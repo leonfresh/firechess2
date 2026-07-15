@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { AnalysisBoardModal } from "@/components/analysis-board-modal";
 import { BrilliantMoveCard } from "@/components/brilliant-move-card";
 import { CardCarousel } from "@/components/card-carousel";
+import type { CardViewMode } from "@/components/card-carousel";
 import type { CommunityPostComposerSeed } from "@/components/community-post-composer-modal";
 import { EndgameCard } from "@/components/endgame-card";
 import { MistakeCard } from "@/components/mistake-card";
@@ -29,7 +30,6 @@ import {
   ScanMentalGame,
 } from "@/components/scan-mental-game";
 import { OpeningRankings } from "@/components/opening-rankings";
-import { ReportSlideDeck } from "@/components/report-slide-deck";
 import { ScanPositionalMotifs } from "@/components/scan-positional-motifs";
 import { ScanStructuralStats } from "@/components/scan-structural-stats";
 import {
@@ -172,92 +172,6 @@ function FloatingSectionNav({ sections }: { sections: FloatingNavSection[] }) {
           );
         })}
       </div>
-    </div>
-  );
-}
-
-/* ── Slide-mode navigation strip (prev/next carousel feel) ── */
-
-function SlideSectionNavigator({
-  sections,
-}: {
-  sections: FloatingNavSection[];
-}) {
-  const [currentIdx, setCurrentIdx] = useState(0);
-
-  // Track which section is visible via scroll position
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            const idx = sections.findIndex(
-              (s) => s.id === (entry.target as HTMLElement).id,
-            );
-            if (idx !== -1) setCurrentIdx(idx);
-          }
-        }
-      },
-      { rootMargin: "-15% 0px -55% 0px", threshold: 0 },
-    );
-
-    const elements = sections
-      .map((s) => document.getElementById(s.id))
-      .filter((el): el is HTMLElement => el !== null);
-    elements.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [sections]);
-
-  const goTo = (idx: number) => {
-    const section = sections[idx];
-    if (!section) return;
-    document
-      .getElementById(section.id)
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    setCurrentIdx(idx);
-  };
-
-  if (sections.length < 2) return null;
-
-  return (
-    <div className="sticky bottom-4 z-30 flex items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-slate-950/90 px-4 py-2.5 shadow-2xl shadow-black/50 backdrop-blur-md">
-      <button
-        type="button"
-        onClick={() => goTo(currentIdx - 1)}
-        disabled={currentIdx === 0}
-        className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
-        aria-label="Previous section"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      </button>
-
-      <div className="flex items-center gap-1.5">
-        {sections.map((section, idx) => (
-          <button
-            key={section.id}
-            type="button"
-            onClick={() => goTo(idx)}
-            className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium transition-all ${
-              idx === currentIdx
-                ? "bg-white/[0.1] text-white"
-                : "text-slate-500 hover:text-slate-300"
-            }`}
-          >
-            <span className="text-xs">{section.icon}</span>
-            <span className="hidden sm:inline">{section.label}</span>
-          </button>
-        ))}
-      </div>
-
-      <button
-        type="button"
-        onClick={() => goTo(currentIdx + 1)}
-        disabled={currentIdx >= sections.length - 1}
-        className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
-        aria-label="Next section"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-      </button>
     </div>
   );
 }
@@ -972,7 +886,7 @@ function SectionHeader({
   description: string;
   badge?: ReactNode;
   live?: boolean;
-  viewMode?: "list" | "grid";
+  viewMode?: "carousel" | "list" | "grid";
   onToggleView?: () => void;
 }) {
   return (
@@ -1010,35 +924,31 @@ function SectionHeader({
               type="button"
               onClick={onToggleView}
               className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-400 transition hover:bg-white/[0.08] hover:text-slate-200"
-              aria-label={`Switch to ${viewMode === "list" ? "grid" : "list"} view`}
+              aria-label={`Switch to ${viewMode === "list" ? "carousel" : viewMode === "carousel" ? "grid" : "list"} view`}
             >
               {viewMode === "list" ? (
                 <>
-                  <svg
-                    width="11"
-                    height="11"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <rect x="3" y="3" width="8" height="8" rx="1" />
-                    <rect x="13" y="3" width="8" height="8" rx="1" />
-                    <rect x="3" y="13" width="8" height="8" rx="1" />
-                    <rect x="13" y="13" width="8" height="8" rx="1" />
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <rect x="3" y="1" width="7" height="9" rx="1" />
+                    <rect x="14" y="1" width="7" height="9" rx="1" />
+                    <rect x="3" y="14" width="7" height="9" rx="1" />
+                    <rect x="14" y="14" width="7" height="9" rx="1" />
+                  </svg>
+                  Grid
+                </>
+              ) : viewMode === "carousel" ? (
+                <>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <rect x="2" y="5" width="20" height="14" rx="2" />
+                    <circle cx="9" cy="12" r="1.5" fill="currentColor" />
+                    <circle cx="15" cy="12" r="1.5" fill="currentColor" />
+                    <path d="M9 12h6" />
                   </svg>
                   Grid
                 </>
               ) : (
                 <>
-                  <svg
-                    width="11"
-                    height="11"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <line x1="8" y1="6" x2="21" y2="6" />
                     <line x1="8" y1="12" x2="21" y2="12" />
                     <line x1="8" y1="18" x2="21" y2="18" />
@@ -2064,19 +1974,21 @@ export function ScanSessionReport({
     useState<ReportAnalysisTarget | null>(null);
 
   const [sectionViewModes, setSectionViewModes] = useState<
-    Record<string, "list" | "grid">
+    Record<string, CardViewMode>
   >({});
   const [reportViewMode, setReportViewMode] = useState<ReportViewMode>(
     // Full report while scanning; guided tour offered via modal when ready.
     "full",
   );
-  const [slideView, setSlideView] = useState(false);
-  const getSV = (id: string): "list" | "grid" => sectionViewModes[id] ?? "list";
+  const getSV = (id: string): CardViewMode => sectionViewModes[id] ?? "carousel";
   const toggleSV = (id: string) =>
-    setSectionViewModes((p) => ({
-      ...p,
-      [id]: (p[id] ?? "list") === "list" ? "grid" : "list",
-    }));
+    setSectionViewModes((p) => {
+      const cur = p[id] ?? "carousel";
+      const next: CardViewMode =
+        cur === "list" ? "carousel" :
+        cur === "carousel" ? "grid" : "list";
+      return { ...p, [id]: next };
+    });
   const changeReportViewMode = (mode: ReportViewMode) => {
     setReportViewMode(mode);
   };
@@ -2542,23 +2454,6 @@ export function ScanSessionReport({
           </nav>
         ) : null}
 
-        {/* ── Slide mode toggle ── */}
-        {(showBrilliants || showOpenings || showTactics || showEndgames || showTimeManagement || showStructural) ? (
-          <div className="flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setSlideView((v) => !v)}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold transition ${
-                slideView
-                  ? "border-white/[0.15] bg-white/[0.08] text-white"
-                  : "border-white/[0.06] bg-white/[0.02] text-slate-500 hover:border-white/[0.1] hover:text-slate-300"
-              }`}
-            >
-              {slideView ? "📖 List View" : "📺 Slide View"}
-            </button>
-          </div>
-        ) : null}
-
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
           <MetricCard
             label="Games analyzed"
@@ -2995,7 +2890,7 @@ export function ScanSessionReport({
                       onClick={() => toggleSV("leaks")}
                       className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-400 transition hover:bg-white/[0.08] hover:text-slate-200"
                     >
-                      {getSV("leaks") === "list" ? "Grid" : "List"}
+                      {getSV("leaks") === "list" ? "Carousel" : getSV("leaks") === "carousel" ? "Grid" : "List"}
                     </button>
                   </div>
                   <p className="mt-2 text-sm text-slate-400">
@@ -3065,7 +2960,7 @@ export function ScanSessionReport({
                       onClick={() => toggleSV("one-offs")}
                       className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-400 transition hover:bg-white/[0.08] hover:text-slate-200"
                     >
-                      {getSV("one-offs") === "list" ? "Grid" : "List"}
+                      {getSV("one-offs") === "list" ? "Carousel" : getSV("one-offs") === "carousel" ? "Grid" : "List"}
                     </button>
                   </div>
                   <p className="mt-2 text-sm text-slate-400">
@@ -3506,11 +3401,6 @@ export function ScanSessionReport({
             />
           </section>
         ) : null}
-
-        {/* ── Section carousel nav (prev/next slide) ── */}
-        {slideView && (
-          <SlideSectionNavigator sections={floatingNavSections} />
-        )}
       </div>
       ) : null}
       <AnalysisBoardModal

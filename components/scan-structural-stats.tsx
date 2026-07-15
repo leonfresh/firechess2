@@ -105,24 +105,45 @@ export function ScanStructuralStats({ report }: Props) {
                 </span>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {entries.slice(0, 4).map((entry) => {
                   const pct = entry.winPct;
                   return (
                     <div key={entry.pattern}>
-                      <div className="mb-0.5 flex items-center justify-between text-xs">
-                        <span className="text-slate-400">
+                      <div className="mb-1 flex items-center justify-between text-xs">
+                        <span className="text-slate-300 font-medium">
                           {patternLabel(axis, entry.pattern)}
                         </span>
                         <span className={winRateColor(pct)}>
-                          {pct}% ({entry.games})
+                          {pct}%
                         </span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                        <div
-                          className={`h-full rounded-full transition-all ${winRateBarColor(pct)}`}
-                          style={{ width: `${Math.max(4, pct)}%` }}
-                        />
+                      {/* Win/Draw/Loss bar */}
+                      <div className="mb-1 flex h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                        {entry.wins > 0 && (
+                          <div
+                            className="bg-emerald-400 transition-all"
+                            style={{ width: `${(entry.wins / entry.games) * 100}%` }}
+                          />
+                        )}
+                        {entry.draws > 0 && (
+                          <div
+                            className="bg-amber-400 transition-all"
+                            style={{ width: `${(entry.draws / entry.games) * 100}%` }}
+                          />
+                        )}
+                        {entry.losses > 0 && (
+                          <div
+                            className="bg-red-400 transition-all"
+                            style={{ width: `${(entry.losses / entry.games) * 100}%` }}
+                          />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                        <span className="text-emerald-400 font-medium">{entry.wins}W</span>
+                        <span className="text-amber-400 font-medium">{entry.draws}D</span>
+                        <span className="text-red-400 font-medium">{entry.losses}L</span>
+                        <span className="ml-auto">{entry.games} game{entry.games !== 1 ? "s" : ""}</span>
                       </div>
                     </div>
                   );
