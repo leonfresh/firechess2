@@ -517,11 +517,7 @@ export default function HomePage() {
       setIsLaunchingScan(true);
       setState("idle");
       setError("");
-      setNotice(
-        authenticated
-          ? "Checking your latest saved scan before opening a dedicated report page."
-          : "Opening your dedicated scan page. Results will stream in there as each section finishes.",
-      );
+      setNotice("Opening your report page. Results stream in as each section finishes.");
       setSaveStatus("idle");
 
       const scanConfig = {
@@ -539,20 +535,7 @@ export default function HomePage() {
         ...(safeSource === "pgn" ? { pgnText: pgnText.trim() } : {}),
       };
 
-      const reuseSignature = authenticated
-        ? await buildScanReuseSignatureInBrowser(trimmed, {
-            maxGames: safeGames,
-            maxOpeningMoves: safeMoves,
-            cpLossThreshold: safeCpThreshold,
-            engineDepth: safeDepth,
-            source: safeSource,
-            scanMode: safeScanMode,
-            timeControl: speed,
-            since: safeSince,
-            until: safeUntil,
-            ...(safeSource === "pgn" ? { pgnText: pgnText.trim() } : {}),
-          })
-        : null;
+      const reuseSignature = null; // Skip game download on homepage — report page handles all analysis
 
       const sessionRes = await fetch("/api/scans", {
         method: "POST",
