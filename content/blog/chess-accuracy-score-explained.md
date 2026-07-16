@@ -1,9 +1,9 @@
 ---
 title: "Chess Accuracy Score Explained: What 90%+ Actually Means"
-description: "What is the chess accuracy score, how is it calculated, and what does a 90%+ accuracy actually tell you about how well you played? A deep dive."
+description: "What is the chess accuracy score, how is it calculated, what does a 90%+ accuracy actually tell you about how well you played, and how does it differ from centipawn loss? A deep dive."
 date: "2026-06-04"
 author: "FireChess Team"
-tags: ["analysis", "fundamentals"]
+tags: ["analysis", "fundamentals", "centipawn-loss"]
 ---
 
 You finish a game and the accuracy report says 94.2%. Is that good? Great? And why does your opponent show 91.7% when they lost?
@@ -99,7 +99,7 @@ Accuracy scores are one of the most misunderstood metrics in chess. Let's unpack
 
 ## How Accuracy Is Calculated
 
-Chess accuracy scores — whether from Lichess, Chess.com, or FireChess — are all built on the same concept: **centipawn loss**.
+Chess accuracy scores — whether from Lichess, Chess.com, or FireChess — are all built on the same concept: **[centipawn loss](/blog/what-is-centipawn-loss)**.
 
 Here's the formula in plain English:
 
@@ -109,6 +109,8 @@ Here's the formula in plain English:
 4. Your accuracy is a function of how small your average loss was across all moves.
 
 The exact formula varies by platform. Chess.com uses a conversion function that maps average centipawn loss to a percentage from 0–100. Lichess uses a similar approach. FireChess uses the raw centipawn loss per-move, grouped into classifications (brilliant, best, excellent, good, inaccuracy, mistake, blunder).
+
+To understand accuracy, you first need to understand the raw number it comes from. If you're not already familiar with the concept, read our complete guide: [What Is Centipawn Loss?](/blog/what-is-centipawn-loss) — it covers how Stockfish calculates evaluations and what those numbers actually mean in practical terms.
 
 ## Why You Can Lose With 94% Accuracy
 
@@ -123,6 +125,8 @@ Accuracy tells you how well you played *given the positions that arose*. It does
 
 **A 95% accurate loss often means you played well but started from a worse position.** A 75% accurate win often means your opponent blundered more than you did.
 
+This is also why **average centipawn loss** and accuracy % tell different stories. Two players might both score 92% accuracy, but one had a steady 20 cp average across all moves while the other had many 0 cp moves punctuated by a single 80 cp mistake. The accuracy % looks the same, but the centipawn loss profile is completely different. For more on this distinction, see [how centipawn loss is calculated](/blog/what-is-centipawn-loss#how-acpl-is-calculated).
+
 ## What "Brilliant" Accuracy Actually Looks Like
 
 Most players fixate on the top of the scale. So what does 99%+ accuracy look like?
@@ -134,15 +138,182 @@ It's essentially impossible to sustain across an entire game. Even world-class e
 
 For real improvement, track **average accuracy across 20+ games**, not a single-game spike.
 
-## Accuracy vs. Centipawn Loss: Which Should You Track?
+## Accuracy vs. Centipawn Loss — the Deeper Difference
 
-| Metric | Pros | Cons |
-|--------|------|------|
-| Accuracy % | Intuitive 0–100 scale | Hides which phase cost you most |
-| Avg centipawn loss | Raw, precise | Less intuitive |
-| Move classification breakdown | Shows pattern of mistakes | Requires counting |
+A common question is: "If accuracy comes from centipawn loss, why look at both?" The short answer is that **accuracy is a processed metric** while **centipawn loss is raw data** — and each serves a different purpose.
 
-For actual improvement, **move classification is most useful**. Knowing you had 1 blunder, 2 mistakes, and 4 inaccuracies tells you more than "85% accuracy." The blunder was probably worth 3x the centipawn loss of all the inaccuracies combined.
+### What Centipawn Loss Measures
+
+[Centipawn loss](/blog/what-is-centipawn-loss) is the absolute difference in evaluation (in hundredths of a pawn) between your chosen move and the engine's best move. If Stockfish says the best move gives +1.00 and your move gives +0.40, your centipawn loss for that move is 60. Straightforward.
+
+Average centipawn loss (ACPL) is the mean of these per-move differences across the entire game. It's a direct, unprocessed number. There's no scaling, no clamping, no curve — it simply tells you, on average, how far from optimal your play was.
+
+### What Accuracy % Measures
+
+Accuracy % takes that raw centipawn loss data and runs it through a **non-linear conversion function**. The purpose of this conversion is to make the metric more intuitive: a 0–100 scale that humans can immediately grasp.
+
+But here's the critical detail: **accuracy % is not proportional to centipawn loss**.
+
+### The Non-Linear Relationship
+
+The relationship between your average centipawn loss and your accuracy % follows a curve — small losses at the top of the scale punish you much harder than large losses at the bottom. This has real practical implications:
+
+| Average Centipawn Loss | Approximate Accuracy % | What This Means |
+|---|---|---|
+| 0 cp | 99.9%+ | Perfect engine play — essentially unreachable for humans |
+| 10 cp | ~93% | A very strong club game, most moves were excellent or best |
+| 25 cp | ~82% | A decent game with a few noticeable imperfections |
+| 50 cp | ~68% | Several inaccuracies or one moderate mistake |
+| 100 cp | 50% | Clear mistakes; likely a blunder or two |
+| 200 cp | ~32% | Multiple blunders, or one catastrophic error |
+| 500 cp | ~15% | The engine barely recognises the game as chess |
+
+The jump from 10 cp to 25 cp (just 15 extra centipawns on average) drops your accuracy from ~93% to ~82% — an 11-point hit. But the jump from 100 cp to 200 cp (100 extra centipawns) drops you from 50% to 32% — only 18 points for more than 6× the centipawn increase.
+
+**Why this matters:** A single 70 cp mistake in an otherwise clean game (say, 15 moves at 5 cp each) gives you an average of ~9 cp, which maps to ~93% accuracy. The same 70 cp mistake in a messy game (15 moves averaging 30 cp) gives you an average of ~33 cp, which maps to ~78%. The mistake cost you identically in engine terms, but its impact on the accuracy % depends entirely on the quality of the rest of your game.
+
+The chart below visualises this directly:
+
+<div style="margin: 2rem 0; display: flex; justify-content: center;">
+<svg width="680" height="360" viewBox="0 0 680 360" fill="none" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif">
+  <defs>
+    <linearGradient id="abBg" x1="0" y1="0" x2="680" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#080d1a"/><stop offset="1" stop-color="#0d1425"/>
+    </linearGradient>
+    <linearGradient id="curveGrad" x1="0" y1="0" x2="1" y2="0" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#6366f1"/><stop offset="0.5" stop-color="#a78bfa"/><stop offset="1" stop-color="#c4b5fd"/>
+    </linearGradient>
+    <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6366f1" stop-opacity="0.2"/><stop offset="1" stop-color="#6366f1" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="curveGlow">
+      <feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="680" height="360" rx="18" fill="url(#abBg)"/>
+  <rect x="1" y="1" width="678" height="358" rx="17" stroke="white" stroke-opacity="0.05"/>
+  <!-- Title -->
+  <text x="340" y="32" text-anchor="middle" fill="white" font-size="16" font-weight="700" letter-spacing="0.3">Accuracy % vs. Average Centipawn Loss (Non-Linear Relationship)</text>
+  <!-- Plot area: left=70, right=30, top=55, bottom=55 → width=580, height=250 -->
+  <!-- Grid lines (horizontal) -->
+  <g stroke="#1e293b" stroke-width="1" stroke-dasharray="4 3">
+    <line x1="70" y1="55" x2="650" y2="55"/>
+    <line x1="70" y1="117.5" x2="650" y2="117.5"/>
+    <line x1="70" y1="180" x2="650" y2="180"/>
+    <line x1="70" y1="242.5" x2="650" y2="242.5"/>
+    <line x1="70" y1="305" x2="650" y2="305"/>
+  </g>
+  <!-- Y-axis labels -->
+  <text x="60" y="59" text-anchor="end" fill="#64748b" font-size="11">100%</text>
+  <text x="60" y="121.5" text-anchor="end" fill="#64748b" font-size="11">75%</text>
+  <text x="60" y="184" text-anchor="end" fill="#64748b" font-size="11">50%</text>
+  <text x="60" y="246.5" text-anchor="end" fill="#64748b" font-size="11">25%</text>
+  <text x="60" y="309" text-anchor="end" fill="#64748b" font-size="11">0%</text>
+  <!-- Grid lines (vertical) -->
+  <g stroke="#1e293b" stroke-width="1" stroke-dasharray="4 3">
+    <line x1="70" y1="55" x2="70" y2="305"/>
+    <line x1="186" y1="55" x2="186" y2="305"/>
+    <line x1="302" y1="55" x2="302" y2="305"/>
+    <line x1="418" y1="55" x2="418" y2="305"/>
+    <line x1="534" y1="55" x2="534" y2="305"/>
+    <line x1="650" y1="55" x2="650" y2="305"/>
+  </g>
+  <!-- X-axis labels -->
+  <text x="70" y="322" text-anchor="middle" fill="#64748b" font-size="11">0</text>
+  <text x="186" y="322" text-anchor="middle" fill="#64748b" font-size="11">100</text>
+  <text x="302" y="322" text-anchor="middle" fill="#64748b" font-size="11">200</text>
+  <text x="418" y="322" text-anchor="middle" fill="#64748b" font-size="11">300</text>
+  <text x="534" y="322" text-anchor="middle" fill="#64748b" font-size="11">400</text>
+  <text x="650" y="322" text-anchor="middle" fill="#64748b" font-size="11">500</text>
+  <!-- Axis titles -->
+  <text x="360" y="350" text-anchor="middle" fill="#94a3b8" font-size="12" letter-spacing="0.3">Average Centipawn Loss (cp)</text>
+  <text x="18" y="180" text-anchor="middle" fill="#94a3b8" font-size="12" letter-spacing="0.3" transform="rotate(-90, 18, 180)">Accuracy %</text>
+  <!-- Fill under curve -->
+  <path d="M70 55 L 76 65.2 L 82 81.6 L 88 97.5 L 94 112.5 L 100 126.6 L 106 139.7 L 112 151.9 L 118 163.2 L 124 173.7 L 130 183.5 L 136 192.5 L 142 200.9 L 148 208.6 L 154 215.8 L 160 222.5 L 166 228.7 L 172 234.5 L 178 239.8 L 184 244.8 L 190 249.4 L 196 253.7 L 202 257.7 L 208 261.4 L 214 264.8 L 220 268.0 L 226 270.9 L 232 273.7 L 238 276.2 L 244 278.6 L 250 280.8 L 256 282.8 L 262 284.7 L 268 286.5 L 274 288.2 L 280 289.8 L 286 291.3 L 292 292.7 L 298 294.0 L 304 295.2 L 310 296.3 L 316 297.4 L 322 298.4 L 328 299.4 L 334 300.3 L 340 301.2 L 346 302.0 L 352 302.8 L 358 303.5 L 364 304.2 L 370 304.9 L 376 305.5 L 382 306.1 L 388 306.7 L 394 307.2 L 400 307.7 L 406 308.2 L 412 308.7 L 418 309.1 L 424 309.5 L 430 309.9 L 436 310.3 L 442 310.7 L 448 311.1 L 454 311.4 L 460 311.8 L 466 312.1 L 472 312.4 L 478 312.7 L 484 313.0 L 490 313.3 L 496 313.5 L 502 313.8 L 508 314.1 L 514 314.3 L 520 314.5 L 526 314.8 L 532 315.0 L 538 315.2 L 544 315.4 L 550 315.6 L 556 315.8 L 562 316.0 L 568 316.2 L 574 316.4 L 580 316.6 L 586 316.8 L 592 317.0 L 598 317.1 L 604 317.3 L 610 317.5 L 616 317.6 L 622 317.8 L 628 317.9 L 634 318.1 L 640 318.2 L 646 318.3 L 650 318.5 Z" fill="url(#fillGrad)"/>
+  <!-- Curve -- computed polyline from accuracy = 100 / (1 + (cpLoss/100)^1.1) -->
+  <!-- x = 70 + cpLoss * 1.16, y = 305 - accuracy * 2.5 -->
+  <polyline points="70,55 76,65.2 82,81.6 88,97.5 94,112.5 100,126.6 106,139.7 112,151.9 118,163.2 124,173.7 130,183.5 136,192.5 142,200.9 148,208.6 154,215.8 160,222.5 166,228.7 172,234.5 178,239.8 184,244.8 190,249.4 196,253.7 202,257.7 208,261.4 214,264.8 220,268.0 226,270.9 232,273.7 238,276.2 244,278.6 250,280.8 256,282.8 262,284.7 268,286.5 274,288.2 280,289.8 286,291.3 292,292.7 298,294.0 304,295.2 310,296.3 316,297.4 322,298.4 328,299.4 334,300.3 340,301.2 346,302.0 352,302.8 358,303.5 364,304.2 370,304.9 376,305.5 382,306.1 388,306.7 394,307.2 400,307.7 406,308.2 412,308.7 418,309.1 424,309.5 430,309.9 436,310.3 442,310.7 448,311.1 454,311.4 460,311.8 466,312.1 472,312.4 478,312.7 484,313.0 490,313.3 496,313.5 502,313.8 508,314.1 514,314.3 520,314.5 526,314.8 532,315.0 538,315.2 544,315.4 550,315.6 556,315.8 562,316.0 568,316.2 574,316.4 580,316.6 586,316.8 592,317.0 598,317.1 604,317.3 610,317.5 616,317.6 622,317.8 628,317.9 634,318.1 640,318.2 646,318.3 650,318.5" stroke="url(#curveGrad)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#curveGlow)"/>
+  <!-- Highlighted data point markers -->
+  <g>
+    <!-- 10 cp / 92.6% -->
+    <circle cx="81.6" cy="73.5" r="5" fill="#10b981" stroke="#080d1a" stroke-width="2"/>
+    <text x="81.6" y="64" text-anchor="middle" fill="#10b981" font-size="9">10 cp → 93%</text>
+    <!-- 50 cp / 68.2% -->
+    <circle cx="128" cy="134.5" r="5" fill="#f59e0b" stroke="#080d1a" stroke-width="2"/>
+    <text x="128" y="148" text-anchor="middle" fill="#f59e0b" font-size="9">50 cp → 68%</text>
+    <!-- 100 cp / 50.0% -->
+    <circle cx="186" cy="180" r="5" fill="#f97316" stroke="#080d1a" stroke-width="2"/>
+    <text x="186" y="194" text-anchor="middle" fill="#f97316" font-size="9">100 cp → 50%</text>
+    <!-- 200 cp / 31.8% -->
+    <circle cx="302" cy="225.5" r="5" fill="#ef4444" stroke="#080d1a" stroke-width="2"/>
+    <text x="302" y="240" text-anchor="middle" fill="#ef4444" font-size="9">200 cp → 32%</text>
+  </g>
+  <!-- Zone annotations -->
+  <g transform="translate(70, 55)">
+    <rect x="0" y="-2" width="58" height="250" fill="#10b981" fill-opacity="0.06" rx="2"/>
+    <text x="29" y="130" text-anchor="middle" fill="#10b981" fill-opacity="0.5" font-size="10" transform="rotate(-90, 29, 130)">GM RANGE</text>
+  </g>
+  <g transform="translate(186, 55)">
+    <rect x="0" y="-2" width="116" height="250" fill="#f59e0b" fill-opacity="0.06" rx="2"/>
+    <text x="58" y="130" text-anchor="middle" fill="#f59e0b" fill-opacity="0.5" font-size="10" transform="rotate(-90, 58, 130)">CLUB RANGE</text>
+  </g>
+  <g transform="translate(302, 55)">
+    <rect x="0" y="-2" width="348" height="250" fill="#ef4444" fill-opacity="0.06" rx="2"/>
+    <text x="174" y="130" text-anchor="middle" fill="#ef4444" fill-opacity="0.5" font-size="10" transform="rotate(-90, 174, 130)">LARGE LOSS RANGE</text>
+  </g>
+</svg>
+</div>
+
+Key takeaway: **accuracy % is compressed at the top and stretched at the bottom.** A 20-cp improvement from 100 cp to 80 cp moves your accuracy from 50% to 57% — modest. But the same 20-cp improvement from 20 cp to 0 cp moves your accuracy from 86% to 100% — nearly three times the impact. The engine punishes every tiny deviation from perfect play disproportionately. This is one reason why grandmasters obsess over seemingly "small" improvements in their play: shaving 5 cp off your average is much harder at the top, and the accuracy reward is much steeper.
+
+## A Concrete Example: One Move That Changes Everything
+
+Let's make this real with a specific position from the **Two Knights Defense**, a sharp opening where a single decision can swing the evaluation by several pawns.
+
+### The Position
+
+> **FEN:** `r1bqkb1r/ppp2ppp/2n5/3Pp3/2B5/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 5`
+
+This arises after: **1.e4 e5 2.Nf3 Nc6 3.Bc4 Nf6 4.Ng5 d5 5.exd5**
+
+```
+      White to move? No — it's Black's turn.
+      ┌─ Position after 5.exd5 ──────────────────────┐
+      │  r . b q k b . r                              │
+      │  p p p . . p p p                              │
+      │  . . n . . . . .                              │
+      │  . . . P p . . .                              │
+      │  . . B . . . . .                              │
+      │  . . . . . N . .                              │
+      │  P P P P . P P P                              │
+      │  R N B Q K . . R                              │
+      │  Black to move                                 │
+      └──────────────────────────────────────────────┘
+```
+
+Black faces a critical decision. The *correct* continuation is **Na5** — attacking White's light-squared bishop before it can inflict damage. The *blunder* is **Nxd5?**, which seems natural (recapturing the pawn and centralising the knight) but falls into the infamous **Fried Liver Attack**.
+
+### The Two Paths
+
+| Path | Move | Eval After | Centipawn Loss | Accuracy Impact |
+|---|---|---|---|---|
+| Engine best | **Na5** attacking the bishop | ~+0.9 (White slightly better — Black has compensation with the misplaced knight) | 0 cp | ~95%+ for this move |
+| Natural blunder | **Nxd5?** recapturing | ~+3.5 (White is winning — **7.Nxf7!** follows) | 260 cp | ~25% for this move |
+| Solid alternative | **b5** (Ulvestad variation) | ~+0.8 (playable, sharp) | ~10 cp | ~90% |
+
+The brutal reality: **Nxd5?** looks like a normal developing move. You capture the pawn, centralise your knight, stay active. But Stockfish's evaluation screams that you've just made a 260-centipawn mistake — enough to drop your game accuracy from a potential 92% to something like 65% in a single move.
+
+### Before and After: The Evaluation Swing
+
+**Before Black's move (position after 5.exd5):** The evaluation is approximately **+0.3** in White's favour — a slight advantage from having an extra pawn (even though it's a temporary sacrifice). The position is still in the realm of normal chess.
+
+**After Nxd5? (Black's mistake):** White plays **7.Nxf7!** — the Fried Liver sacrifice. After Kxf7 Qf3+ Ke6, White has only one piece for the sacrificed knight, but the attack is overwhelming. The evaluation jumps to **+3.5+**. Black's king is in the centre, exposed, and White has Qf3 threatening mate, Nc3 attacking the pinned knight, and all of White's pieces ready to join the attack.
+
+**After Na5 (correct):** White's evaluation is +0.9 — White has a stable advantage, but Black has reasonable play. The accuracy difference between the two continuations is enormous.
+
+This illustrates a crucial truth about accuracy scoring: **the engine judges the move itself, not your intention.** A "natural" move that looks good to a human can be a 260-cp catastrophe to Stockfish. Your accuracy % will reflect the engine's judgment, capturing exactly how far your chosen path strayed from the optimal one.
+
+> This position and the Fried Liver line are discussed further in our guide to [centipawn loss in tactical sequences](/blog/what-is-centipawn-loss#centipawn-loss-in-tactical-sequences).
 
 ## The Phase Problem: Where Your Accuracy Actually Drops
 
@@ -154,7 +325,7 @@ Research on amateur games consistently shows that accuracy doesn't drop evenly a
 
 **Endgame (moves 35+):** Many players lose accuracy here too, but often it's from accumulated pressure or a technically lost position — not calculation errors.
 
-When you analyze your games, look at accuracy *by phase*, not just the overall number.
+When you analyze your games, look at accuracy *by phase*, not just the overall number. Centipawn loss analysis can help with this — see [tracking centipawn loss by game phase](/blog/what-is-centipawn-loss#acpl-by-game-phase).
 
 ## How to Use Accuracy to Actually Improve
 
@@ -162,12 +333,52 @@ When you analyze your games, look at accuracy *by phase*, not just the overall n
 
 2. **Track across opening systems.** You might average 88% in the Italian but only 79% in the Sicilian Dragon. That gap tells you where your preparation ends and your calculation begins.
 
-3. **Compare similar time controls.** A 5-minute blitz game at 80% vs. a 15-minute rapid game at 87% is normal. If your rapid accuracy is close to your blitz accuracy, you're not using the extra time effectively.
+3. **Compare similar time controls.** A 5-minute blitz game at 80% vs. a 15-minute rapid game at 87% is normal. If your rapid accuracy is close to your blitz accuracy, you're not using the extra time effectively. For more on how centipawn loss scales with time control, see [average centipawn loss by time control](/blog/what-is-centipawn-loss#acpl-by-time-control).
 
 4. **Run a game report.** FireChess scans your last N games from Lichess or Chess.com and groups your accuracy drops into patterns — repeated opening leaks, typical tactical blindspots, endgame technique failures — so you can see trends instead of individual fluctuations.
 
-The accuracy number alone is a compass. The breakdown is the map.
+5. **Don't chase 99%.** A 99% accurate game is usually a short game with forced moves. Aim for consistency in the 85–92% range over many games, and use centipawn loss to measure the *magnitude* of your mistakes, not just their count.
+
+The accuracy number alone is a compass. The [centipawn loss breakdown](/blog/what-is-centipawn-loss) is the map.
+
+## FAQ: Chess Accuracy Score
+
+### 1. Is chess accuracy the same as "percentage of best moves"?
+
+No. Accuracy % is not simply "number of best moves divided by total moves." Most platforms use a weighted formula that accounts for the severity of each mistake. A single 100-cp blunder drags your accuracy down much more than three 5-cp inaccuracies, even though the "best move percentage" would weigh them equally. Lichess uses a formula based on the sum of squared centipawn losses, while Chess.com applies a sigmoid-like curve to the average.
+
+### 2. Why does my accuracy sometimes increase after a blunder?
+
+It doesn't — the overall game accuracy always decreases after a blunder compared to where it would have been. But the *per-move* accuracy calculation can produce counterintuitive results if the blunder leads to a forced sequence where all remaining moves are obvious. For example, if you hang a queen and then all remaining moves are forced recaptures with 0 cp loss, the final accuracy might seem higher than expected — but it's still lower than it would have been without the blunder. The distortion comes from the forced nature of the subsequent play.
+
+### 3. What's a "good" accuracy for my rating level?
+
+See the chart at the top of this article for typical ranges, but broad guidelines:
+
+| Rating | Typical Accuracy | What It Means |
+|---|---|---|
+| Under 1000 | 60–70% | Multiple mistakes per game; blunders every 5–7 moves |
+| 1000–1400 | 70–78% | Occasional blunders; inconsistent opening play |
+| 1400–1800 | 78–85% | Few outright blunders; mistakes are inaccuracies |
+| 1800–2200 | 85–92% | Rare blunders; most inaccuracies are positional |
+| 2200+ (NM/IM) | 92–96% | One or two small inaccuracies per game |
+| 2500+ (GM) | 95–98% | Moves that appear "inaccurate" are often strategic trade-offs |
+
+Remember: these vary significantly by time control and opening complexity.
+
+### 4. Can accuracy be negative? Can it go above 100%?
+
+Some platforms (like Chess.com) clamp accuracy to 0–100. Others (like Lichess) allow it to go slightly above 100% in theory if every move was better than the engine's top suggestion (which happens in rare cases where the engine changes its mind across iterations). In practice, values above 100% are essentially never shown. Ceiling values like 99.9% appear in very short, forced games. On the low end, a game with multiple queen-sized blunders can approach 0%, though most platforms display nothing below 1–5%.
+
+### 5. How is accuracy different from centipawn loss?
+
+This is the most common question, and the answer is **accuracy % is a compressed, non-linear transformation of centipawn loss**:
+
+- **Centipawn loss** is raw data — the actual difference between your move and the engine's best, measured in hundredths of a pawn. It's additive, linear, and directly comparable across games.
+- **Accuracy %** is a processed metric — it takes centipawn losses, applies a curve (or another non-linear function), and maps them to a 0–100 percentage. It's intuitive but loses the raw magnitude information.
+
+Use centipawn loss when you want to know *how much* you lost per move. Use accuracy % when you want a quick, understandable summary. For serious improvement, track both. See our full breakdown in [What Is Centipawn Loss?](/blog/what-is-centipawn-loss).
 
 ---
 
-*Want to find where your accuracy actually drops? Run a FireChess report — it scans your recent games and shows you the positions where you lost the most ground.*
+*Want to find where your accuracy actually drops? Run a FireChess report — it scans your recent games and shows you the positions where you lost the most ground, with per-move centipawn loss and accuracy breakdowns by opening, phase, and time control.*

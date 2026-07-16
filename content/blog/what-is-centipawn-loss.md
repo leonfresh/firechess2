@@ -69,13 +69,15 @@ The engine typically normalises this so it's always displayed as a positive numb
 
 ### A Concrete Example
 
-<chess-position fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" caption="Starting position — evaluation is 0.00, perfectly equal. Any deviation from best play starts accumulating centipawn loss." />
+Let's make this real with a position from an actual Italian Game that reached a critical middlegame:
 
-From the starting position, the best move is widely accepted as 1.e4 or 1.d4 (evaluation roughly +0.20 for White's first-move advantage). If you play 1.a3, the evaluation drops to roughly 0.00, and your centipawn loss for that move is about **20 cp** — you gave up 20 centipawns of White's starting advantage with a single unnecessary move.
+<chess-position fen="r1bqk2r/pppp1ppp/2n5/4P3/2B1n3/5N2/PPP2PPP/RNBQR1K1 b kq - 0 9" caption="White has just played 9.Re1, defending the e5 pawn and threatening the black knight on e4. Black's centipawn loss so far is only 18 — very good play. But one careless move here can cost 200+ cp." />
 
-Each subsequent move adds to or subtracts from your cumulative centipawn loss. Your **average centipawn loss (ACPL)** is simply the total centipawn loss across all your moves divided by the number of moves you played.
+In the position above, Black has played accurately for 9 moves (ACPL of 18, strong club level). The best move now is `9...d5`, blocking the bishop's diagonal and challenging the center. If Black instead plays `9...Nxf2?` (capturing the f2 pawn with the knight), the evaluation swings from roughly +0.40 to +3.00 — a centipawn loss of **260 cp** for that single move. And the difference between `9...d5` (solid) and `9...Nc5` (retreating passively) might be only 15 cp — a minor inaccuracy, not a blunder.
 
-<chess-position fen="r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4" caption="The Italian Game after 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 — a balanced opening with near-zero centipawn loss for both sides if played correctly." />
+This is the key insight: centipawn loss is **context-dependent**. A 15-centipawn loss in a sharp tactical position where only one move works is a mistake. The same 15-centipawn loss in a quiet positional game where three moves are roughly equal is meaningless.
+
+<chess-position fen="r1bq1rk1/ppp2ppp/2np4/4p3/2P1P1n1/2NP1N2/PP3PPP/R1BQ1RK1 w - - 0 11" caption="A typical club game middlegame. White's position is solid (+0.35). The best move is 11.h3, kicking the knight. A move like 11.Be3 allows Black to equalise — a centipawn loss of roughly 40 cp. Both players have been playing at ~55 ACPL so far, which is average for 1500-rated play." />
 
 ---
 

@@ -147,8 +147,169 @@ One of the surprises players report is discovering lines they didn't realize the
 
 The tree reveals habits you've never articulated. Some of those habits are good. Some need to go.
 
+## Navigating Transpositions Between Openings
+
+One of the most powerful — and most misunderstood — features of My Opening Tree is how it handles **transpositions**. A transposition occurs when two different move orders lead to the same board position. This is far more common than most players realize, and it means your "repertoire" isn't really a set of fixed move sequences. It's a web of interconnected positions reachable through multiple paths.
+
+**A classic example:** The King's Indian Defense can arise from 1.d4 Nf6 2.c4 g6 3.Nc3 Bg7, or from 1.Nf3 Nf6 2.c4 g6 3.d4 Bg7, or from 1.c4 Nf6 2.Nc3 g6 3.d4 Bg7, or even from 1.g3 d5 2.Bg2 Nf6 3.Nf3 c6 4.d4 Bg7 — same setup, wildly different move orders. A player who thinks of their repertoire as "I play 1.d4" misses the fact that their King's Indian positions also arise from English and Reti move orders.
+
+**The Nimzo-Indian and Queen's Indian** form another well-known transposition nexus. After 1.d4 Nf6 2.c4 e6, White's choice of 3.Nc3 invites the Nimzo (3...Bb4), while 3.Nf3 leads toward the Queen's Indian (3...b6) or Bogo-Indian (3...Bb4+). But if you know both, the tree will merge them at deeper levels when the pawn structures converge.
+
+**How the tree handles this:** My Opening Tree identifies transpositions by comparing the FEN of each position rather than by tracking move order. If two different sequences land on the same board with the same rights (castling, en passant, side to move), they collapse into a single node. Your 12 games from one move order and 8 from another combine into a statistically robust sample of 20.
+
+**Why this matters for improvement:** When you see a merged node, you know you have genuine experience with that position — not just luck from a favorable move order. Conversely, if the tree shows two separate nodes for what you thought was the same opening, your move orders diverged somewhere along the way. That divergence point is exactly where you should study: something you're doing (or your opponent is doing) is taking you into unfamiliar territory.
+
+The transposition view is especially valuable for players who switch between 1.e4 and 1.d4, or for Black players who face multiple first moves from White. Instead of learning separate responses to 1.e4, 1.d4, 1.c4, and 1.Nf3, you can build a unified repertoire that transposes into your preferred structures regardless of what White plays on move one.
+
+For a complete catalog of every opening covered by the tree, visit our [openings database](/openings/).
+
+## Repertoire Coverage by Depth
+
+The chart below visualizes how your repertoire distributes across different depths of play. The horizontal axis shows depth in plies (half-moves), and the vertical axis shows how many distinct positions you've reached at each depth.
+
+<div style="margin: 2rem 0; display: flex; justify-content: center;">
+<svg width="680" height="340" viewBox="0 0 680 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cdBg" x1="0" y1="0" x2="680" y2="340" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#0a0d18"/><stop offset="1" stop-color="#0c1120"/></linearGradient>
+    <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b82f6" stop-opacity="0.9"/><stop offset="100%" stop-color="#6366f1" stop-opacity="0.7"/></linearGradient>
+    <linearGradient id="barGradPeak" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#10b981" stop-opacity="0.9"/><stop offset="100%" stop-color="#059669" stop-opacity="0.7"/></linearGradient>
+    <filter id="barGlow"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="680" height="340" rx="18" fill="url(#cdBg)"/>
+  <rect x="1" y="1" width="678" height="338" rx="17" stroke="white" stroke-opacity="0.05"/>
+  <!-- title -->
+  <text x="340" y="28" text-anchor="middle" fill="white" font-size="14" font-weight="800" letter-spacing="0.3">Repertoire Coverage — Distinct Positions by Depth</text>
+  <!-- Y-axis labels -->
+  <text x="38" y="260" text-anchor="end" fill="#475569" font-size="9">0</text>
+  <text x="38" y="209" text-anchor="end" fill="#475569" font-size="9">10</text>
+  <text x="38" y="159" text-anchor="end" fill="#475569" font-size="9">20</text>
+  <text x="38" y="108" text-anchor="end" fill="#475569" font-size="9">30</text>
+  <text x="38" y="62" text-anchor="end" fill="#475569" font-size="9">40</text>
+  <!-- Grid lines -->
+  <line x1="48" y1="262" x2="650" y2="262" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="48" y1="212" x2="650" y2="212" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="48" y1="162" x2="650" y2="162" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="48" y1="112" x2="650" y2="112" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="48" y1="62" x2="650" y2="62" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
+  <!-- Bars: width=40, gap=14, start x=64 => centers at 84, 138, 192, 246, 300, 354, 408, 462, 516, 570 -->
+  <!-- Depth 1: 2 positions → height=10, y=252 -->
+  <rect x="64" y="252" width="40" height="10" rx="3" fill="url(#barGrad)" fill-opacity="0.5"/>
+  <text x="84" y="270" text-anchor="middle" fill="#475569" font-size="9">1</text>
+  <text x="84" y="248" text-anchor="middle" fill="#64748b" font-size="7">2</text>
+  <!-- Depth 2: 5 positions → height=25, y=237 -->
+  <rect x="118" y="237" width="40" height="25" rx="3" fill="url(#barGrad)" fill-opacity="0.5"/>
+  <text x="138" y="270" text-anchor="middle" fill="#475569" font-size="9">2</text>
+  <text x="138" y="233" text-anchor="middle" fill="#64748b" font-size="7">5</text>
+  <!-- Depth 3: 12 positions → height=60, y=202 -->
+  <rect x="172" y="202" width="40" height="60" rx="3" fill="url(#barGrad)" fill-opacity="0.6"/>
+  <text x="192" y="270" text-anchor="middle" fill="#475569" font-size="9">3</text>
+  <text x="192" y="198" text-anchor="middle" fill="#94a3b8" font-size="8">12</text>
+  <!-- Depth 4: 20 positions → height=100, y=162 -->
+  <rect x="226" y="162" width="40" height="100" rx="3" fill="url(#barGrad)" fill-opacity="0.7"/>
+  <text x="246" y="270" text-anchor="middle" fill="#475569" font-size="9">4</text>
+  <text x="246" y="158" text-anchor="middle" fill="#94a3b8" font-size="8">20</text>
+  <!-- Depth 5: 32 positions → height=160, y=102 -->
+  <rect x="280" y="102" width="40" height="160" rx="3" fill="url(#barGrad)" fill-opacity="0.8"/>
+  <text x="300" y="270" text-anchor="middle" fill="#475569" font-size="9">5</text>
+  <text x="300" y="98" text-anchor="middle" fill="#cbd5e1" font-size="8">32</text>
+  <!-- Depth 6: 38 positions → height=190, y=72 (peak) -->
+  <rect x="334" y="72" width="40" height="190" rx="3" fill="url(#barGradPeak)" fill-opacity="0.9" filter="url(#barGlow)"/>
+  <text x="354" y="270" text-anchor="middle" fill="#475569" font-size="9">6</text>
+  <text x="354" y="68" text-anchor="middle" fill="#6ee7b7" font-size="8" font-weight="700">38</text>
+  <!-- Depth 7: 33 positions → height=165, y=97 -->
+  <rect x="388" y="97" width="40" height="165" rx="3" fill="url(#barGrad)" fill-opacity="0.8"/>
+  <text x="408" y="270" text-anchor="middle" fill="#475569" font-size="9">7</text>
+  <text x="408" y="93" text-anchor="middle" fill="#cbd5e1" font-size="8">33</text>
+  <!-- Depth 8: 24 positions → height=120, y=142 -->
+  <rect x="442" y="142" width="40" height="120" rx="3" fill="url(#barGrad)" fill-opacity="0.65"/>
+  <text x="462" y="270" text-anchor="middle" fill="#475569" font-size="9">8</text>
+  <text x="462" y="138" text-anchor="middle" fill="#94a3b8" font-size="8">24</text>
+  <!-- Depth 9: 14 positions → height=70, y=192 -->
+  <rect x="496" y="192" width="40" height="70" rx="3" fill="url(#barGrad)" fill-opacity="0.5"/>
+  <text x="516" y="270" text-anchor="middle" fill="#475569" font-size="9">9</text>
+  <text x="516" y="188" text-anchor="middle" fill="#64748b" font-size="7">14</text>
+  <!-- Depth 10: 7 positions → height=35, y=227 -->
+  <rect x="550" y="227" width="40" height="35" rx="3" fill="url(#barGrad)" fill-opacity="0.4"/>
+  <text x="570" y="270" text-anchor="middle" fill="#475569" font-size="9">10</text>
+  <text x="570" y="223" text-anchor="middle" fill="#64748b" font-size="7">7</text>
+  <!-- X-axis label -->
+  <text x="340" y="296" text-anchor="middle" fill="#64748b" font-size="10">Depth (plies)</text>
+  <!-- Peak marker -->
+  <line x1="334" y1="66" x2="374" y2="66" stroke="#10b981" stroke-opacity="0.6" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="384" y="69" fill="#10b981" font-size="8">peak coverage</text>
+  <!-- Footprint note -->
+  <text x="340" y="322" text-anchor="middle" fill="#475569" font-size="9">Coverage expands through the opening and early middlegame, then drops as games diverge into unique lines</text>
+</svg>
+</div>
+
+The pattern above is typical for a 1400–1800 rated player. Coverage expands steadily from move 1 (where you have only 2–3 first moves) to a peak around moves 5–7. This is where most of your games are decided — you have enough theory to reach move 6 or 7 comfortably, but beyond that you're largely playing without a prepared map. After the peak, coverage drops because games diverge into unique middlegame positions that don't repeat across your history.
+
+**What different player profiles look like:**
+
+- **Disciplined specialists** show a narrower, taller peak with less spread. They play fewer openings but reach greater depth in each one — coverage stays strong deeper into the tree.
+- **Recreational players** show a flatter curve with broad but shallow coverage — many openings played a few times each, none with real depth.
+- **Pattern-recognition players** (who rely on understanding rather than memorized lines) show a more gradual decline after the peak, since their middlegame positions share recognizable structures even when the specific move orders differ.
+
+The depth slider in My Opening Tree lets you zoom in on any part of this curve. Set it shallow (8–12 plies) to survey your opening tendencies and identify which responses your opponents are throwing at you most often. Crank it deep (20–30 plies) to see how your repertoire actually performs in the early middlegame, where openings end and real chess begins.
+
+For a systematic approach to fixing the weak lines this chart reveals, read our guide on [how to find opening weaknesses](/blog/how-to-find-opening-weaknesses/).
+
+## A Concrete Example: The Italian Game
+
+Let's walk through a real position. Suppose you've reached this Italian Game after 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.c3 Nf6 5.d3 d6 6.0-0 0-0 7.Re1:
+
+```
+r1bq1rk1/ppp2ppp/2np1n2/2b1p3/2B1P3/2PP1N2/PP3PPP/RNBQR1K1 w - - 0 8
+```
+
+This is move 8 from White's perspective. Both sides have castled, the center is semi-closed, and White needs a concrete plan. In My Opening Tree, this position would appear as a green, yellow, or red node depending on your win rate from here.
+
+If this is a **green node** (win rate above 55%), your instincts in this type of position are paying off. You're likely finding good plans — the d3-d4 break at the right moment, Re1 maneuvers, or the classic Bc1-g5 pin on the f6 knight. Keep doing what you're doing.
+
+If this is a **red node** (win rate below 45%), you need to study the typical plans. Here are the three most common approaches from this position:
+
+1. **d3-d4 break (most thematic):** White advances d3-d4 at the right moment to open the center. The timing is everything — push too early and Black gets counterplay; push at the right moment and White's better development tells.
+2. **Bc1-g5:** Pin the knight on f6 to increase pressure on e5. Black typically responds with h6 or Be7-g4, and the resulting play tests both sides' understanding of the Italian structures.
+3. **Qe2 and Rad1:** The "slow buildup." Centralize heavy pieces on the d- and e-files before forcing a breakthrough with d4 or f4. This approach requires patience and rewards positional understanding.
+
+The tree doesn't just tell you the position — it tells you whether you handle it well. That's the difference between generic theory ("study the Italian Game") and personal analytics ("your win rate in this specific Italian structure is 64%"). One guides your study; the other just adds to your reading list.
+
+### French Advance: Another Example
+
+To see how the tree flags a weakness, consider this position from the French Advance variation (mentioned earlier as a 29% win rate "leak"):
+
+```
+r1bqkb1r/pp1pnppp/2n1p3/2pPP3/8/N2P1N2/PP4PP/R1BQKB1R w KQkq - 0 6
+```
+
+Here, White has played the Advance French: 1.e4 e6 2.d4 d5 3.e5 c5 4.c3 Nc6 5.Nf3 Nge7 6.Na3. The position is closed, White has space on the kingside, and the key battle will revolve around the d4 pawn and the f6 square. A 29% win rate here screams that you're mishandling this structure — likely playing too passively when aggressive breaks like b4 or the Ng5-e2-f4 maneuver are needed.
+
+Compare this to the Italian position above. Both are White's turn, both are move 8-ish, but the character of play is totally different. That's why the tree tracks each node independently — a player who excels in open positions (Italian) might flounder in closed ones (French Advance), and the win-rate numbers catch the contrast immediately.
+
+## Frequently Asked Questions
+
+**Q: How many games do I need for the tree to be useful?**
+
+A: At least 50 games, and ideally 100 or more. With fewer than 50, the individual node samples become too small to draw reliable conclusions — a 75% win rate over 4 games doesn't tell you much about your true strength in that line. With 100+ games, most major branches will have 5–15 games each, which is enough to spot real trends. You can load up to 500 games from either Lichess or Chess.com.
+
+**Q: Does the tree include correspondence games or engine-assisted games?**
+
+A: By default, no. My Opening Tree automatically filters out correspondence games (they're too long to reflect real opening skill) and games where either player's accuracy exceeds 95% (likely engine-assisted). Both filters can be disabled in the settings if you want the full picture, but the default view is clean human play — OTB, rapid, and classical time controls only.
+
+**Q: What if I changed my repertoire recently? Won't old games bias the data?**
+
+A: You can set a date range to limit the analysis to recent games only — the last 3 months, last year, or any custom window. This is invaluable after a conscious switch, like moving from the Sicilian to the Caro-Kann. Your old games aren't deleted, they're just filtered. Switch the date range back to include them whenever you want to compare your old repertoire against your new one.
+
+**Q: How are draws counted in the win-rate calculation?**
+
+A: Draws are excluded from the win-rate percentage. The number shown is *wins ÷ (wins + losses)* — decisive games only. This gives a clearer picture of your scoring potential in each line. A 50% win rate with no draws means you're splitting points exactly. A 50% win rate with 40% draws suggests you're reaching safe positions but failing to convert. Both are useful signals, but they tell different stories — the tree lets you see the raw numbers (wins, draws, losses) underneath the percentage.
+
+**Q: Can I share my opening tree with my coach or a training partner?**
+
+A: Yes. Every tree view generates a shareable link. You can send the full tree or a specific branch, and the recipient doesn't need a FireChess account to see it. This makes it straightforward to review your repertoire with a coach during a lesson — they see exactly where you're struggling without combing through dozens of PGN files. It's also useful for group training: share your tree with a study group and compare repertoires to find complementary lines to learn together.
+
 ## Try It
 
-My Opening Tree is at [firechess.com/my-openings](https://firechess.com/my-openings). It's free to use — enter any Lichess username and the tree builds in under 30 seconds. Chess.com support is included too.
+My Opening Tree is at [firechess.com/my-openings](https://firechess.com/my-openings). It's free to use — enter any Lichess username and the tree builds in under 30 seconds. Chess.com support is included too. Browse the full [openings database](/openings/) for every opening in our catalog, or learn a systematic approach to [finding your opening weaknesses](/blog/how-to-find-opening-weaknesses/).
 
-If you've wanted a clearer picture of your actual opening repertoire — not the one you think you play, but the one you actually play — this is it.
+If you've wanted a clearer picture of your actual opening repertoire — not the one you *think* you play, but the one you actually play — this is it.
