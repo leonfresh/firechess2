@@ -144,10 +144,10 @@ The Pawn Bayonet modifier completely rewrites the most fundamental rule in chess
 **Position showing a Bayonet pawn capturing forward:**
 
 ```
-FEN: 4k3/8/3p1p2/4P3/8/8/4K3/8 w - - 0 1
+FEN: 4k3/8/3ppp2/4P3/8/8/4K3/8 w - - 0 1
 ```
 
-Here White's pawn on e5 faces Black's pawns on d6 and f6. In standard chess, this pawn would be blocked — it can't advance to e6 because it's occupied, and it can only capture diagonally on d6 or f6. But with the Pawn Bayonet modifier, the pawn can capture straight ahead onto e6 where a black pawn is sitting. The e5 pawn advances to e6, capturing the blocking pawn with a direct forward thrust.
+Here White's pawn on e5 faces Black's pawns on d6, e6, and f6. In standard chess, this pawn is blocked — e6 is occupied, and the pawn can only capture diagonally on d6 or f6. But with the Pawn Bayonet modifier, the pawn can also capture *straight forward* onto e6. The e5 pawn thrusts into e6, removing the blocking pawn with a direct forward strike that standard pawns simply cannot perform.
 
 This single change has cascading strategic effects. Pawn chains that were previously solid defensive structures become vulnerable. The classic "pawn triangle" formation leaves the lead pawn exposed to a Bayonet capture from the front. Players with Bayonet pawns can crack open closed positions that would be deadlocked in standard chess.
 
@@ -228,6 +228,64 @@ The reason Clash Royale's C.H.A.O.S mode is so satisfying — and why we think C
 When both players are building their "deck" simultaneously in real time over the course of the game, wins and losses feel earned. You're not just playing better chess than your opponent — you're out-drafting them, out-adapting them, and finding combinations they didn't see coming.
 
 The modifier that crushes you in one game is the modifier your opponent doesn't draft in the next. The meta shifts every match.
+
+## Standard Chess vs. Roguelike Draft Mode
+
+How does the roguelike draft system change the game at a fundamental level? Here's a side-by-side comparison across nine key dimensions:
+
+<div style="margin: 2rem 0; display: flex; justify-content: center;">
+<svg width="700" height="420" viewBox="0 0 700 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cmpBg" x1="0" y1="0" x2="700" y2="420" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#0a0618"/><stop offset="1" stop-color="#0d0a1e"/></linearGradient>
+  </defs>
+  <rect width="700" height="420" rx="18" fill="url(#cmpBg)"/>
+  <rect x="1" y="1" width="698" height="418" rx="17" stroke="#a855f7" stroke-opacity="0.16"/>
+  <text x="350" y="30" text-anchor="middle" fill="white" font-size="15" font-weight="800">Standard Chess vs. Roguelike Draft Mode</text>
+  <text x="350" y="48" text-anchor="middle" fill="#94a3b8" font-size="11">How the draft system transforms every dimension of the game</text>
+  <line x1="30" y1="58" x2="670" y2="58" stroke="#a855f7" stroke-opacity="0.12"/>
+  <rect x="210" y="66" width="12" height="12" rx="2" fill="#38bdf8"/>
+  <text x="228" y="77" fill="#94a3b8" font-size="10">Standard Chess</text>
+  <rect x="370" y="66" width="12" height="12" rx="2" fill="#a855f7"/>
+  <text x="388" y="77" fill="#94a3b8" font-size="10">Roguelike Draft Mode</text>
+  <text x="30" y="105" fill="#64748b" font-size="11" font-weight="700">Dimension</text>
+  <text x="250" y="105" fill="#38bdf8" font-size="11" font-weight="700">Standard</text>
+  <text x="460" y="105" fill="#a855f7" font-size="11" font-weight="700">Draft Mode</text>
+  <line x1="20" y1="113" x2="680" y2="113" stroke="#a855f7" stroke-opacity="0.1"/>
+  <text x="30" y="138" fill="white" font-size="12" font-weight="600">Strategy Depth</text>
+  <text x="250" y="138" fill="#38bdf8" font-size="11">Deep — memorized lines</text>
+  <text x="460" y="138" fill="#a855f7" font-size="11">Deeper — adaptive drafting</text>
+  <text x="30" y="168" fill="white" font-size="12" font-weight="600">Replayability</text>
+  <text x="250" y="168" fill="#38bdf8" font-size="11">High — 10^120 possible games</text>
+  <text x="460" y="168" fill="#a855f7" font-size="11">Infinite — modifiers multiply</text>
+  <text x="30" y="198" fill="white" font-size="12" font-weight="600">Piece Values</text>
+  <text x="250" y="198" fill="#38bdf8" font-size="11">Fixed (P=1, N=3, Q=9)</text>
+  <text x="460" y="198" fill="#a855f7" font-size="11">Dynamic — shifts every draft</text>
+  <text x="30" y="228" fill="white" font-size="12" font-weight="600">Decision Points</text>
+  <text x="250" y="228" fill="#38bdf8" font-size="11">~40 per game (moves only)</text>
+  <text x="460" y="228" fill="#a855f7" font-size="11">~55 per game (moves + drafts)</text>
+  <text x="30" y="258" fill="white" font-size="12" font-weight="600">Comeback Potential</text>
+  <text x="250" y="258" fill="#38bdf8" font-size="11">Low — material = advantage</text>
+  <text x="460" y="258" fill="#a855f7" font-size="11">High — one Legendary swings</text>
+  <text x="30" y="288" fill="white" font-size="12" font-weight="600">Opening Theory</text>
+  <text x="250" y="288" fill="#38bdf8" font-size="11">Critical — 15+ moves deep</text>
+  <text x="460" y="288" fill="#a855f7" font-size="11">Irrelevant after turn 5</text>
+  <text x="30" y="318" fill="white" font-size="12" font-weight="600">Win Conditions</text>
+  <text x="250" y="318" fill="#38bdf8" font-size="11">Checkmate, draw, timeout</text>
+  <text x="460" y="318" fill="#a855f7" font-size="11">+ Modifier mismatch resign</text>
+  <text x="30" y="348" fill="white" font-size="12" font-weight="600">Average Game Length</text>
+  <text x="250" y="348" fill="#38bdf8" font-size="11">35-40 moves</text>
+  <text x="460" y="348" fill="#a855f7" font-size="11">25-30 moves (faster resigns)</text>
+  <text x="30" y="378" fill="white" font-size="12" font-weight="600">Learning Curve</text>
+  <text x="250" y="378" fill="#38bdf8" font-size="11">Years to master</text>
+  <text x="460" y="378" fill="#a855f7" font-size="11">Hours to play, years to draft</text>
+  <line x1="20" y1="392" x2="680" y2="392" stroke="#a855f7" stroke-opacity="0.1"/>
+  <text x="350" y="412" text-anchor="middle" fill="#475569" font-size="9">Both modes share the same core win condition: checkmate your opponent's king</text>
+</svg>
+</div>
+
+The biggest shift is in **comeback potential**. In standard chess, if you're down a rook, the game is functionally over at high levels — the material deficit compounds and recovery is nearly impossible. In Chaos Chess, a well-timed Legendary draft (King Ascension, Nuclear Queen, Undead Army) can flip the evaluation in a single turn. The roguelike draft system acts as a natural equalizer, giving trailing players access to the same high-rarity modifiers as the leader.
+
+The second major shift is **opening theory dependency**. Standard chess has decades of accumulated opening preparation — at the master level, the first 15–20 moves can be entirely memorized. Chaos Chess obliterates this. After turn 5, the first modifier changes the position so dramatically that memorized lines become meaningless. This levels the playing field between players who have studied openings and players who think on their feet.
 
 ## Frequently Asked Questions
 
