@@ -39,7 +39,7 @@ A fork occurs when a single piece attacks two or more enemy pieces simultaneousl
 
 Knights are the ultimate forking weapon because their unusual movement pattern makes them hard to track. The knight fork is so common that many players call it "the horse fork."
 
-<chess-position fen="4k3/1rq5/3N4/8/8/8/5PPP/6K1 w - - 0 1" caption="White to play: Nd6 forks the black king on e8 and the rook on b7." orientation="white" analysis="true">
+<chess-position fen="4k3/1rq5/3N4/8/8/8/5PPP/6K1 b - - 0 1" caption="Black to move: the knight on d6 forks the black king on e8 and the rook on b7." orientation="white" analysis="true">
 
 In the position above, white's knight on d6 attacks both the black king (e8) and the black rook (b7). Black must move the king out of check, and then the knight captures the rook on b7 next move. This is a textbook knight fork — the knight simultaneously attacks the enemy king (forcing a response) and a valuable piece.
 

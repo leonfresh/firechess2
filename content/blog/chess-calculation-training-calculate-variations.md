@@ -52,7 +52,7 @@ The fix is simple: before calculating _any_ line, spend 30-60 seconds listing ev
 
 ### Practice Position
 
-<chess-position fen="r1bq1rk1/ppp2ppp/2np1n2/2b1p3/2B1P3/2NP1N2/PPP1BPPP/R1BQ1RK1 w - - 0 1" caption="White to move — generate candidate moves before calculating" orientation="white">
+<chess-position fen="r1bq1rk1/ppp2ppp/2np1n2/2b1p3/2B1P3/2NP1N2/PPP1BPPP/R2Q1RK1 w - - 0 1" caption="White to move — generate candidate moves before calculating" orientation="white">
 
 White has many reasonable plans in this Italian Game middlegame. A player who jumps straight into calculating "d4" might miss a simpler improvement.
 

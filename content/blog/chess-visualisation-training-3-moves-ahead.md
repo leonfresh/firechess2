@@ -76,7 +76,7 @@ Place a white knight on d4 and a black pawn on f7. Mentally move the knight to c
 
 The key at this level is to maintain the positions of both pieces simultaneously — including pieces that are not moving. When the knight moves, the pawn stays where it is until captured.
 
-<chess-position fen="rnbqkb1r/pppppppp/4n3/4p3/4P3/3P4/PPP2PPP/RNBQKBNR w KQkq - 0 3" caption="Blindfold Level 2 exercise: visualise this French Defence position with knight and pawn, then mentally play Nf3-d4-f5 attacking f7 — keep both white and black pieces in your mind" orientation="white">
+<chess-position fen="rnbqkb1r/pppp1ppp/4n3/4p3/4P3/3P4/PPP2PPP/RNBQKBNR w KQkq - 0 3" caption="Blindfold Level 2 exercise: visualise this French Defence position with knight and pawn, then mentally play Nf3-d4-f5 attacking f7 — keep both white and black pieces in your mind" orientation="white">
 
 ### Level 3: Full Position (Days 8-14)
 
@@ -196,7 +196,7 @@ Take a position and calculate a 3-move sequence. Now, instead of evaluating the 
 
 For example, start from a sharp Sicilian position:
 
-<chess-position fen="rnbqkb1r/pppppppp/4n3/4p3/4P3/3P4/PPP2PPP/RNBQKBNR w KQkq - 0 3" caption="From-here calculation — mentally play 1.d4 exd4 2.Qxd4 Nc6 3.Qe3 then recalculate from the resulting position. Can you hold a 9-move sequence in your mind?" orientation="white">
+<chess-position fen="rnbqkb1r/pppp1ppp/4n3/4p3/4P3/3P4/PPP2PPP/RNBQKBNR w KQkq - 0 3" caption="From-here calculation — mentally play 1.d4 exd4 2.Qxd4 Nc6 3.Qe3 then recalculate from the resulting position. Can you hold a 9-move sequence in your mind?" orientation="white">
 
 **Level 1:** Calculate: 1.d4 exd4 2.Qxd4 Nc6 3.Qe3. Stop. Now from **that** position, calculate Black's best reply: 3...Bc5 4.Qg3 Nf6 5.e5 Ng4. Stop. Now from **that** position, calculate: 6.Qf4 d6 7.exd6 Bxd6 8.Qg3 Nge5 — can you still see where every piece is?
 
