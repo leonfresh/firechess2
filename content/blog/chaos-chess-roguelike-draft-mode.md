@@ -117,6 +117,58 @@ Modifiers come in four tiers, just like card rarities in Clash Royale:
 
 **🟡 Legendary** — Game-warping. Nuclear Queen — captures destroy adjacent squares. King Ascension — your king gains the movement of a queen. Undead Army — captures revive your pieces on the back rank. The AI saving a Legendary for phase 5 is terrifying.
 
+## Modifier Interactions: Three Key Positions
+
+To show how modifiers transform actual gameplay, here are three positions from real Chaos Chess games where modifier interactions create entirely new tactical puzzles.
+
+### Position 1: Nuclear Queen Blast Zone
+
+The Nuclear Queen is a Legendary modifier that adds an area-of-effect explosion whenever the queen captures. When she takes a piece, every piece on the eight squares immediately adjacent to the capture square is also destroyed — friend or foe. This creates a blast radius that can wipe out half the board in a single move.
+
+**Position — White to play, Nuclear Queen active:**
+
+```
+FEN: 3qk3/3pp3/8/3Qr3/4n3/8/3K4/8 w - - 0 1
+```
+
+In this position, White's queen on d5 can capture Black's rook on e5. When the Nuclear Queen takes the rook, the blast zone extends to all eight squares adjacent to e5: d4, d5, d6, e4, e6, f4, f5, f6. The black knight on e4 sits directly within the blast radius and is destroyed along with the rook. White trades one queen capture for two enemy pieces — a devastating exchange that would be impossible in standard chess.
+
+The strategic implications run deep. Black must now calculate not just where the queen can move, but what the *blast radius* would hit on every possible capture square. A queen capture near a cluster of friendly pieces becomes a liability. Conversely, the Nuclear Queen can set up multi-capture combinations that look like blunders in standard chess but are actually winning tactics in Chaos Chess.
+
+The green radioactive glow and ☢️ badge on the queen make her instantly recognizable. Opponents learn quickly: don't cluster pieces near squares the Nuclear Queen can reach.
+
+### Position 2: Pawn Bayonet — Forward Captures
+
+The Pawn Bayonet modifier completely rewrites the most fundamental rule in chess: how pawns capture. Instead of the traditional diagonal-only capture, Bayonet pawns can capture *straight forward* — the square directly ahead. They retain their normal diagonal captures as well, making them the most aggressive pawn modifier in the game.
+
+**Position showing a Bayonet pawn capturing forward:**
+
+```
+FEN: 4k3/8/3p1p2/4P3/8/8/4K3/8 w - - 0 1
+```
+
+Here White's pawn on e5 faces Black's pawns on d6 and f6. In standard chess, this pawn would be blocked — it can't advance to e6 because it's occupied, and it can only capture diagonally on d6 or f6. But with the Pawn Bayonet modifier, the pawn can capture straight ahead onto e6 where a black pawn is sitting. The e5 pawn advances to e6, capturing the blocking pawn with a direct forward thrust.
+
+This single change has cascading strategic effects. Pawn chains that were previously solid defensive structures become vulnerable. The classic "pawn triangle" formation leaves the lead pawn exposed to a Bayonet capture from the front. Players with Bayonet pawns can crack open closed positions that would be deadlocked in standard chess.
+
+The most terrifying combination is drafting both Pawn Charge and Pawn Bayonet — this creates a "War Pawn" that can move two squares from any rank AND capture in any forward direction. War Pawns get entirely new SVG piece art, replacing the standard pawn graphic with an armored warrior design. They're the most feared Common/Common combo in Chaos Chess.
+
+### Position 3: Torpedo Pawns — Double Advance from Any Rank
+
+Torpedo Pawns are a Common modifier that removes the "starting rank only" restriction on the pawn's two-square advance. In standard chess, pawns can only move two squares forward from their initial rank (rank 2 for White, rank 7 for Black). Torpedo Pawns can move two squares from *any* rank — meaning a pawn that has already advanced to the 4th rank can still leap forward two more squares to the 6th.
+
+**Position showing Torpedo Pawn double advance from a non-starting rank:**
+
+```
+FEN: 3qk3/4p3/2p1p1p1/8/2P1P1P1/8/4K3/8 w - - 0 1
+```
+
+White has pawns on c4, e4, and g4 — all on the 4th rank. In standard chess, these pawns can only advance one square at a time. But with Torpedo Pawns, the c-pawn can leap from c4 directly to c6 in a single move, capturing Black's c6 pawn. Similarly, the g-pawn can jump from g4 to g6, threatening Black's g6 pawn. This double-advance from the 4th rank creates sudden tactical threats that opponents must constantly calculate.
+
+The real power of Torpedo Pawns emerges in the endgame. A pawn that's been sitting on the 4th rank for several moves — seemingly passive — suddenly explodes forward two squares to reach the 6th rank, then promotes next move. The acceleration catches opponents off guard. What looked like a drawn endgame turns into a promotion race the Torpedo player wins by a tempo.
+
+Combined with the Pawn Bayonet modifier, Torpedo Pawns become the most mobile non-piece on the board: they can advance two squares from any rank AND capture the piece directly ahead. The War Pawn combination (Charge + Bayonet + Torpedo) turns pawns into minor-piece equivalents that control enormous amounts of territory.
+
 ## Opening Anomalies: The Pre-Game Layer
 
 The modifier draft starts at move 5. But we wanted to add a strategic layer that began _before_ move one.
@@ -176,6 +228,28 @@ The reason Clash Royale's C.H.A.O.S mode is so satisfying — and why we think C
 When both players are building their "deck" simultaneously in real time over the course of the game, wins and losses feel earned. You're not just playing better chess than your opponent — you're out-drafting them, out-adapting them, and finding combinations they didn't see coming.
 
 The modifier that crushes you in one game is the modifier your opponent doesn't draft in the next. The meta shifts every match.
+
+## Frequently Asked Questions
+
+### 1. How does the modifier draft actually work in real time?
+
+When a draft phase triggers (at turns 5, 10, 15, 20, and 25), both players see three modifier cards simultaneously. Each card belongs to a tier — Common, Rare, Epic, or Legendary — and shows which piece it affects, what it does, and its rarity. You have until the draft timer expires to pick one. Your opponent picks at the same time, and neither of you can see the other's choice until both have locked in. Once both picks are confirmed, the modifiers activate immediately and the game resumes. The draft timer depends on your time control: in Bullet it's 5 seconds, in Rapid it's 15 seconds, and in Unlimited there's no timer pressure. If you don't pick before time runs out, a random modifier is assigned.
+
+### 2. What happens when two modifiers affect the same piece?
+
+Modifiers stack. If you draft Queen Teleport at turn 10 and then get Nuclear Queen at turn 20, your queen can both teleport once AND trigger a blast zone on every capture. The modifier badges stack visually — you'll see both the teleport arc animation and the radioactive glow. Some modifier combinations are intentionally more powerful than the sum of their parts. The game tracks which modifier was applied first and processes effects in that order. If a modifier would conflict (for example, two different movement modifiers on the same piece), the more recent one takes precedence, but the original modifier's non-movement effects still apply.
+
+### 3. Is Chaos Chess rated? Does it affect my regular chess rating?
+
+Chaos Chess has its own separate ELO rating system starting at 1200. It does not affect your standard chess rating on FireChess. The Chaos rating has its own leaderboard, tier system, and season resets. Casual (unrated) games are also available if you want to practice modifier combinations without risking rating points.
+
+### 4. Can I play Chaos Chess against friends?
+
+Yes. You can create a private room with a room code and invite a friend to play Chaos Chess with full modifier drafting. Private games use the same modifier pool and draft rules as ranked matches, but they're unrated by default. You can also set custom draft parameters — like starting the draft at turn 3 instead of turn 5, or guaranteeing an Epic modifier in the first draft phase — for a more chaotic experience.
+
+### 5. How does Stockfish handle the modified pieces?
+
+Stockfish evaluates positions using standard chess rules, so it can't directly reason about modifier abilities. We built a custom threat-scoring layer that runs after each Stockfish evaluation: it identifies squares threatened by modifier-empowered pieces (like the Nuclear Queen's blast radius or a Ghost Rook's ability to slide through pieces) and applies penalty/bonus adjustments to the engine's raw score. This means the AI at least *responds* to modifier threats rather than being completely blind to them — but it's not perfect, which is actually part of the fun. You can still surprise the AI with creative modifier plays it doesn't see coming. The AI also uses its own modifier selections strategically, preferring modifiers that complement its existing pieces rather than picking randomly.
 
 ## Try It
 
