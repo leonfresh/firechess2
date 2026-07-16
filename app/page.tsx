@@ -35,6 +35,7 @@ import { AdminDebug } from "@/components/admin-debug";
 import { SampleReportsSection } from "@/components/sample-reports-section";
 import { HomepageBlogSection } from "@/components/homepage-blog-section";
 import { DiscordCta } from "@/components/home/discord-cta";
+import { AppGridSection } from "@/components/home/app-grid";
 import { Faq, FAQ_ITEMS } from "@/components/home/faq";
 import { PricingTeaser } from "@/components/home/pricing-teaser";
 import type { CardViewMode } from "@/components/card-carousel";
@@ -957,6 +958,9 @@ export default function HomePage() {
           {/* ─── How it works (placed below the scan tool so the primary
               action sits directly under the hero) ─── */}
           {state === "idle" && <HowItWorks />}
+
+          {/* ─── App Grid: all FireChess modes as icon tiles (Poki-style tablet) ─── */}
+          {state === "idle" && <AppGridSection />}
 
           {/* ─── Sample reports ─── */}
           {state === "idle" && (
