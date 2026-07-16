@@ -172,13 +172,25 @@ The overall ranking above tells you what's popular — but it hides a crucial pa
 
 Below 1200, the Van't Kruijs (1.e3) and the London System are wildly overrepresented. Together they account for nearly **12%** of all games under 1000, far higher than at any other level. These openings are simple to execute — few traps, clear plans, no early tactics — which makes them a natural fit for players who haven't memorised reams of theory yet. But as the heatmap above shows, this simplicity comes at a cost: White scores **45.6–46.7%** with the Van't Kruijs below 1200, well below the baseline.
 
+If you're looking for a classical opening that beginners should learn instead, the Italian Game is the gold standard — it's the most popular named opening at beginner level and teaches you to fight for the center from move one:
+
+<chess-position fen="r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 3" caption="The Italian Game after 1.e4 e5 2.Nf3 Nc6 3.Bc4 — the most popular opening at beginner level. White develops naturally, eyes the f7 square, and learns real chess principles instead of system shortcuts."></chess-position>
+
 ### Classical openings take over above 1600
 
 The trend flips around 1400–1600. Openings like the Queen's Pawn Game and the Philidor Defense see their *share* of games increase as rating climbs, while the Van't Kruijs and Modern Defense begin to fade. By the 1800–2000 band, the Queen's Pawn Game accounts for a larger slice of the opening pie than it does at any lower band. This is the rating range where players start prioritising sound positional foundations over quick-and-easy schemes.
 
+At the 1800+ level, players gravitate toward the Queen's Gambit — a positionally rich opening that rewards understanding over memorization. After 1.d4 d5 2.c4 e6 3.Nc3 Nf6 4.Bg5 Be7 5.e3 O-O 6.Nf3 Nbd7 7.Rc1 c6, the position reaches a typical Queen's Gambit Declined middlegame:
+
+<chess-position fen="r1bq1rk1/pp1nbppp/2p1pn2/3p2B1/2PP4/2N1PN2/PP3PPP/2RQKB1R w K - 0 8" caption="A Queen's Gambit Declined middlegame — the kind of position 1800+ players thrive in. White has space and pressure on the c-file; Black has a solid structure and waits for the right moment to break with ...dxc4 or ...e5."></chess-position>
+
 ### The rare-openings wall at 2000+
 
 The most dramatic shift happens at the top. The Philidor Defense disappears from the data entirely above 2000 (too few games to report), and the Modern Defense nearly does the same. Meanwhile, the Queen's Pawn Game — a classical, principled opening — reaches its **peak White win rate of 51.8%** in the 2200+ bracket. Masters play fewer, deeper openings, and they get better results from them.
+
+The Sicilian Defense is one of the few openings that survives this filter. Its Najdorf variation alone sees more master-level play than most openings see at any level:
+
+<chess-position fen="rnbqkb1r/1p2pppp/p2p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 0 6" caption="The Sicilian Najdorf after 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 a6. The most theoretically dense opening in chess — and the one that separates serious players from everyone else. 2000+ players don't just play the Sicilian; they live in it."></chess-position>
 
 ### What this means for your own repertoire
 

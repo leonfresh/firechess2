@@ -315,6 +315,69 @@ This illustrates a crucial truth about accuracy scoring: **the engine judges the
 
 > This position and the Fried Liver line are discussed further in our guide to [centipawn loss in tactical sequences](/blog/what-is-centipawn-loss#centipawn-loss-in-tactical-sequences).
 
+## Position Deep Dive: Accuracy in Action
+
+Theory is one thing — let's see how accuracy plays out in real positions. Below are three positions that show exactly how centipawn loss translates to accuracy, and why the engine's judgment often diverges from human intuition.
+
+### Position 1: The99% Move vs. the 70% Move
+
+<chess-position
+  fen="r1bq1r2/ppp2kpp/2n5/3np3/2B5/5N2/PPPP1PPP/RNBQK2R w KQ - 0 7"
+  caption="White to move — both Nxe5+ and Qf3+ win the piece back, but the engine sees a 1.5-pawn difference between them."
+  orientation="white"
+></chess-position>
+
+This position arises in the Fried Liver Attack after **1.e4 e5 2.Nf3 Nc6 3.Bc4 Nf6 4.Ng5 d5 5.exd5 Nxd5 6.Nxf7 Kxf7**. White sacrificed a piece on f7 and now needs to recapture. Two moves both win — but the engine strongly prefers one.
+
+| Move | Eval After | Centipawn Loss | Per-Move Accuracy | What Happens |
+|---|---|---|---|---|
+| **Nxe5+** (engine best) | **+4.0** — White is winning | 0 cp | **~99%** | Wins the piece cleanly. After 7...Kd6 8.Qf3+ Ke6 9.Nxc6, White has an extra piece with a crushing position. |
+| **Qf3+** (tempting alternative) | **+2.5** — White is still winning | ~150 cp | **~70%** | Also wins the piece, but Black gets a more coordinated position after 7...Ke6 8.Nxc6 Nxc6, and White's advantage is less dominant. |
+
+Both moves lead to a winning position. But the150-centipawn gap between them reflects a real strategic difference: **Nxe5+** recovers the piece immediately with a forcing check, maintaining full control. **Qf3+** delays the recapture, giving Black time to consolidate.
+
+The per-move accuracy captures this precisely: ~99% for Nxe5+ means the engine considers it essentially the only good move. ~70% for Qf3+ means a significant chunk of the position's potential was left on the table. That gap — 29 percentage points — is entirely about *how well* you converted, not *whether* you converted.
+
+### Position 2: The Inaccuracy That Still Wins
+
+<chess-position
+  fen="8/5k2/8/2pPP3/2P5/2K5/6R1/2r5 w - - 0 1"
+  caption="White to move — both Rg7+ and Kd6 win, but one maximises accuracy while the other invites unnecessary risk."
+  orientation="white"
+></chess-position>
+
+White has a dominant rook endgame: connected passed pawns on the 5th rank, an active rook, and Black's rook stuck defending passively. Two moves both win — but the accuracy difference is telling.
+
+| Move | Eval After | Centipawn Loss | Game Accuracy Impact | What Happens |
+|---|---|---|---|---|
+| **Rg7+** (engine best) | **+9.0** — completely winning | 0 cp | **~92%** | Takes the7th rank with check. After 1...Kf8 2.Rf7+ Rxf7 3.exf7, the d-pawn promotes while the e-pawn supports it. |
+| **Kd6** (reasonable alternative) | **+5.5** — still winning | ~350 cp | **~82%** | Also wins, but Black gets more defensive resources. The conversion takes longer and requires more precise follow-up. |
+
+Kd6 is not a blunder — it's still clearly winning. But the350-centipawn gap shows that White gave up a significant chunk of the advantage. In a longer game, that lost ground could give Black counterplay that wouldn't exist after Rg7+.
+
+**This is the key insight:** even in a winning position, accuracy measures *how efficiently* you converted. A game where you had +9.0 and converted at92% accuracy is a fundamentally different quality of play than one where you had +9.0 and converted at82%. The engine sees the difference — and so does your accuracy score.
+
+### Position 3: The Endgame Where Accuracy Matters Most
+
+<chess-position
+  fen="8/4k3/4P3/4K3/8/8/8/8 b - - 0 1"
+  caption="Black to move — Kd8 draws. Kf8 loses. One move is the difference between a draw and a loss."
+  orientation="black"
+></chess-position>
+
+This is a king-and-pawn endgame where White has a pawn on the7th rank, supported by the king. Black's only job is to stay in front of the pawn. The choice is binary:
+
+| Move | Result | Centipawn Loss | Per-Move Accuracy | Why |
+|---|---|---|---|---|
+| **Kd8** (correct) | **Draw** | 0 cp | **~99%** | Blocks the pawn from promoting. White can't make progress — the king can't outflank without abandoning the pawn. |
+| **Kf8** (losing) | **Loss** | ~900 cp | **~5%** | Lets the pawn promote immediately with e8=Q. Game over. |
+
+This is the extreme case: the same position, the same player, and the accuracy gap between the two moves is **94 percentage points**. In the middlegame, a900-cp mistake might happen through a complex tactical oversight. In an endgame like this, there's nothing to calculate — it's pure knowledge. You either know the pawn promotes or you don't.
+
+**Endgames are where accuracy scores are most brutally honest.** In the opening, you might score90% by following memorised theory. In the middlegame, complex tactics create ambiguity. But in the endgame, every move is a clear decision with a clear evaluation. There's nowhere to hide. A single wrong king move can turn a drawn position into a loss — and your accuracy score will reflect it instantly.
+
+This is why tracking your endgame accuracy separately from your middlegame accuracy is so valuable. If your overall accuracy is85% but your endgame accuracy is70%, you know exactly where to focus your study.
+
 ## The Phase Problem: Where Your Accuracy Actually Drops
 
 Research on amateur games consistently shows that accuracy doesn't drop evenly across all phases:

@@ -293,15 +293,13 @@ As the decision tree shows, a move must pass **all four gates** to earn the bril
 
 ## Famous Brilliant Moves in Chess History
 
-Some of the most celebrated games in chess history hinge on a single brilliant move. Here are two famous examples, presented as positions you can load into the [FireChess Analysis Board](/analyze) to explore yourself.
+Some of the most celebrated games in chess history hinge on a single brilliant move. Here are five famous examples, presented as positions you can interact with directly. Load any position into the [FireChess Analysis Board](/analyze) to explore the tactical ideas yourself.
 
 ### Position 1: Legal's Pseudo-Sacrifice (c. 1750)
 
 One of the earliest recorded brilliant moves comes from a game attributed to François-André Danican Philidor's teacher, de Legal. White has developed actively while Black's bishop on g4 pins the knight on f3. The natural move would be to deal with the pin — by h3, Nbd2, or Be2. But Legal found something far more shocking.
 
-```
-rnbqk1nr/pppp1ppp/3p4/4p3/2B1P1b1/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 5
-```
+<chess-position fen="r2qkbnr/ppp2ppp/2np4/4p3/2B1P1b1/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 4 5" caption="Legal's Mate: White to play — the bishop sacrifice Bxf7+ is coming" orientation="white">
 
 **The Brilliant Move: 5. Nxe5!!**
 
@@ -316,9 +314,7 @@ What makes this brilliant:
 
 Frank Marshall produced what many consider the most famous queen sacrifice in chess history at Breslau 1912. Black's position looks promising but not obviously winning. White's queen on b3 is attacking Black's knight on b6 and pawn on b7, and Black's rook on e8 defends the back rank.
 
-```
-4r1k1/5ppp/pq6/5N2/8/1Q6/PPP2PPP/4R1K1 b - - 0 23
-```
+<chess-position fen="4r1k1/5ppp/pq6/5N2/8/1Q6/PPP2PPP/4R1K1 b - - 0 23" caption="Levitsky vs Marshall, 1912: Black to play — can you find the most famous queen sacrifice in history?" orientation="white">
 
 **The Brilliant Move: 23...Qg3!!**
 
@@ -335,15 +331,45 @@ What makes this brilliant:
 
 In what is widely called the "Immortal Game," Adolf Anderssen produced a series of sacrifices culminating in checkmate. The position below comes after 10...Nc6, a natural developing move by Kieseritzky.
 
-```
-r1bqkb1r/pppp1ppp/2n5/4N3/2B1Pp2/8/PPPP2PP/R1BQ1RK1 w kq - 0 11
-```
+<chess-position fen="r1bqkb1r/pppp1ppp/2n5/4N3/2B1Pp2/8/PPPP2PP/R1BQ1RK1 w kq - 0 11" caption="The Immortal Game, 1851: White to play — Anderssen unleashes a stunning bishop sacrifice" orientation="white">
 
 **The Brilliant Move: 11. Bxb5!!**
 
 White sacrifices a bishop to rip open the Black kingside. If Black recaptures: 11...Nxb5? 12.Nxf7! Kxf7 13.Qf3+ Ke6 (13...Kg8 14.Qxb7 wins back the piece with interest) 14.Nc3 and Black's king is trapped in the center with no shelter. The best Black can do is decline the bishop: 11...Bc5 12.Bxc6 dxc6 13.d4! exd4 14.Qxd4, and White retains a crushing attack with a rook soon joining via e1.
 
 The game continued 11.Bxb5 Nxb5 12.Nxf7 Kxf7 13.Qf3+ Ke6 14.Nc3 Nc7? 15.Qe4! and Anderssen delivered checkmate on move 23. Stockfish evaluates 11.Bxb5 as worth roughly +2.5 — a winning advantage — while the second-best move (11.c3, preparing d4) is worth only +0.6. That ~190 centipawn gap, combined with the bishop sacrifice, earns this the brilliant tag.
+
+### Position 4: Kasparov's 24.Rxf7!! (Kasparov vs Topalov, 1999)
+
+Garry Kasparov produced one of the most stunning combinations in modern chess history at Wijk aan Zee 1999. White's pieces are actively placed but the position doesn't look immediately decisive. Kasparov saw something nobody else did — a rook sacrifice that leads to a forced queen sacrifice and checkmate.
+
+<chess-position fen="b2r3r/k4p1p/p2q1np1/NppP4/3p1Q2/P4PPB/1PP4P/1K1RR3 w - - 1 24" caption="Kasparov vs Topalov, 1999: White to play — can you find Kasparov's legendary rook sacrifice?" orientation="white">
+
+**The Brilliant Move: 24. Rxf7!!**
+
+The rook captures the pawn on f7, seemingly abandoning itself. After 24...Qxf7 (the only reasonable response), Kasparov played 25.Qxd4+! — a queen sacrifice that clears the d4 square for the knight. After 25...Qxd4 (forced, as Nxd4 covers too many squares), 26.Re7+! Kb6 (26...Qd7 27.Rxd7+ wins cleanly) 27.Nc4+ Kb5 28.Nxd4+ Kb4 29.c3+! Ka4 30.Nc2, and White's coordination is overwhelming. Stockfish evaluates the final position as completely winning for White despite the material deficit — the attack is irresistible.
+
+What makes this brilliant:
+- It involves a **deep sacrificial combination** — giving up a rook, then a queen
+- The **gap** between 24.Rxf7 and any other move is enormous
+- The entire sequence requires seeing **8+ moves ahead** through a maze of sacrifices
+
+### Position 5: Fischer's Quiet 17...Be6!! (Byrne vs Fischer, 1956)
+
+In the famous "Game of the Century," 13-year-old Bobby Fischer played a move that looked like a simple developing move — but it concealed a devastating queen sacrifice. White's position seems comfortable: the queen on a3 is active, the bishops are well-placed, and Black appears to be just developing. Then Fischer played the quiet-looking 17...Be6!!
+
+<chess-position fen="r3r1k1/pp3pbp/1qp3p1/2B5/2BP2b1/Q1n2N2/P4PPP/3R1K1R b - - 3 17" caption="Byrne vs Fischer, 1956: Black to play — a quiet bishop move hides a devastating queen sacrifice" orientation="white">
+
+**The Brilliant Move: 17...Be6!!**
+
+This quiet bishop move is actually a queen sacrifice in disguise. If White captures: 18.Bxb6?? Bxc4+! 19.Kg1 (19.Qxc4 Nb3+ forks king and queen) Ne2+! 20.Kf1 Ng3+! 21.Kg1 Qf1+! 22.Rxf1 Ne2# — a spectacular checkmate. White's queen is lured into a false sense of security while Black's pieces coordinate into an unstoppable mating net.
+
+If White doesn't take the queen, Black has simply improved the bishop to a powerful diagonal while keeping all the tactical threats alive. The position is already winning for Black.
+
+What makes this brilliant:
+- The move **looks completely natural** — just developing a bishop to a good square
+- It's a **quiet queen sacrifice** — the queen is offered not by moving it, but by placing another piece where the queen can be captured
+- Fischer was **13 years old** when he found this — it remains one of the most famous quiet brilliants in chess history
 
 ## Why Most "Brilliant" Moves Are Tactics
 
