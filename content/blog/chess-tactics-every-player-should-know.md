@@ -232,6 +232,30 @@ Start with easy patterns — knight forks and back rank mates — then move to m
 
 ---
 
+## Frequently Asked Questions
+
+### What is the most common tactical pattern in chess?
+
+The **knight fork** is by far the most common tactic in amateur games. Knights move in an "L" shape that's difficult to visualize, making fork opportunities easy to miss. The classic king-and-queen fork — where a knight simultaneously checks the king and attacks the queen — appears in thousands of games at every level below master. If you train only one tactic, make it knight forks.
+
+### How do I know when a pin is "absolute" vs. "relative"?
+
+An **absolute pin** involves the king: the pinned piece literally cannot move because it would expose the king to check. A **relative pin** involves a queen or rook: the pinned piece *can* legally move, but doing so would allow the opponent to capture the more valuable piece behind it. The practical difference is small — both paralyze the pinned piece — but absolute pins are stronger because the piece has zero options, while relative pins can sometimes be broken by accepting the material loss for compensation.
+
+### What's the difference between a skewer and an X-ray attack?
+
+A **skewer** attacks the more valuable piece first, forcing it to move and exposing the less valuable piece behind it. An **X-ray** is a defensive concept where a piece defends another piece *through* an intervening piece (e.g., a rook on e1 defending a rook on e8 through the king on e5). Skewers are offensive; X-rays are defensive. The terms are sometimes confused, but the key is direction: skewers attack *through* pieces, X-rays defend *through* them.
+
+### How long does it take to improve tactical pattern recognition?
+
+Most players see noticeable improvement in **2–4 weeks** of consistent daily practice (15–20 minutes of puzzles). The research on deliberate practice suggests that pattern recognition follows a logarithmic curve: you improve fastest in the first month, then gains slow but don't stop. The critical habit is consistency — solving 10 puzzles every day beats solving 70 once a week. After about 3 months of daily tactics, most players report a 100–200 point rating increase.
+
+### Can tactics compensate for a bad opening?
+
+Yes, up to a point. Below 1600 Elo, **tactical awareness matters far more than opening knowledge**. A player who knows zero openings but spots every tactic will beat a player with 20 memorized opening lines but poor tactical vision. That said, truly terrible opening play (losing a piece in the first 5 moves) can't be saved by tactics. The practical advice: learn 2–3 solid openings well enough to reach a playable middlegame, then focus the rest of your training time on tactics and endgames.
+
+---
+
 ## Conclusion
 
 Tactics are the language of chess. Every game, from beginner to grandmaster, is built on tactical sequences. By mastering these eight patterns — forks, pins, skewers, discovered attacks, zwischenzugs, removing defenders, back rank mates, and deflection — you'll spot opportunities your opponents miss and avoid the blunders that lose games.

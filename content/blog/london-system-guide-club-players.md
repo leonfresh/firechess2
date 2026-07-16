@@ -326,3 +326,25 @@ Remember these key takeaways:
 Ready to put your London System into practice? Use the [FireChess analysis tool](https://firechess.com/) to analyse your games and track your opening accuracy with our [chess accuracy score](/blog/chess-accuracy-score-explained). And check out our guides on [chess middlegame strategy](/blog/chess-middlegame-strategy-finding-a-plan), [essential chess tactics](/blog/chess-tactics-every-player-should-know), and [how to analyse your chess games effectively](/blog/how-to-analyze-chess-games) to round out your game.
 
 The London System is waiting. Learn it, play it, and watch your rating climb.
+
+## Frequently Asked Questions
+
+### At what rating should I start playing the London System?
+
+The London System is ideal for players from **1000 to 1800+**. Beginners at 1000 benefit because the setup is nearly automatic — you don't need to memorise long theoretical lines. If you're below 1000, focus on basic tactics and endgame fundamentals first, then add the London around 1000 when you start playing structured openings.
+
+### Is the London System too passive for improving players?
+
+This is a common myth. While the London is solid, it's far from passive. The **e4 break**, the **h4-h5 attack** against fianchetto setups, and the **Jobava London** variation all create dynamic, aggressive play. The key is knowing *when* to attack — the London gives you a safe position from which to launch assaults at the right moment.
+
+### Can I play the London System in classical (over-the-board) tournaments?
+
+Absolutely. GMs like Magnus Carlsen, Hikaru Nakamura, and Wesley So have used the London in classical events. At the club level, it's an excellent tournament weapon because your opponents are less likely to know deep anti-London theory. Just be prepared for opponents who play ...c5 early or adopt the King's Indian setup — both covered in this guide.
+
+### What's the difference between the classical London and the Jobava London?
+
+In the **classical London**, knights go to d2 and f3, maintaining a solid pawn triangle (d4-e3-c3). In the **Jobava London**, the knight goes to c3 instead, creating more central pressure and sharper tactical chances. The Jobava is better when you want to complicate the position and surprise opponents; the classical London is safer and more consistent for long-term improvement.
+
+### How do I handle opponents who prepare specifically against my London?
+
+At the club level, deep anti-London preparation is rare. If you do face it, learn two responses: (1) the **h4-h5 plan** against ...g6 setups, and (2) the **e4 break** against ...d5 setups. These two plans cover the vast majority of games. For extra surprise value, mix in the **Jobava London** — opponents preparing for the classical London will be caught off guard.

@@ -241,6 +241,28 @@ For modern chess players, this game is essential study material. It teaches that
 
 The Immortal Zugzwang Game demonstrates all three phases in perfect harmony.
 
+## Frequently Asked Questions
+
+### What is zugzwang in chess?
+
+Zugzwang is a position in chess where the player whose turn it is to move would prefer to pass, because every legal move worsens their position. The term comes from the German words *Zug* (move) and *Zwang* (compulsion). While zugzwang occurs regularly in king-and-pawn endgames, achieving it in the middlegame — with most pieces still on the board — is exceptionally rare and requires near-perfect positional play.
+
+### Why is the Sämisch vs Nimzowitsch game called the "Immortal Zugzwang"?
+
+The game earned this title because Nimzowitsch achieved something nearly impossible: a middlegame zugzwang where Sämisch had no good moves despite having all his major pieces still on the board. White resigned without losing a single piece, purely because every legal move led to a worse position. No other game in chess history demonstrates the zugzwang concept so completely in the middlegame phase.
+
+### At what point did Sämisch realize he was in zugzwang?
+
+The zugzwang built up gradually through moves 18–25. After the rook exchanges (moves 23–24), White's pieces became progressively restricted — the knight on d1 had no useful squares, the bishop on g2 was blocked by its own pawns, and the rook was tied to defending the b2 pawn. By the time Nimzowitsch's queen threatened to penetrate via the c-file, Sämisch recognized that every move was a concession and resigned.
+
+### Can zugzwang happen with queens and rooks still on the board?
+
+Yes, but it is extraordinarily rare. Most zugzwang positions occur in simplified endgames with only kings and pawns. The Immortal Zugzwang Game is special precisely because it demonstrates zugzwang in a complex middlegame with queens, rooks, bishops, and knights all present. Nimzowitsch achieved this by restricting White's piece mobility so thoroughly that no piece could move without creating a decisive weakness.
+
+### How can I learn to create zugzwang positions in my own games?
+
+Study Nimzowitsch's core principles from *My System*: restraint (prevent your opponent's pawn advances), blockade (place pieces in front of enemy passed pawns), prophylaxis (anticipate and prevent your opponent's plans), and overprotection (defend key squares more than apparently necessary). The key practical skill is learning to fix your opponent's pawn structure so their pieces become permanently passive. Focus on restricting mobility rather than winning material — zugzwang emerges when your opponent runs out of constructive moves.
+
 ---
 
 *Want to analyze your own games for zugzwang patterns and positional weaknesses? Upload your PGN to the [FireChess Game Analyzer](https://firechess.com/analyze) and get instant positional evaluation with Stockfish 17.*

@@ -4,87 +4,89 @@ description: "{{DESCRIPTION}}"
 date: "{{DATE}}"
 author: "FireChess Team"
 tags: [{{TAGS}}]
+canonical: https://firechess.com/blog/{{SLUG}}
 ---
 
 <!--
-  WRITING STANDARDS — MUST FOLLOW:
-  - Minimum 2,000 words (hard floor). Articles under 2000w get 0 SEO traction.
-  - Include 3-5 <chess-position> diagrams for tutorial/opening posts.
-  - Include 2+ inline SVG data visualizations for data-heavy posts (bar charts, comparison tables).
-  - Opening/closing paragraph must include the primary keyword naturally.
-  - Every H2 section should be 250-400 words with at least one concrete example.
-  - Add 1-2 internal links to /openings/, /analyze, or other blog posts per section.
-  - Target: 2,000-3,500 words, readable at grade 8-10 level, concrete > abstract.
+  QUALITY STANDARDS — ALL REQUIRED:
+  - 2500+ words minimum (hard floor — Google rewards depth)
+  - 3-5 chess positions with <chess-position fen="..." caption="..." orientation="white">
+  - ALL FENs must pass python-chess Board.is_valid() — verify before publishing
+  - 1+ inline SVG data visualization (dark theme: #0a0e1a bg, #f1f5f9 text)
+  - FAQ section with 5+ questions (### Q: format for featured snippets)
+  - Internal links to /analyze, /openings/, and other blog posts
+  - Product integration: mention FireChess scanner naturally
+  - Tables for comparisons, real game examples, specific positions
 -->
 
-# {{TITLE}}
-
-{{INTRO_PARAGRAPH}}
-
-<!--
-  SEO INTRO CHECKLIST:
-  - Primary keyword in first 100 words
-  - Reader pain point stated within first 2 sentences
-  - What this post teaches / what they'll get
--->
+[Opening hook — 2-3 paragraphs. Start with the problem or question the reader has.]
 
 ---
 
-## {{SECTION_1_HEADING}}
+## [Section 1: The Core Concept]
 
-{{SECTION_1_CONTENT}}
+[Explanation with concrete chess examples. Use <chess-position> tags for key positions.]
 
-<!-- CHESS POSITION — Must include for tutorial posts:
-<chess-position fen="..." orientation="white" moves="..." caption="..."></chess-position>
--->
+<chess-position fen="..." caption="..." orientation="white">
 
----
-
-## {{SECTION_2_HEADING}}
-
-{{SECTION_2_CONTENT}}
-
-<!-- DATA VISUALIZATION — Add SVG chart for data claims:
-<figure style="margin:2rem 0">
-<svg width="..." height="..." viewBox="...">
-  ... inline bar chart or comparison graphic ...
-</svg>
-<figcaption style="text-align:center;font-size:13px;color:#64748b">...</figcaption>
-</figure>
--->
+[Analysis of the position — what to look for, common mistakes, best moves.]
 
 ---
 
-## {{SECTION_3_HEADING}}
+## [Section 2: Practical Application]
 
-{{SECTION_3_CONTENT}}
+[How this applies to real games. Reference specific openings, structures, or scenarios.]
 
----
-
-## {{SECTION_4_HEADING}} (add if word count < 2000)
-
-{{SECTION_4_CONTENT}}
-
----
-
-## {{SECTION_5_HEADING}} (add if word count < 2000)
-
-{{SECTION_5_CONTENT}}
+| Scenario | What to do | Why |
+|----------|------------|-----|
+| Example 1 | Action | Reasoning |
+| Example 2 | Action | Reasoning |
 
 ---
 
-## Common Questions (FAQ section — targets featured snippets)
+## [Section 3: Common Mistakes]
 
-**Q1: ...**
-A: ...
-
-**Q2: ...**
-A: ...
+[Call out specific errors club players make. Use positions to illustrate.]
 
 ---
 
-### Internal links
+## [Section 4: How to Practice]
 
-- [FireChess homepage](https://firechess.com) — analyse your games for free
-- [Free Chess Analysis Tools Comparison](/blog/free-chess-analysis-tools-2026) — how FireChess stacks up
-- [Opening Explorer](https://firechess.com/openings) — explore chess openings
+[Concrete training steps. Link to FireChess scanner: "Upload your games to [FireChess](/analyze) to see your own data."]
+
+---
+
+## [SVG Data Visualization]
+
+[Inline SVG chart showing key data — comparison bars, flow diagram, or rating curve.]
+
+---
+
+## [Section 5: Advanced Tips]
+
+[Deeper analysis for 1600+ players. More positions, more nuance.]
+
+---
+
+## FAQ
+
+### Q: [Question 1 — common search query]
+[Answer paragraph — concise, actionable, 2-3 sentences]
+
+### Q: [Question 2]
+[Answer]
+
+### Q: [Question 3]
+[Answer]
+
+### Q: [Question 4]
+[Answer]
+
+### Q: [Question 5]
+[Answer]
+
+---
+
+## Conclusion
+
+[Summary + CTA: "Ready to see how you perform in these positions? [Analyze your games on FireChess](/analyze) and find out."]

@@ -309,6 +309,30 @@ The Queen's Gambit is fundamentally about pawn structures — the Carlsbad, the 
 
 ---
 
+## Frequently Asked Questions
+
+### Is the Queen's Gambit good for beginners?
+
+Absolutely. The Queen's Gambit is one of the best openings for players of all levels, including beginners. Its core ideas — controlling the centre with pawns, developing pieces naturally, and playing for long-term positional advantages — teach you fundamental chess principles that apply to every opening. Start with the QGD main line (4.Bg5) and the QGA (3.Nf3 4.e3) to build a solid foundation.
+
+### What's the difference between the Queen's Gambit and the Queen's Gambit Declined?
+
+The **Queen's Gambit** is the opening itself — 1.d4 d5 2.c4. The **Queen's Gambit Declined (QGD)** is Black's most popular response, 2...e6, where Black declines to capture the c4 pawn and instead reinforces the centre. Think of the Queen's Gambit as the parent opening, and the QGD, QGA, and Slav as Black's specific responses to it.
+
+### Should I play the Queen's Gambit or the London System as my main 1.d4 opening?
+
+Both are excellent choices, but they suit different players. The **Queen's Gambit** is more principled and teaches deeper strategic concepts — pawn structures, piece activity, and long-term planning. The **London System** is easier to learn and more system-based — you play the same setup regardless of Black's moves. For club players who want to improve at chess, the Queen's Gambit is the better long-term investment. For players who want an immediate, low-maintenance weapon, the London is a great shortcut.
+
+### Can Black equalise in the Queen's Gambit?
+
+At the club level (under 2200), the Queen's Gambit gives White a lasting edge in most variations. Black can equalise with precise play in certain lines — particularly the QGD Orthodox Defense and the Semi-Slav — but in practice, White's space advantage and easier development provide comfortable winning chances. At the grandmaster level, some variations are closer to equal, but the Queen's Gambit remains one of the most testing openings for White at any rating.
+
+### What pawn structure should I memorise first — the Carlsbad or the IQP?
+
+Start with the **Carlsbad structure** (arising from the Exchange Variation of the QGD). It appears in many Queen's Gambit games, and its plans are clearer and more straightforward — White plays on the kingside, Black plays on the queenside. The **IQP structure** is more dynamic and tactical, requiring sharper calculation. Learn the Carlsbad first, then add the IQP as your tactical vision improves.
+
+---
+
 ## Final Thoughts
 
 The Queen's Gambit is more than just an opening — it's a chess education. By playing the Queen's Gambit, you'll learn about pawn structures, piece activity, the importance of the centre, and how to convert small advantages into full points. These skills transfer to every other opening you'll ever play.

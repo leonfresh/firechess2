@@ -217,6 +217,28 @@ You can [play through the complete Shirov vs Topalov 1998 game on FireChess](htt
 - **Kasparov's Immortal** — [Kasparov vs Topalov, 1999](https://firechess.com/games/kasparov-immortal-1999)
 - **The Immortal Zugzwang Game** — [Sämisch vs Nimzowitsch, 1923](https://firechess.com/games/immortal-zugzwang)
 
+## Frequently Asked Questions
+
+### What was the final score of Shirov vs Topalov at Linares 1998?
+
+The game ended with Shirov winning after 53 moves. Topalov resigned in the position after 53...Kb3, where Black's king supported the a4-pawn and the d4-pawn was unstoppable. The full game lasted 53 moves from a Grünfeld Defense, Exchange Variation. Shirov's victory was a crucial result at the Linares super-tournament, which featured the world's strongest players.
+
+### Why is 47...Bh3!! considered the greatest endgame move ever played?
+
+The sacrifice is extraordinary because it gives up a full bishop for zero immediate material compensation — the piece is attacked by two pawns and defended by none. What makes it immortal is the depth of the idea: by forcing White's g-pawn to capture on h3, Shirov gains exactly one tempo in the king march to e4. That single tempo is the difference between a draw and a win. No other famous endgame sacrifice is as pure — it trades a bishop solely for the right to move first in a king-and-pawn race.
+
+### Why couldn't chess engines evaluate 47...Bh3!! correctly in 1998?
+
+In 1998, engines like Fritz and Rebel relied heavily on material counting. A bishop is worth roughly 3 pawns, so sacrificing it with no check, capture, or direct threat registered as a catastrophic blunder. The sacrifice works for purely positional reasons — king activity and tempo in an opposite-colored bishop endgame — concepts that early engines lacked the evaluation depth to recognize. Modern engines like Stockfish 18 instantly evaluate it as winning for Black at roughly -5.0.
+
+### What are the key themes to learn from the Shirov-Topalov endgame?
+
+Four major endgame principles emerge: (1) **King activity trumps material** — in endgames, an active king can be worth more than a minor piece; (2) **Count tempi, not material** — in king-and-pawn races, the side whose king arrives first wins regardless of material; (3) **Opposite-colored bishops favor the attacker** — the defending bishop cannot contest threats on its opposite color; (4) **Static evaluations lie** — always calculate concretely in king-and-pawn endgames rather than trusting material count.
+
+### Has a bishop sacrifice like 47...Bh3!! been played in other grandmaster games?
+
+While bishop sacrifices for positional compensation occur occasionally at the GM level, Shirov's 47...Bh3!! remains unique in its purity. Other notable endgame sacrifices include Carlsen's exchange sacrifice vs Karjakin (2016 World Championship) and Fischer's exchange sacrifice vs Taimanov (1971 Candidates). However, none match the elegance of trading a full bishop for a single tempo with no residual material gain. The sacrifice has since become a standard teaching tool in endgame training courses worldwide.
+
 ---
 
 *What makes a move immortal? It's not just the outcome — it's the idea behind it. Shirov's 47...Bh3!! was a move that defied material logic, computational evaluation, and even grandmaster intuition. It's a reminder that chess, at its highest level, remains an art form — one where a single bishop sacrifice can earn its place in history forever.*

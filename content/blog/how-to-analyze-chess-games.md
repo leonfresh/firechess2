@@ -339,6 +339,28 @@ Here's a weekly analysis routine that works:
 
 The key is **consistency over intensity**. Thirty minutes of focused analysis three times a week beats a five-hour marathon once a month.
 
+## Frequently Asked Questions
+
+### How long should I spend analyzing a single game?
+
+For a thorough deep analysis following the 5-step process, budget 20-30 minutes per game. That breaks down to roughly 5 minutes replaying without an engine, 5 minutes identifying critical moments, 10-15 minutes on engine-assisted analysis of those moments, and 5 minutes writing your action items. If you're short on time, even a focused 10-minute review of your 3 biggest mistakes is far better than nothing. The goal isn't to analyze every move — it's to extract lessons that stick.
+
+### Should I analyze my wins or just my losses?
+
+Always prioritize losses and unexpected draws, but don't ignore wins entirely. Wins where you were winning from the opening teach you little. However, wins where you were worse and came back, or where you missed a faster finish, are highly instructive. A good rule of thumb: analyze 70% losses, 20% hard-fought wins, and 10% draws. You can often learn more from a loss where you had a good position and blundered than from a clean win where your opponent blundered on move 8.
+
+### What's better: engine analysis or analyzing without an engine first?
+
+Neither alone — they serve different purposes. Analyzing without an engine first (Step 1) captures your thought process and reveals *why* you made decisions. Engine analysis (Step 3) shows you what the objective best move was. Doing only engine analysis means you see the right move but never understand why you missed it. Doing only manual analysis means you might reinforce incorrect evaluations. The 5-step process combines both: think first, then check with the engine, then reconcile the difference.
+
+### How many games do I need to analyze before I see improvement?
+
+Most players notice a difference after analyzing 10-15 games deeply — typically 4-6 weeks of consistent work. But the real improvement comes from *acting on your action items*. If your analysis reveals you consistently miss tactical shots on the back rank, and you train back-rank puzzles for two weeks, you'll see results quickly. If you analyze 50 games but never change your training or habits, you won't improve. Analysis without follow-through is just entertainment.
+
+### Can I use AI or automated analysis instead of doing it manually?
+
+Automated tools like FireChess are excellent for *bulk scanning* — spotting patterns across dozens of games that you'd never catch manually. But they can't replace the self-reflection step. An AI can tell you that you consistently miscalculate in time trouble, but only you can decide whether that's because you panic, spend too long on earlier moves, or don't know the positions well enough to play quickly. Use automated tools to identify *what* your problems are, then use manual analysis to understand *why* they happen and build a fix.
+
 ## Start Analyzing Smarter
 
 If you want to jumpstart your analysis, try scanning your last 50 games with FireChess. In a few minutes you'll see your repeated mistakes, accuracy trends, and weakest areas — giving you a clear roadmap for improvement. The basic scan is free, and everything runs privately in your browser.

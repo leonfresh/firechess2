@@ -299,3 +299,27 @@ Your chess rating will follow.
 The players who reach 2000+ Elo are not the ones who memorised the most opening lines. They are the ones who can sit at a board, close their eyes, and see clearly what will happen five moves from now. That clarity is available to anyone who trains for it.
 
 Start today. Visualise one knight, one square at a time. The board will open before you.
+
+---
+
+## Frequently Asked Questions
+
+### How long does it take to develop chess visualisation?
+
+Most players notice meaningful improvement within 2–4 weeks of daily 15-minute practice. Basic skills like knowing square colours can be automatic within a few days. Holding a full position in your mind and calculating 4–5 moves deep typically takes 4–8 weeks of consistent training. The key variable is daily consistency — 15 minutes every day outperforms an hour once a week.
+
+### Can beginners benefit from visualisation training, or is it only for advanced players?
+
+Beginners benefit enormously, and arguably more than advanced players. Building coordinate awareness and basic mental board skills early means every other aspect of improvement — tactics, openings, endgames — accelerates because you can process information faster. Start with the coordinate drill and Level 1 blindfold exercises; they require no chess knowledge beyond how the pieces move.
+
+### Is chess visualisation the same as being able to play blindfold?
+
+Blindfold chess is one application of visualisation, but visualisation is much broader. You use visualisation every time you calculate a variation, evaluate a candidate move, or plan a sequence. You do not need to play a full blindfold game to benefit from visualisation training. Most players who practise these drills develop strong calculation ability without ever attempting a full blindfold game.
+
+### How do I know if my visualisation is improving?
+
+Track three metrics in a training log: (1) the maximum number of moves you can calculate before losing track of a piece, (2) the number of pieces you can hold in a mental position simultaneously, and (3) whether you can switch perspectives (visualise from both White and Black). If all three numbers are increasing over weeks, your visualisation is improving regardless of rating change.
+
+### Does visualisation training help with blitz and rapid chess as well as classical?
+
+Yes — strong visualisation improves performance at all time controls. In blitz and rapid, the benefit is different but equally significant: you recognise tactical patterns faster because your brain already has a stable mental model of piece relationships. Players with trained visualisation spend less time "rebuilding" the position in their mind after each move, leaving more time for strategic thinking even under time pressure.

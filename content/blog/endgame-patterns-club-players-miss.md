@@ -105,6 +105,10 @@ The Lucena position is the single most important theoretical endgame position. I
 
 This concept has been known for centuries, but a surprising number of 1500-1800 rated players haven't internalized it. **Learn the Lucena, and you'll convert every standard rook ending where you reach this position.**
 
+The Lucena is named after a Spanish chess author whose 1497 book *Repetición de Amores y Arte de Ajedrez* contained one of the earliest printed analyses of this type of position. Despite being over 500 years old, it remains the cornerstone of rook endgame knowledge. Every grandmaster knows it cold — and every club player should too.
+
+The key insight is that without the bridge technique, the defending side can keep checking the king indefinitely from behind. The king can never escape the checks on its own. The rook sacrifice on the 4th rank creates a one-move shelter that breaks the checking sequence, and that single tempo is all you need to promote.
+
 ## 2. King Activity in Pawn Endings
 
 In king and pawn endings, the king transforms from a piece that hides in the corner to the most powerful piece on the board. Yet club players routinely keep their king passive when it needs to be marching forward.
@@ -122,6 +126,10 @@ In king and pawn endings, the king transforms from a piece that hides in the cor
 **The opposition rule:** When two kings face each other with one square between them, the player who does NOT have to move has the "opposition" — a critical advantage in king and pawn endings. If you don't know this concept, you're losing drawn endings and drawing won endings constantly.
 
 <chess-position fen="8/5pk1/6p1/4K1P1/5P2/8/8/8 w - - 0 1" moves="Kd5, Kf8, Kd6, Ke8, Kc7, Ke7, Kc6, Ke6, f5+" orientation="white" caption="White's king outflanks via the queenside. After Kd5-Kd6-Kc7-Kc6, White infiltrates behind the pawns. The f5+ breakthrough wins material."></chess-position>
+
+Understanding opposition is not enough on its own — you also need to recognize **distant opposition** (kings on the same file or diagonal with an odd number of squares between them) and the concept of **corresponding squares**. These ideas determine whether a king and pawn endgame is won, drawn, or lost. Many positions that look equal are actually decisive if one side understands the geometry of king placement.
+
+A practical tip: before entering any king and pawn ending, ask yourself "whose king is more active?" If the answer is your opponent's, think twice about the trade. If the answer is yours, simplify aggressively — the resulting endgame is often a clean win.
 
 ## 3. Rook Behind Passed Pawns (Tarrasch's Rule)
 
@@ -142,6 +150,10 @@ Your opponent has a passed d-pawn on d5. You put your rook on d1, blocking it. B
 
 <chess-position fen="3r4/4k3/8/3P4/8/4K3/8/3R4 w - - 0 1" moves="Ke4, Kd6, Kd4, Ke7, Kc5, Kd7, d6" orientation="white" caption="Tarrasch's Rule in action — White's rook on d1 supports the passed pawn from BEHIND. Black's rook on d8 is stuck blocking from the front. White's king marches forward freely while Black's rook stays chained to d8."></chess-position>
 
+There is one important exception to Tarrasch's Rule: when the passed pawn has already advanced to the 7th rank, placing the rook in front of the *opponent's* pawn can sometimes be the only way to prevent promotion. In these cases, the passive placement is a necessary evil. But for pawns on ranks 2 through 6, the rule almost always holds.
+
+The mathematical reason behind the rule is elegant. A rook behind its own passed pawn gains one square of influence for every step the pawn advances — the file opens up in front of it. A rook in front of its own pawn *loses* one square of influence with each advance — the pawn closes the file behind it. Over five or six moves, this difference is enormous.
+
 ## 4. The Wrong Bishop
 
 This one sounds simple but catches club players constantly. If you have a bishop and a rook pawn (a-pawn or h-pawn), and your bishop doesn't control the promotion square, **it's a draw**.
@@ -158,7 +170,11 @@ This one sounds simple but catches club players constantly. If you have a bishop
 
 **How to avoid it:** Before trading down, check whether your remaining bishop controls your pawn's promotion square. If not, keep more material on the board or find a different plan.
 
-<chess-position fen="7k/8/6KP/8/2B5/8/8/8 w - - 0 1" orientation="white" caption="The 'wrong bishop' — White has a bishop and h-pawn, but the light-squared bishop can NEVER control h8 (a dark square). Black's king sits in the corner forever. This is a dead draw despite being up a full piece."></chess-position>
+<chess-position fen="7k/8/6KP/6B1/8/8/8/8 w - - 0 1" orientation="white" caption="The 'wrong bishop' — White has a bishop and h-pawn, but the light-squared bishop can NEVER control h8 (a dark square). Black's king sits in the corner forever. This is a dead draw despite being up a full piece."></chess-position>
+
+This pattern extends beyond the basic bishop-and-pawn scenario. In many practical endgames, you'll encounter positions where a bishop of the wrong color makes it impossible to convert an otherwise winning advantage. For instance, if you have two bishops and a rook pawn, but only the wrong-colored bishop can reach the promotion corner, the extra bishop is useless for that specific task.
+
+The defensive technique for the side with the lone king is straightforward: head for the corner that your opponent's bishop cannot control. Once the king reaches that corner, it simply oscillates between the corner square and the adjacent square along the edge. The bishop can never drive it away, and the pawn cannot advance past the 6th rank without stalemate or the king holding the promotion square.
 
 ## 5. Not Creating a Passed Pawn
 
@@ -181,6 +197,10 @@ In rook endings with multiple pawns, the side that creates a passed pawn first u
 A passed pawn in a rook ending is like having an extra piece. It ties the opponent's rook to defense while your rook stays active. Even one passed pawn often decides the game.
 
 <chess-position fen="8/pp4k1/8/PPP3K1/8/8/8/8 w - - 0 1" moves="c6, bxc6, bxc6, Kf8, c7, Ke7, a6" orientation="white" caption="The pawn majority technique: advance the unopposed 'candidate' (c5). After c6 bxc6 bxc6, White creates a passed c-pawn. When it reaches c7, the a-pawn advances too — Black can't stop both!"></chess-position>
+
+The concept of the "outside passed pawn" is closely related. When both sides have passed pawns, the player whose passed pawn is farther from the action (the "outside" pawn) has a decisive advantage. The opponent's king must chase that distant pawn, leaving the other side's king free to gobble up pawns on the opposite flank. Recognizing when to create an outside passed pawn — even at the cost of a pawn — is a hallmark of strong endgame play.
+
+Another common mistake is **premature pawn exchanges**. Club players often trade pawns "because it simplifies," but every exchange changes the pawn structure and can hand the opponent a passed pawn or eliminate your own majority. Before capturing, ask: "Does this exchange help me or my opponent create a passed pawn?" If the answer is your opponent, don't capture.
 
 ## How to Fix These Weaknesses
 
@@ -289,3 +309,25 @@ Sounds obvious, but many players resign or agree to draws too early. Play out yo
 ## The Bottom Line
 
 Endgame knowledge has the highest improvement-per-hour-studied of any chess area. These five patterns appear in thousands of games. Learn them, look for them in your own games, and you'll convert significantly more wins from positions you used to draw or lose.
+
+## Frequently Asked Questions
+
+### What endgame should I learn first as a club player?
+
+Start with the **Lucena position** (rook and pawn vs. rook). It is the single highest-value endgame pattern to memorize because rook endings are by far the most common endgame type — they occur in roughly 50% of all games that reach an endgame. The Lucena's "bridge" technique is a concrete, repeatable method that works every time you reach the position. Once you can execute it without thinking, move on to king and pawn opposition, then Tarrasch's rook placement rule. This sequence gives you the best return on study time because each pattern builds on the previous one and covers the most frequently occurring endgame scenarios.
+
+### How many hours should I spend studying endgames versus openings?
+
+For club players rated under 1800, a good rule of thumb is a **2:1 ratio of endgame study to opening study**. Most improvement guides and coaches agree that endgame knowledge provides the highest rating gain per hour invested. You don't need to memorize 20 moves of opening theory to reach 1800 — but you absolutely need to know how to convert a rook ending or recognize a drawn bishop-and-pawn position. Spend 30 minutes a day on endgame patterns (the five in this article are a perfect starting set) and you'll see measurable improvement within a few weeks. Openings can wait until you've built a solid endgame foundation.
+
+### What is the difference between the Lucena and the Philidor position?
+
+The **Lucena** is a *winning* position for the side with the rook and pawn. The pawn is on the 7th rank, the king is in front of it, and the "bridge" technique forces promotion. The **Philidor** is a *drawing* position for the defending side. In the Philidor, the defender's rook sits on the 6th rank (cutting off the enemy king) and waits — once the pawn advances to the 6th rank, the rook retreats to the back rank and gives checks from behind, drawing the game. Confusing these two is a classic club player mistake: players try to win from the Philidor (impossible with correct defense) or fail to win from the Lucena (a forced win with the bridge). Learn both and you'll never mix them up again.
+
+### When should I trade queens and enter an endgame?
+
+Trade queens when you have a **structural or positional advantage** that matters in the endgame but is neutralized in the middlegame. Good reasons to trade: your king is safer, you have a better pawn structure, you have an outside passed pawn, or your pieces (especially rooks) are more active. Bad reasons to trade: you're ahead on material but your position is passive, or the resulting endgame has opposite-colored bishops (which tend to draw). A useful heuristic: if your king can march forward and your opponent's cannot, simplify. If both kings are safe, keep the queens on — the attacking chances may be worth more than the positional edge.
+
+### Why do I keep drawing winning endgames at my level?
+
+The three most common reasons club players draw winning endgames are: **(1) not knowing theoretical positions** like the Lucena or the wrong-bishop draw, leading to incorrect technique; **(2) passive king play** — keeping the king sheltered when it should be centralized and active; and **(3) premature pawn exchanges** that simplify into drawn structures. The fix is targeted study of the five patterns in this article, combined with analyzing your own endgame losses to identify which pattern you're missing. Most players find that just one or two of these patterns account for the majority of their endgame failures. Focus on those first, and your conversion rate will jump significantly.

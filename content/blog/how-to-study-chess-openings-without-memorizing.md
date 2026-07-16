@@ -62,6 +62,41 @@ That is the study gold.
 
 <chess-position fen="r1bq1rk1/ppp2ppp/2n1pn2/2b5/2BPP3/2P2N2/PP3PPP/RNBQ1RK1 w - - 0 8" orientation="white" moves="e5,Nd5,cxd4" caption="A good opening study session asks more than 'what is theory here?' It asks what plans, breaks, and tactical ideas are likely to appear next."></chess-position>
 
+## Putting It All Together: The French Defense Through Three Layers
+
+The three-layer method is easiest to understand with a concrete example. Let us walk through the [French Defense](/openings/french-defense) — one of the most popular openings at every level — and see how each layer builds on the last.
+
+### Layer 1: The Shape of the French Defense
+
+The French Defense begins `1.e4 e6 2.d4 d5`. Black challenges White's center immediately and accepts a slightly cramped but very solid position. The key idea is simple: Black wants to undermine White's pawn center with `...c5` at the right moment and develop behind a sturdy pawn chain.
+
+If you only memorize moves, you might play `...c5` too early or too late. But if you understand the shape — Black's light-squared bishop is permanently blocked behind the pawn chain on `e6` and `d5`, so Black must generate counterplay on the queenside and through the center — then you already know why `...c5` matters and when it is coming.
+
+The most critical variation for most French players is the Advance Variation, which arises after `3.e5`. White locks the center and gains space. Black's task is to break down that space advantage before White consolidates and attacks on the kingside.
+
+### Layer 2: The Recurring Middlegame
+
+After `3.e5 c5 4.c3 Nc6 5.Nf3 Qb6`, a typical and instructive position is reached:
+
+<chess-position fen="r1b1kbnr/pp3ppp/1qn1p3/2ppP3/3P4/2P2N2/PP3PPP/RNBQKB1R w KQkq - 2 6" orientation="white" moves="Be2,Bd7,O-O" caption="The French Advance after 5...Qb6. Black pressures d4 and b2. White must decide how to develop the kingside. Both sides have clear, repeatable plans — this is Layer 2 knowledge."></chess-position>
+
+If you understand this position at Layer 2, you know the following:
+
+- **Black's plan** is to keep pressuring `d4` with moves like `...Bd7`, `...Rc8`, and `...cxd4`. If the center opens favorably, Black's pieces activate. If `...cxd4` opens the c-file, Black's rook and queen coordinate against `c3` and `a2`.
+- **White's plan** is to develop quietly with `Be2`, castle kingside, and then decide whether to reinforce the center with `Nd2` or prepare `f4` to expand on the kingside.
+- **The pawn break that matters most** for Black is `...cxd4`, followed by pressure down the c-file. For White, the break is `f4-f5` if Black is slow, attacking the `e6` base of Black's pawn chain.
+- **The worst piece** for Black is almost always the light-squared bishop on `c8`. Knowing this tells you to delay committing it — or to play `...Bd7` and `...Ba4` or `...Be7` based on concrete needs, not just habit.
+
+This is the kind of knowledge that survives any deviation. If your opponent plays an unusual move order or a sideline, you still know what the middlegame should look like and what your plans are.
+
+### Layer 3: Your Personal Leak Points
+
+Now the personal part. Suppose you play the French regularly and you keep reaching positions where Black has broken through the center but your king is still in the center because you delayed castling. That is a Layer 3 leak.
+
+Or maybe you consistently misjudge when to trade off the dark-squared bishop. In the French, Black's dark-squared bishop (`Bc5` or `Be7`) is often one of the best pieces. Trading it carelessly leaves Black with a passive position. If your game history shows you losing the bishop too early in multiple French games, that is the detail worth writing down in your repertoire file.
+
+The three layers work together. Layer 1 gets you to a recognizable position. Layer 2 tells you what to do once you are there. Layer 3 catches the mistakes that keep costing you games. No amount of memorizing move 17 of a Grandmaster line replaces any of those layers.
+
 ## The 80/20 Rule for Opening Study
 
 Twenty percent of the lines produce eighty percent of the results.
