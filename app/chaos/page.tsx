@@ -6140,6 +6140,43 @@ export default function ChaosChessPage() {
           ? await stockfishPool.getTopMoves(g.fen(), 5, aiDepth, aiSkillLevel)
           : [];
 
+        // Chaos-move injection: Stockfish doesn't know about modifier-specific moves
+        // like Pawn Bayonet (forward capture), Collateral Rook (destroy beyond target),
+        // or Nuclear Queen (blast surrounding squares). Generate them and evaluate.
+        if (hasAiChaosMods) {
+          const aiCol = playerColor_ === "w" ? "b" : "w";
+          const aiChaosMoves = getChaosMoves(
+            g,
+            cs.aiModifiers,
+            aiCol,
+            cs.assignedSquares ?? undefined,
+            cs.playerModifiers,
+            undefined,
+          );
+          for (const chaosMove of aiChaosMoves) {
+            if (chaosMove.type === "spawn" || chaosMove.pieceStays) continue; // skip spawn-only moves
+            const execResult = executeChaosMove(
+              g,
+              chaosMove,
+              cs.aiModifiers,
+              cs.playerModifiers,
+            );
+            if (!execResult) continue;
+            const er = await stockfishPool.evaluateFen(
+              execResult.fen(),
+              Math.min(aiDepth, 10),
+              aiSkillLevel,
+            );
+            if (er) {
+              topMoves.push({
+                bestMove: `${chaosMove.from}${chaosMove.to}`,
+                pvMoves: [`${chaosMove.from}${chaosMove.to}`],
+                cp: er.cp ?? 0,
+              });
+            }
+          }
+        }
+
         // Escape-move injection: Stockfish's top-5 are blind to chaos rules, so if the player
         // already threatens an AI piece right now (e.g. bayonet pawn in front of the queen),
         // inject legal escape moves for those pieces so the penalty loop can find them.
