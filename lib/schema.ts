@@ -895,3 +895,62 @@ export const newsletterSubscribers = pgTable(
     unsubscribeToken: text("unsubscribeToken"),
   },
 );
+
+/* ------------------------------------------------------------------ */
+/*  Flashcards: boards & cards                                          */
+/* ------------------------------------------------------------------ */
+
+export const flashcardBoards = pgTable("flashcard_board", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description").default(""),
+  color: text("color").default("from-indigo-600 to-purple-900"),
+  icon: text("icon").default("🃏"),
+  cardCount: integer("cardCount").notNull().default(0),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow(),
+});
+
+export const flashcards = pgTable("flashcard", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  boardId: text("boardId")
+    .notNull()
+    .references(() => flashcardBoards.id, { onDelete: "cascade" }),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  /** The chess position FEN */
+  fen: text("fen").notNull(),
+  /** Which side to play (for training) */
+  orientation: text("orientation").$type<"w" | "b">().default("w"),
+  /** Optional human label (e.g. "Queen fork from my Italian game") */
+  label: text("label").default(""),
+  /** Optional longer note */
+  note: text("note").default(""),
+  /** Source report ID (nullable — cards can be manual) */
+  reportId: text("reportId"),
+  /** ECO code if known */
+  eco: text("eco").default(""),
+  /** Opening name */
+  openingName: text("openingName").default(""),
+  /** User's move (the mistake/candidate) */
+  userMove: text("userMove").default(""),
+  /** Engine best move */
+  bestMove: text("bestMove").default(""),
+  /** Tags for filtering */
+  tags: text("tags").array().default([]),
+  /** Mastery level: 0=unseen, 1=weak, 2=learning, 3=familiar, 4=mastered */
+  mastery: integer("mastery").notNull().default(0),
+  /** Last review timestamp */
+  lastReviewedAt: timestamp("lastReviewedAt", { mode: "date" }),
+  /** Review count */
+  reviewCount: integer("reviewCount").notNull().default(0),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+});

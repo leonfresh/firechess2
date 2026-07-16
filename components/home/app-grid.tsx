@@ -36,7 +36,7 @@ const APPS: AppTile[] = [
   { icon: "🏅", label: "Leaderboard", href: "/leaderboard", desc: "Top players & rankings", color: "from-amber-600 to-amber-900" },
   { icon: "🏆", label: "Best Game", href: "/dashboard", desc: "Your best performances", color: "from-yellow-600 to-yellow-900" },
   // Row 5 — Social
-  { icon: "👥", label: "Community", href: "/community", desc: "Share, discuss, challenge", color: "from-blue-600 to-blue-900" },
+  { icon: "🃏", label: "Flashcards", href: "/flashcards", desc: "Save positions to flashcard boards", badge: "new", color: "from-indigo-600 to-indigo-900" },
   { icon: "👤", label: "Players", href: "/players", desc: "Search & follow players", color: "from-sky-600 to-sky-900" },
   { icon: "⚡", label: "Blitz Arena", href: "/chaos", desc: "Fast chess arena matches", color: "from-amber-600 to-amber-900" },
   { icon: "💬", label: "Feedback", href: "/feedback", desc: "Report bugs & suggest ideas", color: "from-gray-600 to-gray-900" },
@@ -78,7 +78,7 @@ function AppIcon({ app, size = "md" }: { app: AppTile; size?: "sm" | "md" }) {
 
         {app.badge && (
           <span
-            className={`absolute -right-0.5 -top-0.5 z-20 rounded-full px-1 py-[1px] text-[6px] font-bold uppercase leading-none tracking-wider shadow-lg ${
+            className={`absolute -right-1 -top-1 z-20 flex min-w-[22px] items-center justify-center rounded-full px-1.5 py-[2px] text-[8px] font-bold leading-tight shadow-lg sm:min-w-[26px] sm:px-2 sm:py-[3px] sm:text-[9px] ${
               app.badge === "new"
                 ? "bg-emerald-500 text-white"
                 : app.badge === "hot"
