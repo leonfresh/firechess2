@@ -6795,9 +6795,9 @@ export default function ChaosChessPage() {
           finalTo,
           !!moveResult.captured,
         );
-        // Apply AI nuclear queen cooldown
+        // Apply AI nuclear queen cooldown — 3 full turns before next blast
         if (nukeJustFiredAi) {
-          cs2 = { ...cs2, aiNuclearCooldownUntil: g.moveNumber() + 4 };
+          cs2 = { ...cs2, aiNuclearCooldownUntil: g.moveNumber() + 3 };
         }
         // Decrement Justice / Devil counters (AI's half-move)
         cs2 = decrementAnomalyCounters(cs2, "ai", finalFrom, finalTo);
@@ -8839,9 +8839,9 @@ export default function ChaosChessPage() {
         to,
         !!moveResult.captured,
       );
-      // Apply nuclear queen cooldown — 3 full turns before next blast
+      // Apply nuclear queen cooldown — 3 full turns before next blast (off-by-one fix: +3 not +4)
       if (nukeJustFiredPlayer) {
-        cs2 = { ...cs2, playerNuclearCooldownUntil: game.moveNumber() + 4 };
+        cs2 = { ...cs2, playerNuclearCooldownUntil: game.moveNumber() + 3 };
       }
       // Decrement Justice / Devil counters (player's half-move)
       cs2 = decrementAnomalyCounters(cs2, "player", from, to);
