@@ -450,10 +450,10 @@ export default function DashboardPage() {
 
           {/* ─── Two-Column Layout (loading + content) ─── */}
           {showGrid && (
-            <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
+            <div className="grid gap-8 lg:grid-cols-[320px_1fr]">
 
             {/* ═══ MAIN CONTENT (first in DOM for mobile) ═══ */}
-            <main className="min-w-0 space-y-6 order-1 lg:order-2">
+            <main className="min-w-0 space-y-5 order-1 lg:order-2">
 
               {/* ─── New Scan Widget ─── */}
               <div className="animate-fade-in-up" style={{ animationDelay: "0s" }}>
@@ -480,6 +480,17 @@ export default function DashboardPage() {
                 />
               </div>
 
+              {/* ─── Daily Challenge ─── */}
+              {allTactics.length > 0 && (
+                <div
+                  data-tour="daily-challenge"
+                  className="animate-fade-in-up"
+                  style={{ animationDelay: "0.1s" }}
+                >
+                  <DailyChallenge allTactics={allTactics} />
+                </div>
+              )}
+
               {/* ─── Progress Highlights ─── */}
               {latestNonTimeMgmt &&
                 previousNonTimeMgmt &&
@@ -494,17 +505,6 @@ export default function DashboardPage() {
                     />
                   </div>
                 )}
-
-              {/* ─── Daily Challenge ─── */}
-              {allTactics.length > 0 && (
-                <div
-                  data-tour="daily-challenge"
-                  className="animate-fade-in-up"
-                  style={{ animationDelay: "0.1s" }}
-                >
-                  <DailyChallenge allTactics={allTactics} />
-                </div>
-              )}
 
               {/* ─── Training CTAs ─── */}
               <div className="animate-fade-in-up grid gap-4 sm:grid-cols-2" style={{ animationDelay: "0.13s" }}>
@@ -675,11 +675,11 @@ export default function DashboardPage() {
               <ProWelcomeModal />
             </main>
 
-            {/* ═══ LEFT SIDEBAR (second in DOM, shows on right on desktop) ═══ */}
-            <aside className="space-y-6 order-2 lg:order-1">
+            {/* ═══ LEFT SIDEBAR (wider, better spaced, second in DOM) ═══ */}
+            <aside className="space-y-4 order-2 lg:order-1">
 
-              {/* Search / Player Filter */}
-              <div className="animate-fade-in-up space-y-3">
+              {/* Player Filter + Stats row */}
+              <div className="animate-fade-in-up space-y-3" style={{ animationDelay: "0.02s" }}>
                 {userOptions.length > 1 ? (
                   <div className="relative">
                     <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -706,38 +706,48 @@ export default function DashboardPage() {
                     />
                   </div>
                 )}
-              </div>
 
-              {/* Compact Stat Cards */}
-              <div className="animate-fade-in-up grid grid-cols-2 gap-2" style={{ animationDelay: "0.05s" }}>
+                {/* Compact Stat Cards — 4 in a row with icons */}
                 {loading ? (
-                  <>
+                  <div className="grid grid-cols-4 gap-2">
                     {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="animate-pulse rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                        <div className="h-6 w-12 rounded bg-white/[0.06]" />
-                        <div className="mt-1 h-3 w-14 rounded bg-white/[0.04]" />
+                      <div key={i} className="animate-pulse rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5">
+                        <div className="h-5 w-8 rounded bg-white/[0.06]" />
+                        <div className="mt-1 h-2 w-10 rounded bg-white/[0.04]" />
                       </div>
                     ))}
-                  </>
+                  </div>
                 ) : (
-                  <>
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                      <div className="text-lg font-bold text-white">{filtered.length}</div>
-                      <div className="text-[10px] text-slate-500">Reports</div>
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base">📊</span>
+                        <div className="text-base font-bold text-white">{filtered.length}</div>
+                      </div>
+                      <div className="text-[9px] text-slate-500 leading-tight">Reports</div>
                     </div>
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                      <div className="text-lg font-bold text-white">{totalGames.toLocaleString()}</div>
-                      <div className="text-[10px] text-slate-500">Games</div>
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base">♟️</span>
+                        <div className="text-base font-bold text-white">{totalGames.toLocaleString()}</div>
+                      </div>
+                      <div className="text-[9px] text-slate-500 leading-tight">Games</div>
                     </div>
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                      <div className="text-lg font-bold text-white">{totalLeaks.toLocaleString()}</div>
-                      <div className="text-[10px] text-slate-500">Leaks</div>
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base">💣</span>
+                        <div className="text-base font-bold text-white">{totalLeaks.toLocaleString()}</div>
+                      </div>
+                      <div className="text-[9px] text-slate-500 leading-tight">Leaks</div>
                     </div>
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                      <div className="text-lg font-bold text-white">{totalTactics.toLocaleString()}</div>
-                      <div className="text-[10px] text-slate-500">Tactics</div>
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base">🧩</span>
+                        <div className="text-base font-bold text-white">{totalTactics.toLocaleString()}</div>
+                      </div>
+                      <div className="text-[9px] text-slate-500 leading-tight">Tactics</div>
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
 
