@@ -71,7 +71,13 @@ Chess improvement isn't random. There's a clear hierarchy of what gives you the 
 
 If you're under 1800, tactics should be 40–60% of your study time. Full stop.
 
-The reason is simple: at the 1000–1800 level, most rating points are won or lost in a single move — a piece hanging, a fork missed, a back-rank weakness overlooked. Opening theory, endgame precision, and positional understanding all become irrelevant if you're hanging a piece on move 18.
+Opening theory, endgame precision, and positional understanding all become irrelevant if you're hanging a piece on move 18.
+
+The most common way players under 1200 throw games isn't missing a deep combination — it's walking into a one-move threat they never checked for. This position arises in thousands of online games every day:
+
+<chess-position fen="rnbqk1nr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 3" orientation="white" caption="Black to move. After 1.e4 e5 2.Qh5 Nc6 3.Bc4, White threatens Qxf7# — Scholar's Mate. A 1200-rated player instinctively plays 3...Nf6??, attacking the queen, without first checking what the opponent threatens. The game ends immediately: Qxf7# is checkmate."></chess-position>
+
+The 1200 player's mistake isn't a lack of chess knowledge — it's a thinking habit. They ask "what do I want to do?" instead of "what does my opponent threaten?" That one-second question would have found 3...g6 or 3...Qe7, both of which defend comfortably and leave Black with a fine game.
 
 Consider this typical fork pattern that decides games at the club level:
 
@@ -155,6 +161,12 @@ The numbers tell a stark story. A player who plays 2,000 blitz games per year wi
 - **No structured focus.** Playing a game involves too many skills at once — tactics, openings, time management, endgames — to improve any single one.
 - **Speed reinforces bad habits.** In blitz, you don't have time to calculate. You guess. Doing that 1,000 times builds confidence in guesses, not skill.
 
+Here's a position that separates casual players from deliberate calculators:
+
+<chess-position fen="2r3k1/ppp2ppp/8/8/8/8/PPP1RPPP/4R1K1 w - - 0 1" orientation="white" caption="White to move. A casual player sees doubled rooks and a cramped Black king — nothing jumps out. A deliberate player checks forcing moves first: Re8+! Rxe8 Rxe8#. A rook sacrifice that forces back-rank mate, because the pawns on f7, g7, and h7 seal every escape square."></chess-position>
+
+This pattern — sacrifice on the back rank, recapture, mate — comes up regularly in club games. The casual player never finds it because they're not in the habit of asking "what if I give something up?" before settling for a quiet move. The deliberate player checks every check, every capture, and every threat before choosing. That habit is trainable.
+
 ### What Deliberate Practice Looks Like
 
 Deliberate practice was defined by psychologist Anders Ericsson (whose work inspired the "10,000-hour rule" popularised by Malcolm Gladwell). The key characteristics are:
@@ -163,6 +175,12 @@ Deliberate practice was defined by psychologist Anders Ericsson (whose work insp
 2. **Immediate feedback.** You need to know, move by move, whether your decision was correct. This is why engine-aided analysis is so powerful — but only when used *after* you've tried to find the answer yourself.
 3. **At the edge of your ability.** Practice should be hard enough that you're making mistakes, but not so hard that you can't understand what went wrong. Solving 1800-rated puzzles when you're 1200 is a waste of time. Solving 1300-rated puzzles that you get 60% right is growth territory.
 4. **Repetition with variation.** You don't just solve one knight fork puzzle — you solve fifty, across different board positions, piece configurations, and move orders, until the pattern is automatic.
+
+Consider this position, which is common in the Italian Game opening:
+
+<chess-position fen="r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4" orientation="white" caption="White to move. The 'guesser' plays Bxf7+! — a sacrifice they've seen work in famous games and YouTube videos. But after Kxf7 Ng5+ Kg8, White is down a full bishop with insufficient attack. The 'calculator' plays 4.O-O or 4.d3, maintaining a comfortable advantage without risk."></chess-position>
+
+This is the core difference between guessing and calculating. The guesser's brain pattern-matches: "bishop sacrifice on f7 — I've seen this win!" They play it without verifying the specifics. The calculator asks: "After Bxf7+ Kxf7 Ng5+ Kg8, do I have enough for the bishop? What are Black's best defensive moves?" One extra question, backed by concrete calculation, changes the decision entirely. Deliberate practice means building the habit of asking that extra question every single move.
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
 <svg width="720" height="400" viewBox="0 0 720 400" fill="none" xmlns="http://www.w3.org/2000/svg">
