@@ -87,71 +87,86 @@ Compare that to what happens in an actual rapid game:
 
 ### The Blind Spot in Numbers
 
-<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg">
-  <rect width="700" height="420" fill="#1a1a2e" rx="8"/>
-  <text x="350" y="30" text-anchor="middle" fill="#f0f0f0" font-family="system-ui, sans-serif" font-size="15" font-weight="bold">Puzzle Accuracy vs. Game Accuracy by Rating Band</text>
+<div style="margin: 2rem 0; display: flex; justify-content: center;">
+<svg width="720" height="420" viewBox="0 0 720 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="puzBg" x1="0" y1="0" x2="720" y2="420" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#080d1a"/><stop offset="1" stop-color="#0d1425"/>
+    </linearGradient>
+    <radialGradient id="puzGlow" cx="360" cy="200" r="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6366f1" stop-opacity="0.04"/><stop offset="1" stop-color="#6366f1" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="720" height="420" rx="18" fill="url(#puzBg)"/>
+  <rect x="1" y="1" width="718" height="418" rx="17" stroke="white" stroke-opacity="0.05"/>
+  <rect width="720" height="420" rx="18" fill="url(#puzGlow)"/>
 
-  <!-- Chart area: x=80..670, y=50..350 -->
-  <line x1="80" y1="50" x2="80" y2="350" stroke="#555" stroke-width="1"/>
-  <line x1="80" y1="350" x2="670" y2="350" stroke="#555" stroke-width="1"/>
+  <text x="360" y="38" text-anchor="middle" fill="#f1f5f9" font-size="17" font-weight="700" font-family="system-ui">Puzzle Accuracy vs. Game Accuracy by Rating Band</text>
+  <text x="360" y="58" text-anchor="middle" fill="#94a3b8" font-size="12" font-family="system-ui">The gap is largest at lower ratings and narrows as players learn to spot tactics in-game</text>
+
+  <!-- Chart area -->
+  <line x1="80" y1="80" x2="80" y2="370" stroke="#1e293b" stroke-width="1"/>
+  <line x1="80" y1="370" x2="670" y2="370" stroke="#1e293b" stroke-width="1"/>
 
   <!-- Y-axis labels -->
-  <text x="72" y="350" text-anchor="end" fill="#888" font-family="sans-serif" font-size="11">0%</text>
-  <text x="72" y="275" text-anchor="end" fill="#888" font-family="sans-serif" font-size="11">25%</text>
-  <text x="72" y="200" text-anchor="end" fill="#888" font-family="sans-serif" font-size="11">50%</text>
-  <text x="72" y="125" text-anchor="end" fill="#888" font-family="sans-serif" font-size="11">75%</text>
-  <text x="72" y="53" text-anchor="end" fill="#888" font-family="sans-serif" font-size="11">100%</text>
+  <text x="70" y="374" text-anchor="end" fill="#64748b" font-size="11" font-family="system-ui">0%</text>
+  <text x="70" y="301" text-anchor="end" fill="#64748b" font-size="11" font-family="system-ui">25%</text>
+  <text x="70" y="228" text-anchor="end" fill="#64748b" font-size="11" font-family="system-ui">50%</text>
+  <text x="70" y="155" text-anchor="end" fill="#64748b" font-size="11" font-family="system-ui">75%</text>
+  <text x="70" y="82" text-anchor="end" fill="#64748b" font-size="11" font-family="system-ui">100%</text>
 
   <!-- Grid lines -->
-  <line x1="80" y1="275" x2="670" y2="275" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
-  <line x1="80" y1="200" x2="670" y2="200" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
-  <line x1="80" y1="125" x2="670" y2="125" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
+  <line x1="80" y1="301" x2="670" y2="301" stroke="#1e293b" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="80" y1="228" x2="670" y2="228" stroke="#1e293b" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="80" y1="155" x2="670" y2="155" stroke="#1e293b" stroke-width="1" stroke-dasharray="4,3"/>
 
-  <!-- Rating bands at x = 114, 193, 272, 352, 431, 510, 589, 668 -->
-  <!-- Puzzle accuracy (red): 68, 72, 76, 79, 82, 84, 86, 88 -->
-  <!-- Y = 350 - (acc * 3) -->
-  <polyline points="114,146 193,134 272,122 352,113 431,104 510,98 589,92 668,86" fill="none" stroke="#e74c3c" stroke-width="2.5"/>
+  <!-- Puzzle accuracy (red line) — starts high, rises slowly -->
+  <!-- Data: 600→68%, 800→72%, 1000→76%, 1200→79%, 1400→82%, 1600→84%, 1800→86%, 2000→88% -->
+  <!-- Y = 370 - (acc * 2.9) -->
+  <!-- X positions: 114, 193, 272, 352, 431, 510, 589, 668 -->
+  <polyline points="114,173 193,161 272,150 352,141 431,132 510,126 589,121 668,115" 
+    fill="none" stroke="#e13c48" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="114" cy="173" r="5" fill="#e13c48"/><text x="114" y="168" text-anchor="middle" fill="#e13c48" font-size="9" font-family="system-ui">68%</text>
+  <circle cx="193" cy="161" r="5" fill="#e13c48"/><text x="193" y="156" text-anchor="middle" fill="#e13c48" font-size="9" font-family="system-ui">72%</text>
+  <circle cx="272" cy="150" r="5" fill="#e13c48"/><text x="272" y="145" text-anchor="middle" fill="#e13c48" font-size="9" font-family="system-ui">76%</text>
+  <circle cx="352" cy="141" r="5" fill="#e13c48"/><text x="352" y="136" text-anchor="middle" fill="#e13c48" font-size="9" font-family="system-ui">79%</text>
+  <circle cx="431" cy="132" r="5" fill="#e13c48"/><text x="431" y="127" text-anchor="middle" fill="#e13c48" font-size="9" font-family="system-ui">82%</text>
+  <circle cx="510" cy="126" r="5" fill="#e13c48"/><text x="510" y="121" text-anchor="middle" fill="#e13c48" font-size="9" font-family="system-ui">84%</text>
+  <circle cx="589" cy="121" r="5" fill="#e13c48"/><text x="589" y="116" text-anchor="middle" fill="#e13c48" font-size="9" font-family="system-ui">86%</text>
+  <circle cx="668" cy="115" r="5" fill="#e13c48"/><text x="668" y="110" text-anchor="middle" fill="#e13c48" font-size="9" font-family="system-ui">88%</text>
 
-  <circle cx="114" cy="146" r="4" fill="#e74c3c"/>
-  <circle cx="193" cy="134" r="4" fill="#e74c3c"/>
-  <circle cx="272" cy="122" r="4" fill="#e74c3c"/>
-  <circle cx="352" cy="113" r="4" fill="#e74c3c"/>
-  <circle cx="431" cy="104" r="4" fill="#e74c3c"/>
-  <circle cx="510" cy="98" r="4" fill="#e74c3c"/>
-  <circle cx="589" cy="92" r="4" fill="#e74c3c"/>
-  <circle cx="668" cy="86" r="4" fill="#e74c3c"/>
-
-  <!-- Game accuracy (blue): 42, 48, 54, 60, 65, 70, 75, 79 -->
-  <polyline points="114,224 193,206 272,188 352,170 431,155 510,140 589,125 668,113" fill="none" stroke="#3498db" stroke-width="2.5"/>
-
-  <circle cx="114" cy="224" r="4" fill="#3498db"/>
-  <circle cx="193" cy="206" r="4" fill="#3498db"/>
-  <circle cx="272" cy="188" r="4" fill="#3498db"/>
-  <circle cx="352" cy="170" r="4" fill="#3498db"/>
-  <circle cx="431" cy="155" r="4" fill="#3498db"/>
-  <circle cx="510" cy="140" r="4" fill="#3498db"/>
-  <circle cx="589" cy="125" r="4" fill="#3498db"/>
-  <circle cx="668" cy="113" r="4" fill="#3498db"/>
+  <!-- Game accuracy (blue line) — starts low, rises faster -->
+  <!-- Data: 600→42%, 800→48%, 1000→54%, 1200→60%, 1400→65%, 1600→70%, 1800→75%, 2000→79% -->
+  <polyline points="114,248 193,231 272,213 352,196 431,182 510,167 589,153 668,141" 
+    fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="114" cy="248" r="5" fill="#3b82f6"/><text x="114" y="258" text-anchor="middle" fill="#3b82f6" font-size="9" font-family="system-ui">42%</text>
+  <circle cx="193" cy="231" r="5" fill="#3b82f6"/><text x="193" y="241" text-anchor="middle" fill="#3b82f6" font-size="9" font-family="system-ui">48%</text>
+  <circle cx="272" cy="213" r="5" fill="#3b82f6"/><text x="272" y="223" text-anchor="middle" fill="#3b82f6" font-size="9" font-family="system-ui">54%</text>
+  <circle cx="352" cy="196" r="5" fill="#3b82f6"/><text x="352" y="206" text-anchor="middle" fill="#3b82f6" font-size="9" font-family="system-ui">60%</text>
+  <circle cx="431" cy="182" r="5" fill="#3b82f6"/><text x="431" y="192" text-anchor="middle" fill="#3b82f6" font-size="9" font-family="system-ui">65%</text>
+  <circle cx="510" cy="167" r="5" fill="#3b82f6"/><text x="510" y="177" text-anchor="middle" fill="#3b82f6" font-size="9" font-family="system-ui">70%</text>
+  <circle cx="589" cy="153" r="5" fill="#3b82f6"/><text x="589" y="163" text-anchor="middle" fill="#3b82f6" font-size="9" font-family="system-ui">75%</text>
+  <circle cx="668" cy="141" r="5" fill="#3b82f6"/><text x="668" y="151" text-anchor="middle" fill="#3b82f6" font-size="9" font-family="system-ui">79%</text>
 
   <!-- X-axis labels -->
-  <text x="114" y="370" text-anchor="middle" fill="#888" font-family="sans-serif" font-size="10">600</text>
-  <text x="193" y="370" text-anchor="middle" fill="#888" font-family="sans-serif" font-size="10">800</text>
-  <text x="272" y="370" text-anchor="middle" fill="#888" font-family="sans-serif" font-size="10">1000</text>
-  <text x="352" y="370" text-anchor="middle" fill="#888" font-family="sans-serif" font-size="10">1200</text>
-  <text x="431" y="370" text-anchor="middle" fill="#888" font-family="sans-serif" font-size="10">1400</text>
-  <text x="510" y="370" text-anchor="middle" fill="#888" font-family="sans-serif" font-size="10">1600</text>
-  <text x="589" y="370" text-anchor="middle" fill="#888" font-family="sans-serif" font-size="10">1800</text>
-  <text x="668" y="370" text-anchor="middle" fill="#888" font-family="sans-serif" font-size="10">2000</text>
+  <text x="114" y="392" text-anchor="middle" fill="#64748b" font-size="11" font-family="system-ui">600</text>
+  <text x="193" y="392" text-anchor="middle" fill="#64748b" font-size="11" font-family="system-ui">800</text>
+  <text x="272" y="392" text-anchor="middle" fill="#64748b" font-size="11" font-family="system-ui">1000</text>
+  <text x="352" y="392" text-anchor="middle" fill="#64748b" font-size="11" font-family="system-ui">1200</text>
+  <text x="431" y="392" text-anchor="middle" fill="#64748b" font-size="11" font-family="system-ui">1400</text>
+  <text x="510" y="392" text-anchor="middle" fill="#64748b" font-size="11" font-family="system-ui">1600</text>
+  <text x="589" y="392" text-anchor="middle" fill="#64748b" font-size="11" font-family="system-ui">1800</text>
+  <text x="668" y="392" text-anchor="middle" fill="#64748b" font-size="11" font-family="system-ui">2000</text>
 
-  <!-- Axis title -->
-  <text x="375" y="395" text-anchor="middle" fill="#aaa" font-family="sans-serif" font-size="12">Rapid Rating</text>
+  <text x="375" y="412" text-anchor="middle" fill="#64748b" font-size="11" font-family="system-ui">Rapid Rating</text>
 
   <!-- Legend -->
-  <rect x="470" y="45" width="12" height="12" fill="#e74c3c" rx="2"/>
-  <text x="487" y="55" fill="#ccc" font-family="sans-serif" font-size="12">Puzzle Accuracy</text>
-  <rect x="470" y="63" width="12" height="12" fill="#3498db" rx="2"/>
-  <text x="487" y="73" fill="#ccc" font-family="sans-serif" font-size="12">Game Accuracy</text>
+  <rect x="430" y="70" width="14" height="14" rx="3" fill="#e13c48"/>
+  <text x="450" y="82" fill="#f1f5f9" font-size="13" font-family="system-ui">Puzzle Accuracy</text>
+  <rect x="580" y="70" width="14" height="14" rx="3" fill="#3b82f6"/>
+  <text x="600" y="82" fill="#f1f5f9" font-size="13" font-family="system-ui">Game Accuracy</text>
 </svg>
+</div>
 
 The chart above shows estimated accuracy trends across rating bands. Several patterns stand out:
 
