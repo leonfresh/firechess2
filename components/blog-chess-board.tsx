@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Chessboard } from "@/components/chessboard-compat";
 import { Chess } from "chess.js";
 import { stockfishClient } from "@/lib/stockfish-client";
+import { MoveBadge } from "@/components/move-badge";
 import { MOVE_CLASSIFICATION_SHORT_LABELS } from "@/lib/move-quality";
 import type { MoveClassification } from "@/lib/move-quality";
 
@@ -26,6 +27,16 @@ const BADGE_STYLES: Record<MoveClassification, { bg: string; text: string; borde
   inaccuracy: { bg: "rgba(245,158,11,0.15)", text: "#fbbf24", border: "rgba(245,158,11,0.25)" },
   mistake: { bg: "rgba(249,115,22,0.15)", text: "#fb923c", border: "rgba(249,115,22,0.25)" },
   blunder: { bg: "rgba(239,68,68,0.15)", text: "#f87171", border: "rgba(239,68,68,0.3)" },
+};
+
+const BADGE_SQ_ALPHA: Record<MoveClassification, { from: string; to: string }> = {
+  brilliant: { from: "rgba(34,211,238,0.18)", to: "rgba(34,211,238,0.35)" },
+  best:      { from: "rgba(52,211,153,0.18)", to: "rgba(52,211,153,0.35)" },
+  good:      { from: "rgba(110,231,183,0.14)", to: "rgba(110,231,183,0.28)" },
+  book:      { from: "rgba(203,213,225,0.10)", to: "rgba(203,213,225,0.20)" },
+  inaccuracy:{ from: "rgba(251,191,36,0.18)", to: "rgba(251,191,36,0.35)" },
+  mistake:   { from: "rgba(251,146,60,0.18)", to: "rgba(251,146,60,0.35)" },
+  blunder:   { from: "rgba(248,113,113,0.18)", to: "rgba(248,113,113,0.35)" },
 };
 
 export function BlogChessBoard({
@@ -181,6 +192,35 @@ export function BlogChessBoard({
     }).filter(Boolean) as [string, string, string][];
   }, [arrows]);
 
+  // Square highlight styles based on badge + first arrow
+  const squareStyles = useMemo(() => {
+    if (!parsedArrows?.length || !badge) return undefined;
+    const first = parsedArrows[0];
+    const alpha = BADGE_SQ_ALPHA[badge] ?? BADGE_SQ_ALPHA.best;
+    return {
+      [first[0]]: { backgroundColor: alpha.from },
+      [first[1]]: { backgroundColor: alpha.to },
+    } as Record<string, React.CSSProperties>;
+  }, [parsedArrows, badge]);
+
+  // Custom square renderer — shows MoveBadge on the destination square
+  const firstArrowTo = parsedArrows?.[0]?.[1];
+  const customSquare = useMemo(() => {
+    if (!firstArrowTo || !badge) return undefined;
+    const BadgeOverlay = (props: any) => {
+      const sq = props?.square as string | undefined;
+      const show = sq === firstArrowTo;
+      return (
+        <div style={props?.style} className="relative h-full w-full">
+          {props?.children}
+          {show ? <MoveBadge classification={badge} variant="corner" /> : null}
+        </div>
+      );
+    };
+    BadgeOverlay.displayName = "BlogBadgeOverlay";
+    return BadgeOverlay as any;
+  }, [firstArrowTo, badge]);
+
   return (
     <div className="my-8 flex flex-col items-center gap-3">
       <div className="relative overflow-hidden rounded-xl border border-white/[0.08] shadow-lg" style={{ maxWidth: 420, width: "100%" }}>
@@ -193,21 +233,9 @@ export function BlogChessBoard({
           customDarkSquareStyle={{ backgroundColor: "#779952" }}
           customLightSquareStyle={{ backgroundColor: "#edeed1" }}
           customArrows={parsedArrows}
+          customSquareStyles={squareStyles}
+          customSquare={customSquare}
         />
-        {/* Badge overlay */}
-        {badge && (
-          <span
-            className="pointer-events-none absolute right-1.5 top-1.5 z-40 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-bold shadow-lg backdrop-blur-sm"
-            style={{
-              background: BADGE_STYLES[badge].bg,
-              color: BADGE_STYLES[badge].text,
-              border: `1.5px solid ${BADGE_STYLES[badge].border}`,
-            }}
-          >
-            <span className="font-black text-sm leading-none">{MOVE_CLASSIFICATION_SHORT_LABELS[badge]}</span>
-            <span className="text-[10px] uppercase tracking-wider">{badge}</span>
-          </span>
-        )}
       </div>
 
       {/* Controls */}
