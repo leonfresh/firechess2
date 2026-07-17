@@ -76,13 +76,13 @@ Place a white knight on d4 and a black pawn on f7. Mentally move the knight to c
 
 The key at this level is to maintain the positions of both pieces simultaneously — including pieces that are not moving. When the knight moves, the pawn stays where it is until captured.
 
-<chess-position fen="rnbqkb1r/pppp1ppp/4n3/4p3/4P3/3P4/PPP2PPP/RNBQKBNR w KQkq - 0 3" caption="Blindfold Level 2 exercise: visualise this French Defence position with knight and pawn, then mentally play Nf3-d4-f5 attacking f7 — keep both white and black pieces in your mind" orientation="white">
+<chess-position fen="rnbqkb1r/pppp1ppp/4n3/4p3/4P3/3P4/PPP2PPP/RNBQKBNR w KQkq - 0 3" caption="Blindfold Level 2 exercise: visualise this French Defence position with knight and pawn, then mentally play Nf3-d4-f5 attacking f7 — keep both white and black pieces in your mind" orientation="white" badge="best" arrows="g1f3:green">
 </chess-position>
 ### Level 3: Full Position (Days 8-14)
 
 Take a simple endgame position and try to calculate a 4-move variation without moving the pieces. For example:
 
-<chess-position fen="8/3k4/8/8/8/5K2/6R1/8 w - - 0 1" caption="Visualisation Level 3 — White to move. Calculate the winning plan without moving the pieces: Rg7+ Ke8, then what? Keep the king, rook, and pawn in your mental board through the whole sequence" orientation="white">
+<chess-position fen="8/3k4/8/8/8/5K2/6R1/8 w - - 0 1" caption="Visualisation Level 3 — White to move. Calculate the winning plan without moving the pieces: Rg7+ Ke8, then what? Keep the king, rook, and pawn in your mental board through the whole sequence" orientation="white" badge="best" arrows="g2e2:green">
 </chess-position>
 In this rook endgame, the winning plan is to cut off the black king with the rook. Without touching the board, calculate: 1.Rg7+ Ke8 2.Ke4 Kf8 3.Rg5 Ke8 4.Ke5 Kf8 5.Rg3 Ke8 6.Ke6 Kf8 7.Rg8#. If you can see this whole sequence in your mind before checking with a real board, you have graduated from Level 3.
 
@@ -90,7 +90,7 @@ In this rook endgame, the winning plan is to cut off the black king with the roo
 
 Now you train with positions that have branching variations. This is the hardest level because you must hold multiple images in your mind and switch between them.
 
-<chess-position fen="8/8/8/3k4/2P5/2K5/8/8 b - - 0 1" caption="Visualisation Level 4 — Black to move. Two branches: if ...Kc6, White has Kd4 Kd6 c5+!; if ...Ke6, White has Kd4 Kd6 c5! again. See both sequences without touching the board" analysis="true" orientation="white">
+<chess-position fen="8/8/8/3k4/2P5/2K5/8/8 b - - 0 1" caption="Visualisation Level 4 — Black to move. Two branches: if ...Kc6, White has Kd4 Kd6 c5+!; if ...Ke6, White has Kd4 Kd6 c5! again. See both sequences without touching the board" analysis="true" orientation="white" badge="best" arrows="d5c5:green">
 </chess-position>
 In this position, Black has two king moves: ...Kc6 and ...Ke6. Each creates a different sequence. Visualise the pawn race for both branches. The opposition decides the outcome — White wins because the black king on d5 has no reserve tempo.
 
@@ -126,7 +126,7 @@ For the next 20 games you play (or analyse), force yourself to calculate every v
 
 Here is a structured way to practise:
 
-<chess-position fen="r2q1rk1/ppp2ppp/2np4/2b1p3/2B1P1b1/2NP1N2/PPP2PPP/R1BQ1RK1 w - - 0 8" caption="Hands-free analysis practice — White to move. Instead of moving the pieces on a board, calculate: what happens after 1.h3 Bxf3 2.Qxf3? Is White better? What if 1.Be3 instead? See the whole variation before touching anything" analysis="true" orientation="white">
+<chess-position fen="r2q1rk1/ppp2ppp/2np4/2b1p3/2B1P1b1/2NP1N2/PPP2PPP/R1BQ1RK1 w - - 0 8" caption="Hands-free analysis practice — White to move. Instead of moving the pieces on a board, calculate: what happens after 1.h3 Bxf3 2.Qxf3? Is White better? What if 1.Be3 instead? See the whole variation before touching anything" analysis="true" orientation="white" badge="best" arrows="h2h3:green">
 </chess-position>
 In this Italian Game middlegame, White has several plans. Before moving any pieces, try to calculate the consequences of:
 
@@ -158,7 +158,7 @@ Once you internalise the quadrants, you can know the colour of any square instan
 
 Knights change square colour with every move. This means a knight on a light square attacks only dark squares, and vice versa. When training visualisation, practise visualising the knight's "web" of reachable squares — all of which are the opposite colour of the knight's current square.
 
-<chess-position fen="r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4" caption="Coordinate training visualisation — look at the knights. White's Nf3 attacks g5, h4, d4, e5, g1, h2 (all light squares). Black's Nc6 attacks a5, a7, b8, d8, e7, b4 (all dark squares). Can you see the colour pattern without tracing each move?" orientation="white">
+<chess-position fen="r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4" caption="Coordinate training visualisation — look at the knights. White's Nf3 attacks g5, h4, d4, e5, g1, h2 (all light squares). Black's Nc6 attacks a5, a7, b8, d8, e7, b4 (all dark squares). Can you see the colour pattern without tracing each move?" orientation="white" badge="best" arrows="b1c3:green">
 </chess-position>
 The knight exercise here: the white knight on f3 attacks six squares (g5, h4, d4, e5, g1, h2). Every single one of these is a **light square** because the knight started on a dark square (f3). If you memorise this rule — knights invert colour every move — you can instantly know the colour of any knight destination, which dramatically speeds up tactical visualisation.
 
@@ -180,7 +180,7 @@ Take a random position from a grandmaster game. Study it for 30 seconds. Then lo
 
 Do this for 3-5 positions per session. Over time, the level of detail you can recall will increase from "about six pieces" to "the entire position."
 
-<chess-position fen="r1bq1rk1/pppp1ppp/2n2n2/2b1p3/2B1P3/2NP1N2/PPP2PPP/R1BQK2R w KQ - 0 6" caption="Mystery Square exercise — study this Italian Game position for 30 seconds, then look away and reconstruct: pawn structure by file, bishop diagonals, knight destination squares, and queen's unobstructed paths" orientation="white">
+<chess-position fen="r1bq1rk1/pppp1ppp/2n2n2/2b1p3/2B1P3/2NP1N2/PPP2PPP/R1BQK2R w KQ - 0 6" caption="Mystery Square exercise — study this Italian Game position for 30 seconds, then look away and reconstruct: pawn structure by file, bishop diagonals, knight destination squares, and queen's unobstructed paths" orientation="white" badge="best" arrows="c1g5:green">
 </chess-position>
 Here is the position. Spend 30 seconds studying it. Now look away and answer: what squares does the white queen on d1 control? (Answer: d2, e1, e2, f1, and ...the long diagonal through c2-b3-a4 is blocked by the pawn on c2. The queen also covers d1-a1-h5 diagonal via e2, f3, g4, h5.)
 
@@ -196,7 +196,7 @@ Take a position and calculate a 3-move sequence. Now, instead of evaluating the 
 
 For example, start from a sharp Sicilian position:
 
-<chess-position fen="rnbqkb1r/pppp1ppp/4n3/4p3/4P3/3P4/PPP2PPP/RNBQKBNR w KQkq - 0 3" caption="From-here calculation — mentally play 1.d4 exd4 2.Qxd4 Nc6 3.Qe3 then recalculate from the resulting position. Can you hold a 9-move sequence in your mind?" orientation="white">
+<chess-position fen="rnbqkb1r/pppp1ppp/4n3/4p3/4P3/3P4/PPP2PPP/RNBQKBNR w KQkq - 0 3" caption="From-here calculation — mentally play 1.d4 exd4 2.Qxd4 Nc6 3.Qe3 then recalculate from the resulting position. Can you hold a 9-move sequence in your mind?" orientation="white" badge="best" arrows="g1f3:green">
 </chess-position>
 **Level 1:** Calculate: 1.d4 exd4 2.Qxd4 Nc6 3.Qe3. Stop. Now from **that** position, calculate Black's best reply: 3...Bc5 4.Qg3 Nf6 5.e5 Ng4. Stop. Now from **that** position, calculate: 6.Qf4 d6 7.exd6 Bxd6 8.Qg3 Nge5 — can you still see where every piece is?
 

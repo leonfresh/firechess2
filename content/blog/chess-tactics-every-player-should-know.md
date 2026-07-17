@@ -39,7 +39,7 @@ A fork occurs when a single piece attacks two or more enemy pieces simultaneousl
 
 Knights are the ultimate forking weapon because their unusual movement pattern makes them hard to track. The knight fork is so common that many players call it "the horse fork."
 
-<chess-position fen="4k3/1rq5/3N4/8/8/8/5PPP/6K1 b - - 0 1" caption="Black to move: the knight on d6 forks the black king on e8 and the rook on b7." orientation="white" analysis="true">
+<chess-position fen="4k3/1rq5/3N4/8/8/8/5PPP/6K1 b - - 0 1" caption="Black to move: the knight on d6 forks the black king on e8 and the rook on b7." orientation="white" analysis="true" badge="best" arrows="c7d6:green">
 </chess-position>
 In the position above, white's knight on d6 attacks both the black king (e8) and the black rook (b7). Black must move the king out of check, and then the knight captures the rook on b7 next move. This is a textbook knight fork — the knight simultaneously attacks the enemy king (forcing a response) and a valuable piece.
 
@@ -49,7 +49,7 @@ The key to spotting knight forks is to look for squares where your knight can at
 
 Pawns can also fork, though differently. A pawn fork typically happens when a pawn advances and attacks two pieces diagonally.
 
-<chess-position fen="r1bqkb1r/ppp1pppp/2np4/4P3/2B5/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 4" caption="White's pawn on e5 forks the black knights on d6 and f6. Black will lose one of them." orientation="white" analysis="true">
+<chess-position fen="r1bqkb1r/ppp1pppp/2np4/4P3/2B5/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 4" caption="White's pawn on e5 forks the black knights on d6 and f6. Black will lose one of them." orientation="white" analysis="true" badge="best" arrows="d6e5:green">
 </chess-position>
 Pawn forks are especially dangerous because pawns are "disguised" — beginners focus on the pieces, not the pawns. Always check what your opponent's pawns attack before you place a piece on a square that a pawn can reach.
 
@@ -67,7 +67,7 @@ A pin occurs when a piece cannot move without exposing a more valuable piece beh
 
 An *absolute pin* pins a piece to the king. The pinned piece legally cannot move because doing so would leave the king in check.
 
-<chess-position fen="rnbq1rk1/pppp1ppp/4pn2/8/1bPP4/2N5/PP2PPPP/R1BQKBNR w KQ - 0 5" caption="Black's bishop on b4 absolutely pins white's knight on c3 to the white king. The knight cannot move." orientation="white" analysis="true">
+<chess-position fen="rnbq1rk1/pppp1ppp/4pn2/8/1bPP4/2N5/PP2PPPP/R1BQKBNR w KQ - 0 5" caption="Black's bishop on b4 absolutely pins white's knight on c3 to the white king. The knight cannot move." orientation="white" analysis="true" badge="best" arrows="e2e3:green">
 </chess-position>
 In this position, the knight on c3 is absolutely pinned by the bishop on b4. The knight cannot move — any move would expose the white king to check from the bishop. This means the knight no longer defends any squares, including the e4 pawn (if it were there). Absolute pins are powerful because they neutralize a piece completely.
 
@@ -75,7 +75,7 @@ In this position, the knight on c3 is absolutely pinned by the bishop on b4. The
 
 A *relative pin* pins a piece to something valuable that isn't the king — typically a queen or rook. The pinned piece *can* legally move, but doing so would allow the opponent to capture the more valuable piece behind it.
 
-<chess-position fen="rnbqkb1r/pppp1ppp/4pn2/8/2PP4/2N5/PP2PPPP/R1BQKBNR w KQkq - 0 4" caption="White's bishop on g5 relatively pins black's knight on f6 to the queen on e7." orientation="white" analysis="true">
+<chess-position fen="rnbqkb1r/pppp1ppp/4pn2/8/2PP4/2N5/PP2PPPP/R1BQKBNR w KQkq - 0 4" caption="White's bishop on g5 relatively pins black's knight on f6 to the queen on e7." orientation="white" analysis="true" badge="best" arrows="e2e4:green">
 </chess-position>
 Here, the bishop on g5 pins the knight on f6 to the queen on e7. The knight *could* move, but if it does, the bishop captures the queen. In practice, the knight is just as paralyzed as in an absolute pin — but there's a key difference: sometimes you can "ignore" a relative pin by interposing a piece or by accepting the material loss for a greater compensation (like checkmate).
 
@@ -91,7 +91,7 @@ FireChess's [glossary](/glossary) has detailed explanations of both absolute and
 
 A skewer is like a pin in reverse. Instead of a valuable piece behind a less valuable one, the *more valuable* piece is in front, and when it moves, the less valuable piece behind it is captured. Skewers most often involve the king or queen.
 
-<chess-position fen="6k1/5qpp/8/8/8/8/5RPP/6K1 w - - 0 1" caption="White to play: Rf8+ skewers the black king to the queen behind it." orientation="white" analysis="true">
+<chess-position fen="6k1/5qpp/8/8/8/8/5RPP/6K1 w - - 0 1" caption="White to play: Rf8+ skewers the black king to the queen behind it." orientation="white" analysis="true" badge="best" arrows="f2f7:green">
 </chess-position>
 In this position, white plays **Rf8+!** The black king must move out of check (to h7), after which the rook captures the queen on f7. This is a skewer — the king is forced to move, exposing the piece behind it.
 
@@ -114,7 +114,7 @@ This distinction matters for calculation: in a skewer, the front piece is forced
 
 A *discovered attack* happens when you move one piece, revealing an attack from a piece behind it. This is one of the most powerful tactical motifs because the moving piece can make a threat while the discovered piece attacks something else — your opponent can only respond to one.
 
-<chess-position fen="r3k2r/pppp1ppp/2n5/8/3R4/3N4/PPP2PPP/R3K2R w KQkq - 0 8" caption="White's knight on d3 blocks the rook on d4 from checking the king. If the knight moves, the rook discovers check." orientation="white" analysis="true">
+<chess-position fen="r3k2r/pppp1ppp/2n5/8/3R4/3N4/PPP2PPP/R3K2R w KQkq - 0 8" caption="White's knight on d3 blocks the rook on d4 from checking the king. If the knight moves, the rook discovers check." orientation="white" analysis="true" badge="best" arrows="d4e4:green">
 </chess-position>
 In this position, white's knight on d3 blocks the rook's line to the black king on e8. If white plays **Nc5** (or any knight move), the rook on d4 discovers check — the knight might also create a secondary threat. A discovered attack is even stronger when the moving piece itself makes a threat (like attacking the queen), forcing the opponent to deal with one threat while the discovered attack gets through.
 
@@ -122,7 +122,7 @@ In this position, white's knight on d3 blocks the rook's line to the black king 
 
 A *double check* is a special type of discovered attack where **both** the moving piece and the discovered piece give check simultaneously. Double checks are uniquely powerful because the only legal response is to move the king — you cannot block two checks at once, and you cannot capture both checking pieces.
 
-<chess-position fen="r1b1k2r/pppN1ppp/2n5/8/8/1B6/PPPP1PPP/R3K2R w KQkq - 0 9" caption="White to play: Nf6+ is a devastating double check — the knight attacks the king, and the bishop on b3 discovers check." orientation="white" analysis="true">
+<chess-position fen="r1b1k2r/pppN1ppp/2n5/8/8/1B6/PPPP1PPP/R3K2R w KQkq - 0 9" caption="White to play: Nf6+ is a devastating double check — the knight attacks the king, and the bishop on b3 discovers check." orientation="white" analysis="true" badge="best" arrows="d7c5:green">
 </chess-position>
 After **1. Nf6+!**, black receives a double check from both the knight on f6 and the bishop on b3. Black's only legal response is to move the king (to f8). This often leads to forced checkmate or significant material gain because the double check gives the opponent virtually no options.
 
@@ -132,7 +132,7 @@ After **1. Nf6+!**, black receives a double check from both the knight on f6 and
 
 *Zwischenzug* — German for "intermediate move" — is a tactic where instead of playing the expected recapture or defense, you insert a move that improves your position before following through. It's one of the most satisfying tactics to pull off because it catches opponents who play on autopilot.
 
-<chess-position fen="r1bqk2r/pppp1ppp/2n5/8/1bBPP3/2N2N2/PPP2PPP/R1BQK2R b KQkq - 0 7" caption="Black to play: instead of capturing on c3, black plays Nxe4! — a zwischenzug that grabs a pawn before dealing with the pin." orientation="black" analysis="true">
+<chess-position fen="r1bqk2r/pppp1ppp/2n5/8/1bBPP3/2N2N2/PPP2PPP/R1BQK2R b KQkq - 0 7" caption="Black to play: instead of capturing on c3, black plays Nxe4! — a zwischenzug that grabs a pawn before dealing with the pin." orientation="black" analysis="true" badge="best" arrows="d7d6:green">
 </chess-position>
 In this Italian Game position, black has a bishop on b4 pinning the knight on c3. The natural move would be **Bxc3**, capturing the knight. But black has a better idea: **7... Nxe4!** — a zwischenzug. This move captures the e4 pawn while threatening the white queen. If white recaptures with **8. Nxe4**, then **8... Bxc3+** wins a second piece (a discovered fork from the check). If instead **8. Bxf7+? Kxf7**, black still holds the extra pawn and the pin.
 
@@ -144,7 +144,7 @@ The zwischenzug requires you to think: "What if I don't respond the way they exp
 
 A piece that defends another piece is a "defender." If you can capture or chase away the defender, the formerly defended piece becomes undefended and can be captured. This is one of the most common tactical ideas because every attacked piece has a defender, and every defender has a vulnerability.
 
-<chess-position fen="r1bq1rk1/ppp2ppp/2np4/8/2B1P3/2N2N2/PPP2PPP/R1BQ1RK1 w - - 0 10" caption="White to play: Bxf7+ removes the defender of the knight on d6." orientation="white" analysis="true">
+<chess-position fen="r1bq1rk1/ppp2ppp/2np4/8/2B1P3/2N2N2/PPP2PPP/R1BQ1RK1 w - - 0 10" caption="White to play: Bxf7+ removes the defender of the knight on d6." orientation="white" analysis="true" badge="best" arrows="c1g5:green">
 </chess-position>
 In this position, the black knight on d6 is defended by the bishop on e7 (and potentially other pieces). White plays **1. Bxf7+!** The black king must recapture or move. If **1... Kxf7**, the bishop is gone, but more importantly, the knight on d6 has lost a key defender. If **2. Ne5+** (forking king and knight), black is in trouble.
 
@@ -156,7 +156,7 @@ In this position, the black knight on d6 is defended by the bishop on e7 (and po
 
 The back rank mate is the most common checkmate pattern in beginner chess. When a king is trapped behind its own pawns on the back rank, a rook or queen on the same rank delivers checkmate. The king has no escape because its own pawns block the squares.
 
-<chess-position fen="6k1/5ppp/8/8/8/8/5PPP/3Q2K1 w - - 0 1" caption="White to play: Qd8# is a back-rank checkmate. The black king cannot escape." orientation="white" analysis="true">
+<chess-position fen="6k1/5ppp/8/8/8/8/5PPP/3Q2K1 w - - 0 1" caption="White to play: Qd8# is a back-rank checkmate. The black king cannot escape." orientation="white" analysis="true" badge="best" arrows="d1d8:green">
 </chess-position>
 In this position, black's king is trapped behind its own pawns on f7, g7, and h7. White plays **1. Qd8#** — checkmate. The queen attacks the back rank, and the king cannot move forward (blocked by pawns) or sideways (the queen controls h8 and f8).
 
@@ -176,7 +176,7 @@ The back rank mate is so common that every player needs a prevention strategy. H
 
 Deflection is a tactic where you force an enemy piece away from a critical defensive duty. By sacrificing material (or threatening something irresistible), you "deflect" the defender away from the square it's protecting.
 
-<chess-position fen="r1b1q1k1/ppp2ppp/2np4/5N2/2B1P3/8/PPP2PPP/R1BQ1RK1 w - - 0 11" caption="White to play: Nxg7! deflects the g7 pawn, opening the h6 square for the queen." orientation="white" analysis="true">
+<chess-position fen="r1b1q1k1/ppp2ppp/2np4/5N2/2B1P3/8/PPP2PPP/R1BQ1RK1 w - - 0 11" caption="White to play: Nxg7! deflects the g7 pawn, opening the h6 square for the queen." orientation="white" analysis="true" badge="best" arrows="f5g3:green">
 </chess-position>
 In this position, white's knight on f5 eyes the g7 pawn. White plays **1. Nxg7!** sacrificing the knight. If black captures with **1... Kxg7** or **1... Rxg7**, the pawn on g7 is gone, and **2. Qh6** threatens Qh8# — a checkmate black can only prevent by giving up the queen.
 
@@ -184,7 +184,7 @@ In this position, white's knight on f5 eyes the g7 pawn. White plays **1. Nxg7!*
 
 A piece that must defend two or more targets simultaneously is "overloaded" — it can't possibly defend both. Overloading is a form of deflection where you attack two things that the same piece must protect.
 
-<chess-position fen="r1bq1rk1/pppp1ppp/2n2n2/2b1P3/2B5/2NP4/PPP2PPP/R1BQ1RK1 b - - 0 7" caption="Black's queen defends both the knight on c5 and the knight on f6. White can overload it." orientation="white" analysis="true">
+<chess-position fen="r1bq1rk1/pppp1ppp/2n2n2/2b1P3/2B5/2NP4/PPP2PPP/R1BQ1RK1 b - - 0 7" caption="Black's queen defends both the knight on c5 and the knight on f6. White can overload it." orientation="white" analysis="true" badge="best" arrows="c6e5:green">
 </chess-position>
 In this position, black's queen is overloaded: it defends both the knight on c5 and the knight on f6. If white attacks one knight (say with **d4**, attacking the bishop on c5), the queen must choose which piece to cover. No matter which one the queen guards, white wins material by capturing the other.
 

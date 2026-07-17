@@ -52,7 +52,7 @@ The fix is simple: before calculating _any_ line, spend 30-60 seconds listing ev
 
 ### Practice Position
 
-<chess-position fen="r1bq1rk1/ppp2ppp/2np1n2/2b1p3/2B1P3/2NP1N2/PPP1BPPP/R2Q1RK1 w - - 0 1" caption="White to move — generate candidate moves before calculating" orientation="white">
+<chess-position fen="r1bq1rk1/ppp2ppp/2np1n2/2b1p3/2B1P3/2NP1N2/PPP1BPPP/R2Q1RK1 w - - 0 1" caption="White to move — generate candidate moves before calculating" orientation="white" badge="best" arrows="c3a4:green">
 </chess-position>
 White has many reasonable plans in this Italian Game middlegame. A player who jumps straight into calculating "d4" might miss a simpler improvement.
 
@@ -86,7 +86,7 @@ In a position with a forced tactical win, your non-forcing candidate (like a qui
 
 ### Practice Position
 
-<chess-position fen="r1bqkb1r/ppp2ppp/2np4/4p3/2BnP2N/2NP4/PPP2PPP/R1BQK2R w KQkq - 0 1" caption="White to move — forcing moves first: Nf5 creates multiple threats" orientation="white">
+<chess-position fen="r1bqkb1r/ppp2ppp/2np4/4p3/2BnP2N/2NP4/PPP2PPP/R1BQK2R w KQkq - 0 1" caption="White to move — forcing moves first: Nf5 creates multiple threats" orientation="white" badge="best" arrows="h4f3:green">
 </chess-position>
 White's knight on h4 can move to several squares, but the most forcing move is **Nf5**. Let's see why:
 
@@ -127,7 +127,7 @@ The tree-of-variations method, popularized by Soviet grandmaster Alexander Kotov
 
 ### Practice Position
 
-<chess-position fen="r1bq1rk1/pppp1ppp/2n2n2/2b1p3/2B1P3/2NP1N2/PPP2PPP/R1BQ1RK1 w - - 0 1" caption="White to move — build a tree from candidate d4 or Re1" orientation="white">
+<chess-position fen="r1bq1rk1/pppp1ppp/2n2n2/2b1p3/2B1P3/2NP1N2/PPP2PPP/R1BQ1RK1 w - - 0 1" caption="White to move — build a tree from candidate d4 or Re1" orientation="white" badge="best" arrows="a2a3:green">
 </chess-position>
 Let's apply the tree method to this Italian Game position. Our top two candidates are **Re1** (central pressure) and **d4** (immediate central break).
 
@@ -167,7 +167,7 @@ Ask three questions in order:
 
 ### Practice Position
 
-<chess-position fen="r1bq1rk1/ppp2ppp/2np4/2b1p1N1/2BnP3/3P4/PPP2PPP/R1BQ1RK1 w - - 0 1" caption="White to move — apply the blunder check before committing" orientation="white">
+<chess-position fen="r1bq1rk1/ppp2ppp/2np4/2b1p1N1/2BnP3/3P4/PPP2PPP/R1BQ1RK1 w - - 0 1" caption="White to move — apply the blunder check before committing" orientation="white" badge="blunder" arrows="d1h5:green">
 </chess-position>
 White has a tempting fork: **Nxf7?** wins a pawn, right? Let's apply the blunder check:
 
@@ -195,7 +195,7 @@ Do this exercise for 10 minutes daily:
 
 **Level 2 (Days 11-20):** Take a simple position — a king and pawn endgame is perfect. Calculate the outcome of each legal move without touching the pieces. Write down your conclusion, then check by moving the pieces.
 
-<chess-position fen="4k3/5ppp/8/8/8/4K3/5PPP/8 w - - 0 1" caption="King and pawn endgame — calculate the race without moving pieces" orientation="white">
+<chess-position fen="4k3/5ppp/8/8/8/4K3/5PPP/8 w - - 0 1" caption="King and pawn endgame — calculate the race without moving pieces" orientation="white" badge="best" arrows="e3d4:green">
 </chess-position>
 In this position, calculate: if 1.Ke4 Ke7 2.Ke5 Kf7 3.Kf5 Kg7 4.Kg5 — does White win? What if Black plays 1...Kd7 instead?
 
