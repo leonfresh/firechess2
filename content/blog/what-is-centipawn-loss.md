@@ -241,7 +241,7 @@ FireChess badge at this level: **Blunder (??)** — the red badge.
 
 At this level, you've probably dropped a full piece or allowed a decisive attack. A 300+ centipawn loss almost always means you hung a knight or bishop, missed a forced mate, or walked into a devastating tactic.
 
-<chess-position fen="rnb1kbnr/pppp1ppp/8/4q3/2B1P3/8/PPPP1PPP/RNBQK1NR w KQkq - 0 4" caption="Black's queen has just been captured by the pawn on e4 after Black blundered by moving it to e5 without considering the pawn capture. Centipawn loss for Black: +950 cp — a full queen lost." analysis="true" badge="blunder" arrows="e4e5:red"></chess-position>
+<chess-position fen="rnb1kbnr/pppp1ppp/8/3q4/2B1P3/8/PPPP1PPP/RNBQK1NR w KQkq - 0 4" caption="Black's queen has just been captured by the pawn on e4 after Black blundered by moving it to d5 without considering the pawn capture on that square. Centipawn loss for Black: +950 cp — a full queen lost." analysis="true" badge="blunder" arrows="e4d5:red"></chess-position>
 
 ---
 
