@@ -32,7 +32,7 @@ The analysis board is where most improvement happens. You play a game, review it
 
 Lichess offers a full-featured analysis board with Stockfish 18 (the latest version of the strongest chess engine in the world). You can step through any game, see engine evaluations in centipawns, view the top engine lines, and toggle the evaluation graph. All of this is free, unlimited, and available in your browser or mobile app.
 
-<chess-position fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" caption="The analysis board on both platforms starts here, but the depth of analysis differs significantly." />
+<chess-position fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" caption="The analysis board on both platforms starts here, but the depth of analysis differs significantly."></chess-position>
 
 One of Lichess's standout features is **Cloud Analysis**. When you finish a game, Lichess runs it through Stockfish on their servers and highlights every mistake, inaccuracy, and blunder with a color-coded bar. The computer analysis is nearly instantaneous for most positions because the results are cached from thousands of previous analyses. You get unlimited cloud analysis for free.
 
@@ -44,7 +44,7 @@ Chess.com's analysis board is also powered by Stockfish, but the depth is tied t
 
 The flagship feature is **Game Review**, which is Chess.com's AI-powered analysis tool. It doesn't just show you engine evaluations — it explains *why* a move was good or bad in plain English. For example, instead of showing "+1.2" it might say "This move hangs your knight to Qxh7+." The coach provides context and teaches you the reasoning behind engine lines.
 
-<chess-position fen="r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4" caption="A typical Italian Game position. Chess.com's Game Review would explain why ...Nxe4 is a bad idea here." analysis="true" />
+<chess-position fen="r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4" caption="A typical Italian Game position. Chess.com's Game Review would explain why ...Nxe4 is a bad idea here." analysis="true"></chess-position>
 
 Chess.com's analysis is more accessible to beginners who don't know how to interpret engine evaluations. It translates engine numbers into actionable advice. The downside: you're limited to a certain number of Game Reviews per day on the free tier (usually one or two), and even on paid plans, the analysis isn't as deep as Lichess's cloud engine (Chess.com limits search depth on cheaper plans).
 
@@ -232,7 +232,7 @@ To make this practical, here's what we'd recommend based on your current level:
 
 **Start with Chess.com's free tier**, then upgrade to Diamond if you can afford it. At this level, you benefit most from structured lessons that explain basic concepts. The Game Review feature will help you understand why your moves are mistakes. Focus on playing longer time controls (15+10 or longer) and doing 10-15 puzzles per day.
 
-<chess-position fen="r1bqkb1r/pppp1ppp/2n2n2/4N3/2B1P3/8/PPPP1PPP/RNBQK2R b KQkq - 0 4" caption="The Fried Liver Attack — a sharp tactical line every beginner should know. Analyze this position on either platform to understand the attacking ideas." analysis="true" />
+<chess-position fen="r1bqkb1r/pppp1ppp/2n2n2/4N3/2B1P3/8/PPPP1PPP/RNBQK2R b KQkq - 0 4" caption="The Fried Liver Attack — a sharp tactical line every beginner should know. Analyze this position on either platform to understand the attacking ideas." analysis="true"></chess-position>
 
 Use Lichess for additional puzzle practice (unlimited) and to explore the opening explorer once you're ready to build a basic repertoire.
 
@@ -252,7 +252,7 @@ If you want structured training at this level, focus on Chess.com's advanced cou
 
 **Lichess, with supplementary resources.** At this level, you need the deepest possible analysis, and Lichess's unlimited Stockfish 18 access is unmatched. Use Chess.com primarily for the larger tournament pool. Supplement with specialized tools: endgame tablebases, database analysis, and platforms like FireChess for alternative perspectives on your play.
 
-<chess-position fen="8/8/4kp2/8/8/4K3/8/8 w - - 0 1" caption="A fundamental king and pawn endgame. Both platforms handle basic endgame positions well, but Lichess's 7-piece tablebase is a major advantage." />
+<chess-position fen="8/8/4kp2/8/8/4K3/8/8 w - - 0 1" caption="A fundamental king and pawn endgame. Both platforms handle basic endgame positions well, but Lichess's 7-piece tablebase is a major advantage."></chess-position>
 
 ## The Verdict
 

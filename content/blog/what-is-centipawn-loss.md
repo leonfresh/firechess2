@@ -75,7 +75,7 @@ Let's make this real with actual positions. Each one demonstrates a different ce
 
 ### Example 1: A Minor Inaccuracy (15-25 cp Loss)
 
-<chess-position fen="r1bq1rk1/ppp2ppp/2np1n2/4p3/2P5/2NP1NP1/PP2PPBP/R1BQ1RK1 w - - 0 10" caption="A typical King's Indian Attack structure. White's best move is 10.Be3, completing development. Playing 10.b3 instead (preparing Bb2) loses about 18 cp — a minor inaccuracy. The engine prefers the bishop on e3 where it targets the d6 weakness. This is the kind of inaccuracy that FireChess marks with a yellow '?!' badge." />
+<chess-position fen="r1bq1rk1/ppp2ppp/2np1n2/4p3/2P5/2NP1NP1/PP2PPBP/R1BQ1RK1 w - - 0 10" caption="A typical King's Indian Attack structure. White's best move is 10.Be3, completing development. Playing 10.b3 instead (preparing Bb2) loses about 18 cp — a minor inaccuracy. The engine prefers the bishop on e3 where it targets the d6 weakness. This is the kind of inaccuracy that FireChess marks with a yellow '?!' badge." badge="inaccuracy"></chess-position>
 
 In the position above, White has a comfortable position (+0.45). The best move is 10.Be3, developing the bishop to its most active square. If White plays 10.b3 instead, the evaluation drops to roughly +0.27 — a centipawn loss of **18 cp**. FireChess would label this an **Inaccuracy (?!)**.
 
@@ -83,7 +83,7 @@ This is the most common type of centipawn loss for intermediate players: small p
 
 ### Example 2: A Clear Mistake (40-80 cp Loss)
 
-<chess-position fen="r1bqk2r/pppp1ppp/2n5/4P3/2B1n3/5N2/PPP2PPP/RNBQK2R w KQkq - 0 7" caption="White to move. The best continuation is 7.Nc3, developing and attacking the knight on e4. Playing 7.O-O? instead allows Black to consolidate with ...d5, equalising. Centipawn loss: approximately 55 cp. FireChess badge: Mistake (?)." />
+<chess-position fen="r1bqk2r/pppp1ppp/2n5/4P3/2B1n3/5N2/PPP2PPP/RNBQK2R w KQkq - 0 7" caption="White to move. The best continuation is 7.Nc3, developing and attacking the knight on e4. Playing 7.O-O? instead allows Black to consolidate with ...d5, equalising. Centipawn loss: approximately 55 cp. FireChess badge: Mistake (?)." badge="mistake"></chess-position>
 
 White has a slight advantage (+0.60) after the opening. The best move is 7.Nc3, hitting the loose knight on e4 and maintaining pressure. If White castles with 7.O-O?, Black plays 7...d5 and suddenly Black is completely fine. The evaluation swings from +0.60 to roughly +0.05 — a centipawn loss of **55 cp**. FireChess marks this with an orange **Mistake (?)** badge.
 
@@ -91,7 +91,7 @@ Notice this isn't a tactical blunder — White didn't hang a piece. But White ga
 
 ### Example 3: A Blunder (80-150 cp Loss)
 
-<chess-position fen="r1b1kb1r/ppp2ppp/2n5/3qp3/8/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 4 7" caption="White to move. Black has just played ...Qe5, leaving the queen undefended. The only good move is Nxe5, winning the queen. Any other move — say, Be2 — is a 900 cp blunder. FireChess badge: Blunder (??)." />
+<chess-position fen="r1b1kb1r/ppp2ppp/2n5/3qp3/8/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 4 7" caption="White to move. Black has just played ...Qe5, leaving the queen undefended. The only good move is Nxe5, winning the queen. Any other move — say, Be2 — is a 900 cp blunder. FireChess badge: Blunder (??)." badge="blunder"></chess-position>
 
 This is the most dramatic type of centipawn loss. White can capture the black queen with 7.Nxe5, gaining +9.00 in evaluation. Any other normal move — developing a bishop, castling — throws away a full queen. The centipawn loss for missing Nxe5 is roughly **900 cp**. FireChess labels this a red **Blunder (??)**.
 
@@ -99,7 +99,7 @@ Blunders of this magnitude usually come from tactical blindness — you simply d
 
 ### Example 4: Near-Perfect Play (0-15 cp Loss)
 
-<chess-position fen="r2q1rk1/ppp2ppp/2n1bn2/3p4/3P4/2NQ1N2/PPP2PPP/R1B2RK1 w - - 6 10" caption="A quiet position from a Queen's Gambit Declined. White has several reasonable moves. 11.Bg5, 11.Bf4, and 11.Rd1 are all within 5-10 cp of each other. Even the 'suboptimal' choice here barely registers as centipawn loss. FireChess badge: Best (!) or Good (✓)." />
+<chess-position fen="r2q1rk1/ppp2ppp/2n1bn2/3p4/3P4/2NQ1N2/PPP2PPP/R1B2RK1 w - - 6 10" caption="A quiet position from a Queen's Gambit Declined. White has several reasonable moves. 11.Bg5, 11.Bf4, and 11.Rd1 are all within 5-10 cp of each other. Even the 'suboptimal' choice here barely registers as centipawn loss. FireChess badge: Best (!) or Good (✓)." badge="best"></chess-position>
 
 In quiet, symmetrical positions, the centipawn loss between reasonable moves can be tiny. Here, White's three candidate moves — 11.Bg5, 11.Bf4, and 11.Rd1 — all evaluate between +0.25 and +0.30. Choosing the "wrong" one costs at most **5-8 cp**. FireChess would label any of these as **Best (!)** or **Good (✓)**.
 
@@ -107,13 +107,13 @@ This is a key insight: not all centipawn loss is created equal. A 10-centipawn l
 
 ### Example 5: The Opening Blunder (150+ cp Loss)
 
-<chess-position fen="rnbqkbnr/ppp2ppp/3p4/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 3" caption="Black to play in the Philidor Defence. Playing the natural-looking 3...Bg4? pins the knight but loses a pawn after 4.Bxf7+! Kxf7 5.Ng5+. Centipawn loss: approximately 250 cp. FireChess badge: Blunder (??)." />
+<chess-position fen="rnbqkbnr/ppp2ppp/3p4/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 3" caption="Black to play in the Philidor Defence. Playing the natural-looking 3...Bg4? pins the knight but loses a pawn after 4.Bxf7+! Kxf7 5.Ng5+. Centipawn loss: approximately 250 cp. FireChess badge: Blunder (??)." badge="blunder"></chess-position>
 
 The Philidor Defence (1.e4 e5 2.Nf3 d6 3.Bc4) looks innocent, but Black must be careful. The move 3...Bg4? feels logical — pin the knight — but it walks into 4.Bxf7+! After 4...Kxf7 5.Ng5+, Black loses castling rights and a pawn. The centipawn loss is roughly **250 cp** for a single move. This is the kind of opening trap that FireChess flags with a red **Blunder (??)** badge.
 
 ### Example 6: Endgame Precision (10 cp vs 50 cp)
 
-<chess-position fen="8/8/8/4k3/8/3KP3/8/8 w - - 0 1" caption="A simple king and pawn endgame. White to move. 1.Ke2? (losing the opposition) costs about 45 cp and turns a win into a draw. 1.Kd2! maintains the opposition and wins. The difference between +1.20 and +0.08 is 112 cp — a single move changing the game outcome." />
+<chess-position fen="8/8/8/4k3/8/3KP3/8/8 w - - 0 1" caption="A simple king and pawn endgame. White to move. 1.Ke2? (losing the opposition) costs about 45 cp and turns a win into a draw. 1.Kd2! maintains the opposition and wins. The difference between +1.20 and +0.08 is 112 cp — a single move changing the game outcome." badge="blunder"></chess-position>
 
 Endgames are where centipawn loss becomes brutally unforgiving. In the position above, White must play 1.Kd2! to maintain the opposition and win. Playing 1.Ke2? loses the opposition and the evaluation crashes from +1.20 to +0.08 — a centipawn loss of **112 cp**. One king move. Game over. FireChess marks this as a **Blunder (??)** because the evaluation swing is decisive.
 
@@ -241,7 +241,7 @@ FireChess badge at this level: **Blunder (??)** — the red badge.
 
 At this level, you've probably dropped a full piece or allowed a decisive attack. A 300+ centipawn loss almost always means you hung a knight or bishop, missed a forced mate, or walked into a devastating tactic.
 
-<chess-position fen="rnb1kbnr/pppp1ppp/8/4q3/2B1P3/8/PPPP1PPP/RNBQK1NR w KQkq - 0 4" caption="Black's queen has just been captured by the pawn on e4 after Black blundered by moving it to e5 without considering the pawn capture. Centipawn loss for Black: +950 cp — a full queen lost." analysis="true" />
+<chess-position fen="rnb1kbnr/pppp1ppp/8/4q3/2B1P3/8/PPPP1PPP/RNBQK1NR w KQkq - 0 4" caption="Black's queen has just been captured by the pawn on e4 after Black blundered by moving it to e5 without considering the pawn capture. Centipawn loss for Black: +950 cp — a full queen lost." analysis="true" badge="blunder"></chess-position>
 
 ---
 
@@ -347,7 +347,7 @@ This is why chess engines report **evaluation before and after** your move, not 
 
 **Reality:** Different engines and even different engine settings produce different centipawn loss numbers for the same game. Stockfish 18 at depth 22 will report different evaluations than Stockfish 16 at depth 18. Lichess's evaluations tend to be more forgiving than Chess.com's or FireChess's because of depth differences.
 
-<chess-position fen="r1bqk2r/pppp1ppp/2n5/4P3/2B5/5N2/PPP2PPP/RNBQK2R b KQkq - 0 5" caption="White is up a clean pawn thanks to the e5 pawn, with a strong centre and developed pieces. The centipawn advantage here is approximately +100-120 cp. Black's task is to minimise further losses." analysis="true" />
+<chess-position fen="r1bqk2r/pppp1ppp/2n5/4P3/2B5/5N2/PPP2PPP/RNBQK2R b KQkq - 0 5" caption="White is up a clean pawn thanks to the e5 pawn, with a strong centre and developed pieces. The centipawn advantage here is approximately +100-120 cp. Black's task is to minimise further losses." analysis="true" badge="mistake"></chess-position>
 
 ---
 

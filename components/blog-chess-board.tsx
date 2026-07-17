@@ -14,6 +14,8 @@ interface BlogChessBoardProps {
   caption?: string;
   size?: number;
   showAnalysis?: boolean;
+  badge?: MoveClassification;
+  arrows?: string;
 }
 
 const BADGE_STYLES: Record<MoveClassification, { bg: string; text: string; border: string }> = {
@@ -32,6 +34,8 @@ export function BlogChessBoard({
   orientation = "white",
   caption,
   showAnalysis = false,
+  badge,
+  arrows,
 }: BlogChessBoardProps) {
   const moveList = useMemo(
     () =>
@@ -175,6 +179,20 @@ export function BlogChessBoard({
           customDarkSquareStyle={{ backgroundColor: "#779952" }}
           customLightSquareStyle={{ backgroundColor: "#edeed1" }}
         />
+        {/* Badge overlay */}
+        {badge && (
+          <span
+            className="pointer-events-none absolute right-1.5 top-1.5 z-40 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-bold shadow-lg backdrop-blur-sm"
+            style={{
+              background: BADGE_STYLES[badge].bg,
+              color: BADGE_STYLES[badge].text,
+              border: `1.5px solid ${BADGE_STYLES[badge].border}`,
+            }}
+          >
+            <span className="font-black text-sm leading-none">{MOVE_CLASSIFICATION_SHORT_LABELS[badge]}</span>
+            <span className="text-[10px] uppercase tracking-wider">{badge}</span>
+          </span>
+        )}
       </div>
 
       {/* Controls */}
