@@ -20,10 +20,6 @@ Ready to jump in? **[Play Chaos Chess now](/play/chaos)** — free, no account n
 
 If you haven't played Chaos Chess yet, here's how the modifier system works.
 
-The game starts as a normal chess game from the standard starting position:
-
-<chess-position fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" caption="Every Chaos Chess game starts from the standard position — but by move 25, you could have up to 5 modifiers active. The board transforms completely." orientation="white">
-</chess-position>
 At moves **5, 10, 15, 20, and 25**, the game pauses and both players are shown three modifier cards drawn from a shared pool. You each pick one permanently. These modifiers stack — by the 25th-turn draft, you could have five modifiers active at once. Some combinations are sublime. Others are a beautiful disaster.
 
 You also choose one **Opening Anomaly** before the game starts — a Tarot-themed pre-game power (The Fool, The Moon, Death, etc.) that gives you a permanent passive bonus and a one-time active ability. For help with Opening Anomalies, check our [Opening Anomalies guide](/play/chaos/anomalies).
@@ -234,8 +230,6 @@ King's Chains causes your king to **paralyze the highest-value adjacent enemy pi
 
 **Strategy tip:** Position your king near high-value enemy pieces. If their rook or queen is adjacent, it's frozen — giving you a free tempo to reorganize or attack.
 
-<chess-position fen="4k3/8/8/8/3K4/8/4q3/8 w - - 0 1" caption="King's Chains in action: the white king on d4 paralyzes the black queen on e2 — the highest-value adjacent enemy piece. The queen cannot move until the king moves away." orientation="white">
-</chess-position>
 ---
 
 ### Dragon Rook
