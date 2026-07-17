@@ -142,7 +142,7 @@ Mark 5-8 critical moments per game. If you try to analyze every move deeply, you
 Here's a real example of a critical moment from an Italian Game middlegame:
 
 <chess-position fen="r1bq1rk1/1pp2ppp/p1pb1n2/4N3/2BpP3/5Q2/PPPN1PPP/R1B2RK1 w - - 0 12" caption="Italian Game middlegame — White's pieces (Ne5, Bc4, Qf3) all point at f7, but the critical move isn't a direct attack. The engine reveals d4! as best, opening the center for White's superior coordination. This is the kind of position where analysis catches moves you'd never find at the board.">
-
+</chess-position>
 White's knight on e5, bishop on c4, and queen on f3 all aim at f7. Your instinct might be to pile on with moves like Qg3 or Ng5. But analysis reveals that **d4!** is the critical move — it rips open the center, activates White's pieces, and leaves Black's passive Ba7 stranded. Without engine analysis, this quiet-looking pawn break is almost impossible to find over the board.
 
 ### Step 3: Use the Engine Surgically
@@ -254,7 +254,7 @@ After analyzing several games, patterns emerge. Common categories:
 Here's a position where the tactical opportunity is right on the surface — but a rushed player walks right past it:
 
 <chess-position fen="r1bq1rk1/ppp2ppp/2n1bn2/3pp3/2B1P3/2NP1N2/PPP2PPP/R1BQ1RK1 w - - 0 7" caption="Black has just played …Be6, challenging White's bishop. Most players continue quietly with Be2 or Bb5, but analysis reveals the tactical shot Bxf7+! — after Rxf7 Ng5, White wins material with a devastating attack on the weakened kingside.">
-
+</chess-position>
 White can play **Bxf7+!** here — a temporary sacrifice that rips open Black's king. After Rxf7 Ng5, the knight attacks f7 and h7 simultaneously, and White's attack is crushing. A player who skips analysis sees a quiet position; the engine shows a forced winning sequence hiding in plain sight. This is exactly the kind of "I can't believe I missed that" moment that makes analysis worth doing.
 
 - **Positional misunderstandings** — wrong plan, bad piece placement
@@ -269,7 +269,7 @@ Knowing your dominant error type tells you what to study. If 60% of your mistake
 Every analysis session should produce at least one concrete takeaway. Here's an endgame where the analysis takeaway is crystal clear:
 
 <chess-position fen="8/8/3k4/2pPp3/3KP3/8/8/8 w - - 0 1" caption="White has a protected passed pawn on d5 and a more active king. The winning move is Kf5!, seizing control and winning the e5 pawn. Many players would passively wait here — analysis reveals the concrete path to victory.">
-
+</chess-position>
 White's protected passed pawn on d5 and active king give a decisive advantage. The winning move is **Kf5!** — taking the e5 pawn and using the passed d-pawn to promote. Many club players would play passively here, shuffling the king without a plan. Analysis reveals the concrete winning technique: activate your king, attack the weak pawns, and push your passer. This kind of endgame position is easy to draw if you don't know the method — and easy to win once analysis shows you the plan.
 
 - "Before playing a quiet developing move, check all captures and checks first"
