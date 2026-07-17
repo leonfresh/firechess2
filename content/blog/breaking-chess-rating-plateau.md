@@ -244,7 +244,7 @@ Notice the flat zones — months where the rating barely moves, followed by sudd
 
 This is purely a habit issue, not a knowledge issue. The blunder check habit alone can push you past 1200. The most common mistake at this level isn't missing complex tactics — it's simply not looking at what your opponent's last move did. Before you touch a piece, spend 3 seconds asking: "What did their move threaten? Is my piece safe on its new square?" This one habit, applied consistently, is worth more than memorizing 20 opening variations.
 
-<chess-position fen="rnbqkbnr/pppp1ppp/8/4p3/8/5P2/PPPPP1PP/RNBQKBNR w KQkq - 0 2" moves="g4, Qh4#" orientation="white" caption="At this level, games are decided by basic blunders. After 1.f3? e5 2.g4??, Black delivers Qh4# — checkmate in two moves. The pawns on f3 and g4 destroyed White's king safety entirely."></chess-position>
+<chess-position fen="rnbqkbnr/pppp1ppp/8/4p3/8/5P2/PPPPP1PP/RNBQKBNR w KQkq - 0 2" moves="g4, Qh4#" orientation="white" caption="At this level, games are decided by basic blunders. After 1.f3? e5 2.g4??, Black delivers Qh4# — checkmate in two moves. The pawns on f3 and g4 destroyed White's king safety entirely." arrows="e2e4:rgba(16,185,129,0.5)"></chess-position>
 
 ### The 1400-1600 Plateau
 
@@ -258,7 +258,7 @@ This is purely a habit issue, not a knowledge issue. The blunder check habit alo
 
 Here's a position from an Italian Game where White has built a small lead in development. The key move is **Nd5!** — a centralization that simultaneously attacks the c7 square (threatening a royal fork on the king and rook) and pressures the f6 knight. Black cannot hold everything:
 
-<chess-position fen="r1bq1rk1/ppp2p2/2np1n1p/2b1p1p1/2B1P3/2NP1NB1/PPP2PPP/R2QK2R w KQ - 2 9" moves="Nd5, Nxd5, exd5" orientation="white" caption="White plays Nd5!, exploiting the undefended c7 square. After ...Nxd5 exd5, White wins a pawn and has a powerful passed pawn on d5. The knight fork on c7 is the key tactical threat that justifies the centralization."></chess-position>
+<chess-position fen="r1bq1rk1/ppp2p2/2np1n1p/2b1p1p1/2B1P3/2NP1NB1/PPP2PPP/R2QK2R w KQ - 2 9" moves="Nd5, Nxd5, exd5" orientation="white" caption="White plays Nd5!, exploiting the undefended c7 square. After ...Nxd5 exd5, White wins a pawn and has a powerful passed pawn on d5. The knight fork on c7 is the key tactical threat that justifies the centralization." arrows="c3d5:green"></chess-position>
 
 At the 1400-1600 level, the missing skill is recognizing that a piece can attack two targets at once. Training forks and knight tactics specifically — rather than generic puzzle sets — breaks this plateau faster. In FireChess scans of players stuck at 1400, the most common missed tactic is the knight fork on c7, appearing in 23% of analyzed games where the player lost a piece.
 
@@ -274,7 +274,7 @@ At the 1400-1600 level, the missing skill is recognizing that a piece can attack
 
 Here's a typical Queen's Gambit Declined structure where White has established a powerful knight on e5. The position looks quiet, but White has a decisive positional advantage:
 
-<chess-position fen="r2q1rk1/pbp1bppp/1p6/3pP1B1/4n3/2NBP3/PP3PPP/R2Q1RK1 w - - 1 12" moves="Bxf6, Bxf6, Nxe4" orientation="white" caption="White's knight on e5 is a monster outpost — Black has no pawn that can ever chase it away. The key positional idea is Bxf6 Bxf6, shattering Black's kingside pawns, followed by Nxe4 winning a clean piece. This kind of positional squeeze is what separates 1800 from 2000."></chess-position>
+<chess-position fen="r2q1rk1/pbp1bppp/1p6/3pP1B1/4n3/2NBP3/PP3PPP/R2Q1RK1 w - - 1 12" moves="Bxf6, Bxf6, Nxe4" orientation="white" caption="White's knight on e5 is a monster outpost — Black has no pawn that can ever chase it away. The key positional idea is Bxf6 Bxf6, shattering Black's kingside pawns, followed by Nxe4 winning a clean piece. This kind of positional squeeze is what separates 1800 from 2000." arrows="g5f6:green"></chess-position>
 
 This position illustrates a key concept for breaking the 1800 plateau: **outposts and pawn structure manipulation**. White doesn't need a tactic to win — the positional advantage is overwhelming. The knight on e5 cannot be challenged by any pawn, and the Bxf6 exchange tears apart Black's kingside. Players who learn to build and exploit these positional advantages consistently break through to 2000.
 

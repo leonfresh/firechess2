@@ -26,7 +26,7 @@ The London System is a queen's pawn opening defined by its first two moves: **1.
 
 The core idea is simple: White develops the dark-squared bishop to f4 before blocking it with e3, then builds a solid pawn chain with c3 and e3. The result is a compact, resilient position with few weaknesses and clear attacking plans.
 
-<chess-position fen="rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR w KQkq - 0 4" caption="The London System after 1.d4 d5 2.Bf4 Nf6 3.e3 — White already has a solid, flexible position with clear development plans."></chess-position>
+<chess-position fen="rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR w KQkq - 0 4" caption="The London System after 1.d4 d5 2.Bf4 Nf6 3.e3 — White already has a solid, flexible position with clear development plans." arrows="f4c7:rgba(16,185,129,0.5)"></chess-position>
 
 ### Why Club Players Love the London
 
@@ -53,7 +53,7 @@ The beauty of the London System is that White's first five moves are nearly alwa
 
 This setup creates White's characteristic pawn structure: pawns on d4, e3, and c3, forming a sturdy triangle in the centre. The knights typically go to f3 and d2, keeping the pawn structure intact and preparing a kingside castle.
 
-<chess-position fen="rnbqkb1r/ppp2ppp/4pn2/3p4/3P1B2/2P1P3/PP3PPP/RN1QKBNR w KQkq - 0 5" caption="The London 'triangle' pawn structure after 1.d4 d5 2.Bf4 Nf6 3.e3 e6 4.Nd2 c5 5.c3 — a compact, resilient centre with no obvious weaknesses."></chess-position>
+<chess-position fen="rnbqkb1r/ppp2ppp/4pn2/3p4/3P1B2/2P1P3/PP3PPP/RN1QKBNR w KQkq - 0 5" caption="The London 'triangle' pawn structure after 1.d4 d5 2.Bf4 Nf6 3.e3 e6 4.Nd2 c5 5.c3 — a compact, resilient centre with no obvious weaknesses." arrows="f4c7:rgba(16,185,129,0.5)"></chess-position>
 
 ### The London Triangle Pawn Structure
 
@@ -75,7 +75,7 @@ After 1.d4 d5 2.Bf4 Nf6 3.e3 e6, both sides have several good options. The most 
 
 **4.Nd2 c5 5.c3 Nc6 6.Ngf3 Bd6 7.Bg3 O-O 8.Bd3**
 
-<chess-position fen="r1bq1rk1/pp3ppp/2nbpn2/2pp4/3P4/2PBPNB1/PP1N1PPP/R2QK2R b KQ - 6 8" caption="A typical London main line position after 8.Bd3. White has completed development and can choose between queenside pressure or a timely e4 break."></chess-position>
+<chess-position fen="r1bq1rk1/pp3ppp/2nbpn2/2pp4/3P4/2PBPNB1/PP1N1PPP/R2QK2R b KQ - 6 8" caption="A typical London main line position after 8.Bd3. White has completed development and can choose between queenside pressure or a timely e4 break." arrows="d6g3:rgba(16,185,129,0.5)"></chess-position>
 
 White's plan in this position:
 
@@ -105,7 +105,7 @@ White gains space on the queenside and may open lines with a6 or b4 later. This 
 
 When Black fianchettoes the king's bishop with ...g6 and ...Bg7, you face the King's Indian Defense setup — one of the most popular ways to meet the London at club level.
 
-<chess-position fen="rnbq1rk1/ppp1ppbp/3p1np1/8/3P1B2/4PNBP/PPP2PP1/RN1QK2R w KQ - 0 7" caption="London System vs the King's Indian setup. White has the h4 attacking plan as a powerful weapon against Black's fianchetto."></chess-position>
+<chess-position fen="rnbq1rk1/ppp1ppbp/3p1np1/8/3P1B2/4PNBP/PPP2PP1/RN1QK2R w KQ - 0 7" caption="London System vs the King's Indian setup. White has the h4 attacking plan as a powerful weapon against Black's fianchetto." arrows="h3h4:green"></chess-position>
 
 White's key plan here is the **h4-h5 attack**. Because Black has weakened the dark squares around their king by playing ...g6, White can launch a direct kingside assault:
 
@@ -131,7 +131,7 @@ This move aims to disrupt White's setup by attacking the centre immediately. The
 
 This transposes to a type of Queen's Pawn game where White has committed to Bf4 early. The position is balanced with chances for both sides. White's plan is to develop naturally with Nf3, Nc3, Bd3, and O-O, then play for e4.
 
-<chess-position fen="rnbqkb1r/pp1ppppp/5n2/8/3P1B2/8/PPP2PPP/RN1QKBNR b KQkq - 0 4" caption="After 1.d4 Nf6 2.Bf4 c5 3.e3 cxd4 4.exd4 — Black has traded off the c-pawn for White's e-pawn, leaving White with a central pawn majority."></chess-position>
+<chess-position fen="rnbqkb1r/pp1ppppp/5n2/8/3P1B2/8/PPP2PPP/RN1QKBNR b KQkq - 0 4" caption="After 1.d4 Nf6 2.Bf4 c5 3.e3 cxd4 4.exd4 — Black has traded off the c-pawn for White's e-pawn, leaving White with a central pawn majority." arrows="d8a5:rgba(16,185,129,0.5)"></chess-position>
 
 ## The Famous London Queen Trap
 
@@ -143,7 +143,7 @@ At first glance, Black's queen move looks logical — it attacks b2 and puts pre
 
 **4.Nc3!**
 
-<chess-position fen="rnb1kbnr/pp2pppp/1q6/2pp4/3P1B2/2N1P3/PPP2PPP/R2QKBNR b KQkq - 2 4" caption="The critical position after 4.Nc3. If Black grabs the b2 pawn, White wins with 5.Na4." analysis="true"></chess-position>
+<chess-position fen="rnb1kbnr/pp2pppp/1q6/2pp4/3P1B2/2N1P3/PPP2PPP/R2QKBNR b KQkq - 2 4" caption="The critical position after 4.Nc3. If Black grabs the b2 pawn, White wins with 5.Na4." analysis="true" arrows="b6b2:rgba(16,185,129,0.5)"></chess-position>
 
 Now here's the trap: if Black plays 4...Qxb2? (a very common mistake at the club level), White wins:
 
@@ -161,7 +161,7 @@ At higher levels (1500+), many Black players know about this trap and won't fall
 
 Named after Georgian GM Baadur Jobava, the Jobava London replaces the standard Nf3/Nd2 setup with an early Nc3. It's more aggressive, more tactical, and leads to sharper positions than the classical London.
 
-<chess-position fen="rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/2N5/PPP1PPPP/R2QKBNR b KQkq - 1 3" caption="The Jobava London after 1.d4 d5 2.Nc3 Nf6 3.Bf4 — White develops the knight to c3 instead of the usual f3/d2 setup, creating sharper tactical possibilities."></chess-position>
+<chess-position fen="rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/2N5/PPP1PPPP/R2QKBNR b KQkq - 1 3" caption="The Jobava London after 1.d4 d5 2.Nc3 Nf6 3.Bf4 — White develops the knight to c3 instead of the usual f3/d2 setup, creating sharper tactical possibilities." arrows="f6e4:rgba(16,185,129,0.5)"></chess-position>
 
 ### The Key Difference
 
@@ -204,7 +204,7 @@ Another common line at the club level is when Black develops the light-squared b
 
 This looks natural — Black develops the bishop and eyes the c2 pawn. But it actually allows White to gain a tempo and seize control of the light squares.
 
-<chess-position fen="rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR w KQkq - 2 5" caption="After 4.Bd3! Bxd3 5.Qxd3 — White has the bishop pair and Black's light-squared bishop, which was doing nothing useful on f5, has been traded off."></chess-position>
+<chess-position fen="rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR w KQkq - 2 5" caption="After 4.Bd3! Bxd3 5.Qxd3 — White has the bishop pair and Black's light-squared bishop, which was doing nothing useful on f5, has been traded off." arrows="f4c7:rgba(16,185,129,0.5)"></chess-position>
 
 **4.Bd3! Bxd3 5.Qxd3**
 
@@ -227,7 +227,7 @@ The typical London endgame features White's central pawn triangle against variou
 - **Good knight vs bad bishop**: White's knights often outperform Black's bishops in London structures because Black's central pawns are usually on light squares (d5, e6), complementing White's knight
 - **Kingside attacking potential**: Even in endgames, the pawn on e3 supports a kingside pawn storm
 
-<chess-position fen="4k3/pp3ppp/4p3/3p4/3P4/2P1P3/PP3PPP/4K3 w - - 0 20" caption="A typical London endgame structure. White's central pawn triangle gives space on the kingside, and White can aim for f4-f5 or e4 breaks depending on Black's setup."></chess-position>
+<chess-position fen="4k3/pp3ppp/4p3/3p4/3P4/2P1P3/PP3PPP/4K3 w - - 0 20" caption="A typical London endgame structure. White's central pawn triangle gives space on the kingside, and White can aim for f4-f5 or e4 breaks depending on Black's setup." arrows="f2f4:green"></chess-position>
 
 ### Converting the London Endgame
 

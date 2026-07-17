@@ -23,7 +23,7 @@ This guide recommends specific openings for every rating level from complete beg
 <chess-position
   fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
   caption="Every game starts here. What you do in the first 10 moves sets the tone for everything that follows."
-></chess-position>
+ arrows="e2e4:rgba(16,185,129,0.5)"></chess-position>
 
 ## Under 1000 — Play Simple, Survive the Opening
 
@@ -41,7 +41,7 @@ The Italian Game is the perfect beginner opening for three reasons:
   fen="r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 3"
   caption="The Italian Game after 3.Bc4. Simple development, clear plans, and no traps to fall into."
   analysis="true"
-></chess-position>
+ arrows="c6d4:rgba(16,185,129,0.5)"></chess-position>
 
 ### As Black: The Caro-Kann Defence (1.e4 c6 2.d4 d5)
 
@@ -55,7 +55,7 @@ Many beginners play 1...e5 against 1.e4, which is fine — but it leads to Itali
   fen="rnbqkbnr/pp1ppppp/2p5/8/3PP3/8/PPP2PPP/RNBQKBNR b KQkq - 0 2"
   caption="The Caro-Kann after 1.e4 c6 2.d4 d5. Black immediately challenges the center in the safest way possible."
   analysis="true"
-></chess-position>
+ arrows="d8a5:rgba(16,185,129,0.5)"></chess-position>
 
 ### What to Avoid Under 1000
 
@@ -64,7 +64,7 @@ Many beginners play 1...e5 against 1.e4, which is fine — but it leads to Itali
 <chess-position
   fen="r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 3"
   caption="The Scholar's Mate setup. Avoid this — it works on beginners but builds terrible habits."
-></chess-position>
+ arrows="c6d4:rgba(16,185,129,0.5)"></chess-position>
 
 - **The Sicilian Defense (1.e4 c5).** It's the most popular response to 1.e4 for a reason, but it requires deep knowledge of asymmetrical pawn structures that beginners don't have. You'll lose more games in the opening than you'll win.
 - **Hypermodern openings (Pirc, Modern, Alekhine).** These invite White to build a big center and then attack it — subtle positional play that beginners don't have the experience to execute.
@@ -85,7 +85,7 @@ The London System is the ultimate club-level weapon:
   fen="rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3"
   caption="The London System setup after 1.d4 d5 2.Bf4 Nf6 3.e3. Solid, simple, and effective."
   analysis="true"
-></chess-position>
+ arrows="f6e4:rgba(16,185,129,0.5)"></chess-position>
 
 ### As Black: Queen's Pawn Defenses (1.d4 d5 or 1.d4 Nf6)
 
@@ -99,7 +99,7 @@ Against 1.d4, you have two rock-solid options:
   fen="rnbqkbnr/ppp1pppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq - 0 2"
   caption="The Queen's Gambit (1.d4 d5 2.c4). Solid, principled, and great for learning positional chess."
   analysis="true"
-></chess-position>
+ arrows="d5c4:rgba(16,185,129,0.5)"></chess-position>
 
 ### What to Avoid at 1000–1200
 
@@ -120,7 +120,7 @@ Continue with the Italian Game. Learn the Gioco Piano (3...Bc5) and the Two Knig
 <chess-position
   fen="r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4"
   caption="The Italian Game after 3...Bc5 — the Giuoco Piano. Quiet chess is real chess."
-></chess-position>
+ arrows="c4f7:rgba(16,185,129,0.5)"></chess-position>
 
 **Option B: 1.d4 with the Queen's Gambit**
 Learn the Queen's Gambit (1.d4 d5 2.c4). It's one of the most respected openings in chess history. Black has three main responses:
@@ -142,7 +142,7 @@ Your White and Black openings should reinforce each other. Here's the ideal pair
   fen="rnbqk2r/ppppppbp/5np1/8/2PP4/2N5/PP2PPPP/R1BQKBNR w KQkq - 0 3"
   caption="The King's Indian setup for Black. An ambitious choice that teaches dynamic counterplay."
   analysis="true"
-></chess-position>
+ arrows="c3d5:rgba(16,185,129,0.5)"></chess-position>
 
 ## 1400–1600 — Learn the Plans Behind the Moves
 
@@ -173,7 +173,7 @@ The Queen's Gambit opens up a rich world of positional ideas:
   fen="r1bqkb1r/pppp1ppp/2n2n2/4p3/4P3/2N2N2/PPPP1PPP/R1BQKB1R w KQkq - 0 4"
   caption="The Four Knights Game. A principled opening that teaches piece coordination without sharp tactics."
   analysis="true"
-></chess-position>
+ arrows="f3e5:rgba(16,185,129,0.5)"></chess-position>
 
 ## 1600–1800 — Expand and Specialize
 
@@ -218,7 +218,7 @@ By 1600, opening preparation matters. Before a tournament or match:
 <chess-position
   fen="r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 3"
   caption="The Ruy Lopez (3.Bb5). A rich opening that teaches deep positional themes — but save it for 1400+."
-></chess-position>
+ arrows="c6d4:rgba(16,185,129,0.5)"></chess-position>
 
 ## Quick Reference Table — Best Openings by Rating
 
@@ -274,7 +274,7 @@ The best way to study openings depends on your rating. Here's a level-by-level a
 <chess-position
   fen="rnbqkbnr/ppp2ppp/3p4/4p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 3"
   caption="The Philidor Defense (1.e4 e5 2.Nf3 d6). A safe beginner choice that teaches solid development."
-></chess-position>
+ arrows="f3e5:rgba(16,185,129,0.5)"></chess-position>
 
 ## Which Opening Should You Learn First?
 

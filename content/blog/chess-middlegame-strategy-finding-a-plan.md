@@ -122,7 +122,7 @@ You don't need to memorize all pawn structures — just start noticing them. Ove
 
 ### Position Example: The Carlsbad Minority Attack
 
-<chess-position fen="r1bqr1k1/pp2bppp/2p2nn1/3p2B1/3P4/2NBPP2/PPQ1N1PP/1R3RK1 b - - 2 12" orientation="white" caption="Classic Carlsbad structure after 12...Re8. White's plan is clear: b4-b5 to break open Black's queenside pawns. The minority attack creates a weakness on c6 that White's pieces will target."></chess-position>
+<chess-position fen="r1bqr1k1/pp2bppp/2p2nn1/3p2B1/3P4/2NBPP2/PPQ1N1PP/1R3RK1 b - - 2 12" orientation="white" caption="Classic Carlsbad structure after 12...Re8. White's plan is clear: b4-b5 to break open Black's queenside pawns. The minority attack creates a weakness on c6 that White's pieces will target." arrows="g6e5:rgba(16,185,129,0.5)"></chess-position>
 
 This is a textbook Carlsbad position. White has pawns on b2, c2 vs. Black's pawns on a7, b7, c6. White's minority (2 pawns) attacks Black's majority (3 pawns) with the plan b4-b5, exchanging to create a weak pawn on c6. Meanwhile, Black should counterattack on the kingside — the semi-open e-file and the f6-knight eyeing g4 and h5 give Black dynamic chances. This tension between White's queenside plan and Black's kingside counterplay is what makes middlegames rich and instructive. The player who executes their plan first usually wins.
 
@@ -141,7 +141,7 @@ Every position has a piece (or two) that's doing nothing useful. It might be a b
 
 **Practical example:** Your knight is on a3. It's doing nothing there. Where should it go? Maybe Nc2-e3-d5, reaching a strong central outpost. That's not a flashy plan, but it's a PLAN — and having any plan is better than aimless moves. When you look at your [FireChess game analysis](/analyze), check the "piece activity" scores — you'll often see that the position where you lost the most centipawn loss coincided with your worst piece being stuck.
 
-<chess-position fen="r1bq1rk1/ppp2ppp/3p1n2/4p3/4P3/N1N5/PP3PPP/R1BQ1RK1 w - - 0 1" moves="Nc2, Be6, Ne3, Nd7, Ned5" orientation="white" caption="Improve your worst piece: the knight on a3 is doing nothing on the rim. Through Nc2→Ne3→Nd5, it reaches a dominant central outpost controlling 8 squares. That's a plan!"></chess-position>
+<chess-position fen="r1bq1rk1/ppp2ppp/3p1n2/4p3/4P3/N1N5/PP3PPP/R1BQ1RK1 w - - 0 1" moves="Nc2, Be6, Ne3, Nd7, Ned5" orientation="white" caption="Improve your worst piece: the knight on a3 is doing nothing on the rim. Through Nc2→Ne3→Nd5, it reaches a dominant central outpost controlling 8 squares. That's a plan!" arrows="a3c2:green"></chess-position>
 
 ## Step 3: Assess King Safety
 
@@ -177,7 +177,7 @@ Once you've chosen a plan, commit to it — but stay flexible. A plan isn't a su
 
 ### The IQP Decision: A Practical Example
 
-<chess-position fen="r2q1rk1/pp2bpp1/5n1p/2np4/6bB/2NBP3/PP2NPPP/R2Q1RK1 w - - 0 12" orientation="white" caption="Black has an isolated queen pawn on d5. White's plan: trade minor pieces, attack the d5 pawn, and reach an endgame where the IQP is a weakness. Black's plan: keep pieces on, use the d5 square for pieces, and attack with piece activity before the pawn becomes a target."></chess-position>
+<chess-position fen="r2q1rk1/pp2bpp1/5n1p/2np4/6bB/2NBP3/PP2NPPP/R2Q1RK1 w - - 0 12" orientation="white" caption="Black has an isolated queen pawn on d5. White's plan: trade minor pieces, attack the d5 pawn, and reach an endgame where the IQP is a weakness. Black's plan: keep pieces on, use the d5 square for pieces, and attack with piece activity before the pawn becomes a target." arrows="h4f6:rgba(16,185,129,0.5)"></chess-position>
 
 This position illustrates a classic planning decision. Black has an isolated queen pawn on d5 — structurally weak in the endgame but a source of dynamic piece activity in the middlegame. White should aim to trade pieces (especially the light-squared bishops) and place a rook on the d-file, building pressure against d5. Black should avoid trades, keep the position complex, and look for a central break with ...d4 or kingside play with ...Ne4. The entire game will revolve around whether the IQP is a strength or a weakness — and that depends on who executes their plan better.
 

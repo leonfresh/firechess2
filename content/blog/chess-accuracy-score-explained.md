@@ -325,7 +325,7 @@ Theory is one thing — let's see how accuracy plays out in real positions. Belo
   fen="r1bq1r2/ppp2kpp/2n5/3np3/2B5/5N2/PPPP1PPP/RNBQK2R w KQ - 0 7"
   caption="White to move — both Nxe5+ and Qf3+ win the piece back, but the engine sees a 1.5-pawn difference between them."
   orientation="white"
-></chess-position>
+ arrows="f3e5:green"></chess-position>
 
 This position arises in the Fried Liver Attack after **1.e4 e5 2.Nf3 Nc6 3.Bc4 Nf6 4.Ng5 d5 5.exd5 Nxd5 6.Nxf7 Kxf7**. White sacrificed a piece on f7 and now needs to recapture. Two moves both win — but the engine strongly prefers one.
 
@@ -344,7 +344,7 @@ The per-move accuracy captures this precisely: ~99% for Nxe5+ means the engine c
   fen="8/5k2/8/2pPP3/2P5/2K5/6R1/2r5 w - - 0 1"
   caption="White to move — both Rg7+ and Kd6 win, but one maximises accuracy while the other invites unnecessary risk."
   orientation="white"
-></chess-position>
+ arrows="c3d3:rgba(16,185,129,0.5)"></chess-position>
 
 White has a dominant rook endgame: connected passed pawns on the 5th rank, an active rook, and Black's rook stuck defending passively. Two moves both win — but the accuracy difference is telling.
 
@@ -363,7 +363,7 @@ Kd6 is not a blunder — it's still clearly winning. But the350-centipawn gap sh
   fen="8/4k3/4P3/4K3/8/8/8/8 b - - 0 1"
   caption="Black to move — Kd8 draws. Kf8 loses. One move is the difference between a draw and a loss."
   orientation="black"
-></chess-position>
+ arrows="e7d8:green"></chess-position>
 
 This is a king-and-pawn endgame where White has a pawn on the7th rank, supported by the king. Black's only job is to stay in front of the pawn. The choice is binary:
 

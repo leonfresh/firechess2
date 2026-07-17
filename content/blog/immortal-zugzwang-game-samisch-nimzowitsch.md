@@ -20,7 +20,7 @@ Before diving into the game itself, it's worth understanding what zugzwang means
 
 **Pure zugzwang** occurs when a player would prefer to pass their turn — if that were allowed in chess — because any move they make damages their position. In endgames, zugzwang is common: a king trapped on the edge of the board, triangulation maneuvers, and pawn races all rely on it. Here's a classic example:
 
-<chess-position fen="8/8/8/8/1k6/p7/KP6/8 w - - 0 1" caption="A trivial zugzwang: White to move loses (any king move drops the b2 pawn, and Kb1 allows ...Kb3). If Black were to move instead, the game is a draw. This is why 'having the move' changes everything in pawn endgames."></chess-position>
+<chess-position fen="8/8/8/8/1k6/p7/KP6/8 w - - 0 1" caption="A trivial zugzwang: White to move loses (any king move drops the b2 pawn, and Kb1 allows ...Kb3). If Black were to move instead, the game is a draw. This is why 'having the move' changes everything in pawn endgames." arrows="a2b1:green"></chess-position>
 
 But in the **middlegame** — with rooks, bishops, knights, and queens on the board — zugzwang is exceptionally rare. Pieces can usually find productive squares, and pawn breaks can unlock a blocked position. Nimzowitsch's achievement was to create a position where:
 
@@ -46,13 +46,13 @@ The game begins with the **Queen's Indian Defense** — Nimzowitsch's favorite w
 
 By move 7, the game has transposed into the **Queen's Indian with d5**, a structure that resembles the Queen's Gambit Declined but with Black's bishop on b7 rather than a pawn on c6. The resulting pawn structure — White's d4 versus Black's d5, with both sides having pawns on c6/c2 — is known as the **Carlsbad structure**.
 
-<chess-position fen="r1bq1rk1/pp1nbppp/1p1ppn2/8/2PP4/2N2NP1/PP2PPBP/R1BQ1RK1 w - - 0 8" caption="Standard Queen's Indian position after 7 moves. Black's setup is solid: the bishop on b7 pressures White's center, while the d5 pawn restrains White's e4 break."></chess-position>
+<chess-position fen="r1bq1rk1/pp1nbppp/1p1ppn2/8/2PP4/2N2NP1/PP2PPBP/R1BQ1RK1 w - - 0 8" caption="Standard Queen's Indian position after 7 moves. Black's setup is solid: the bishop on b7 pressures White's center, while the d5 pawn restrains White's e4 break." arrows="f3e5:rgba(16,185,129,0.5)"></chess-position>
 
 **8.Ne5 c6 9.cxd5 cxd5 10.Bf4 a6 11.Rc1 b5 12.Qb3 Nc6 13.Nxc6 Bxc6**
 
 This exchange is critical. By trading his knight on e5 for Black's knight on c6, White activates Black's bishop from b7 to c6. This is a long-term positional concession: Black now has the bishop pair, and the bishop on c6 exerts pressure along the a8-h1 diagonal, targeting White's king on g2.
 
-<chess-position fen="r2q1rk1/4bppp/p1b1pn2/1p1p4/3P1B2/1QN3P1/PP2PPBP/2R2RK1 b - - 0 14" caption="Position after 13...Bxc6. Black's bishop has been 'activated' by the exchange, moving from b7 to c6 where it controls key central diagonals. White's bishop on f4 is well-placed but vulnerable to ...Bd6."></chess-position>
+<chess-position fen="r2q1rk1/4bppp/p1b1pn2/1p1p4/3P1B2/1QN3P1/PP2PPBP/2R2RK1 b - - 0 14" caption="Position after 13...Bxc6. Black's bishop has been 'activated' by the exchange, moving from b7 to c6 where it controls key central diagonals. White's bishop on f4 is well-placed but vulnerable to ...Bd6." arrows="f6e4:rgba(16,185,129,0.5)"></chess-position>
 
 **14.h3 Qd7**
 
@@ -75,7 +75,7 @@ A small move with big implications. Black attacks White's bishop on f4, forcing 
 
 Sämisch chooses to trade. This is objectively reasonable — White avoids losing time with a retreat — but it has a hidden cost: Black now has **complete control over the dark squares**, and White's remaining bishop (on g2) is light-squared and restricted by its own pawns on d4 and e2.
 
-<chess-position fen="r1r3k1/5ppp/p1bqpn2/1p1p4/3P4/1QN3PP/PPR1PPB1/2R3K1 w - - 0 18" caption="Position after 17...Qxd6. Black now controls the dark squares with queen and bishop. White's knight on c3 is a target (the b2 pawn is weak), and the queenside structure (a6, b5, c6) locks Black's pieces into ideal squares."></chess-position>
+<chess-position fen="r1r3k1/5ppp/p1bqpn2/1p1p4/3P4/1QN3PP/PPR1PPB1/2R3K1 w - - 0 18" caption="Position after 17...Qxd6. Black now controls the dark squares with queen and bishop. White's knight on c3 is a target (the b2 pawn is weak), and the queenside structure (a6, b5, c6) locks Black's pieces into ideal squares." arrows="c3d5:rgba(16,185,129,0.5)"></chess-position>
 
 ## The Squeeze: Positional Domination (Moves 18–25)
 
@@ -97,7 +97,7 @@ Black responds perfectly. By advancing the b-pawn, Nimzowitsch **fixes the queen
 
 **22.Qb3**
 
-<chess-position fen="2r3k1/2rq1ppp/2b1pn2/p2p4/Pp1P4/1Q2P1PP/1PR2PB1/2RN2K1 b - - 0 23" caption="Position after 22.Qb3. The queenside is locked (a4 vs a5, b4 vs b2). Black's rook on c7 and c8 control the c-file. White's knight on d1 is trapped behind its pawns, and the bishop on g2 is blocked by the e3 pawn. Every White piece is on a defensive square."></chess-position>
+<chess-position fen="2r3k1/2rq1ppp/2b1pn2/p2p4/Pp1P4/1Q2P1PP/1PR2PB1/2RN2K1 b - - 0 23" caption="Position after 22.Qb3. The queenside is locked (a4 vs a5, b4 vs b2). Black's rook on c7 and c8 control the c-file. White's knight on d1 is trapped behind its pawns, and the bishop on g2 is blocked by the e3 pawn. Every White piece is on a defensive square." arrows="c6a4:rgba(16,185,129,0.5)"></chess-position>
 
 Now the pattern of **restriction** becomes visible. Look at White's position:
 
@@ -115,7 +115,7 @@ Black simplifies to a queen-and-pieces endgame. The rooks come off, but the posi
 
 White tries to stabilize the queenside, but this creates a new weakness: the pawn on b3 is now a permanent target.
 
-<chess-position fen="5rk1/5ppp/p1bqpn2/1p1p4/3P4/1P2P1PP/2R2PB1/3N2K1 w - - 0 18" caption="A simplified position showing the zugzwang theme. Black's bishop on c6 dominates the board. White's knight is passive on d1, the rook is tied to the b3 pawn, and the bishop on g2 is 'bad' — blocked by its own pawns on d4, e3, f2, and g3."></chess-position>
+<chess-position fen="5rk1/5ppp/p1bqpn2/1p1p4/3P4/1P2P1PP/2R2PB1/3N2K1 w - - 0 18" caption="A simplified position showing the zugzwang theme. Black's bishop on c6 dominates the board. White's knight is passive on d1, the rook is tied to the b3 pawn, and the bishop on g2 is 'bad' — blocked by its own pawns on d4, e3, f2, and g3." arrows="g2d5:rgba(16,185,129,0.5)"></chess-position>
 
 Wait — the position above is illustrative, not from the actual game. Let's look more carefully at what happened next.
 
@@ -166,7 +166,7 @@ It was a statement of the obvious — but the obvious was precisely the problem.
 
 Accounts vary on the exact move of resignation, but the key point is: **Sämisch resigned without a single white piece being captured**. The zugzwang was so complete that the game ended not with a checkmate or a winning combination, but with the simple realization that movement itself was fatal.
 
-<chess-position fen="2r3k1/2q2ppp/2b3n1/3p4/p2P4/1P2PP1P/2Q1N1B1/5RK1 b - - 0 25" caption="A position illustrating the zugzwang theme in the Queen's Indian structure. Black's pieces dominate every sector of the board, while White's army is tied to defensive duties with no constructive plan."></chess-position>
+<chess-position fen="2r3k1/2q2ppp/2b3n1/3p4/p2P4/1P2PP1P/2Q1N1B1/5RK1 b - - 0 25" caption="A position illustrating the zugzwang theme in the Queen's Indian structure. Black's pieces dominate every sector of the board, while White's army is tied to defensive duties with no constructive plan." arrows="a4b3:rgba(16,185,129,0.5)"></chess-position>
 
 ## What Makes the Immortal Zugzwang Game So Important?
 

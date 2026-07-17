@@ -167,6 +167,20 @@ export function BlogChessBoard({
   const currentBadge = showAnalysis && currentIdx >= 0 ? classifications[currentIdx] : null;
   const hasAllBadges = showAnalysis && classifications.length === moveList.length && moveList.length > 0;
 
+  // Parse arrows string: "e2e4,e7e5:red,d4d5:#00ff00" → [[from,to,color],...]
+  const parsedArrows = useMemo(() => {
+    if (!arrows) return undefined;
+    return arrows.split(",").map((a) => {
+      const parts = a.trim().split(":");
+      const squares = parts[0].trim();
+      if (squares.length < 4) return null;
+      const from = squares.slice(0, 2);
+      const to = squares.slice(2, 4);
+      const color = parts[1]?.trim() || "rgba(255,170,0,0.8)";
+      return [from, to, color];
+    }).filter(Boolean) as [string, string, string][];
+  }, [arrows]);
+
   return (
     <div className="my-8 flex flex-col items-center gap-3">
       <div className="relative overflow-hidden rounded-xl border border-white/[0.08] shadow-lg" style={{ maxWidth: 420, width: "100%" }}>
@@ -178,6 +192,7 @@ export function BlogChessBoard({
           animationDuration={300}
           customDarkSquareStyle={{ backgroundColor: "#779952" }}
           customLightSquareStyle={{ backgroundColor: "#edeed1" }}
+          customArrows={parsedArrows}
         />
         {/* Badge overlay */}
         {badge && (

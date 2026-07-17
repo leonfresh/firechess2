@@ -44,7 +44,7 @@ This isn't about seeing deep combinations. It's about catching the obvious stuff
 
 A classic example — one of the most common blunder types at 1200:
 
-<chess-position fen="6k1/5ppp/8/8/8/8/6PP/5R1K b - - 0 1" caption="Black to move — can you see the danger?" orientation="black"></chess-position>
+<chess-position fen="6k1/5ppp/8/8/8/8/6PP/5R1K b - - 0 1" caption="Black to move — can you see the danger?" orientation="black" arrows="g8h8:rgba(16,185,129,0.5)"></chess-position>
 
 Black's king is trapped in the corner by its own pawns. White threatens Rf8#. Black's best move is to create luft with ...g6 or ...h6. But many players at this level panic and play ...Rf8??, which walks directly into the back rank mate.
 
@@ -54,7 +54,7 @@ Black's king is trapped in the corner by its own pawns. White threatens Rf8#. Bl
 
 At 1200–1300, the single tactic that costs the most rating points is the **knight fork**. Consider this position:
 
-<chess-position fen="r1bq1rk1/ppp2ppp/2np4/4N3/2B1P3/3P4/PPP2PPP/R1BQ1RK1 b - - 0 1" caption="Black to move — the knight on e5 threatens a devastating fork on f7. Can you find the only safe reply?" orientation="black"></chess-position>
+<chess-position fen="r1bq1rk1/ppp2ppp/2np4/4N3/2B1P3/3P4/PPP2PPP/R1BQ1RK1 b - - 0 1" caption="Black to move — the knight on e5 threatens a devastating fork on f7. Can you find the only safe reply?" orientation="black" arrows="c6e5:rgba(16,185,129,0.5)"></chess-position>
 
 Black's knight on e5 threatens Nxf7+, forking the queen on d8 and the rook on f8. Black must defend proactively. The correct move is ...Re8, which covers the f7 square and unpins the rook. A common mistake at this level is playing ...d5? (attacking the bishop on c4), which ignores the fork threat — after Nxf7+ Kh8 Nxd8 Rxd8, White emerges a queen ahead for a knight.
 
@@ -72,7 +72,7 @@ The key principles:
 
 The Italian Game is a perfect teaching tool for this range. After the standard moves:
 
-<chess-position fen="r1bq1rk1/pppp1ppp/2n2n2/2b1p3/2B1P3/2NP1N2/PPP2PPP/R1BQ1RK1 w - - 0 7" caption="Italian Game after castling — a balanced middlegame where understanding plans beats memorization" orientation="white"></chess-position>
+<chess-position fen="r1bq1rk1/pppp1ppp/2n2n2/2b1p3/2B1P3/2NP1N2/PPP2PPP/R1BQ1RK1 w - - 0 7" caption="Italian Game after castling — a balanced middlegame where understanding plans beats memorization" orientation="white" arrows="c4f7:rgba(16,185,129,0.5)"></chess-position>
 
 Notice the structure: symmetrical pawn chains, both sides castled, all minor pieces developed. The player with a better plan wins — not the one who remembers more theory. Our [middlegame strategy guide](/blog/chess-middlegame-strategy-finding-a-plan) covers how to find plans from exactly this type of position.
 
@@ -89,7 +89,7 @@ Start with just these:
 
 ### King and Pawn Fundamentals
 
-<chess-position fen="4k3/8/8/8/8/8/4P3/4K3 w - - 0 1" caption="White to move — can white promote the pawn? The answer depends on the king's ability to get in front of the pawn." orientation="white"></chess-position>
+<chess-position fen="4k3/8/8/8/8/8/4P3/4K3 w - - 0 1" caption="White to move — can white promote the pawn? The answer depends on the king's ability to get in front of the pawn." orientation="white" arrows="e2e4:rgba(16,185,129,0.5)"></chess-position>
 
 In this position, 1.e4? only draws because Black's king can sprint to d7. The winning plan is **get the king in front of the pawn first**: 1.Ke2 Ke7 2.Ke3 Ke6 3.Ke4 followed by pushing e4, e5, etc. This is the "king leads the pawn" principle — a basic endgame concept every 1500-level player knows cold.
 
@@ -97,7 +97,7 @@ In this position, 1.e4? only draws because Black's king can sprint to d7. The wi
 
 Here is a second endgame position that trips up players even at 1400:
 
-<chess-position fen="8/5k2/8/8/3K4/8/6P1/8 w - - 0 1" caption="White to move — can you win? The opposition is the key, and one wrong move throws away the full point." orientation="white"></chess-position>
+<chess-position fen="8/5k2/8/8/3K4/8/6P1/8 w - - 0 1" caption="White to move — can you win? The opposition is the key, and one wrong move throws away the full point." orientation="white" arrows="d4e5:rgba(16,185,129,0.5)"></chess-position>
 
 White to move with a g-pawn and the king on d4. The correct plan is **1.Ke4!** taking the diagonal opposition. If Black replies ...Ke6, White takes the direct opposition with 2.Ke4... wait — 1.Ke4 directly. Let's trace it:
 
@@ -120,7 +120,7 @@ A simple framework to follow on every middlegame turn:
 
 ### Positional Play with an IQP
 
-<chess-position fen="r1bq1rk1/pp2bppp/2np1n2/2pP4/2B1P3/2N2N2/PP3PPP/R1BQ1RK1 w - - 0 10" caption="White has an isolated queen's pawn (d5) — a classic 1400-level battleground. White attacks, Black blocks." orientation="white"></chess-position>
+<chess-position fen="r1bq1rk1/pp2bppp/2np1n2/2pP4/2B1P3/2N2N2/PP3PPP/R1BQ1RK1 w - - 0 10" caption="White has an isolated queen's pawn (d5) — a classic 1400-level battleground. White attacks, Black blocks." orientation="white" arrows="d5c6:rgba(16,185,129,0.5)"></chess-position>
 
 Positions like this — with an isolated queen's pawn — are a rite of passage between 1300 and 1500. White has space and attacking chances on the kingside. Black aims to blockade the d5 pawn and trade pieces into a favorable endgame. Learning how to handle such structures is what separates 1400 from 1500.
 

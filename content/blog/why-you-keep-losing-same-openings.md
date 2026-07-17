@@ -148,7 +148,7 @@ Some openings have well-known traps, tactical motifs, or forcing sequences that 
 
 **The fix:** If you keep losing to a specific line, spend 30 minutes studying the typical traps and forcing sequences. YouTube has excellent "Opening Traps" content. Once you know the patterns, they never catch you again.
 
-<chess-position fen="r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4" moves="Ng5, d5, exd5, Nxd5, Nxf7" orientation="white" caption="The Fried Liver Attack: after 4.Ng5 d5 5.exd5 Nxd5?? comes 6.Nxf7! — a knight sacrifice forking the queen and rook while ripping open the king. Know this trap or you'll keep walking into it!"></chess-position>
+<chess-position fen="r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4" moves="Ng5, d5, exd5, Nxd5, Nxf7" orientation="white" caption="The Fried Liver Attack: after 4.Ng5 d5 5.exd5 Nxd5?? comes 6.Nxf7! — a knight sacrifice forking the queen and rook while ripping open the king. Know this trap or you'll keep walking into it!" arrows="f3g5:green"></chess-position>
 
 ## Common Opening Mistakes That Cost You Games
 
@@ -160,7 +160,7 @@ The squares f7 (for Black) and f2 (for White) are the weakest points on the boar
 
 In the diagram below, Black has just played 3...Nf6??, developing a piece and attacking White's queen. It looks like a perfectly reasonable move. But it's a catastrophic mistake because Black ignored the threat to f7.
 
-<chess-position fen="r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4" moves="Qxf7" orientation="white" caption="Scholar's Mate: Black played 3...Nf6?? thinking to attack the queen, but forgot about f7. White plays 4.Qxf7# — checkmate! The bishop on c4 protects the queen, and the king has no escape. This is the most common opening trap in chess, and it catches players who develop without considering their opponent's threats."></chess-position>
+<chess-position fen="r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4" moves="Qxf7" orientation="white" caption="Scholar's Mate: Black played 3...Nf6?? thinking to attack the queen, but forgot about f7. White plays 4.Qxf7# — checkmate! The bishop on c4 protects the queen, and the king has no escape. This is the most common opening trap in chess, and it catches players who develop without considering their opponent's threats." arrows="h5h7:rgba(16,185,129,0.5)"></chess-position>
 
 This position illustrates a broader principle: **every move in the opening should account for your opponent's threats, not just your own plans.** Black saw "I'll attack the queen with my knight" but didn't ask "what does the queen do if I move this knight away from defending f7?"
 

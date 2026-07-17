@@ -31,7 +31,7 @@ By the end of this guide, you'll have a complete, ready-to-play Queen's Gambit r
 
 The Queen's Gambit begins with the moves **1.d4 d5 2.c4**. White offers a pawn (the c-pawn) to tempt Black away from the centre. If Black captures on c4, White can regain the pawn with a tempo advantage while maintaining central control. If Black declines, White has gained space and centre presence for free.
 
-<chess-position fen="rnbqkb1r/ppp1pppp/5n2/3p4/2PP4/2N5/PP2PPPP/R1BQKBNR b KQkq - 2 3" caption="Position after 1.d4 d5 2.c4 — the Queen's Gambit proper. White challenges Black's centre pawn immediately."></chess-position>
+<chess-position fen="rnbqkb1r/ppp1pppp/5n2/3p4/2PP4/2N5/PP2PPPP/R1BQKBNR b KQkq - 2 3" caption="Position after 1.d4 d5 2.c4 — the Queen's Gambit proper. White challenges Black's centre pawn immediately." arrows="d5c4:rgba(16,185,129,0.5)"></chess-position>
 
 The name "Queen's Gambit" dates back to the 15th century, when Spanish chess treatises first documented the opening. The "gambit" label stuck even though modern analysis shows White can always regain the pawn — making it technically a "false gambit" or "accepted gambit" where the pawn is only temporarily sacrificed.
 
@@ -72,7 +72,7 @@ The Queen's Gambit Declined, 1.d4 d5 2.c4 e6, is the most solid and principled w
 
 After 3.Nc3 Nf6, White's most testing move is **4.Bg5**, pinning the knight against the queen and threatening to double Black's pawns with Bxf6.
 
-<chess-position fen="rnbqk2r/ppp1bppp/4p3/3p2B1/2PP4/2N5/PP2PPPP/R2QKBNR w KQkq - 4 5" caption="The QGD Orthodox Defense after 4.Bg5 Be7 — the classical main line. White pins the knight while Black prepares to break the pin."></chess-position>
+<chess-position fen="rnbqk2r/ppp1bppp/4p3/3p2B1/2PP4/2N5/PP2PPPP/R2QKBNR w KQkq - 4 5" caption="The QGD Orthodox Defense after 4.Bg5 Be7 — the classical main line. White pins the knight while Black prepares to break the pin." arrows="g5e7:green"></chess-position>
 
 Black's most reliable response is 4...Be7, preparing to unpin with ...O-O and possibly ...Ne4 or ...h6. The main line continues:
 
@@ -80,7 +80,7 @@ Black's most reliable response is 4...Be7, preparing to unpin with ...O-O and po
 
 **The Exchange Variation** (7.Bxf6 Bxf6 8.cxd5 exd5) is a critical decision point. White trades the bishop pair for a solid pawn structure, leading to the famous **Carlsbad structure**:
 
-<chess-position fen="rnbq1rk1/ppp1b1pp/4pn2/3p4/2PP4/2N1P3/PP3PPP/R1BQKBNR w KQ - 0 6" caption="The Carlsbad pawn structure after the Exchange Variation. White has a majority on the kingside, Black on the queenside — a classic endgame imbalance."></chess-position>
+<chess-position fen="rnbq1rk1/ppp1b1pp/4pn2/3p4/2PP4/2N1P3/PP3PPP/R1BQKBNR w KQ - 0 6" caption="The Carlsbad pawn structure after the Exchange Variation. White has a majority on the kingside, Black on the queenside — a classic endgame imbalance." arrows="c3d5:rgba(16,185,129,0.5)"></chess-position>
 
 **White's plan in the Carlsbad structure:**
 1. Kingside pawn storm — advance the g- and h-pawns to create attacking chances
@@ -110,7 +110,7 @@ A popular alternative to the Orthodox Defense is 4...Nbd7, preparing to meet 5.B
 
 The Queen's Gambit Accepted, 1.d4 d5 2.c4 dxc4, is Black's most straightforward attempt to test White's "gambit." Black captures the pawn and tries to hold it. White's task is to regain the pawn while maintaining superior development.
 
-<chess-position fen="rnbqkb1r/ppp1pppp/5n2/8/2pP4/5N2/PP2PPPP/RNBQKB1R b KQkq - 1 3" caption="The QGA after 1.d4 d5 2.c4 dxc4 3.Nf3 — the modern main line. White develops quickly and will regain the c4 pawn."></chess-position>
+<chess-position fen="rnbqkb1r/ppp1pppp/5n2/8/2pP4/5N2/PP2PPPP/RNBQKB1R b KQkq - 1 3" caption="The QGA after 1.d4 d5 2.c4 dxc4 3.Nf3 — the modern main line. White develops quickly and will regain the c4 pawn." arrows="d8d4:rgba(16,185,129,0.5)"></chess-position>
 
 ### The Modern Main Line
 
@@ -118,7 +118,7 @@ The Queen's Gambit Accepted, 1.d4 d5 2.c4 dxc4, is Black's most straightforward 
 
 **4...e6 5.Bxc4 c5** — the critical position. Black challenges White's centre, creating an **Isolated Queen's Pawn (IQP)** structure if White captures on c5:
 
-<chess-position fen="rnbqkb1r/pp3ppp/4pn2/2p5/2BP4/4PN2/PP3PPP/RNBQK2R w KQkq - 0 6" caption="QGA position after 5...c5. White can capture on c5 and play against an IQP, or maintain the tension with 6.0-0."></chess-position>
+<chess-position fen="rnbqkb1r/pp3ppp/4pn2/2p5/2BP4/4PN2/PP3PPP/RNBQK2R w KQkq - 0 6" caption="QGA position after 5...c5. White can capture on c5 and play against an IQP, or maintain the tension with 6.0-0." arrows="c4e6:rgba(16,185,129,0.5)"></chess-position>
 
 **White's two main approaches:**
 1. **6.0-0** — the flexible approach. Castles first, then decides how to handle the centre. If 6...cxd4 7.exd4, we reach the IQP position (see below).
@@ -147,7 +147,7 @@ If White captures on c5 and Black recaptures with ...Bxc5, White gets a half-ope
 
 The Slav Defense, 1.d4 d5 2.c4 c6, is Black's third major option and the most flexible. By supporting the d5 pawn with ...c6 instead of ...e6, Black keeps the c8 bishop's diagonal open. The Slav is extremely popular at all levels — it was Ding Liren's main defense during his 2023 World Championship match.
 
-<chess-position fen="rnbqkb1r/pp2pppp/2p2n2/8/2pP4/2N2N2/PP2PPPP/R1BQKB1R w KQkq - 0 5" caption="The Slav Defense after 4...dxc4 — Black captures the c4 pawn with the c6-pawn supporting, avoiding the pinned knight problems of the QGD."></chess-position>
+<chess-position fen="rnbqkb1r/pp2pppp/2p2n2/8/2pP4/2N2N2/PP2PPPP/R1BQKB1R w KQkq - 0 5" caption="The Slav Defense after 4...dxc4 — Black captures the c4 pawn with the c6-pawn supporting, avoiding the pinned knight problems of the QGD." arrows="f3e5:rgba(16,185,129,0.5)"></chess-position>
 
 ### The Main Line
 
@@ -169,7 +169,7 @@ The Slav Defense, 1.d4 d5 2.c4 c6, is Black's third major option and the most fl
 
 The Albin Counter-Gambit is a sharp but unsound attempt by Black to seize the initiative. After 2...e5, Black offers a pawn to gain time and create central tension.
 
-<chess-position fen="rnbqkb1r/ppp1pppp/8/4P3/3p4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 3" caption="The Albin Counter-Gambit after 1.d4 d5 2.c4 e5 3.dxe5 d4 — Black advances the d-pawn, creating immediate tension."></chess-position>
+<chess-position fen="rnbqkb1r/ppp1pppp/8/4P3/3p4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 3" caption="The Albin Counter-Gambit after 1.d4 d5 2.c4 e5 3.dxe5 d4 — Black advances the d-pawn, creating immediate tension." arrows="d4c3:rgba(16,185,129,0.5)"></chess-position>
 
 ### The Lasker Trap
 
@@ -223,7 +223,7 @@ The most common Queen's Gambit endgame arises from the Exchange Variation of the
 3. Use the king actively to support the passed pawn
 4. If Black tries to create counterplay with ...c5, meet it with b3 to keep the queenside closed
 
-<chess-position fen="8/1p2kppp/p1p5/3p4/P2P4/1P3P2/2PK2PP/8 w - - 0 20" caption="A typical Carlsbad endgame. White's kingside majority gives long-term winning chances. Black's counterplay on the queenside is limited."></chess-position>
+<chess-position fen="8/1p2kppp/p1p5/3p4/P2P4/1P3P2/2PK2PP/8 w - - 0 20" caption="A typical Carlsbad endgame. White's kingside majority gives long-term winning chances. Black's counterplay on the queenside is limited." arrows="d2e3:rgba(16,185,129,0.5)"></chess-position>
 
 ### The IQP Endgame
 
