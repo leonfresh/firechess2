@@ -75,7 +75,7 @@ Opening theory, endgame precision, and positional understanding all become irrel
 
 The most common way players under 1200 throw games isn't missing a deep combination — it's walking into a one-move threat they never checked for. This position arises in thousands of online games every day:
 
-<chess-position fen="rnbqk1nr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 3" orientation="white" caption="Black to move. After 1.e4 e5 2.Qh5 Nc6 3.Bc4, White threatens Qxf7# — Scholar's Mate. A 1200-rated player instinctively plays 3...Nf6??, attacking the queen, without first checking what the opponent threatens. The game ends immediately: Qxf7# is checkmate." arrows="c6d4:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="rnbqk1nr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 3" orientation="white" caption="Black to move. After 1.e4 e5 2.Qh5 Nc6 3.Bc4, White threatens Qxf7# — Scholar's Mate. A 1200-rated player instinctively plays 3...Nf6??, attacking the queen, without first checking what the opponent threatens. The game ends immediately: Qxf7# is checkmate." arrows="d8e7:green,c6d4:red" badge="best"></chess-position>
 
 The 1200 player's mistake isn't a lack of chess knowledge — it's a thinking habit. They ask "what do I want to do?" instead of "what does my opponent threaten?" That one-second question would have found 3...g6 or 3...Qe7, both of which defend comfortably and leave Black with a fine game.
 
@@ -163,7 +163,7 @@ The numbers tell a stark story. A player who plays 2,000 blitz games per year wi
 
 Here's a position that separates casual players from deliberate calculators:
 
-<chess-position fen="2r3k1/ppp2ppp/8/8/8/8/PPP1RPPP/4R1K1 w - - 0 1" orientation="white" caption="White to move. A casual player sees doubled rooks and a cramped Black king — nothing jumps out. A deliberate player checks forcing moves first: Re8+! Rxe8 Rxe8#. A rook sacrifice that forces back-rank mate, because the pawns on f7, g7, and h7 seal every escape square." arrows="e2e8:green"></chess-position>
+<chess-position fen="2r3k1/ppp2ppp/8/8/8/8/PPP1RPPP/4R1K1 w - - 0 1" orientation="white" caption="White to move. A casual player sees doubled rooks and a cramped Black king — nothing jumps out. A deliberate player checks forcing moves first: Re8+! Rxe8 Rxe8#. A rook sacrifice that forces back-rank mate, because the pawns on f7, g7, and h7 seal every escape square." arrows="e2e8:green" badge="best"></chess-position>
 
 This pattern — sacrifice on the back rank, recapture, mate — comes up regularly in club games. The casual player never finds it because they're not in the habit of asking "what if I give something up?" before settling for a quiet move. The deliberate player checks every check, every capture, and every threat before choosing. That habit is trainable.
 
@@ -178,7 +178,7 @@ Deliberate practice was defined by psychologist Anders Ericsson (whose work insp
 
 Consider this position, which is common in the Italian Game opening:
 
-<chess-position fen="r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4" orientation="white" caption="White to move. The 'guesser' plays Bxf7+! — a sacrifice they've seen work in famous games and YouTube videos. But after Kxf7 Ng5+ Kg8, White is down a full bishop with insufficient attack. The 'calculator' plays 4.O-O or 4.d3, maintaining a comfortable advantage without risk." arrows="c4f7:green"></chess-position>
+<chess-position fen="r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4" orientation="white" caption="White to move. The 'guesser' plays Bxf7+! — a sacrifice they've seen work in famous games and YouTube videos. But after Kxf7 Ng5+ Kg8, White is down a full bishop with insufficient attack. The 'calculator' plays 4.O-O or 4.d3, maintaining a comfortable advantage without risk." arrows="e1g1:green,c4f7:red" badge="inaccuracy"></chess-position>
 
 This is the core difference between guessing and calculating. The guesser's brain pattern-matches: "bishop sacrifice on f7 — I've seen this win!" They play it without verifying the specifics. The calculator asks: "After Bxf7+ Kxf7 Ng5+ Kg8, do I have enough for the bishop? What are Black's best defensive moves?" One extra question, backed by concrete calculation, changes the decision entirely. Deliberate practice means building the habit of asking that extra question every single move.
 

@@ -37,7 +37,7 @@ The Accelerated Dragon is the single best Sicilian for beginners. Here's why:
 
 **Key idea:** The ...d5 break in the center is Black's main equalizer. After 8...d5, Black has comfortable equality regardless of whether White captures or advances. This is a specific, concrete plan you can aim for in every game.
 
-<chess-position fen="r1bq1rk1/pp2ppbp/2n2np1/3p4/2BP4/2N1BN2/PPP2PPP/R2Q1RK1 w - - 0 9" caption="The Accelerated Dragon after the ...d5 break — Black has comfortable equality" orientation="black" arrows="c4d5:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="r1bq1rk1/pp2ppbp/2n2np1/3p4/2BP4/2N1BN2/PPP2PPP/R2Q1RK1 w - - 0 9" caption="The Accelerated Dragon after the ...d5 break — Black has comfortable equality" orientation="black" arrows="c4b3:green,c4d5:red" badge="best"></chess-position>
 
 **Common beginner mistake:** Playing ...d6 instead of ...d5 in one move. That transposes to the full Dragon, and suddenly you face the Yugoslav Attack. Stick to the Accelerated line and play ...d5 as a single move.
 
@@ -59,7 +59,7 @@ After the starting position, Black typically continues with g6/Bg7 or e6/Be7 dep
 
 6.Be3 e6 7.Qd2 Be7 8.0-0-0 0-0 9.f4 d5!
 
-<chess-position fen="r1bq1rk1/pp2bppp/2nppn2/3p4/3NPP2/2N1B3/PPPQ2PP/2KR1B1R w - - 0 10" caption="Classical Sicilian with opposite-side castling — Black achieves the ...d5 break" orientation="black" arrows="d4c6:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="r1bq1rk1/pp2bppp/2nppn2/3p4/3NPP2/2N1B3/PPPQ2PP/2KR1B1R w - - 0 10" caption="Classical Sicilian with opposite-side castling — Black achieves the ...d5 break" orientation="black" arrows="e4d5:green,d4c6:orange" badge="best"></chess-position>
 
 Again — the ...d5 break is your priority. Once Black achieves ...d5 in the Sicilian, you've solved most of your opening problems.
 
@@ -77,7 +77,7 @@ The Kan is the most flexible and positional of the three lines. It's perfect for
 **The basic setup:**
 1.e4 c5 2.Nf3 e6 3.d4 cxd4 4.Nxd4 a6 5.Nc3 Qc7 6.Bd3 Nf6 7.0-0 Be7 8.Be3 0-0 9.f4 d6
 
-<chess-position fen="r1b2rk1/1pqnbppp/p2ppn2/8/3NPP2/2NBB3/PPP3PP/R2Q1RK1 w - - 0 10" caption="The Kan Variation — Black's flexible setup with queen on c7, pawn on a6 preventing Nb5" orientation="black" arrows="d4e6:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="r1b2rk1/1pqnbppp/p2ppn2/8/3NPP2/2NBB3/PPP3PP/R2Q1RK1 w - - 0 10" caption="The Kan Variation — Black's flexible setup with queen on c7, pawn on a6 preventing Nb5" orientation="black" arrows="g2g4:green,d4e6:orange" badge="best"></chess-position>
 
 **Key idea:** Black's pawn on a6 prevents Nb5 (a common annoyance in many Sicilians). The queen on c7 eyes the c2 pawn and supports a future ...d5 break. The position is solid and flexible — you can choose between ...b5 expansion on the queenside or a timely ...d5 in the center.
 
@@ -197,7 +197,7 @@ A core idea in the Accelerated Dragon that beginners often overlook: Black can d
 
 After 7.Bc4 O-O 8.Bb3, Black plays **8...Na5!** attacking the bishop. The immediate threat is ...Nc4, which would fork the bishop on e3 and the queen on d2. If White carelessly moves the bishop again, Black gains time and reduces White's attacking potential.
 
-<chess-position fen="r1bq1rk1/ppppppbp/5np1/n7/3NP3/1BN1B3/PPP2PPP/R2QK2R w KQ - 0 9" caption="Accelerated Dragon — Black's Na5 attacks White's bishop on b3, threatening ...Nc4" orientation="black" arrows="b3f7:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="r1bq1rk1/ppppppbp/5np1/n7/3NP3/1BN1B3/PPP2PPP/R2QK2R w KQ - 0 9" caption="Accelerated Dragon — Black's Na5 attacks White's bishop on b3, threatening ...Nc4" orientation="black" arrows="e4e5:green,b3f7:red" badge="best"></chess-position>
 
 **Why beginners miss this:** After the flashy Bc4-Bb3 maneuver, many players assume the bishop is safely placed. They don't realize that ...Na5 followed by ...Nc4 gives Black a tactical foothold on the queenside.
 
@@ -209,7 +209,7 @@ The ...d5 break is Black's main equalizer in the Classical, but sometimes White 
 
 Consider the Classical Sicilian after both sides have castled on opposite wings. Black has just played ...b5, starting queenside counterplay. White responds with **12.e5!** — a thematic breakthrough that exploits Black's pinned knight on f6 and the temporarily vulnerable d6 pawn.
 
-<chess-position fen="r1b2rk1/p1q1bppp/3ppn2/1p2P3/3R4/1BN1B3/PPP1QPPP/2K4R b - - 0 12" caption="Classical Sicilian — White's e5 breakthrough opens lines against the black king" orientation="black" arrows="c7c3:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="r1b2rk1/p1q1bppp/3ppn2/1p2P3/3R4/1BN1B3/PPP1QPPP/2K4R b - - 0 12" caption="Classical Sicilian — White's e5 breakthrough opens lines against the black king" orientation="black" arrows="d6e5:green,c7c3:red" badge="best"></chess-position>
 
 **Why beginners miss this:** When focused on their own queenside attack, Black players often overlook White's central breakthrough. After 12.e5, Black must be careful: 12...dxe5? 13.fxe5 Ng4 14.Rd7! wins the exchange, while 12...d5! gives Black a solid pawn center.
 

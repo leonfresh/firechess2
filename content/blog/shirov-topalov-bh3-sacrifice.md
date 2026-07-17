@@ -36,7 +36,7 @@ White's setup is solid but slightly passive. The bishop on a4 is outside the paw
 
 Both sides complete development. White's pieces are well-placed for central control, while Black's pieces target the d4 and c4 squares. The position is balanced, with White's space advantage offset by Black's active piece play.
 
-<chess-position fen="2rq1rk1/pb3ppp/1pnpbn2/5b2/2BPP3/2N1B3/PPQ2PPP/3R1RK1 w - - 4 14" caption="Position after 14 moves — White has a comfortable space advantage but Black's pieces are actively placed. The battle for the center continues." orientation="white" arrows="e4f5:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="2rq1rk1/pb3ppp/1pnpbn2/5b2/2BPP3/2N1B3/PPQ2PPP/3R1RK1 w - - 4 14" caption="Position after 14 moves — White has a comfortable space advantage but Black's pieces are actively placed. The battle for the center continues." orientation="white" arrows="d4d5:green,e4f5:red" badge="best"></chess-position>
 
 ## Middlegame: Maneuvering and Counterplay (Moves 15–30)
 
@@ -66,7 +66,7 @@ Both sides exchange into a queen-and-pawn endgame. White has an extra pawn but B
 
 Topalov's position is slipping. The d5 pawn fell, and now Black's pieces are coordinating beautifully. The bishop on f5 controls key diagonals, the rook on e5 is aggressively placed, and the queen on c5 supports both offense and defense. White's pieces, by contrast, are passive.
 
-<chess-position fen="7k/5pp1/5p2/2q1rb2/p5PP/4R3/1P3P2/Q5K1 w - - 1 41" caption="Position after 40 moves — Black's pieces dominate. The rook on e5, queen on c5, and bishop on f5 outgun White's passive setup. The endgame is slipping away from Topalov." orientation="black" arrows="g4f5:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="7k/5pp1/5p2/2q1rb2/p5PP/4R3/1P3P2/Q5K1 w - - 1 41" caption="Position after 40 moves — Black's pieces dominate. The rook on e5, queen on c5, and bishop on f5 outgun White's passive setup. The endgame is slipping away from Topalov." orientation="black" arrows="e3e5:green,g4f5:red" badge="best"></chess-position>
 
 ## The Final Maneuvers (Moves 41–47)
 
@@ -78,7 +78,7 @@ Rooks come off, and the game enters a pure opposite-colored bishops endgame. Bla
 
 This is the critical mistake. Topalov plays a natural-looking king move, centralizing toward the queenside. But it's one tempo too slow. As we'll see, White's king needed to be on f2 immediately to hold the position.
 
-<chess-position fen="8/8/4kpp1/3p1b2/p6P/2B5/6P1/6K1 b - - 2 47" caption="Position after 47.Kg1 — White's king centralizes one tempo too slowly. Black to play and win with the most famous endgame move in chess history." orientation="black" arrows="f5e4:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="8/8/4kpp1/3p1b2/p6P/2B5/6P1/6K1 b - - 2 47" caption="Position after 47.Kg1 — White's king centralizes one tempo too slowly. Black to play and win with the most famous endgame move in chess history." orientation="black" arrows="f5c2:green,f5e4:red" badge="mistake"></chess-position>
 
 ## 47...Bh3!! — The Move That Broke Chess
 
@@ -88,7 +88,7 @@ Shirov played **47...Bh3!!**, placing his bishop on a square attacked by White's
 
 But the sacrifice is the point. The move is a profound example of **tempo counting in king-and-pawn endgames**. Let's examine both responses:
 
-<chess-position fen="8/8/4kpp1/3p4/p6P/2B4b/6P1/6K1 w - - 3 48" moves="gxh3,Kf5,Kf2,Ke4,Bxf6,d4,Be7,Kd3,Bc5,Kc4,Be7,Kb3" analysis="true" orientation="black" caption="47...Bh3!! — The bishop is en prise to two pawns. After 48.gxh3, Black's king marches to e4 one critical tempo ahead of White's, and the d-pawn becomes unstoppable. Play through the main line and watch the badges." arrows="g2h3:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="8/8/4kpp1/3p4/p6P/2B4b/6P1/6K1 w - - 3 48" moves="gxh3,Kf5,Kf2,Ke4,Bxf6,d4,Be7,Kd3,Bc5,Kc4,Be7,Kb3" analysis="true" orientation="black" caption="47...Bh3!! — The bishop is en prise to two pawns. After 48.gxh3, Black's king marches to e4 one critical tempo ahead of White's, and the d-pawn becomes unstoppable. Play through the main line and watch the badges." arrows="g2h3:rgba(16,185,129,0.5)" badge="best"></chess-position>
 
 ### If White Captures: 48.gxh3
 
@@ -108,7 +108,7 @@ The key insight: **White's g-pawn was in the way of his own king's path to the c
 
 Topalov could also try to simply ignore the sacrifice and bring his king toward the center:
 
-<chess-position fen="8/8/4kpp1/3p4/p6P/2B4b/6P1/6K1 w - - 3 48" moves="Kf2,Kf5,Ke3,Bxg2" analysis="true" orientation="black" caption="If White declines with 48.Kf2, Black takes the g2-pawn and creates three connected passed pawns on the kingside — an even faster win." arrows="g1f2:green"></chess-position>
+<chess-position fen="8/8/4kpp1/3p4/p6P/2B4b/6P1/6K1 w - - 3 48" moves="Kf2,Kf5,Ke3,Bxg2" analysis="true" orientation="black" caption="If White declines with 48.Kf2, Black takes the g2-pawn and creates three connected passed pawns on the kingside — an even faster win." arrows="g1h2:green,g1f2:red" badge="best"></chess-position>
 
 **48.Kf2 Kf5 49.Ke3 Bxg2**
 
@@ -139,7 +139,7 @@ Topalov chose 48.gxh3, the capture line. Over the next 6 moves, Shirov executed 
 
 The final position is beautiful in its clarity: Black's king on b3 supports the a4-pawn toward promotion, while the d4-pawn is also threatening to advance. White's bishop can stop one but not both. The white king on f2 is helpless, stuck guarding the kingside pawns.
 
-<chess-position fen="8/4B3/6p1/8/p2p3P/1k5P/5K2/8 w - - 6 54" caption="Final position after 53...Kb3 — Black's king supports the passed a-pawn while the d-pawn also threatens. White's bishop can't stop both, and the king is tied down on the kingside. Topalov resigned." orientation="black" arrows="e7f8:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="8/4B3/6p1/8/p2p3P/1k5P/5K2/8 w - - 6 54" caption="Final position after 53...Kb3 — Black's king supports the passed a-pawn while the d-pawn also threatens. White's bishop can't stop both, and the king is tied down on the kingside. Topalov resigned." orientation="black" arrows="f2f3:green,e7f8:red" badge="blunder"></chess-position>
 
 ## Lessons for Club Players (1200–1800)
 

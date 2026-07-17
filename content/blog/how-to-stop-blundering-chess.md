@@ -90,7 +90,7 @@ This takes 3-5 seconds and eliminates the majority of hanging-piece blunders. It
 
 Look at this position — White has a queen on d4 that appears powerful, attacking squares deep in Black's territory. But the queen has wandered to an undefended square, and Black's knight on c6 is ready to pounce:
 
-<chess-position fen="r3k3/8/2n5/8/3Q4/8/8/4K3 b - - 0 1" moves="Nxd4" orientation="white" caption="White just played Qd4, eyeing the kingside. But the queen is undefended on d4 — Black plays Nxd4 and wins a full queen for nothing. This is the most common blunder pattern in chess: moving a piece to a square where it can be captured without compensation. Always ask 'is this square safe?' before committing." arrows="c6d4:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="r3k3/8/2n5/8/3Q4/8/8/4K3 b - - 0 1" moves="Nxd4" orientation="white" caption="White just played Qd4, eyeing the kingside. But the queen is undefended on d4 — Black plays Nxd4 and wins a full queen for nothing. This is the most common blunder pattern in chess: moving a piece to a square where it can be captured without compensation. Always ask 'is this square safe?' before committing." arrows="c6d4:rgba(16,185,129,0.5)" badge="best"></chess-position>
 
 This exact pattern — a queen or major piece landing on a square where a minor piece can simply capture it — happens in thousands of games every day. The fix is the blunder check: before you move, count the defenders and attackers on your destination square. If the attackers outnumber the defenders, don't go there.
 
@@ -107,7 +107,7 @@ Knight forks are the most commonly missed tactic in chess. The knight's L-shaped
 
 Also watch for your own fork opportunities — many games are won not because you were better, but because your opponent let you fork two pieces and you actually saw it.
 
-<chess-position fen="r3k3/8/8/3N4/8/8/8/4K3 w - - 0 1" moves="Nc7+, Kd8, Nxa8" orientation="white" caption="The classic knight fork: Nc7+ simultaneously attacks the king on e8 and the rook on a8. After the king moves, the rook falls. Always check where your opponent's knight can jump next!" arrows="d5c7:green"></chess-position>
+<chess-position fen="r3k3/8/8/3N4/8/8/8/4K3 w - - 0 1" moves="Nc7+, Kd8, Nxa8" orientation="white" caption="The classic knight fork: Nc7+ simultaneously attacks the king on e8 and the rook on a8. After the king moves, the rook falls. Always check where your opponent's knight can jump next!" arrows="d5f4:green,d5c7:green" badge="good"></chess-position>
 
 ## 3. Back Rank Mate — The Perennial Trap
 
@@ -125,7 +125,7 @@ You could be up a queen and still lose to back rank mate. It's embarrassing, it'
 2. **Before trading pieces**, check if you're removing a defender of your back rank. Trading your only rook when your back rank is weak is a recipe for disaster.
 3. **Use back rank threats yourself.** If your opponent hasn't made luft, their back rank is a tactical target you should exploit.
 
-<chess-position fen="6k1/5ppp/4q3/8/8/8/5PPP/3QR1K1 w - - 0 1" moves="Qd8+, Qe8, Rxe8#" orientation="white" caption="Back rank mate in action: Qd8+ forces Black's queen to block on e8 — the only legal move. Then Rxe8# is checkmate! Black's own pawns on f7, g7, h7 seal every escape. Always make luft!" arrows="d1d8:green"></chess-position>
+<chess-position fen="6k1/5ppp/4q3/8/8/8/5PPP/3QR1K1 w - - 0 1" moves="Qd8+, Qe8, Rxe8#" orientation="white" caption="Back rank mate in action: Qd8+ forces Black's queen to block on e8 — the only legal move. Then Rxe8# is checkmate! Black's own pawns on f7, g7, h7 seal every escape. Always make luft!" arrows="d1d8:green" badge="best"></chess-position>
 
 ## 4. Pins and Skewers — The Diagonal Blind Spot
 

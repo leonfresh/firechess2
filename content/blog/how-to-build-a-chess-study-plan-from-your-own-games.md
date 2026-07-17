@@ -75,7 +75,7 @@ It is a split like:
 
 That keeps your training concrete. Instead of a vague resolution, you have a list of specific levers you can pull.
 
-<chess-position fen="2r3k1/5ppp/3p4/3P4/1p2P3/1P3P2/P5PP/2R3K1 w - - 0 1" orientation="white" moves="Rxc8+,Rxc8,Kf2" caption="Sometimes the right study target is not 'more tactics' but learning which endgames you should simplify into and how active your king needs to become." arrows="c1c8:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="2r3k1/5ppp/3p4/3P4/1p2P3/1P3P2/P5PP/2R3K1 w - - 0 1" orientation="white" moves="Rxc8+,Rxc8,Kf2" caption="Sometimes the right study target is not 'more tactics' but learning which endgames you should simplify into and how active your king needs to become." arrows="c1c8:rgba(16,185,129,0.5)" badge="best"></chess-position>
 
 ## Step 4: Give Each Category a Job
 
@@ -252,7 +252,7 @@ One of the most rewarding parts of a structured study plan is noticing that you 
 
 A club player who had not yet studied deflection tactics reached this position in a rapid game:
 
-<chess-position fen="r1b2rk1/ppp2ppp/2n5/3q4/2BP4/2N5/PP3PPP/R1BQ1RK1 w - - 0 11" orientation="white" caption="Before study. White to move. Can you spot the winning tactical idea? The queen on d5 is defended only by the king and rook." arrows="c3d5:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="r1b2rk1/ppp2ppp/2n5/3q4/2BP4/2N5/PP3PPP/R1BQ1RK1 w - - 0 11" orientation="white" caption="Before study. White to move. Can you spot the winning tactical idea? The queen on d5 is defended only by the king and rook." arrows="c4d5:green,c3d5:red" badge="best"></chess-position>
 
 White played a quiet positional move here — maybe Re1, h3, or a3 — and the game continued with equal chances. The problem? White missed **Bxf7+**.
 
@@ -264,7 +264,7 @@ Before this player added deflection patterns to their study plan, moves like Bxf
 
 Two weeks later — after daily deflection-tactic drills and game reviews that specifically highlighted this pattern — the same player reached a new position:
 
-<chess-position fen="r1b2rk1/ppp2ppp/2n2q2/3p4/2BP4/2N2N2/PP3PPP/R1BQ1RK1 w - - 0 12" orientation="white" caption="After study. White to move again. Different setup, same tactical idea — can you see it?" moves="Bxf7+,Rxf7,Qxd5" arrows="c4d5:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="r1b2rk1/ppp2ppp/2n2q2/3p4/2BP4/2N2N2/PP3PPP/R1BQ1RK1 w - - 0 12" orientation="white" caption="After study. White to move again. Different setup, same tactical idea — can you see it?" moves="Bxf7+,Rxf7,Qxd5" arrows="c3d5:green,c4d5:red" badge="best"></chess-position>
 
 The pieces are different, but the deflection theme is the same. White spotted **Bxf7+!** immediately, deflecting the rook from the defense of the queen, then captured the queen with **Qxd5**. The difference was not talent — it was training. The pattern had been drilled enough that the brain now flagged "undefended queen + bishop attacking f7" as a candidate.
 

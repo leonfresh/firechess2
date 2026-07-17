@@ -75,7 +75,7 @@ Let's make this real with actual positions. Each one demonstrates a different ce
 
 ### Example 1: A Minor Inaccuracy (15-25 cp Loss)
 
-<chess-position fen="r1bq1rk1/ppp2ppp/2np1n2/4p3/2P5/2NP1NP1/PP2PPBP/R1BQ1RK1 w - - 0 10" caption="A typical King's Indian Attack structure. White's best move is 10.Be3, completing development. Playing 10.b3 instead (preparing Bb2) loses about 18 cp — a minor inaccuracy. The engine prefers the bishop on e3 where it targets the d6 weakness. This is the kind of inaccuracy that FireChess marks with a yellow '?!' badge." badge="inaccuracy" arrows="c1e3:green"></chess-position>
+<chess-position fen="r1bq1rk1/ppp2ppp/2np1n2/4p3/2P5/2NP1NP1/PP2PPBP/R1BQ1RK1 w - - 0 10" caption="A typical King's Indian Attack structure. White's best move is 10.Be3, completing development. Playing 10.b3 instead (preparing Bb2) loses about 18 cp — a minor inaccuracy. The engine prefers the bishop on e3 where it targets the d6 weakness. This is the kind of inaccuracy that FireChess marks with a yellow '?!' badge." badge="blunder" arrows="b2b3:green,c1e3:red"></chess-position>
 
 In the position above, White has a comfortable position (+0.45). The best move is 10.Be3, developing the bishop to its most active square. If White plays 10.b3 instead, the evaluation drops to roughly +0.27 — a centipawn loss of **18 cp**. FireChess would label this an **Inaccuracy (?!)**.
 
@@ -83,7 +83,7 @@ This is the most common type of centipawn loss for intermediate players: small p
 
 ### Example 2: A Clear Mistake (40-80 cp Loss)
 
-<chess-position fen="r1bqk2r/pppp1ppp/2n5/4P3/2B1n3/5N2/PPP2PPP/RNBQK2R w KQkq - 0 7" caption="White to move. The best continuation is 7.Nc3, developing and attacking the knight on e4. Playing 7.O-O? instead allows Black to consolidate with ...d5, equalising. Centipawn loss: approximately 55 cp. FireChess badge: Mistake (?)." badge="mistake" arrows="b1c3:green"></chess-position>
+<chess-position fen="r1bqk2r/pppp1ppp/2n5/4P3/2B1n3/5N2/PPP2PPP/RNBQK2R w KQkq - 0 7" caption="White to move. The best continuation is 7.Nc3, developing and attacking the knight on e4. Playing 7.O-O? instead allows Black to consolidate with ...d5, equalising. Centipawn loss: approximately 55 cp. FireChess badge: Mistake (?)." badge="best" arrows="d1d5:green,b1c3:red"></chess-position>
 
 White has a slight advantage (+0.60) after the opening. The best move is 7.Nc3, hitting the loose knight on e4 and maintaining pressure. If White castles with 7.O-O?, Black plays 7...d5 and suddenly Black is completely fine. The evaluation swings from +0.60 to roughly +0.05 — a centipawn loss of **55 cp**. FireChess marks this with an orange **Mistake (?)** badge.
 
@@ -91,7 +91,7 @@ Notice this isn't a tactical blunder — White didn't hang a piece. But White ga
 
 ### Example 3: A Blunder (80-150 cp Loss)
 
-<chess-position fen="r1b1kb1r/ppp2ppp/2n5/3qp3/8/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 4 7" caption="White to move. Black has just played ...Qe5, leaving the queen undefended. The only good move is Nxe5, winning the queen. Any other move — say, Be2 — is a 900 cp blunder. FireChess badge: Blunder (??)." badge="blunder" arrows="f3e5:green"></chess-position>
+<chess-position fen="r1b1kb1r/ppp2ppp/2n5/3qp3/8/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 4 7" caption="White to move. Black has just played ...Qe5, leaving the queen undefended. The only good move is Nxe5, winning the queen. Any other move — say, Be2 — is a 900 cp blunder. FireChess badge: Blunder (??)." badge="best" arrows="c3d5:green,f3e5:orange"></chess-position>
 
 This is the most dramatic type of centipawn loss. White can capture the black queen with 7.Nxe5, gaining +9.00 in evaluation. Any other normal move — developing a bishop, castling — throws away a full queen. The centipawn loss for missing Nxe5 is roughly **900 cp**. FireChess labels this a red **Blunder (??)**.
 

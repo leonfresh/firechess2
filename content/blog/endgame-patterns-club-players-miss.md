@@ -101,7 +101,7 @@ The Lucena position is the single most important theoretical endgame position. I
 3. When the opponent's rook gives checks, block with your own rook on the 4th rank
 4. Promote the pawn
 
-<chess-position fen="3K4/3P4/5k2/8/8/8/3r4/R7 w - - 0 1" moves="Ra4, Rd1, Kc7, Rc1+, Kb6, Rd1, Kc6, Rc1+, Kb5, Rd1, Rc4" orientation="white" caption="The Lucena Position — White builds the 'bridge'. The rook goes to the 4th rank to shield the king from checks. The king zigzags forward while the rook blocks each check, escorting the pawn to promotion." arrows="a1a6:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="3K4/3P4/5k2/8/8/8/3r4/R7 w - - 0 1" moves="Ra4, Rd1, Kc7, Rc1+, Kb6, Rd1, Kc6, Rc1+, Kb5, Rd1, Rc4" orientation="white" caption="The Lucena Position — White builds the 'bridge'. The rook goes to the 4th rank to shield the king from checks. The king zigzags forward while the rook blocks each check, escorting the pawn to promotion." arrows="a1a6:rgba(16,185,129,0.5)" badge="blunder"></chess-position>
 
 This concept has been known for centuries, but a surprising number of 1500-1800 rated players haven't internalized it. **Learn the Lucena, and you'll convert every standard rook ending where you reach this position.**
 
@@ -125,7 +125,7 @@ In king and pawn endings, the king transforms from a piece that hides in the cor
 
 **The opposition rule:** When two kings face each other with one square between them, the player who does NOT have to move has the "opposition" — a critical advantage in king and pawn endings. If you don't know this concept, you're losing drawn endings and drawing won endings constantly.
 
-<chess-position fen="8/5pk1/6p1/4K1P1/5P2/8/8/8 w - - 0 1" moves="Kd5, Kf8, Kd6, Ke8, Kc7, Ke7, Kc6, Ke6, f5+" orientation="white" caption="White's king outflanks via the queenside. After Kd5-Kd6-Kc7-Kc6, White infiltrates behind the pawns. The f5+ breakthrough wins material." arrows="e5d5:green"></chess-position>
+<chess-position fen="8/5pk1/6p1/4K1P1/5P2/8/8/8 w - - 0 1" moves="Kd5, Kf8, Kd6, Ke8, Kc7, Ke7, Kc6, Ke6, f5+" orientation="white" caption="White's king outflanks via the queenside. After Kd5-Kd6-Kc7-Kc6, White infiltrates behind the pawns. The f5+ breakthrough wins material." arrows="e5d6:green,e5d5:green" badge="best"></chess-position>
 
 Understanding opposition is not enough on its own — you also need to recognize **distant opposition** (kings on the same file or diagonal with an odd number of squares between them) and the concept of **corresponding squares**. These ideas determine whether a king and pawn endgame is won, drawn, or lost. Many positions that look equal are actually decisive if one side understands the geometry of king placement.
 
@@ -148,7 +148,7 @@ Siegbert Tarrasch stated it over 100 years ago: **"Rooks belong behind passed pa
 
 Your opponent has a passed d-pawn on d5. You put your rook on d1, blocking it. But now your rook is stuck babysitting. If instead you get your rook to d8 (behind their pawn), you're both stopping the pawn and keeping your rook active.
 
-<chess-position fen="3r4/4k3/8/3P4/8/4K3/8/3R4 w - - 0 1" moves="Ke4, Kd6, Kd4, Ke7, Kc5, Kd7, d6" orientation="white" caption="Tarrasch's Rule in action — White's rook on d1 supports the passed pawn from BEHIND. Black's rook on d8 is stuck blocking from the front. White's king marches forward freely while Black's rook stays chained to d8." arrows="d5d6:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="3r4/4k3/8/3P4/8/4K3/8/3R4 w - - 0 1" moves="Ke4, Kd6, Kd4, Ke7, Kc5, Kd7, d6" orientation="white" caption="Tarrasch's Rule in action — White's rook on d1 supports the passed pawn from BEHIND. Black's rook on d8 is stuck blocking from the front. White's king marches forward freely while Black's rook stays chained to d8." arrows="e3d4:green,d5d6:green" badge="best"></chess-position>
 
 There is one important exception to Tarrasch's Rule: when the passed pawn has already advanced to the 7th rank, placing the rook in front of the *opponent's* pawn can sometimes be the only way to prevent promotion. In these cases, the passive placement is a necessary evil. But for pawns on ranks 2 through 6, the rule almost always holds.
 
@@ -170,7 +170,7 @@ This one sounds simple but catches club players constantly. If you have a bishop
 
 **How to avoid it:** Before trading down, check whether your remaining bishop controls your pawn's promotion square. If not, keep more material on the board or find a different plan.
 
-<chess-position fen="7k/8/6KP/6B1/8/8/8/8 w - - 0 1" orientation="white" caption="The 'wrong bishop' — White has a bishop and h-pawn, but the light-squared bishop can NEVER control h8 (a dark square). Black's king sits in the corner forever. This is a dead draw despite being up a full piece." arrows="g5f6:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="7k/8/6KP/6B1/8/8/8/8 w - - 0 1" orientation="white" caption="The 'wrong bishop' — White has a bishop and h-pawn, but the light-squared bishop can NEVER control h8 (a dark square). Black's king sits in the corner forever. This is a dead draw despite being up a full piece." arrows="g5f6:rgba(16,185,129,0.5)" badge="best"></chess-position>
 
 This pattern extends beyond the basic bishop-and-pawn scenario. In many practical endgames, you'll encounter positions where a bishop of the wrong color makes it impossible to convert an otherwise winning advantage. For instance, if you have two bishops and a rook pawn, but only the wrong-colored bishop can reach the promotion corner, the extra bishop is useless for that specific task.
 
@@ -196,7 +196,7 @@ In rook endings with multiple pawns, the side that creates a passed pawn first u
 
 A passed pawn in a rook ending is like having an extra piece. It ties the opponent's rook to defense while your rook stays active. Even one passed pawn often decides the game.
 
-<chess-position fen="8/pp4k1/8/PPP3K1/8/8/8/8 w - - 0 1" moves="c6, bxc6, bxc6, Kf8, c7, Ke7, a6" orientation="white" caption="The pawn majority technique: advance the unopposed 'candidate' (c5). After c6 bxc6 bxc6, White creates a passed c-pawn. When it reaches c7, the a-pawn advances too — Black can't stop both!" arrows="g5h5:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="8/pp4k1/8/PPP3K1/8/8/8/8 w - - 0 1" moves="c6, bxc6, bxc6, Kf8, c7, Ke7, a6" orientation="white" caption="The pawn majority technique: advance the unopposed 'candidate' (c5). After c6 bxc6 bxc6, White creates a passed c-pawn. When it reaches c7, the a-pawn advances too — Black can't stop both!" arrows="b5b6:green,g5h5:red" badge="best"></chess-position>
 
 The concept of the "outside passed pawn" is closely related. When both sides have passed pawns, the player whose passed pawn is farther from the action (the "outside" pawn) has a decisive advantage. The opponent's king must chase that distant pawn, leaving the other side's king free to gobble up pawns on the opposite flank. Recognizing when to create an outside passed pawn — even at the cost of a pawn — is a hallmark of strong endgame play.
 

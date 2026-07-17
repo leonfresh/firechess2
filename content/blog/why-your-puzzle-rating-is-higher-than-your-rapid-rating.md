@@ -12,7 +12,7 @@ Puzzle ratings and game ratings measure different skills under different conditi
 
 This article explains the gap, why it exists, and — most importantly — how to close it. We will look at concrete examples, compare puzzle patterns against real-game patterns, and give you a practical plan to convert tactical strength into actual rating points.
 
-<chess-position fen="r3k2r/pp3ppp/2n1pn2/2bp4/3P4/2N1PN2/PP3PPP/R1BQ1RK1 w kq - 0 1" orientation="white" moves="Ne5,Nxe5,dxe5" caption="In a puzzle, you immediately start looking for forcing moves. In a real game, many players never pause long enough to consider the tactical break." arrows="d4c5:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="r3k2r/pp3ppp/2n1pn2/2bp4/3P4/2N1PN2/PP3PPP/R1BQ1RK1 w kq - 0 1" orientation="white" moves="Ne5,Nxe5,dxe5" caption="In a puzzle, you immediately start looking for forcing moves. In a real game, many players never pause long enough to consider the tactical break." arrows="d4c5:rgba(16,185,129,0.5)" badge="best"></chess-position>
 
 ## The Short Version
 
@@ -173,7 +173,7 @@ That recognition gap is where a lot of Elo disappears.
 
 Consider this position. It is White to move in a typical Italian Game middlegame:
 
-<chess-position fen="r1bq1rk1/ppp1bppp/2np4/4p3/2B1P3/3P1N2/PPP2PPP/RNBQ1RK1 w - - 0 1" orientation="white" moves="Nxe5" caption="White to play. The natural moves are Re1 or d4, but there is a tactical shot. In a puzzle, you find it immediately. In a game, you might walk right past it." arrows="f1e1:green"></chess-position>
+<chess-position fen="r1bq1rk1/ppp1bppp/2np4/4p3/2B1P3/3P1N2/PPP2PPP/RNBQ1RK1 w - - 0 1" orientation="white" moves="Nxe5" caption="White to play. The natural moves are Re1 or d4, but there is a tactical shot. In a puzzle, you find it immediately. In a game, you might walk right past it." arrows="a2a4:green,f1e1:red" badge="best"></chess-position>
 
 In a **puzzle**, you know instantly that something is here. You scan checks and captures. Within seconds, you find it: **1. Nxe5!**
 

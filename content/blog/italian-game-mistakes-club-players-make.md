@@ -40,7 +40,7 @@ The most common branches include the **Giuoco Pianissimo** (4.d3, slow buildup),
 
 Each of these requires a slightly different mindset. The mistake is treating them all the same way.
 
-<chess-position fen="r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 2 4" orientation="white" moves="c3,Nf6,d4,exd4,cxd4,Bb4+" caption="The Italian looks calm until the center opens. If you develop cleanly and time c3-d4 well, the opening starts playing itself." arrows="c4f7:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 2 4" orientation="white" moves="c3,Nf6,d4,exd4,cxd4,Bb4+" caption="The Italian looks calm until the center opens. If you develop cleanly and time c3-d4 well, the opening starts playing itself." arrows="e1g1:green,c4f7:red" badge="best"></chess-position>
 
 ---
 
@@ -131,7 +131,7 @@ They know the motif exists in theory. They just do not notice when the board is 
 
 A common example: after 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.c3 Nf6 5.d3 d6 6.0-0 0-0, many club players miss 7.Bxf7+ Rxf7 8.Ng5 — attacking the rook on f7 and threatening Qh5+ with a winning attack. Even when the sacrifice is not strictly winning, the practical pressure it creates at club level is enormous.
 
-<chess-position fen="r1bqk2r/pppp1ppp/2n2n2/2b1N3/2B1P3/8/PPPP1PPP/RNBQ1RK1 b kq - 0 6" orientation="white" moves="Nxe5,Bxf7+,Kxf7,Qh5+" caption="Italian positions often punish loose development immediately. Tactical ideas around e5 and f7 appear the moment Black gets careless. The Nxe5 sacrifice followed by Bxf7+ is a classic Italian pattern that wins many club games." arrows="c6e5:green"></chess-position>
+<chess-position fen="r1bqk2r/pppp1ppp/2n2n2/2b1N3/2B1P3/8/PPPP1PPP/RNBQ1RK1 b kq - 0 6" orientation="white" moves="Nxe5,Bxf7+,Kxf7,Qh5+" caption="Italian positions often punish loose development immediately. Tactical ideas around e5 and f7 appear the moment Black gets careless. The Nxe5 sacrifice followed by Bxf7+ is a classic Italian pattern that wins many club games." arrows="c6e5:green" badge="best"></chess-position>
 
 ---
 
@@ -172,7 +172,7 @@ The c3-d4 approach is sharper. If you play d4 and Black exchanges, you get an op
 
 A simple way to decide: if you feel comfortable with open, tactical positions, learn the c3-d4 approach. If you prefer quiet, positional games where you outplay the opponent over 30 moves, the d3 Italian is your weapon.
 
-<chess-position fen="r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2PP1N2/PP3PPP/RNBQK2R b KQkq - 0 5" orientation="white" moves="d3" caption="The Giuoco Pianissimo after 5.d3. This position looks quiet but contains deep plans: White can reroute the knight to g3, prepare f4, or play Be3 to exchange the dark-squared bishop. Black needs to be patient too." arrows="c5e3:green"></chess-position>
+<chess-position fen="r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2PP1N2/PP3PPP/RNBQK2R b KQkq - 0 5" orientation="white" moves="d3" caption="The Giuoco Pianissimo after 5.d3. This position looks quiet but contains deep plans: White can reroute the knight to g3, prepare f4, or play Be3 to exchange the dark-squared bishop. Black needs to be patient too." arrows="a7a6:green,c5e3:red" badge="best"></chess-position>
 
 ---
 
@@ -193,7 +193,7 @@ When Black plays ...Be6 without first playing ...d5, White often has the strong 
 
 The key is recognising that inaccuracies in the Italian are not just harmless waiting moves — they are invitations to take over the game. If Black is wasting time, you should be gaining space.
 
-<chess-position fen="r1bqk2r/bppp1ppp/p1n2n2/4p3/2B1P3/2PP1N2/PP3PPP/RNBQ1RK1 w kq - 2 7" orientation="white" moves="a4" caption="Black played ...a6 and ...Ba7, wasting two tempi. White already has a space advantage and can fix the queenside with a4. The early ...a6 has given White a target on b6 and Black struggles to generate counterplay." arrows="c4f7:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="r1bqk2r/bppp1ppp/p1n2n2/4p3/2B1P3/2PP1N2/PP3PPP/RNBQ1RK1 w kq - 2 7" orientation="white" moves="a4" caption="Black played ...a6 and ...Ba7, wasting two tempi. White already has a space advantage and can fix the queenside with a4. The early ...a6 has given White a target on b6 and Black struggles to generate counterplay." arrows="f1e1:green,c4f7:red" badge="inaccuracy"></chess-position>
 
 ---
 

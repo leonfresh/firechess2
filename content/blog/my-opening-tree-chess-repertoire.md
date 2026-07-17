@@ -124,7 +124,7 @@ The tree starts at the initial position and branches at every move. When you pla
 
 When you step outside your prepared repertoire, the tree catches it immediately. Consider this Sicilian Dragon position after 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 g6 6.Be3 Bg7 7.f3 O-O 8.Qd2 Nc6 9.Bc4:
 
-<chess-position fen="r1bq1rk1/pp2ppbp/2np1np1/8/2BPP1b1/2N2N2/PP2QPPP/R1B2RK1 w - - 0 9" orientation="white" caption="Sicilian Dragon Yugoslav Attack — what happens outside your repertoire. After 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 g6 6.Be3 Bg7 7.f3 O-O 8.Qd2 Nc6 9.Bc4, White is launching the Yugoslav Attack with opposite-side castling coming. If your repertoire is the Italian Game, you're in unfamiliar, razor-sharp territory. This is where the tree turns red — without specific Dragon knowledge, you'll face mating attacks you've never seen before." arrows="c4f7:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="r1bq1rk1/pp2ppbp/2np1np1/8/2BPP1b1/2N2N2/PP2QPPP/R1B2RK1 w - - 0 9" orientation="white" caption="Sicilian Dragon Yugoslav Attack — what happens outside your repertoire. After 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 g6 6.Be3 Bg7 7.f3 O-O 8.Qd2 Nc6 9.Bc4, White is launching the Yugoslav Attack with opposite-side castling coming. If your repertoire is the Italian Game, you're in unfamiliar, razor-sharp territory. This is where the tree turns red — without specific Dragon knowledge, you'll face mating attacks you've never seen before." arrows="c1e3:green,c4f7:red" badge="blunder"></chess-position>
 
 Here's the fastest way to use it:
 
@@ -262,7 +262,7 @@ For a systematic approach to fixing the weak lines this chart reveals, read our 
 
 Let's walk through a real position. Suppose you've reached this Italian Game after 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.c3 Nf6 5.d3 d6 6.0-0 0-0 7.Re1:
 
-<chess-position fen="r1bq1rk1/ppp2ppp/2np1n2/2b1p3/2B1P3/2PP1N2/PP3PPP/RNBQR1K1 w - - 0 8" orientation="white" caption="Italian Game — the position your repertoire aims for. After 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.c3 Nf6 5.d3 d6 6.O-O O-O 7.Re1, White has a solid setup with clear plans: the d3-d4 break, Bc1-g5 pin, or Qe2 and Rad1 buildup. This is what a well-prepared repertoire looks like — a position you've studied, you understand, and you consistently score well from." arrows="c4f7:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="r1bq1rk1/ppp2ppp/2np1n2/2b1p3/2B1P3/2PP1N2/PP3PPP/RNBQR1K1 w - - 0 8" orientation="white" caption="Italian Game — the position your repertoire aims for. After 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.c3 Nf6 5.d3 d6 6.O-O O-O 7.Re1, White has a solid setup with clear plans: the d3-d4 break, Bc1-g5 pin, or Qe2 and Rad1 buildup. This is what a well-prepared repertoire looks like — a position you've studied, you understand, and you consistently score well from." arrows="c4b3:green,c4f7:red" badge="inaccuracy"></chess-position>
 
 ```
 r1bq1rk1/ppp2ppp/2np1n2/2b1p3/2B1P3/2PP1N2/PP3PPP/RNBQR1K1 w - - 0 8

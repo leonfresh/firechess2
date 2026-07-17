@@ -48,7 +48,7 @@ Openings only become useful when you know what the resulting middlegame wants:
 
 Consider a typical Italian Game middlegame after both sides have castled and the center is about to open. You should know that White often looks for `d4` or `f4` breaks, while Black aims to challenge the center with `d5` or `e5` at the right moment.
 
-<chess-position fen="r1bq1rk1/ppp2ppp/2n5/2bp4/2B1P3/3P1N2/PPP2PPP/RNBQ1RK1 w - - 0 7" orientation="white" moves="d4,exd4,cxd4" caption="White is ready to break with d4. Before you play it, ask: what happens after the pawn exchange? Whose pieces become more active? This is layer-2 thinking." arrows="d3d4:green"></chess-position>
+<chess-position fen="r1bq1rk1/ppp2ppp/2n5/2bp4/2B1P3/3P1N2/PPP2PPP/RNBQ1RK1 w - - 0 7" orientation="white" moves="d4,exd4,cxd4" caption="White is ready to break with d4. Before you play it, ask: what happens after the pawn exchange? Whose pieces become more active? This is layer-2 thinking." arrows="c4d5:green,d3d4:red" badge="best"></chess-position>
 
 ### Layer 3: Learn your own leak points
 
@@ -60,7 +60,7 @@ Maybe you repeatedly miss one tactical motif in the same structure.
 
 That is the study gold.
 
-<chess-position fen="r1bq1rk1/ppp2ppp/2n1pn2/2b5/2BPP3/2P2N2/PP3PPP/RNBQ1RK1 w - - 0 8" orientation="white" moves="e5,Nd5,cxd4" caption="A good opening study session asks more than 'what is theory here?' It asks what plans, breaks, and tactical ideas are likely to appear next." arrows="d4c5:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="r1bq1rk1/ppp2ppp/2n1pn2/2b5/2BPP3/2P2N2/PP3PPP/RNBQ1RK1 w - - 0 8" orientation="white" moves="e5,Nd5,cxd4" caption="A good opening study session asks more than 'what is theory here?' It asks what plans, breaks, and tactical ideas are likely to appear next." arrows="d4c5:rgba(16,185,129,0.5)" badge="best"></chess-position>
 
 ## Putting It All Together: The French Defense Through Three Layers
 
@@ -78,7 +78,7 @@ The most critical variation for most French players is the Advance Variation, wh
 
 After `3.e5 c5 4.c3 Nc6 5.Nf3 Qb6`, a typical and instructive position is reached:
 
-<chess-position fen="r1b1kbnr/pp3ppp/1qn1p3/2ppP3/3P4/2P2N2/PP3PPP/RNBQKB1R w KQkq - 2 6" orientation="white" moves="Be2,Bd7,O-O" caption="The French Advance after 5...Qb6. Black pressures d4 and b2. White must decide how to develop the kingside. Both sides have clear, repeatable plans — this is Layer 2 knowledge." arrows="d4c5:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="r1b1kbnr/pp3ppp/1qn1p3/2ppP3/3P4/2P2N2/PP3PPP/RNBQKB1R w KQkq - 2 6" orientation="white" moves="Be2,Bd7,O-O" caption="The French Advance after 5...Qb6. Black pressures d4 and b2. White must decide how to develop the kingside. Both sides have clear, repeatable plans — this is Layer 2 knowledge." arrows="a2a3:green,d4c5:green" badge="best"></chess-position>
 
 If you understand this position at Layer 2, you know the following:
 
@@ -205,7 +205,7 @@ Opening study gets much stronger when it follows your actual games. If a scan sh
 
 This is especially common in the Caro-Kann, where players spend hours on the Fantasy Variation and then lose repeatedly in the Exchange Variation because they do not understand the resulting IQP (isolated queen pawn) positions.
 
-<chess-position fen="r1bq1rk1/pp1n1ppp/2p1pn2/3p4/2PP4/2NBPN2/PP3PPP/R1BQ1RK1 w - - 0 9" orientation="white" moves="cxd5,Nxd5,Nxd5,Nxd5,cxd5" caption="A typical Caro-Kann Exchange middlegame. The isolated pawn on d5 defines every plan. If you do not know how to play IQP positions, studying sidelines is a distraction." arrows="d3h7:rgba(16,185,129,0.5)"></chess-position>
+<chess-position fen="r1bq1rk1/pp1n1ppp/2p1pn2/3p4/2PP4/2NBPN2/PP3PPP/R1BQ1RK1 w - - 0 9" orientation="white" moves="cxd5,Nxd5,Nxd5,Nxd5,cxd5" caption="A typical Caro-Kann Exchange middlegame. The isolated pawn on d5 defines every plan. If you do not know how to play IQP positions, studying sidelines is a distraction." arrows="h2h3:green,d3h7:red" badge="blunder"></chess-position>
 
 ## Understanding Your Opponent's Options
 
