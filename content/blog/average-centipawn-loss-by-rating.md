@@ -117,15 +117,11 @@ Averages can feel abstract, so here's what different ACPL values mean in practic
 
 **ACPL 15–25 (GM level):** Mistakes are subtle — a slightly mis-evaluated pawn break, a piece placed on the wrong square in a closed position, or choosing the wrong plan from three roughly equal options. Games are decided by microscopic advantages that compound over 40+ moves.
 
-Consider a typical club-level position from the Italian Game:
+Consider this position from the Italian Game, Giuoco Pianissimo:
 
-<div class="chess-fen" style="margin: 1rem 0; padding: 0.75rem 1rem; background: #0d1425; border-radius: 8px; border: 1px solid #1e293b; font-family: monospace; color: #94a3b8; font-size: 13px;">
-<strong style="color: #cbd5e1;">Position:</strong> r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3<br>
-<strong style="color: #cbd5e1;">Typical mistake at 1400:</strong> Black plays 3...d6? which is passive, giving White a comfortable edge (≈40 cp advantage).<br>
-<strong style="color: #cbd5e1;">Best move:</strong> 3...Nf6 or 3...Bc5 fighting for the center.
-</div>
+<chess-position fen="r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R b KQkq - 0 4" caption="Italian Game after 4.d3 — Black's next move determines the character of the game. A 1400 typically plays 4...d6? (passive, ≈40 cp loss), while a 2000 plays 4...Bc5 or 4...Be7 with a clear plan." orientation="white"></chess-position>
 
-A 1400-rated player in this position might lose 50–70 cp by choosing the wrong plan over the next few moves. A 2000-rated player evaluates the same position and gains 10–15 cp of advantage through precise play.
+A 1400-rated player in this position might lose 50–70 cp by choosing the wrong plan over the next few moves. A 2000-rated player evaluates the same position and gains 10–15 cp of advantage through precise play. See our guide on [Italian Game Mistakes Club Players Make](/blog/italian-game-mistakes-club-players-make) for the most common errors from this setup.
 
 ## Why Every Platform's ACPL Differs
 
@@ -135,7 +131,7 @@ If you've checked your centipawn loss on Lichess versus Chess.com, you've notice
 - **Chess.com** uses a stronger Stockfish (Cloud Engine) at higher depths. Their centipawn loss numbers tend to be higher — sometimes 10–20% higher than Lichess for the same game — because the engine finds finer distinctions between moves.
 - **FireChess** uses Stockfish 18 at balanced depth, comparable to Chess.com. The ACPL table above is calibrated for FireChess-level analysis strength.
 
-**Rule of thumb:** If you're used to Lichess numbers, add roughly 10% when comparing to FireChess or Chess.com ACPL. A "good" 40 ACPL on Lichess might register as 45–48 on FireChess. Cross-platform comparisons are always approximate — commit to one platform for tracking your own progress.
+**Rule of thumb:** If you're used to Lichess numbers, add roughly 10% when comparing to FireChess or Chess.com ACPL. For a full comparison of chess analysis tools, see our guide on [Free Chess Analysis Tools 2026](/blog/free-chess-analysis-tools-2026). A "good" 40 ACPL on Lichess might register as 45–48 on FireChess. Cross-platform comparisons are always approximate — commit to one platform for tracking your own progress.
 
 ## ACPL by Time Control
 
@@ -258,7 +254,7 @@ A typical club player's game breakdown might look like:
 - Middlegame ACPL: **80** (where the damage happens)
 - Endgame ACPL: **55** (some technique, some time-scramble)
 
-The middlegame spike is where improvement happens fastest. If your middlegame ACPL is double your opening ACPL, you're not running out of theory — you're running out of a plan. The greatest gains come from improving your middlegame decision-making, which is where most games are decided.
+The middlegame spike is where improvement happens fastest. If your middlegame ACPL is double your opening ACPL, you're not running out of theory — you're running out of a plan. The greatest gains come from improving your middlegame decision-making, which is where most games are decided. If your middlegame ACPL is spiking, [Chess Tactics Every Player Should Know](/blog/chess-tactics-every-player-should-know) covers the tactical patterns that club players miss most often.
 
 ## Why Variance Matters — cpLoss Distribution Within Rating Bands
 
@@ -272,6 +268,12 @@ Two players can have the same ACPL of 65 but arrive there in completely differen
 Which player do you think has the higher peak rating? Research and platform data consistently show that **lower variance correlates with higher peak performance**, even when the averages are matched. A player who avoids the 120 ACPL blowout games will gain more rating points than a player who occasionally plays at 35 ACPL but also has catastrophic losses.
 
 Here's what the spread of centipawn loss typically looks like within each rating band:
+
+To see how this plays out concretely, consider the Sicilian Najdorf — one of the most theoretically demanding openings in chess:
+
+<chess-position fen="r2q1rk1/3nbppp/p2pbn2/1p2p1P1/4P3/1NN1BP2/PPPQ3P/2KR1B1R b - - 0 12" caption="Sicilian Najdorf, English Attack — the kind of position where ACPL diverges wildly by rating. A 1200 player will hang pieces in the tactical chaos. A 1600 plays the position passively and drifts. A 2000 finds the concrete counterplay with 12...h6 or 12...Rc8." orientation="white"></chess-position>
+
+At the 1200 level, this position produces ACPL 100+ — players either freeze from the complexity or play random pawn pushes. At 1600, ACPL drops to 55–70, but the moves are still reactive rather than proactive. At 2000+, players find the right plan (counter-attack on the queenside with ...Rc8 and ...h6) and keep ACPL under 35. The position hasn't changed — the player has. Use [FireChess's analysis tools](/analyze) to see how your ACPL shifts across different opening structures.
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
 <svg width="680" height="440" viewBox="0 0 680 440" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -397,7 +399,7 @@ A typical 1500-rated player might have an ACPL of 75 ±30 (average 75, std dev 3
 
 ## Frequently Asked Questions about Average Centipawn Loss
 
-### 1. What is a good average centipawn loss for my rating?
+### Q: What is a good average centipawn loss for my rating?
 
 There is no single "good" number — it depends entirely on your rating. Use the table above as your guide. A "good" ACPL for your rating is one that falls in the lower half of your band's range. For example:
 
@@ -407,23 +409,23 @@ There is no single "good" number — it depends entirely on your rating. Use the
 
 But remember: **a trending ACPL is better than a good ACPL.** If your numbers are dropping week over week, you're improving regardless of where you start.
 
-### 2. Why is my ACPL higher on Chess.com than Lichess?
+### Q: Why is my ACPL higher on Chess.com than Lichess?
 
 This is the most common question we get, and the answer is the engine depth. Chess.com uses a stronger, deeper Stockfish analysis that finds finer distinctions between moves. A move that Stockfish evaluates as +0.50 at depth 22 on Lichess might evaluate at +0.70 at depth 30 on Chess.com — the same move, but counted as a bigger inaccuracy. The difference can be 10–20% higher ACPL on Chess.com for the exact same game.
 
 There's also a methodological difference: Chess.com's cloud analysis sometimes applies additional pruning that can make its depth uneven across the board, while Lichess consistently analyzes at a fixed depth. This means the same blunder might be caught on one platform but not the other, further skewing cross-platform comparisons. Our advice: pick one platform and stick with it for tracking your progress over time. Consistency of method matters more than which method you choose.
 
-### 3. Can I have a low ACPL and still lose?
+### Q: Can I have a low ACPL and still lose?
 
 Absolutely — this is one of the most misunderstood aspects of centipawn loss. Centipawn loss measures the quality of your moves, not the result of the game. You can play a nearly perfect game (ACPL 25) and lose because your opponent also played accurately (ACPL 20) and had a slight positional edge from the opening. Conversely, you can win with ACPL 80 if your opponent blunders worse.
 
 This is also why you shouldn't judge a single game's quality by its result alone. A loss where you held a difficult position for 50 moves with ACPL 30 is a far better performance than a win where your opponent blundered a piece on move 8 and you coasted with ACPL 90. **ACPL tells you how well you played, not who deserved to win.** For more on this distinction, read [Chess Accuracy Score Explained](/blog/chess-accuracy-score-explained).
 
-### 4. How many games do I need for a reliable ACPL snapshot?
+### Q: How many games do I need for a reliable ACPL snapshot?
 
 A bare minimum of 5 games, but 10–20 is where the number stabilizes. In any single game, your ACPL can swing wildly based on whether you got a comfortable opening, faced unfamiliar theory, or flagged in time pressure. A 20-game rolling average smooths out these one-off factors and gives you a number that actually reflects your playing strength. FireChess's [analyze page](/analyze) lets you batch-analyze any number of games and automatically computes rolling averages.
 
-### 5. Is ACPL or accuracy percentage better for tracking improvement?
+### Q: Is ACPL or accuracy percentage better for tracking improvement?
 
 They measure the same underlying data but from different angles. ACPL is more precise for fine-grained improvement tracking because it isn't capped — accuracy percentage maxes out at 100% (and most players cluster between 60–99%), while ACPL gives you more room to see small changes at higher levels. A drop from 35 to 30 ACPL might move your accuracy from 91% to 93% — a small percentage change but a meaningful improvement in move quality.
 
@@ -432,6 +434,12 @@ There's also a psychological factor: ACPL is a "lower is better" metric where im
 **Practical rule:** Use ACPL for tracking day-to-day improvement. Use accuracy percentage for sharing with friends and quick benchmarking. And use both together with FireChess's accuracy score (which combines them with phase weighting) for the most complete picture.
 
 ## How to Calculate Your Average Centipawn Loss
+
+Consider this Ruy Lopez middlegame — a position that appears in thousands of club games every month:
+
+<chess-position fen="r1bq1rk1/2pnbppp/p2p1n2/1p2p3/3PP3/1BP2N1P/PP3PP1/RNBQR1K1 w - - 1 11" caption="Ruy Lopez, Closed Defense — White's d4 break has been played, and the position is about to open up. A 1400 might miss the timing of d5 and lose 40+ cp in the next 5 moves. A 2000 plays d5 at exactly the right moment, maintaining pressure." orientation="white"></chess-position>
+
+This is the kind of position where middlegame ACPL spikes for club players. White has a clear plan (d4-d5 break, piece activity on the e-file) but the timing is critical. Play d5 too early and Black equalizes; play it too late and Black gets counterplay on the queenside. A 1400 player will typically waste 2-3 moves deciding, losing 40+ centipawns in indecision. For deeper coverage of this structure, see our [Italian Game Mistakes guide](/blog/italian-game-mistakes-club-players-make) — many of the same middlegame patterns apply.
 
 To get a reliable ACPL reading, follow these guidelines:
 
@@ -442,21 +450,15 @@ To get a reliable ACPL reading, follow these guidelines:
 
 Here's an example of a typical middlegame position where rating level dramatically affects ACPL:
 
-<div class="chess-fen" style="margin: 1rem 0; padding: 0.75rem 1rem; background: #0d1425; border-radius: 8px; border: 1px solid #1e293b; font-family: monospace; color: #94a3b8; font-size: 13px;">
-<strong style="color: #cbd5e1;">Position:</strong> r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/2NP1N2/PPP2PPP/R1BQK2R b KQkq - 5 4<br>
-<strong style="color: #cbd5e1;">Italian Game, Classical Variation:</strong><br>
-<strong style="color: #cbd5e1;">At 1400:</strong> Players average 65–85 ACPL from this position, often misplacing the dark-squared bishop or playing premature attacks.<br>
-<strong style="color: #cbd5e1;">At 2000:</strong> Players average 35–45 ACPL, choosing solid developing moves like 5...Be7 or 5...a6 with clear plans.
-</div>
+<chess-position fen="rnbq1rk1/ppp1bpp1/4pn1p/3p4/2PP3B/2N1PN2/PP3PPP/R2QKB1R b KQ - 1 7" caption="Queen's Gambit Declined after 7.Bh4 — Black must decide how to handle the pin. At 1400, players average 65–85 ACPL from here, often mishandling the pin with passive moves. At 2000, players find 7...b6 or 7...dxc4 with clear plans, averaging 35–45 ACPL." orientation="white"></chess-position>
+
+This position perfectly illustrates the rating-ACPL relationship. A 1400 player facing the Bh4 pin typically panics — playing passive moves like 7...Nh5 that give White a free hand in the center. A 2000 player recognizes the pin is manageable and finds the right moment to break with ...dxc4 or reposition with ...b6. The material is equal, the position is symmetrical, and yet the accuracy gap between these two players can be 30+ centipawns per move. If you want to practice these kinds of middlegame decisions, try [Chess Middlegame Strategy: Finding a Plan](/blog/chess-middlegame-strategy-finding-a-plan).
 
 Centipawn loss in the endgame also reveals a lot about a player's true level:
 
-<div class="chess-fen" style="margin: 1rem 0; padding: 0.75rem 1rem; background: #0d1425; border-radius: 8px; border: 1px solid #1e293b; font-family: monospace; color: #94a3b8; font-size: 13px;">
-<strong style="color: #cbd5e1;">Position:</strong> 8/8/8/8/4k3/8/4K3/8 w - - 0 1<br>
-<strong style="color: #cbd5e1;">King and pawn endgame — opposition matters:</strong><br>
-<strong style="color: #cbd5e1;">At 1200:</strong> Players lose 80+ cp here from random king moves.<br>
-<strong style="color: #cbd5e1;">At 1800:</strong> Players lose <20 cp, understanding opposition and key squares.
-</div>
+<chess-position fen="8/8/8/4k3/8/8/4K3/8 w - - 0 1" caption="Bare kings — White to move. At 1200, players lose 80+ cp from random king moves. At 1800, players understand opposition and key squares, losing under 20 cp. This is the purest test of endgame knowledge." orientation="white"></chess-position>
+
+This bare-king position looks trivial, but it's the purest test of endgame knowledge. A 1200-rated player will walk their king to the side of the board, losing opposition and giving ground with every move. An 1800 knows that with White to move, the key is to **keep the opposition** — moving the king to a square that mirrors Black's king, forcing Black to step aside. For more endgame patterns like this, see our guide on [Endgame Patterns Club Players Miss](/blog/endgame-patterns-club-players-miss).
 
 ## Still Not Sure If Your ACPL Is "Good"?
 
