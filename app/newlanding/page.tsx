@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { HeroSection } from "@/components/new-landing/hero-section";
+import { ScanSection } from "@/components/new-landing/scan-section";
 import { HowItWorksSection } from "@/components/new-landing/how-it-works-section";
 import { FeaturesSection } from "@/components/new-landing/features-section";
 import { SampleReportsSection } from "@/components/new-landing/sample-reports-section";
 import { SocialProofSection } from "@/components/new-landing/social-proof-section";
-import { PricingSection } from "@/components/new-landing/pricing-section";
+import { PricingTeaser } from "@/components/home/pricing-teaser";
 import { FaqSection } from "@/components/new-landing/faq-section";
 import type { SiteStats } from "@/components/new-landing/hero-section";
 
@@ -18,8 +19,7 @@ import type { SiteStats } from "@/components/new-landing/hero-section";
  * Dark premium aesthetic, bento-grid features, scroll-aware sections,
  * gradient accents (orange/red fire identity), auto-playing sample reports.
  *
- * This is a pure marketing page; scan CTAs deep-link to the existing
- * analyzer on the main homepage via /?scan=1.
+ * Includes the scan dialog directly on the page.
  */
 export default function NewLandingPage() {
   const router = useRouter();
@@ -35,8 +35,11 @@ export default function NewLandingPage() {
   }, []);
 
   const goToScan = useCallback(() => {
-    router.push("/?scan=1");
-  }, [router]);
+    const el = document.getElementById("scan-section");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, []);
 
   const goToSamples = useCallback(() => {
     const el = document.getElementById("sample-reports");
@@ -52,13 +55,14 @@ export default function NewLandingPage() {
         onScanClick={goToScan}
         onSeeSampleClick={goToSamples}
       />
+      <ScanSection />
       <HowItWorksSection />
       <FeaturesSection />
       <div id="sample-reports">
         <SampleReportsSection />
       </div>
       <SocialProofSection />
-      <PricingSection />
+      <PricingTeaser />
       <FaqSection />
     </div>
   );

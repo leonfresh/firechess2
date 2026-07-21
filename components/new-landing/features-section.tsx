@@ -20,7 +20,7 @@ const FEATURES = [
       "Find the exact moves where your openings fall apart. See which lines you keep losing and why.",
     color: "text-orange-400",
     bg: "bg-orange-500/10",
-    span: "col-span-2 row-span-2",
+    span: "col-span-1 row-span-1",
   },
   {
     icon: Brain,
@@ -149,7 +149,7 @@ export function FeaturesSection() {
         {/* Bottom CTA */}
         <div className="mt-12 text-center">
           <a
-            href="#features"
+            href="/pricing"
             className="inline-flex items-center gap-2 text-sm font-medium text-orange-400 transition-colors hover:text-orange-300"
           >
             <Flame className="h-4 w-4" />

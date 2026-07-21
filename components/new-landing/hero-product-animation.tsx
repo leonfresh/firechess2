@@ -380,42 +380,64 @@ function LeaksPhase() {
         </div>
       </div>
 
-      {/* Mini chessboard — real react-chessboard */}
+      {/* Board + eval bar — matches original hero board style */}
       <div className="mb-3 flex gap-3">
+        {/* Eval bar */}
         <div
-          className="h-[140px] w-[140px] shrink-0 overflow-hidden rounded-lg border border-white/[0.08] shadow-lg shadow-black/20"
-          style={{ animation: "hpa-fade-in 0.4s ease 0.3s both" }}
+          className="relative shrink-0 overflow-hidden rounded-lg"
+          style={{
+            width: 24,
+            height: 200,
+            animation: "hpa-fade-in 0.4s ease 0.3s both",
+          }}
+        >
+          <div className="absolute inset-x-0 top-0 bg-[#312e2b] transition-all duration-500" style={{ height: "37%" }} />
+          <div className="absolute inset-x-0 bottom-0 bg-[#f0d9b5] transition-all duration-500" style={{ height: "63%" }} />
+          <span className="absolute inset-x-0 bottom-1 text-center text-[10px] font-bold leading-none text-[#312e2b]">
+            +1.17
+          </span>
+        </div>
+
+        {/* Chessboard — standard green/cream squares like original hero */}
+        <div
+          className="shrink-0 overflow-hidden rounded-lg border border-white/[0.08] bg-[linear-gradient(180deg,rgba(7,11,28,0.96),rgba(30,43,90,0.88)_60%,rgba(236,72,153,0.26))] shadow-lg shadow-black/30"
+          style={{
+            width: 200,
+            height: 200,
+            animation: "hpa-fade-in 0.4s ease 0.3s both",
+          }}
         >
           <Chessboard
             position="rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
-            boardWidth={140}
+            boardWidth={200}
             arePiecesDraggable={false}
-            customDarkSquareStyle={{ backgroundColor: "#2a1f1a" }}
-            customLightSquareStyle={{ backgroundColor: "#4a3a32" }}
+            customDarkSquareStyle={{ backgroundColor: "#779952" }}
+            customLightSquareStyle={{ backgroundColor: "#edeed1" }}
             customArrows={[
-              ["g1", "f3", "rgba(34,197,94,0.9)"],
-              ["d1", "h5", "rgba(239,68,68,0.9)"],
+              ["g1", "f3", "rgba(34,197,94,0.85)"],
+              ["d1", "h5", "rgba(239,68,68,0.85)"],
             ]}
           />
         </div>
 
         {/* Legend */}
-        <div className="flex flex-col justify-center gap-2">
+        <div className="flex flex-col justify-center gap-2.5">
           {[
-            { color: "bg-emerald-500", label: "Best move (Nf3)" },
-            { color: "bg-red-500", label: "Your move (Qh5)" },
-          ].map(({ color, label }) => (
-            <span
-              key={label}
-              className="flex items-center gap-1.5 text-[10px] text-slate-400"
-            >
-              <span className={`h-2 w-2 rounded-full ${color}`} />
-              {label}
-            </span>
+            { color: "bg-emerald-500", label: "Best (Nf3)", sub: "Stockfish 18 · depth 12" },
+            { color: "bg-red-500", label: "Your move (Qh5!?)", sub: "Mistake · −1.17 cp loss" },
+          ].map(({ color, label, sub }) => (
+            <div key={label} className="flex flex-col gap-0.5">
+              <span className="flex items-center gap-1.5 text-[10px] text-slate-300">
+                <span className={`h-2 w-2 rounded-full ${color}`} />
+                {label}
+              </span>
+              <span className="ml-3.5 text-[8px] text-slate-500">{sub}</span>
+            </div>
           ))}
-          <span className="mt-1 rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-400">
-            −1.17 eval lost
-          </span>
+          <div className="mt-1 flex gap-1">
+            <span className="rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-400">−1.17</span>
+            <span className="rounded-md bg-red-500/15 px-1.5 py-0.5 text-[9px] font-bold text-red-400">Blunder</span>
+          </div>
         </div>
       </div>
 

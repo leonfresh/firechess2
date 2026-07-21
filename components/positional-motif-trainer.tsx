@@ -354,7 +354,7 @@ export function PositionalMotifTrainer({
               </span>
             ))}
             {motifs.length > 4 && (
-              <span className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11px] font-medium text-slate-500">
+              <span className="flex items-center gap-1.5 rounded-full border border-orange-500/10 bg-orange-500/[0.03] px-3 py-1.5 text-[11px] font-medium text-slate-500">
                 +{motifs.length - 4} more
               </span>
             )}
@@ -434,7 +434,7 @@ export function PositionalMotifTrainer({
         <button
           type="button"
           onClick={() => setExpanded(false)}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-orange-500/10 bg-orange-500/[0.04] text-slate-400 transition-colors hover:bg-orange-500/[0.08] hover:text-white"
         >
           <svg
             width="16"
@@ -450,7 +450,7 @@ export function PositionalMotifTrainer({
       </div>
 
       {/* Stats bar */}
-      <div className="mb-5 flex flex-wrap items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-2.5">
+      <div className="mb-5 flex flex-wrap items-center gap-4 rounded-xl border border-orange-500/5 bg-black/20 px-4 py-2.5">
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-slate-500">Correct</span>
           <span className="text-sm font-bold text-emerald-400">{solved}</span>
@@ -511,7 +511,7 @@ export function PositionalMotifTrainer({
         {/* Right panel */}
         <div className="flex flex-col gap-4">
           {/* Position info */}
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+          <div className="rounded-xl border border-orange-500/5 bg-black/20 p-4">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-white">
@@ -546,7 +546,7 @@ export function PositionalMotifTrainer({
           </div>
 
           {/* Instruction text */}
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+          <div className="rounded-xl border border-orange-500/5 bg-black/20 p-4">
             <p className="text-xs font-medium text-slate-400">
               {trainState === "thinking" && (
                 <>
@@ -626,7 +626,7 @@ export function PositionalMotifTrainer({
                 <button
                   type="button"
                   onClick={revealSolution}
-                  className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-xs font-medium text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                  className="flex items-center gap-1.5 rounded-xl border border-orange-500/10 bg-orange-500/[0.03] px-4 py-2.5 text-xs font-medium text-slate-400 transition-colors hover:bg-orange-500/[0.06] hover:text-white"
                 >
                   Show Solution
                 </button>
