@@ -42,7 +42,15 @@ const nextConfig: NextConfig = {
       },
       {
         // Pages that use Stockfish WASM with SharedArrayBuffer — need cross-origin isolation
-        source: "/(analyze|analysis|board|chaos|sparring|train|puzzles|daily|guess|escape|flashcards|tutor|tactics|endgames|openings/beginner|openings/intermediate|openings/advanced|mistakes|positions|time-controls)",
+        source: "/(analyze|analysis|board|chaos|sparring|train|puzzles|daily|guess|escape|flashcards|tutor|tactics|endgames|openings/beginner|openings/intermediate|openings/advanced|mistakes|positions|time-controls|dungeon|learn|coach|recruit|dashboard|my-openings)",
+        headers: [
+          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+        ],
+      },
+      {
+        // Pages that use Stockfish — parameterized routes (/:path* style)
+        source: "/report/:path*",
         headers: [
           { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
