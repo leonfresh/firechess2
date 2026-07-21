@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 interface AppTile {
   icon: string;
@@ -109,27 +108,6 @@ function AppIcon({ app, size = "md" }: { app: AppTile; size?: "sm" | "md" }) {
   );
 }
 
-function StatusBarClock() {
-  const [time, setTime] = useState<string>("");
-
-  useEffect(() => {
-    const update = () => {
-      setTime(
-        new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      );
-    };
-    update();
-    const id = setInterval(update, 60000);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <span className="text-[10px] font-semibold text-white/50 sm:text-[11px]">
-      {time || "00:00"}
-    </span>
-  );
-}
-
 export function AppGridSection() {
   // Arrange into rows manually for a clean 5-wide grid
   const rows: AppTile[][] = [];
@@ -166,7 +144,9 @@ export function AppGridSection() {
 
             {/* Status bar */}
             <div className="flex items-center justify-between px-4 pt-2.5 pb-1 sm:px-5 sm:pt-3 sm:pb-1.5">
-              <StatusBarClock />
+              <span className="text-[10px] font-semibold text-white/50 sm:text-[11px]">
+                {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </span>
               <div className="flex items-center gap-1.5">
                 <svg className="h-[11px] w-[11px] text-white/40 sm:h-3 sm:w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M1 9l4-4 4 4" /><path d="M1 17l4-4 4 4" />

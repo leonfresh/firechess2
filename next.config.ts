@@ -41,25 +41,11 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Pages that use Stockfish WASM with SharedArrayBuffer — need cross-origin isolation
-        source: "/(analyze|analysis|board|chaos|sparring|train|puzzles|daily|guess|escape|flashcards|tutor|tactics|endgames|openings/beginner|openings/intermediate|openings/advanced|mistakes|positions|time-controls|dungeon|learn|coach|recruit|dashboard|my-openings)",
-        headers: [
-          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
-          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-        ],
-      },
-      {
-        // Pages that use Stockfish — parameterized routes (/:path* style)
-        source: "/report/:path*",
-        headers: [
-          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
-          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-        ],
-      },
-      {
-        // Generic security headers for all pages (no COEP/COOP — they break crawlers)
+        // Global cross-origin isolation for Stockfish SharedArrayBuffer
         source: "/:path*",
         headers: [
+          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

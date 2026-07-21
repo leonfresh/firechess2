@@ -1,6 +1,6 @@
 ---
-title: "What Is Centipawn Loss? ACPL Explained With Board Examples"
-description: "Centipawn loss measures how far each move deviates from the engine's best. Learn what ACPL means, how to read move badges, and how to lower your score at /analyze."
+title: "What Is Centipawn Loss in Chess? The Complete Guide"
+description: "Centipawn loss explained simply — what it measures, how chess engines calculate it, how FireChess uses move badges (Brilliant, Best, Good, Inaccuracy, Mistake, Blunder) to classify your moves, and how to use average centipawn loss (ACPL) to track improvement and find your biggest mistakes."
 date: "2026-07-11"
 author: "FireChess Team"
 tags: ["analysis", "fundamentals", "improvement", "centipawn-loss"]
