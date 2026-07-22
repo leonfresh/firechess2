@@ -28,24 +28,35 @@ export function PositionPerformance({ leaks, hasProAccess }: PositionPerformance
   const { worst, best } = useMemo(() => {
     const withGames = leaks.filter((l) => openCount(l) >= 2 && l.fenBefore);
 
-    const worstByDamage = [...withGames]
+    const worstByLossRate = [...withGames]
+      .map((l) => ({
+        leak: l,
+        lossRate: openCount(l) > 0 ? (l.userLosses ?? 0) / openCount(l) : 0,
+      }))
+      .filter(({ lossRate }) => lossRate > 0.4) // only positions you actually lose from
       .sort((a, b) => {
-        const aScore = (a.reachCount || 1) * a.cpLoss;
-        const bScore = (b.reachCount || 1) * b.cpLoss;
+        const aScore = a.lossRate * (a.leak.reachCount || 1);
+        const bScore = b.lossRate * (b.leak.reachCount || 1);
         return bScore - aScore;
       })
+      .map(({ leak }) => leak)
       .slice(0, limit);
 
     const bestByWinRate = [...withGames]
-      .filter((l) => winRate(l) > 0.5)
+      .map((l) => ({
+        leak: l,
+        winRateVal: openCount(l) > 0 ? (l.userWins ?? 0) / openCount(l) : 0,
+      }))
+      .filter(({ winRateVal }) => winRateVal > 0.5)
       .sort((a, b) => {
-        const aScore = winRate(a) * (a.reachCount || 1);
-        const bScore = winRate(b) * (b.reachCount || 1);
+        const aScore = a.winRateVal * (a.leak.reachCount || 1);
+        const bScore = b.winRateVal * (b.leak.reachCount || 1);
         return bScore - aScore;
       })
+      .map(({ leak }) => leak)
       .slice(0, limit);
 
-    return { worst: worstByDamage, best: bestByWinRate };
+    return { worst: worstByLossRate, best: bestByWinRate };
   }, [leaks, limit]);
 
   if (worst.length === 0 && best.length === 0) return null;
@@ -126,14 +137,15 @@ function PositionCard({ leak, type }: { leak: RepeatedOpeningLeak; type: "best" 
   const wr = winRate(leak);
   const losses = leak.userLosses ?? 0;
   const wins = leak.userWins ?? 0;
+  const lossRate = total > 0 ? losses / total : 0;
 
   return (
     <div className="flex gap-3 rounded-xl border border-white/[0.06] bg-black/20 p-3">
       {/* Mini board */}
-      <div className="h-[80px] w-[80px] shrink-0 overflow-hidden rounded-lg border border-white/[0.06]">
+      <div className="h-[120px] w-[120px] shrink-0 overflow-hidden rounded-lg border border-white/[0.06]">
         <Chessboard
           position={leak.fenBefore}
-          boardWidth={80}
+          boardWidth={120}
           arePiecesDraggable={false}
           customDarkSquareStyle={{ backgroundColor: "#779952" }}
           customLightSquareStyle={{ backgroundColor: "#edeed1" }}
@@ -150,17 +162,17 @@ function PositionCard({ leak, type }: { leak: RepeatedOpeningLeak; type: "best" 
         </p>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${type === "worst" ? "bg-red-500/15 text-red-400" : "bg-emerald-500/15 text-emerald-400"}`}>
-            {wr >= 0.5 ? `${(wr * 100).toFixed(0)}%` : `${((1 - wr) * 100).toFixed(0)}%`} {type === "worst" ? "loss rate" : "win rate"}
+            {type === "worst"
+              ? `${(lossRate * 100).toFixed(0)}% loss rate`
+              : `${(wr * 100).toFixed(0)}% win rate`}
           </span>
           <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-400">
-            −{(leak.cpLoss / 100).toFixed(1)} avg cp
+            {(leak.cpLoss / 100).toFixed(1)} avg cp
           </span>
         </div>
-        {type === "worst" && losses > 2 && (
-          <p className="mt-1 text-[9px] text-slate-500">
-            {wins}W / {losses}L / {leak.userDraws ?? 0}D
-          </p>
-        )}
+        <p className="mt-1 text-[9px] text-slate-500">
+          {wins}W / {losses}L / {leak.userDraws ?? 0}D
+        </p>
       </div>
     </div>
   );

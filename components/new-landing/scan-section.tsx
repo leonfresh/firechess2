@@ -43,6 +43,31 @@ export function ScanSection() {
   const [state, setState] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState("");
 
+  // Restore saved prefs on mount
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("fc-scan-prefs");
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed.source === "lichess" || parsed.source === "chesscom" || parsed.source === "pgn")
+        setSource(parsed.source);
+      if (typeof parsed.username === "string" && parsed.username) setUsername(parsed.username);
+      if (typeof parsed.gameCount === "number") setGameCount(Math.min(100000, Math.max(1, parsed.gameCount)));
+      if (typeof parsed.engineDepth === "number") setEngineDepth(Math.min(24, Math.max(6, parsed.engineDepth)));
+      if (typeof parsed.moveCount === "number") setMoveCount(Math.min(30, Math.max(1, parsed.moveCount)));
+      if (typeof parsed.cpThreshold === "number") setCpThreshold(Math.min(1000, Math.max(1, parsed.cpThreshold)));
+    } catch { /* ignore malformed */ }
+  }, []);
+
+  // Save prefs on change
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("fc-scan-prefs", JSON.stringify({
+        username, source, gameCount, engineDepth, moveCount, cpThreshold,
+      }));
+    } catch { /* ignore quota */ }
+  }, [username, source, gameCount, engineDepth, moveCount, cpThreshold]);
+
   useEffect(() => {
     if (!advancedSettingsOpen) return;
     const prev = document.body.style.overflow;
@@ -67,6 +92,7 @@ export function ScanSection() {
     setState("idle"); setError("");
 
     try {
+      setState("loading");
       const res = await fetch("/api/scans", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -221,10 +247,23 @@ export function ScanSection() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <button
               type="submit"
-              className="group inline-flex h-14 flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 px-8 text-base font-semibold text-white transition-all duration-300 hover:scale-[1.01] hover:shadow-[0_0_40px_-10px_rgba(249,115,22,0.5)]"
+              disabled={state === "loading"}
+              className="group inline-flex h-14 flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 px-8 text-base font-semibold text-white transition-all duration-300 hover:scale-[1.01] hover:shadow-[0_0_40px_-10px_rgba(249,115,22,0.5)] disabled:scale-100 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              Scan my games — free
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              {state === "loading" ? (
+                <>
+                  <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Creating your report...
+                </>
+              ) : (
+                <>
+                  Scan my games — free
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </>
+              )}
             </button>
             <button
               type="button"

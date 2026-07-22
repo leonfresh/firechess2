@@ -2296,6 +2296,66 @@ export function computeChaosThreatPenalty(
     }
   }
 
+  // Kamikaze Bishop: if the AI captures a kamikaze bishop, its own piece explodes too.
+  // Add a penalty equal to the capturing piece's value so the AI treats it like a trade.
+  const hasKamikaze = opponentModifiers.some((m) => m.id === "kamikaze-bishop");
+  if (hasKamikaze && !hasNuclearQueen) {
+    // Only need explicit handling when nuclear queen isn't already the dominant threat
+    const aiColor = opponentColor === "w" ? "b" : "w";
+    for (const sq of ["a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8",
+                       "b1", "b2", "b3", "b4", "b5", "b6", "b7", "b8",
+                       "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8",
+                       "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8",
+                       "e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8",
+                       "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8",
+                       "g1", "g2", "g3", "g4", "g5", "g6", "g7", "g8",
+                       "h1", "h2", "h3", "h4", "h5", "h6", "h7", "h8"]) {
+      const piece = game.get(sq as any);
+      if (piece && piece.color === opponentColor && piece.type === "b") {
+        // Found a kamikaze bishop controlled by the opponent
+        // Check if AI has any piece that can capture it
+        const aiCol = aiColor as "w" | "b";
+        const fenParts = game.fen().split(" ");
+        fenParts[1] = aiCol;
+        try {
+          const flipped = new Chess(fenParts.join(" "));
+          for (const mv of flipped.moves({ verbose: true }) as any[]) {
+            if (mv.to === sq && mv.flags.includes("c")) {
+              const attacker = game.get(mv.from as any);
+              if (attacker && attacker.color === aiCol) {
+                const attackerVal = valFn(mv.from, attacker.type, aiCol);
+                // Attacker also dies — full value loss
+                if (attackerVal > maxThreat) maxThreat = attackerVal;
+              }
+            }
+          }
+        } catch { /* skip */ }
+      }
+    }
+  }
+
+  // King's Chains: pieces adjacent to the opponent's king cannot move.
+  // The AI should treat threatened pieces near the ascended/king-chains king as vulnerable.
+  if (opponentModifiers.some((m) => m.id === "kings-chains")) {
+    const aiColor = opponentColor === "w" ? "b" : "w";
+    const aiCol = aiColor as "w" | "b";
+    const fenParts = game.fen().split(" ");
+    fenParts[1] = aiCol;
+    try {
+      const flipped = new Chess(fenParts.join(" "));
+      for (const mv of flipped.moves({ verbose: true }) as any[]) {
+        if (mv.piece === "k") {
+          // Opponent's king can capture this piece
+          const target = game.get(mv.to as any);
+          if (target && target.color === aiCol) {
+            const targetVal = valFn(mv.to, target.type, aiCol);
+            if (targetVal > maxThreat) maxThreat = targetVal;
+          }
+        }
+      }
+    } catch { /* skip */ }
+  }
+
   return maxThreat;
 }
 

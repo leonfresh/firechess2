@@ -608,6 +608,8 @@ export function getChaosPieceValCp(
     "kamikaze-bishop": 140, // bishop detonates on capture — wipes up to 8 adjacent enemies
     "pawn-charge": 10,
     "pawn-capture-forward": 15,
+    "pawn-fortress": 50, // 50% respawn on capture ≈ +0.5 value
+    "king-wrath": 60, // capturing revives a piece ≈ tempo advantage
   };
   let bonus = 0;
   for (const mod of mods) {

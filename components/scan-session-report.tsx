@@ -31,6 +31,10 @@ import {
 } from "@/components/scan-mental-game";
 import { OpeningRankings } from "@/components/opening-rankings";
 import { PositionPerformance } from "@/components/position-performance";
+import { OppositeCastlingCard } from "@/components/opposite-castling-card";
+import { AiReportAnalysis } from "@/components/ai-report-analysis";
+import { CoachStickyNote } from "@/components/coach-sticky-note";
+import { useReportAnalysis } from "@/lib/use-report-analysis";
 import { ScanPositionalMotifs } from "@/components/scan-positional-motifs";
 import { ScanStructuralStats } from "@/components/scan-structural-stats";
 import {
@@ -1850,6 +1854,7 @@ export function ScanSessionReport({
     [leaks],
   );
 
+  const { analysis, loading: analysisLoading } = useReportAnalysis(scan);
   const motifs = useMemo(
     () => buildMotifs(missedTactics, leaks, oneOffMistakes, positionalFindings),
     [missedTactics, leaks, oneOffMistakes, positionalFindings],
@@ -2661,6 +2666,11 @@ export function ScanSessionReport({
           />
         ) : null}
 
+        {/* ── AI Coach Analysis ── */}
+        {!isProcessing && result ? (
+          <AiReportAnalysis analysis={analysis} loading={analysisLoading} />
+        ) : null}
+
         {/* ── Performance Overview ── */}
         {categoryData.length > 0 && (
           <section id="section-overview" className="space-y-4">
@@ -2881,6 +2891,15 @@ export function ScanSessionReport({
 
             <PositionPerformance leaks={leaks} hasProAccess={hasProAccess} />
 
+            {analysis?.sectionNotes?.openings ? (
+              <CoachStickyNote section="openings" note={analysis.sectionNotes.openings} />
+            ) : null}
+
+            {/* Opposite-side castling */}
+            {!isProcessing && result.games && result.games.length > 0 ? (
+              <OppositeCastlingCard games={result.games} />
+            ) : null}
+
             {leaks.length > 0 ? (
               <div className="space-y-4">
                 <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
@@ -3048,6 +3067,10 @@ export function ScanSessionReport({
               <TacticsCoachInsight missedTactics={missedTactics} />
             ) : null}
 
+            {analysis?.sectionNotes?.tactics ? (
+              <CoachStickyNote section="tactics" note={analysis.sectionNotes.tactics} />
+            ) : null}
+
             {missedTactics.length > 0 ? (
               <CardCarousel
                 viewMode={getSV("tactics")}
@@ -3129,12 +3152,17 @@ export function ScanSessionReport({
               onToggleView={() => toggleSV("endgames")}
             />
 
-            {endgameStats ? (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <MetricCard
-                  label="Positions analyzed"
-                  value={endgameStats.totalPositions}
-                  tone="sky"
+              {endgameStats ? (
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+
+              {analysis?.sectionNotes?.endgames ? (
+                <CoachStickyNote section="endgames" note={analysis.sectionNotes.endgames} />
+              ) : null}
+
+                  <MetricCard
+                    label="Positions analyzed"
+                    value={endgameStats.totalPositions}
+                    tone="sky"
                 />
                 <MetricCard
                   label="Average loss"
