@@ -35,13 +35,13 @@ Think of it as the smallest meaningful unit of chess advantage. Just as a gram m
 
 These are starting points. The engine adjusts these values dynamically based on position, piece activity, king safety, pawn structure, and dozens of other factors. A knight on a perfect outpost might be evaluated at 350 cp; the same knight stuck on the edge of the board might drop to 280 cp.
 
-**Centipawn loss**, then, measures the difference between your move and the engine's best move, expressed in these units. If the best move in a position gives the engine +0.50 (a 50-centipawn advantage) and your move gives +0.20, your centipawn loss for that move is 30 cp — the difference between the optimal and what you played.
+**Centipawn loss**, then, measures the difference between your move and the engine's best move, expressed in these units. If the best move in a position gives the engine +0.50 (a 50-centipawn advantage) and your move gives +0.20, your centipawn loss for that move is 30 cp — the difference between the optimal and what you played. For a detailed breakdown of how these values map to rating levels, see our [ACPL by rating guide](/blog/average-centipawn-loss-by-rating).
 
 ---
 
 ## How Chess Engines Calculate Centipawn Loss
 
-This is where most explanations get fuzzy, so let's be precise.
+This is where most explanations get fuzzy, so let's be precise. If you're more interested in how platforms convert these numbers into accuracy percentages, see our [accuracy score guide](/blog/chess-accuracy-score-explained).
 
 ### Step 1: The Engine Evaluates the Position Before Your Move
 
@@ -123,7 +123,7 @@ The same centipawn loss of 112 in the middlegame might be a partial mistake in a
 
 ## FireChess Move Badges: What Each Label Means
 
-When you analyse a game on FireChess, each move gets a coloured badge next to it in the move list. These badges aren't random — they map directly to centipawn loss ranges. Here's the complete mapping so you know exactly what each label means when you see it.
+When you analyse a game on FireChess, each move gets a coloured badge next to it in the move list. These badges aren't random — they map directly to centipawn loss ranges. Here's the complete mapping so you know exactly what each label means when you see it. For a deeper dive into how accuracy scores work, see our [accuracy score guide](/blog/chess-accuracy-score-explained).
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
 <svg width="720" height="560" viewBox="0 0 720 560" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -211,7 +211,7 @@ This is the connection between the abstract centipawn loss number and the concre
 
 ## What Different Centipawn Loss Values Look Like on the Board
 
-Numbers on a page are abstract. Let's put them on a real chessboard so you can see what different centipawn loss scores represent.
+Numbers on a page are abstract. Let's put them on a real chessboard so you can see what different centipawn loss scores represent. If you want to see these ranges mapped to rating levels, our [ACPL by rating guide](/blog/average-centipawn-loss-by-rating) has the full breakdown.
 
 ### Centipawn Loss 0-15: Near-Perfect Play
 
@@ -357,7 +357,7 @@ This is where theory becomes practice. Here's a step-by-step workflow for using 
 
 ### Step 1: Upload Your Game to FireChess
 
-Import games from Lichess, Chess.com, or paste a PGN. FireChess analyses every move and produces a report with centipawn loss per move, per phase, and per opening. The summary panel immediately shows your badge breakdown — Best, Book, Good, Inaccuracy, Mistake, Blunder counts for both players.
+Import games from Lichess, Chess.com, or paste a PGN into [FireChess's analysis tool](/analyze). FireChess analyses every move and produces a report with centipawn loss per move, per phase, and per opening. The summary panel immediately shows your badge breakdown — Best, Book, Good, Inaccuracy, Mistake, Blunder counts for both players.
 
 ### Step 2: Find Your Biggest Single Moves
 
@@ -410,7 +410,7 @@ If you've analysed the same game on multiple platforms, you've probably noticed 
 
 **Why the difference:** A weaker engine or lower depth sees fewer tactical possibilities, so it considers more "good enough" moves as equal to the best move. Your centipawn loss appears lower because the engine doesn't penalise you as harshly for missing a deep 25-move tactic.
 
-**What this means for you:** Always benchmark against your own historical data on the *same platform*. Don't compare your Lichess ACPL of 55 to a friend's Chess.com ACPL of 55 — they're measured differently. Use FireChess consistently for your improvement tracking and learn to read the badge system — it's the most granular of any platform.
+**What this means for you:** Always benchmark against your own historical data on the *same platform*. Don't compare your Lichess ACPL of 55 to a friend's Chess.com ACPL of 55 — they're measured differently. Use FireChess consistently for your improvement tracking and learn to read the badge system — it's the most granular of any platform. For a deeper comparison of analysis platforms, see our [Lichess vs. Chess.com improvement guide](/blog/lichess-vs-chess-com-improvement).
 
 ---
 
@@ -420,9 +420,9 @@ If you've analysed the same game on multiple platforms, you've probably noticed 
 
 It depends entirely on your rating and time control. For a 1500-rated player in rapid, anything under 60 is good. For a 2000-rated player, under 45 is expected. See our [ACPL by rating table](/blog/average-centipawn-loss-by-rating) for detailed benchmarks.
 
-### Is centipawn loss the same as accuracy?
+### Q: Is centipawn loss the same as accuracy?
 
-No. Accuracy percentage is a normalised score (0-100%) based on centipawn loss. Centipawn loss is the raw mathematical measure. They correlate strongly but aren't identical. The FireChess move badges sit between them — badges translate centipawn loss into a human-readable label.
+No. Accuracy percentage is a normalised score (0-100%) based on centipawn loss. Centipawn loss is the raw mathematical measure. They correlate strongly but aren't identical. The FireChess move badges sit between them — badges translate centipawn loss into a human-readable label. For a full breakdown of how accuracy works, see our [chess accuracy score guide](/blog/chess-accuracy-score-explained).
 
 ### What is a centipawn loss of 100?
 
@@ -439,31 +439,31 @@ Each badge maps to a centipawn loss range:
 - **? Mistake** (75-200 cp, real miss) — orange badge
 - **?? Blunder** (200+ cp, heavy error) — red badge
 
-### Why does my centipawn loss vary so much between games?
+### Q: Why does my centipawn loss vary so much between games?
 
 That's normal. A game where you face a sharp Sicilian Defence and have to calculate complex tactics will naturally produce higher centipawn loss than a slow Queen's Gambit game where you play known theory for 20 moves. Average across 10+ games before drawing conclusions.
 
-### How many games do I need for a reliable ACPL reading?
+### Q: How many games do I need for a reliable ACPL reading?
 
 At least 10 games in the same time control. A single game has too much variance from the specific opening, opponent, and circumstances. Ten games smooth out the noise. The badge counts will also stabilise over 10+ games.
 
-### Can centipawn loss be negative?
+### Q: Can centipawn loss be negative?
 
 No. Centipawn loss is defined as the absolute difference between your move's evaluation and the best move's evaluation. It's always a non-negative number. Some platforms display "0" for the best move, meaning zero centipawns lost.
 
-### Does centipawn loss matter in completely winning positions?
+### Q: Does centipawn loss matter in completely winning positions?
 
-It matters less. When you're up a queen and a rook, a 100-centipawn inaccuracy is irrelevant. Focus your analysis on critical positions — where the game was balanced and a mistake changed the outcome.
+It matters less. When you're up a queen and a rook, a 100-centipawn inaccuracy is irrelevant. Focus your analysis on critical positions — where the game was balanced and a mistake changed the outcome. Our [ACPL by rating guide](/blog/average-centipawn-loss-by-rating) shows which centipawn loss ranges actually affect your win rate at each level.
 
-### Is centipawn loss useful for openings?
+### Q: Is centipawn loss useful for openings?
 
-Partially. Opening centipawn loss tends to be very low because there's established theory. A high centipawn loss in the opening usually means you left book and made a mistake. More useful is tracking your centipawn loss *after leaving theory* — that's a measure of how well you understand the resulting middlegame positions. In FireChess, opening moves typically show **DB (Book)** badges until move 15 or until an early deviation occurs.
+Partially. Opening centipawn loss tends to be very low because there's established theory. A high centipawn loss in the opening usually means you left book and made a mistake. More useful is tracking your centipawn loss *after leaving theory* — that's a measure of how well you understand the resulting middlegame positions. In FireChess, opening moves typically show **DB (Book)** badges until move 15 or until an early deviation occurs. If your opening centipawn loss is consistently high, use the [opening weaknesses scanner](/blog/how-to-find-opening-weaknesses) to find which lines are costing you.
 
-### How do I read the badge summary at the top of my FireChess report?
+### Q: How do I read the badge summary at the top of my FireChess report?
 
-The summary panel shows you: accuracy percentage, badge counts by type, and ACPL. For example: "White 78.7% accuracy · Best 11 · Book 8 · Good 3 · Blunder 2 · ACPL 43.2". This means White played 11 perfect moves, 8 book moves, 3 good moves, and 2 blunders. The average loss was 43.2 centipawns per move. More Best (!) moves than Blunders (??) is always a good sign.
+The summary panel shows you: accuracy percentage, badge counts by type, and ACPL. For example: "White 78.7% accuracy · Best 11 · Book 8 · Good 3 · Blunder 2 · ACPL 43.2". This means White played 11 perfect moves, 8 book moves, 3 good moves, and 2 blunders. The average loss was 43.2 centipawns per move. More Best (!) moves than Blunders (??) is always a good sign. Upload a game to [FireChess at /analyze](/analyze) to see your own badge breakdown.
 
-### Is the Brilliant (!!) badge the same as a Best (!) move?
+### Q: Is the Brilliant (!!) badge the same as a Best (!) move?
 
 No. A Brilliant move (!!) is a specific type of Best move — it's a piece sacrifice where the engine confirms the sacrifice actually works (the evaluation improves after the sacrifice). Not every best move is brilliant. In practice, Brilliant moves are rare — you might see 1-2 per 20 games. A Best (!) move simply means you matched the engine's top choice.
 
