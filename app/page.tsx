@@ -46,7 +46,7 @@ export default function NewLandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#08070b] text-slate-100">
+    <div className="min-h-screen overflow-x-hidden bg-[#08070b] text-slate-100">
       <HeroSection
         siteStats={siteStats}
         onScanClick={goToScan}
@@ -60,7 +60,7 @@ export default function NewLandingPage() {
       </div>
       <SocialProofSection />
       <PricingTeaser />
-      <FaqSection />
+      <FaqSection onScanClick={goToScan} />
     </div>
   );
 }

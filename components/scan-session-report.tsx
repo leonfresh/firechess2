@@ -30,6 +30,7 @@ import {
   ScanMentalGame,
 } from "@/components/scan-mental-game";
 import { OpeningRankings } from "@/components/opening-rankings";
+import { PositionPerformance } from "@/components/position-performance";
 import { ScanPositionalMotifs } from "@/components/scan-positional-motifs";
 import { ScanStructuralStats } from "@/components/scan-structural-stats";
 import {
@@ -2877,6 +2878,8 @@ export function ScanSessionReport({
             {openingSummaries.length > 0 ? (
               <OpeningRankings openingSummaries={openingSummaries} />
             ) : null}
+
+            <PositionPerformance leaks={leaks} hasProAccess={hasProAccess} />
 
             {leaks.length > 0 ? (
               <div className="space-y-4">

@@ -36,7 +36,7 @@ const FAQS = [
   },
 ];
 
-export function FaqSection() {
+export function FaqSection({ onScanClick }: { onScanClick?: () => void }) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
@@ -107,13 +107,13 @@ export function FaqSection() {
           <p className="mb-6 text-lg text-slate-400">
             Ready to find your patterns?
           </p>
-          <a
-            href="/"
+          <button
+            onClick={onScanClick}
             className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 px-8 py-4 text-base font-semibold text-white transition-all hover:opacity-90"
           >
             Scan my games — free
             <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-          </a>
+          </button>
           <p className="mt-4 text-sm text-slate-500">
             No credit card required · Free forever
           </p>

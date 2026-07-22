@@ -246,7 +246,7 @@ export function ScanSection() {
         {advancedSettingsOpen && (
           <div className="fixed inset-0 z-[80] flex items-start justify-center bg-[rgba(2,6,23,0.78)] px-4 py-6 backdrop-blur-sm sm:items-center sm:px-6">
             <div className="absolute inset-0" onClick={() => setAdvancedSettingsOpen(false)} aria-hidden="true" />
-            <section className="relative z-10 max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[2rem] bg-[rgba(6,11,26,0.96)] p-5 shadow-[0_30px_120px_-48px_rgba(2,6,23,0.98)] sm:p-6">
+            <section className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-[2rem] bg-[rgba(6,11,26,0.96)] p-5 shadow-[0_30px_120px_-48px_rgba(2,6,23,0.98)] sm:max-w-4xl sm:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-orange-200/72">Advanced Scan Settings</p>
