@@ -1,6 +1,6 @@
 ---
 title: "What Is Centipawn Loss? ACPL Explained With Board Examples"
-description: "Centipawn loss measures how far each move deviates from the engine's best. Learn what ACPL means, how to read move badges, and how to lower your score at /analyze."
+description: "What does centipawn loss mean? Learn how ACPL works, what each FireChess badge means, and how to use this metric to find and fix your biggest mistakes."
 date: "2026-07-11"
 author: "FireChess Team"
 tags: ["analysis", "fundamentals", "improvement", "centipawn-loss"]
@@ -416,7 +416,7 @@ If you've analysed the same game on multiple platforms, you've probably noticed 
 
 ## FAQ: Quick Answers to Common Questions
 
-### What is a good average centipawn loss?
+### Q: What is a good average centipawn loss?
 
 It depends entirely on your rating and time control. For a 1500-rated player in rapid, anything under 60 is good. For a 2000-rated player, under 45 is expected. See our [ACPL by rating table](/blog/average-centipawn-loss-by-rating) for detailed benchmarks.
 
@@ -424,11 +424,11 @@ It depends entirely on your rating and time control. For a 1500-rated player in 
 
 No. Accuracy percentage is a normalised score (0-100%) based on centipawn loss. Centipawn loss is the raw mathematical measure. They correlate strongly but aren't identical. The FireChess move badges sit between them — badges translate centipawn loss into a human-readable label. For a full breakdown of how accuracy works, see our [chess accuracy score guide](/blog/chess-accuracy-score-explained).
 
-### What is a centipawn loss of 100?
+### Q: What is a centipawn loss of 100?
 
 A centipawn loss of 100 means you gave up the equivalent of one full pawn of advantage on a single move. This is a genuine blunder in most positions. FireChess marks this with a red **?? Blunder** badge.
 
-### What do the move badges on FireChess mean?
+### Q: What do the move badges on FireChess mean?
 
 Each badge maps to a centipawn loss range:
 - **!! Brilliant** (0-10 cp, sacrifice that works) — cyan badge
