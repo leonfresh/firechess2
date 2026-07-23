@@ -163,6 +163,8 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
   const [llmLoading, setLlmLoading] = useState(false);
   const [llmCommentary, setLlmCommentary] = useState<Record<number, string>>({});
   const [showCoachModal, setShowCoachModal] = useState(false);
+  const [playingPv, setPlayingPv] = useState<{ fens: string[]; moves: string[] } | null>(null);
+  const [pvFenIndex, setPvFenIndex] = useState(-1);
   const [allEvals, setAllEvals] = useState<any[]>([]);
   const [batchAnalyzing, setBatchAnalyzing] = useState(false);
   const moveReviewRequestRef = useRef(0);
@@ -210,7 +212,18 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
     }
   }, []);
 
-  // ── Batch analysis: evaluate ALL moves upfront (like Lichess) ──
+  // Play PV animation: step through best continuation FENs
+  useEffect(() => {
+    if (!playingPv) { setPvFenIndex(-1); return; }
+    let i = 0;
+    setPvFenIndex(0);
+    const interval = setInterval(() => {
+      i++;
+      if (i >= playingPv.fens.length) { clearInterval(interval); setPlayingPv(null); return; }
+      setPvFenIndex(i);
+    }, 900);
+    return () => clearInterval(interval);
+  }, [playingPv]);
   useEffect(() => {
     if (!gameLoaded || parsedMoves.length === 0 || allEvals.length > 0 || batchAnalyzing) return;
     let cancelled = false;
@@ -260,6 +273,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
           san: toSan(fenBefore, l.bestMove ?? null),
           cp: l.cp,
           mateIn: l.mateIn ?? null,
+          pv: l.pvMoves ?? [],
         }));
 
         results.push({
@@ -338,6 +352,9 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
     return parsedMoves[currentPly - 1]?.fenAfter ?? new Chess().fen();
   }, [parsedMoves, currentPly]);
 
+  // The FEN to display: either current game position or PV animation position
+  const displayFen = pvFenIndex >= 0 && playingPv ? playingPv.fens[pvFenIndex] : currentFen;
+
   // Derive judgement from pre-computed eval
   const judgement = useMemo(() => {
     if (!currentMoveEval) return null;
@@ -349,6 +366,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
       evalAfter: currentMoveEval.cpAfter,
       bestMoveSan: currentMoveEval.bestMoveSan,
       topLines: currentMoveEval.topLines ?? [],
+      bestPv: currentMoveEval.topLines?.[0]?.pv ?? [],
       commentary: currentMoveEval.commentary,
     };
   }, [currentMoveEval]);
@@ -368,6 +386,8 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
     } else {
       setPrevMoveSquares([]);
     }
+    // Stop PV playback when navigating
+    if (playingPv) setPlayingPv(null);
   }, [currentMoveEval]);
 
   // Square styles: last move highlight
@@ -483,7 +503,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
           <div className="min-w-0 flex-1">
             <Chessboard
               id="game-review"
-              position={currentFen}
+              position={displayFen}
               boardWidth={boardSize}
               arePiecesDraggable={false}
               customBoardStyle={{ borderRadius: "12px", boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}
@@ -514,9 +534,24 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
             </div>
 
             {/* Multi-PV: top engine lines */}
-            {judgement.topLines && judgement.topLines.length > 1 && (
+            {judgement.topLines && judgement.topLines.length > 0 && (
               <div className="mt-3 space-y-1">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Top engine lines</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Top engine lines</p>
+                  {judgement.bestPv.length > 1 && judgement.classification !== "best" && !playingPv && (
+                    <button onClick={() => {
+                      const chess = new Chess(currentMoveEval?.fenBefore ?? currentFen);
+                      const fens: string[] = [chess.fen()];
+                      const moves: string[] = [];
+                      for (const uci of judgement.bestPv) {
+                        try { const move = chess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.slice(4, 5) || undefined }); moves.push(move.san); fens.push(chess.fen()); }
+                        catch { break; }
+                      }
+                      if (fens.length > 1) setPlayingPv({ fens, moves });
+                    }} className="text-[10px] text-emerald-400 transition hover:text-emerald-300">▶ Play best</button>
+                  )}
+                  {playingPv && <button onClick={() => setPlayingPv(null)} className="text-[10px] text-red-400">■ Stop</button>}
+                </div>
                 {judgement.topLines.map((line: any, i: number) => {
                   const isPlayed = line.san === lastMove?.san;
                   const cpWhite = toWhitePerspective(currentFen, line.cp);
