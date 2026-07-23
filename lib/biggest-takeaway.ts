@@ -97,11 +97,11 @@ export function computeBiggestTakeaway(
   // ── 3. Endgame ──
   const eg = r.endgameStats;
   if (eg && eg.totalPositions >= 8) {
-    const convPenalty = eg.conversionRate != null && eg.conversionRate < 0.6 ? 22 : 0;
+    const convPenalty = eg.conversionRate != null && eg.conversionRate < 60 ? 22 : 0;
     const score = clamp((eg.avgCpLoss - 30) * 1.2 + convPenalty);
     if (score > 0) {
       const weak = eg.weakestType ? ` Your weakest area: ${eg.weakestType.toLowerCase()} endgames.` : "";
-      const conv = eg.conversionRate != null ? ` You convert only ${Math.round(eg.conversionRate * 100)}% of winning endgames.` : "";
+      const conv = eg.conversionRate != null ? ` You convert only ${eg.conversionRate}% of winning endgames.` : "";
       candidates.push({
         category: "endgame",
         severity: sev(score),

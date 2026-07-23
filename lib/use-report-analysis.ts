@@ -26,7 +26,8 @@ export function useReportAnalysis(scan: any): {
   useEffect(() => {
     const scanId = scan?.id;
     const result = scan?.result;
-    if (!result || !scanId) return;
+    // Wait for scan to be complete so all data fields are populated
+    if (!result || !scanId || scan.status !== "ready") return;
 
     // 1. Check if analysis is already persisted in the DB (scan.result.aiAnalysis)
     if (result.aiAnalysis?.coachNote) {
@@ -79,6 +80,23 @@ export function useReportAnalysis(scan: any): {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.coachNote) {
+          // Validate: LLM must not contradict the data (common hallucination)
+          const rawCounts = {
+            missedTactics: summary.missedTactics,
+            endgameMistakes: summary.endgameMistakes,
+            openingLeaks: summary.openingLeaks,
+          };
+          const text = JSON.stringify(data).toLowerCase();
+          for (const [key, val] of Object.entries(rawCounts)) {
+            if (val > 0 && (text.includes("zero " + key.replace(/([A-Z])/g, " $1").toLowerCase()) || text.includes("no " + key.replace(/([A-Z])/g, " $1").toLowerCase()))) {
+              // LLM hallucinated — fall back to a safe default
+              data.coachNote = `Analysis detected ${summary.missedTactics} missed tactics, ${summary.endgameMistakes} endgame mistakes, and ${summary.openingLeaks} opening leaks across ${summary.gamesAnalyzed} games.`;
+              data.verdict = `Player with ${summary.missedTactics} missed tactics, ${summary.endgameMistakes} endgame mistakes, and ${summary.openingLeaks} opening leaks.`;
+              data.badges = [];
+              data.sectionNotes = {};
+              break;
+            }
+          }
           setAnalysis(data);
           // Persist aiAnalysis into the scan's result in DB
           const currentResult = scan.result || {};
