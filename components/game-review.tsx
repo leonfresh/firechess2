@@ -52,9 +52,7 @@ export type GameMeta = {
 
 async function fetchLichessGames(username: string): Promise<GameMeta[]> {
   try {
-    const res = await fetch(`https://lichess.org/api/games/user/${encodeURIComponent(username)}?max=20&pgnInJson=true`, {
-      headers: { "Accept": "application/x-ndjson" },
-    });
+    const res = await fetch(`/api/proxy?url=${encodeURIComponent(`https://lichess.org/api/games/user/${encodeURIComponent(username)}?max=20&pgnInJson=true`)}`);
     if (!res.ok) throw new Error("Lichess user not found");
     const text = await res.text();
     return text.trim().split("\n").filter(Boolean).map((line) => {
@@ -69,7 +67,7 @@ async function fetchLichessGames(username: string): Promise<GameMeta[]> {
 async function fetchChesscomGames(username: string): Promise<GameMeta[]> {
   try {
     const now = new Date();
-    const res = await fetch(`https://api.chess.com/pub/player/${encodeURIComponent(username)}/games/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}`);
+    const res = await fetch(`/api/proxy?url=${encodeURIComponent(`https://api.chess.com/pub/player/${encodeURIComponent(username)}/games/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}`)}`);
     if (!res.ok) throw new Error("Chess.com user not found");
     const data = await res.json();
     return (data.games ?? []).slice(-20).map((g: any) => ({
