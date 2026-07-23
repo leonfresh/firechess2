@@ -34,14 +34,16 @@ export default function NewLandingPage() {
   const goToScan = useCallback(() => {
     const el = document.getElementById("scan-section");
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      const y = el.getBoundingClientRect().top + window.scrollY - 100;
+      window.scrollTo({ top: y, behavior: "smooth" });
     }
   }, []);
 
   const goToSamples = useCallback(() => {
     const el = document.getElementById("sample-reports");
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      const y = el.getBoundingClientRect().top + window.scrollY - 100;
+      window.scrollTo({ top: y, behavior: "smooth" });
     }
   }, []);
 
