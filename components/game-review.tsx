@@ -205,7 +205,8 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
     setLlmLoading(false);
 
     (async () => {
-      const results: any[] = [];
+      try {
+        const results: any[] = [];
       const chess = new Chess();
 
       // Evaluate starting position
@@ -304,6 +305,9 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
       }).then((r) => r.ok ? r.json() : null).then((data) => {
         if (data?.summary) { setLlmSummary(data); setLlmCommentary(data.commentary ?? {}); setShowCoachModal(true); }
       }).catch(() => {}).finally(() => { clearTimeout(llmTimeout); if (!cancelled) setLlmLoading(false); });
+      } catch (e) {
+        if (!cancelled) { setBatchAnalyzing(false); setLlmLoading(false); }
+      }
     })();
     return () => { cancelled = true; };
   }, [gameLoaded, parsedMoves, meta]);
