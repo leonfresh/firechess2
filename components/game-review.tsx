@@ -149,6 +149,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
   const [llmSummary, setLlmSummary] = useState<any>(null);
   const [llmLoading, setLlmLoading] = useState(false);
   const [llmCommentary, setLlmCommentary] = useState<Record<number, string>>({});
+  const [showCoachModal, setShowCoachModal] = useState(false);
   const [allEvals, setAllEvals] = useState<any[]>([]);
   const [batchAnalyzing, setBatchAnalyzing] = useState(false);
   const moveReviewRequestRef = useRef(0);
@@ -188,6 +189,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
       setGameLoaded(true);
       setLlmSummary(null);
       setLlmCommentary({});
+      setShowCoachModal(false);
       setAllEvals([]);
       setBatchAnalyzing(false);
     } catch {
@@ -265,6 +267,8 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
 
       // Now fire LLM with all the data
       setLlmLoading(true);
+      // Client-side timeout: force loading off after 25s
+      const llmTimeout = setTimeout(() => { setLlmLoading(false); }, 25000);
       const keyMoments = results
         .filter((r) => r.classification === "blunder" || r.classification === "brilliant" || r.cpLoss > 100 || Math.abs(r.cpAfter - (r.ply > 0 ? results[r.ply - 1].cpAfter : 20)) > 150)
         .slice(0, 20)
@@ -297,8 +301,8 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
           accuracy,
         }),
       }).then((r) => r.ok ? r.json() : null).then((data) => {
-        if (data?.summary) { setLlmSummary(data); setLlmCommentary(data.commentary ?? {}); }
-      }).catch(() => {}).finally(() => { if (!cancelled) setLlmLoading(false); });
+        if (data?.summary) { setLlmSummary(data); setLlmCommentary(data.commentary ?? {}); setShowCoachModal(true); }
+      }).catch(() => {}).finally(() => { clearTimeout(llmTimeout); if (!cancelled) setLlmLoading(false); });
     })();
     return () => { cancelled = true; };
   }, [gameLoaded, parsedMoves, meta]);
@@ -422,6 +426,12 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
           </div>
           {batchAnalyzing && <span className="rounded-full bg-amber-500/10 px-3 py-1 text-[10px] text-amber-300">Analyzing {allEvals.length}/{parsedMoves.length} moves...</span>}
           {!batchAnalyzing && llmLoading && <span className="rounded-full bg-sky-500/10 px-3 py-1 text-[10px] text-sky-300">Coach analyzing...</span>}
+          {!batchAnalyzing && !llmLoading && llmSummary && (
+            <button onClick={() => setShowCoachModal(true)}
+              className="rounded-full bg-sky-500/15 px-3 py-1 text-[10px] font-semibold text-sky-300 transition hover:bg-sky-500/25">
+              🧠 Coach
+            </button>
+          )}
         </div>
 
         {/* LLM Summary */}
@@ -501,6 +511,58 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
                   fill="none" stroke="rgb(249, 115, 22)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
                 <line x1="0" y1="0" x2={Math.max(1, evalHistory.length - 1)} y2="0" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
               </svg>
+            </div>
+          </div>
+        )}
+
+        {/* Coach modal */}
+        {showCoachModal && llmSummary && (
+          <div className="fixed inset-0 z-[100] flex items-start justify-center bg-[rgba(2,6,23,0.82)] px-4 py-8 backdrop-blur-sm sm:items-center" onClick={() => setShowCoachModal(false)}>
+            <div className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-[2rem] border border-sky-500/20 bg-[rgba(6,11,26,0.97)] p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <button onClick={() => setShowCoachModal(false)} className="absolute right-4 top-4 text-slate-500 transition hover:text-white">✕</button>
+              <div className="mb-4 flex items-center gap-2">
+                <span className="text-xl">🧠</span>
+                <div>
+                  <p className="text-sm font-bold text-white">Coach Analysis</p>
+                  <p className="text-xs text-slate-400">{meta?.white} vs {meta?.black}</p>
+                </div>
+              </div>
+
+              <p className="mb-4 text-sm leading-relaxed text-slate-200">{llmSummary.summary}</p>
+
+              {llmSummary.verdict && (
+                <div className="mb-4 rounded-xl border border-sky-500/10 bg-sky-500/[0.04] p-4">
+                  <p className="text-sm font-semibold text-sky-200">&ldquo;{llmSummary.verdict}&rdquo;</p>
+                </div>
+              )}
+
+              {llmSummary.moveAdvice && (llmSummary.moveAdvice.opening || llmSummary.moveAdvice.middlegame || llmSummary.moveAdvice.endgame) && (
+                <div className="mb-4 space-y-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Phase Advice</p>
+                  {llmSummary.moveAdvice.opening && <p className="rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-slate-300"><span className="font-semibold text-slate-400">Opening:</span> {llmSummary.moveAdvice.opening}</p>}
+                  {llmSummary.moveAdvice.middlegame && <p className="rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-slate-300"><span className="font-semibold text-slate-400">Middlegame:</span> {llmSummary.moveAdvice.middlegame}</p>}
+                  {llmSummary.moveAdvice.endgame && <p className="rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-slate-300"><span className="font-semibold text-slate-400">Endgame:</span> {llmSummary.moveAdvice.endgame}</p>}
+                </div>
+              )}
+
+              {Object.keys(llmCommentary).length > 0 && (
+                <div>
+                  <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Key Move Notes</p>
+                  <div className="space-y-1.5">
+                    {Object.entries(llmCommentary).slice(0, 8).map(([ply, note]) => {
+                      const move = allEvals[parseInt(ply)];
+                      if (!move) return null;
+                      return (
+                        <button key={ply} onClick={() => { setCurrentPly(parseInt(ply) + 1); setShowCoachModal(false); }}
+                          className="flex w-full gap-2 rounded-lg px-3 py-2 text-left text-xs text-slate-300 transition hover:bg-white/[0.04]">
+                          <span className="shrink-0 font-semibold text-slate-500">{Math.floor(parseInt(ply) / 2) + 1}{parseInt(ply) % 2 === 0 ? "." : "..."}</span>
+                          <span>{note}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
