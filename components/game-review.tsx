@@ -143,13 +143,14 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
   const [parsedMoves, setParsedMoves] = useState<ParsedMove[]>([]);
   const [meta, setMeta] = useState<{ white: string | null; black: string | null; result: string | null } | null>(null);
   const [currentPly, setCurrentPly] = useState(0);
-  const [judgement, setJudgement] = useState<MoveJudgement | null>(null);
   const [prevMoveSquares, setPrevMoveSquares] = useState<string[]>([]);
   const [evalHistory, setEvalHistory] = useState<number[]>([]);
   const [inputTab, setInputTab] = useState<"pgn" | "lichess" | "chesscom">("pgn");
   const [llmSummary, setLlmSummary] = useState<any>(null);
   const [llmLoading, setLlmLoading] = useState(false);
   const [llmCommentary, setLlmCommentary] = useState<Record<number, string>>({});
+  const [allEvals, setAllEvals] = useState<any[]>([]);
+  const [batchAnalyzing, setBatchAnalyzing] = useState(false);
   const moveReviewRequestRef = useRef(0);
 
   const { ref: boardContainerRef, size: boardSize } = useBoardSize(440, { evalBar: true, minSize: 240 });
@@ -182,145 +183,153 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
       });
       setParsedMoves(parsed);
       setCurrentPly(0);
-      setJudgement(null);
       setPrevMoveSquares([]);
       setEvalHistory([]);
       setGameLoaded(true);
       setLlmSummary(null);
       setLlmCommentary({});
-      previousAllEval.current = false;
+      setAllEvals([]);
+      setBatchAnalyzing(false);
     } catch {
       setError("Invalid PGN. Check the format.");
     }
   }, []);
 
-  // Evaluate the current position and the move that led to it
+  // ── Batch analysis: evaluate ALL moves upfront (like Lichess) ──
+  useEffect(() => {
+    if (!gameLoaded || parsedMoves.length === 0 || allEvals.length > 0) return;
+    setBatchAnalyzing(true);
+
+    (async () => {
+      const results: any[] = [];
+      const chess = new Chess();
+
+      // Evaluate starting position
+      const startEval = await stockfishClient.evaluateFen(chess.fen(), 14);
+
+      for (let ply = 0; ply < parsedMoves.length; ply++) {
+        const move = parsedMoves[ply];
+        const fenBefore = move.fenBefore;
+        const fenAfter = move.fenAfter;
+
+        // Evaluate position before the move (for best move comparison)
+        const beforeEval = await stockfishClient.evaluateFen(fenBefore, 14);
+        // Evaluate position after the move
+        const afterEval = await stockfishClient.evaluateFen(fenAfter, 14);
+
+        const cpBefore = toWhitePerspective(fenBefore, beforeEval?.cp ?? 20);
+        const cpAfter = toWhitePerspective(fenAfter, afterEval?.cp ?? (ply > 0 ? results[ply - 1].cpAfter : 20));
+        const evalBeforeMover = move.color === "w" ? cpBefore : -cpBefore;
+        const evalAfterMover = move.color === "w" ? cpAfter : -cpAfter;
+        const cpLoss = Math.max(0, evalBeforeMover - evalAfterMover);
+        const isBestMove = beforeEval?.bestMove === move.uci ||
+          (beforeEval?.bestMove && move.uci?.startsWith(beforeEval.bestMove.slice(0, 4)) && cpLoss <= 5);
+        const classification = classifyMoveQuality({
+          cpLoss,
+          isBestMove: !!isBestMove,
+          evalBeforeMover,
+          evalAfterMover,
+          fenBefore,
+          moveUci: move.uci ?? null,
+          moveIndex: ply,
+        });
+        const bestMoveSan = toSan(fenBefore, beforeEval?.bestMove ?? null);
+
+        results.push({
+          ply,
+          san: move.san,
+          fenBefore,
+          fenAfter,
+          cpBefore,
+          cpAfter,
+          cpLoss,
+          classification,
+          bestMove: beforeEval?.bestMove ?? null,
+          bestMoveSan,
+          uci: move.uci ?? "",
+          commentary: buildMoveQualityCommentary({
+            classification,
+            cpLoss,
+            evalBefore: cpBefore,
+            evalAfter: cpAfter,
+            bestMoveSan,
+          }),
+        });
+      }
+
+      setAllEvals(results);
+      setBatchAnalyzing(false);
+      setEvalHistory(results.map((r) => r.cpAfter));
+
+      // Now fire LLM with all the data
+      setLlmLoading(true);
+      const keyMoments = results
+        .filter((r) => r.classification === "blunder" || r.classification === "brilliant" || r.cpLoss > 100 || Math.abs(r.cpAfter - (r.ply > 0 ? results[r.ply - 1].cpAfter : 20)) > 150)
+        .slice(0, 20)
+        .map((r) => ({
+          moveNumber: Math.floor(r.ply / 2) + 1,
+          san: r.san,
+          color: r.ply % 2 === 0 ? "w" : "b",
+          classification: r.classification,
+          cpLoss: Math.round(r.cpLoss),
+          evalBefore: r.cpBefore,
+          evalAfter: r.cpAfter,
+          isCritical: true,
+        }));
+      const blunders = results.filter((r) => r.classification === "blunder").length;
+      const brilliants = results.filter((r) => r.classification === "brilliant").length;
+      const avgLoss = results.reduce((s: number, r: any) => s + r.cpLoss, 0) / Math.max(1, results.length);
+      const accuracy = Math.round(Math.max(0, Math.min(100, 100 - avgLoss / 5)));
+
+      fetch("/api/review/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          white: meta?.white ?? "?",
+          black: meta?.black ?? "?",
+          result: meta?.result ?? "*",
+          totalMoves: parsedMoves.length,
+          keyMoments,
+          blunderCount: blunders,
+          brilliantCount: brilliants,
+          accuracy,
+        }),
+      }).then((r) => r.ok ? r.json() : null).then((data) => {
+        if (data?.summary) { setLlmSummary(data); setLlmCommentary(data.commentary ?? {}); }
+      }).catch(() => {}).finally(() => setLlmLoading(false));
+    })();
+  }, [gameLoaded, parsedMoves, meta]);
+
+  // Current move data from pre-computed allEvals
   const lastMove = currentPly > 0 ? parsedMoves[currentPly - 1] : null;
+  const currentMoveEval = currentPly > 0 && allEvals.length > 0 ? allEvals[currentPly - 1] : null;
   const currentFen = useMemo(() => {
     if (currentPly === 0) return new Chess().fen();
     return parsedMoves[currentPly - 1]?.fenAfter ?? new Chess().fen();
   }, [parsedMoves, currentPly]);
 
+  // Derive judgement from pre-computed eval
+  const judgement = useMemo(() => {
+    if (!currentMoveEval) return null;
+    return {
+      square: currentMoveEval.uci.slice(2, 4),
+      classification: currentMoveEval.classification as MoveClassification,
+      cpLoss: currentMoveEval.cpLoss,
+      evalBefore: currentMoveEval.cpBefore,
+      evalAfter: currentMoveEval.cpAfter,
+      bestMoveSan: currentMoveEval.bestMoveSan,
+      commentary: currentMoveEval.commentary,
+    };
+  }, [currentMoveEval]);
+
+  // Update prev move squares when current ply changes
   useEffect(() => {
-    if (!lastMove) { setJudgement(null); return; }
-
-    const requestId = ++moveReviewRequestRef.current;
-    setJudgement(null);
-
-    void Promise.all([
-      stockfishClient.evaluateFen(lastMove.fenBefore, 14),
-      stockfishClient.evaluateFen(lastMove.fenAfter, 14),
-    ]).then(([beforeEval, afterEval]) => {
-      if (requestId !== moveReviewRequestRef.current || !beforeEval || !afterEval) return;
-
-      const evalBeforeWhite = toWhitePerspective(lastMove.fenBefore, beforeEval.cp);
-      const evalAfterWhite = toWhitePerspective(lastMove.fenAfter, afterEval.cp);
-      const evalBeforeMover = lastMove.color === "w" ? evalBeforeWhite : -evalBeforeWhite;
-      const evalAfterMover = lastMove.color === "w" ? evalAfterWhite : -evalAfterWhite;
-      const cpLoss = Math.max(0, evalBeforeMover - evalAfterMover);
-      const isBestMove = beforeEval.bestMove === lastMove.uci ||
-        (beforeEval.bestMove && lastMove.uci?.startsWith(beforeEval.bestMove.slice(0, 4)) && cpLoss <= 5);
-      const classification = classifyMoveQuality({
-        cpLoss,
-        isBestMove: !!isBestMove,
-        evalBeforeMover,
-        evalAfterMover,
-        fenBefore: lastMove.fenBefore,
-        moveUci: lastMove.uci ?? null,
-        moveIndex: currentPly - 1,
-      });
-      const bestMoveSan = toSan(lastMove.fenBefore, beforeEval.bestMove);
-
-      setJudgement({
-        square: (lastMove.uci ?? "").slice(2, 4),
-        classification,
-        cpLoss,
-        evalBefore: evalBeforeWhite,
-        evalAfter: evalAfterWhite,
-        bestMoveSan,
-        commentary: buildMoveQualityCommentary({ classification, cpLoss, evalBefore: evalBeforeWhite, evalAfter: evalAfterWhite, bestMoveSan }),
-      });
-      setPrevMoveSquares([(lastMove.uci ?? "").slice(0, 2), (lastMove.uci ?? "").slice(2, 4)]);
-
-      setEvalHistory((prev) => {
-        const next = [...prev];
-        next[currentPly - 1] = evalAfterWhite;
-        return next;
-      });
-    }).catch(() => {
-      if (requestId === moveReviewRequestRef.current) setJudgement(null);
-    });
-  }, [lastMove, currentPly]);
-
-  // ── LLM analysis: fire when all moves have been evaluated ──
-  const allEvaluated = parsedMoves.length > 0 && evalHistory.length >= parsedMoves.length;
-  const previousAllEval = useRef(false);
-  useEffect(() => {
-    if (!allEvaluated || previousAllEval.current || llmSummary) return;
-    previousAllEval.current = true;
-    setLlmLoading(true);
-
-    const keyMoments: any[] = [];
-    let blunders = 0, brilliants = 0;
-
-    // We need the full eval data — rebuild from what we have. Since we only
-    // keep evalHistory (cpAfter per ply), derive moments from the last judgement.
-    for (let ply = 0; ply < parsedMoves.length; ply++) {
-      const cpBefore = ply === 0 ? 20 : (evalHistory[ply - 1] ?? 20);
-      const cpAfter = evalHistory[ply] ?? 20;
-      const loss = Math.max(0, (parsedMoves[ply].color === "w" ? 1 : -1) * (cpBefore - cpAfter));
-      const isBest = loss <= 15;
-      let classification = "good";
-      if (isBest && loss <= 5 && ply >= 16) classification = "brilliant";
-      else if (isBest) classification = "best";
-      else if (loss > 200) { classification = "blunder"; blunders++; }
-      else if (loss > 75) { classification = "mistake"; }
-      else if (loss > 25) { classification = "inaccuracy"; }
-      if (classification === "brilliant") brilliants++;
-
-      const isCritical = classification === "blunder" || classification === "brilliant" || loss > 100 || Math.abs(cpAfter - cpBefore) > 150;
-      if (isCritical) {
-        keyMoments.push({
-          moveNumber: parsedMoves[ply].moveNumber,
-          san: parsedMoves[ply].san,
-          color: parsedMoves[ply].color,
-          classification,
-          cpLoss: Math.round(loss),
-          evalBefore: cpBefore,
-          evalAfter: cpAfter,
-          isCritical: true,
-        });
-      }
+    if (currentMoveEval) {
+      setPrevMoveSquares([currentMoveEval.uci.slice(0, 2), currentMoveEval.uci.slice(2, 4)]);
+    } else {
+      setPrevMoveSquares([]);
     }
-
-    const accuracy = parsedMoves.length > 0
-      ? Math.round(100 - (keyMoments.reduce((s, m) => s + Math.min(m.cpLoss, 500), 0) / Math.max(1, parsedMoves.length) / 5))
-      : 50;
-
-    fetch("/api/review/analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        white: meta?.white ?? "?",
-        black: meta?.black ?? "?",
-        result: meta?.result ?? "*",
-        totalMoves: parsedMoves.length,
-        keyMoments,
-        blunderCount: blunders,
-        brilliantCount: brilliants,
-        accuracy: Math.max(0, Math.min(100, accuracy)),
-      }),
-    })
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => {
-        if (data?.summary) {
-          setLlmSummary(data);
-          setLlmCommentary(data.commentary ?? {});
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLlmLoading(false));
-  }, [allEvaluated, parsedMoves, meta, llmSummary]);
+  }, [currentMoveEval]);
 
   // Square styles: last move highlight
   const squareStyles = useMemo(() => {
@@ -408,7 +417,8 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
             <p className="text-sm font-bold text-white">{meta?.white ?? "?"} vs {meta?.black ?? "?"}</p>
             <p className="text-xs text-slate-400">{meta?.result ?? "*"} · {parsedMoves.length} moves</p>
           </div>
-          {llmLoading && <span className="rounded-full bg-sky-500/10 px-3 py-1 text-[10px] text-sky-300">Coach analyzing...</span>}
+          {batchAnalyzing && <span className="rounded-full bg-amber-500/10 px-3 py-1 text-[10px] text-amber-300">Analyzing {allEvals.length}/{parsedMoves.length} moves...</span>}
+          {!batchAnalyzing && llmLoading && <span className="rounded-full bg-sky-500/10 px-3 py-1 text-[10px] text-sky-300">Coach analyzing...</span>}
         </div>
 
         {/* LLM Summary */}
@@ -544,7 +554,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
           </div>
         </div>
 
-        <button onClick={() => { setGameLoaded(false); setJudgement(null); setParsedMoves([]); setCurrentPly(0); setMeta(null); setEvalHistory([]); }}
+        <button onClick={() => { setGameLoaded(false); setParsedMoves([]); setCurrentPly(0); setMeta(null); setEvalHistory([]); setAllEvals([]); }}
           className="w-full rounded-xl border border-white/[0.08] px-4 py-2.5 text-xs text-slate-400 transition hover:bg-white/[0.04] hover:text-white">
           ← New game
         </button>
