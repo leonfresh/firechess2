@@ -23,7 +23,13 @@ Respond with valid JSON (no markdown, no backticks):
   "commentary": {}
 }
 
-For the commentary field, provide a 1-2 sentence note for EVERY move that is a blunder, mistake, brilliant, or has cpLoss > 75. Key is the 0-based ply index, value is the note. Start each note with the player's name. Example: {"15": "LeonFresh misses a tactical shot here. Nxe5 wins a pawn."}`;
+IMPORTANT RULES:
+- NEVER invent player names. Use ONLY the WHITE and BLACK names provided above.
+- A move like "22... a6" means BLACK played a6 on move 22 (the "..." denotes Black's move).
+- A move like "22. a6" means WHITE played a6 on move 22.
+- When a blunder/mistake occurs, say which player made it: "WHITE_NAME blundered with 22. a6" or "BLACK_NAME missed a tactic with 22... Nf7".
+- The key turning point is the blunder itself, not the move before it.
+- Be concise. Summary: 2-3 sentences. Per-move commentary: 1-2 sentences each.`;
 
 async function callLLM(prompt: string, model: string, key: string, url: string): Promise<string | null> {
   if (!key || key.length < 10) return null;
