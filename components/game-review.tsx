@@ -147,6 +147,9 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
   const [prevMoveSquares, setPrevMoveSquares] = useState<string[]>([]);
   const [evalHistory, setEvalHistory] = useState<number[]>([]);
   const [inputTab, setInputTab] = useState<"pgn" | "lichess" | "chesscom">("pgn");
+  const [llmSummary, setLlmSummary] = useState<any>(null);
+  const [llmLoading, setLlmLoading] = useState(false);
+  const [llmCommentary, setLlmCommentary] = useState<Record<number, string>>({});
   const moveReviewRequestRef = useRef(0);
 
   const { ref: boardContainerRef, size: boardSize } = useBoardSize(440, { evalBar: true, minSize: 240 });
@@ -183,6 +186,9 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
       setPrevMoveSquares([]);
       setEvalHistory([]);
       setGameLoaded(true);
+      setLlmSummary(null);
+      setLlmCommentary({});
+      previousAllEval.current = false;
     } catch {
       setError("Invalid PGN. Check the format.");
     }
@@ -245,6 +251,76 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
       if (requestId === moveReviewRequestRef.current) setJudgement(null);
     });
   }, [lastMove, currentPly]);
+
+  // ── LLM analysis: fire when all moves have been evaluated ──
+  const allEvaluated = parsedMoves.length > 0 && evalHistory.length >= parsedMoves.length;
+  const previousAllEval = useRef(false);
+  useEffect(() => {
+    if (!allEvaluated || previousAllEval.current || llmSummary) return;
+    previousAllEval.current = true;
+    setLlmLoading(true);
+
+    const keyMoments: any[] = [];
+    let blunders = 0, brilliants = 0;
+
+    // We need the full eval data — rebuild from what we have. Since we only
+    // keep evalHistory (cpAfter per ply), derive moments from the last judgement.
+    for (let ply = 0; ply < parsedMoves.length; ply++) {
+      const cpBefore = ply === 0 ? 20 : (evalHistory[ply - 1] ?? 20);
+      const cpAfter = evalHistory[ply] ?? 20;
+      const loss = Math.max(0, (parsedMoves[ply].color === "w" ? 1 : -1) * (cpBefore - cpAfter));
+      const isBest = loss <= 15;
+      let classification = "good";
+      if (isBest && loss <= 5 && ply >= 16) classification = "brilliant";
+      else if (isBest) classification = "best";
+      else if (loss > 200) { classification = "blunder"; blunders++; }
+      else if (loss > 75) { classification = "mistake"; }
+      else if (loss > 25) { classification = "inaccuracy"; }
+      if (classification === "brilliant") brilliants++;
+
+      const isCritical = classification === "blunder" || classification === "brilliant" || loss > 100 || Math.abs(cpAfter - cpBefore) > 150;
+      if (isCritical) {
+        keyMoments.push({
+          moveNumber: parsedMoves[ply].moveNumber,
+          san: parsedMoves[ply].san,
+          color: parsedMoves[ply].color,
+          classification,
+          cpLoss: Math.round(loss),
+          evalBefore: cpBefore,
+          evalAfter: cpAfter,
+          isCritical: true,
+        });
+      }
+    }
+
+    const accuracy = parsedMoves.length > 0
+      ? Math.round(100 - (keyMoments.reduce((s, m) => s + Math.min(m.cpLoss, 500), 0) / Math.max(1, parsedMoves.length) / 5))
+      : 50;
+
+    fetch("/api/review/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        white: meta?.white ?? "?",
+        black: meta?.black ?? "?",
+        result: meta?.result ?? "*",
+        totalMoves: parsedMoves.length,
+        keyMoments,
+        blunderCount: blunders,
+        brilliantCount: brilliants,
+        accuracy: Math.max(0, Math.min(100, accuracy)),
+      }),
+    })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.summary) {
+          setLlmSummary(data);
+          setLlmCommentary(data.commentary ?? {});
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLlmLoading(false));
+  }, [allEvaluated, parsedMoves, meta, llmSummary]);
 
   // Square styles: last move highlight
   const squareStyles = useMemo(() => {
@@ -332,7 +408,26 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
             <p className="text-sm font-bold text-white">{meta?.white ?? "?"} vs {meta?.black ?? "?"}</p>
             <p className="text-xs text-slate-400">{meta?.result ?? "*"} · {parsedMoves.length} moves</p>
           </div>
+          {llmLoading && <span className="rounded-full bg-sky-500/10 px-3 py-1 text-[10px] text-sky-300">Coach analyzing...</span>}
         </div>
+
+        {/* LLM Summary */}
+        {llmSummary && (
+          <div className="rounded-2xl border border-sky-500/15 bg-gradient-to-r from-sky-500/[0.05] to-transparent p-5">
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-sky-400">Coach Summary</p>
+            <p className="text-sm leading-relaxed text-slate-200">{llmSummary.summary}</p>
+            {llmSummary.verdict && (
+              <p className="mt-2 text-sm font-semibold text-sky-200">&ldquo;{llmSummary.verdict}&rdquo;</p>
+            )}
+            {llmSummary.moveAdvice && (
+              <div className="mt-3 flex flex-wrap gap-2 text-[10px] text-slate-400">
+                {llmSummary.moveAdvice.opening && <span>♟ {llmSummary.moveAdvice.opening}</span>}
+                {llmSummary.moveAdvice.middlegame && <span>⚔ {llmSummary.moveAdvice.middlegame}</span>}
+                {llmSummary.moveAdvice.endgame && <span>🏁 {llmSummary.moveAdvice.endgame}</span>}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Board + Eval bar */}
         <div ref={boardContainerRef} className="flex gap-3">
@@ -372,6 +467,13 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
             </p>
             {judgement.bestMoveSan && judgement.classification !== "best" && judgement.classification !== "book" && (
               <p className="mt-1 text-xs text-emerald-400">Best: {judgement.bestMoveSan}</p>
+            )}
+            {/* LLM per-move commentary */}
+            {llmCommentary[currentPly - 1] && (
+              <div className="mt-3 rounded-lg border border-sky-500/10 bg-sky-500/[0.04] p-3">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-sky-400">Coach</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-slate-300">{llmCommentary[currentPly - 1]}</p>
+              </div>
             )}
           </div>
         )}
