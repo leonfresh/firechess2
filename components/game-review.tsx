@@ -198,6 +198,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
   // ── Batch analysis: evaluate ALL moves upfront (like Lichess) ──
   useEffect(() => {
     if (!gameLoaded || parsedMoves.length === 0 || allEvals.length > 0) return;
+    let cancelled = false;
     setBatchAnalyzing(true);
 
     (async () => {
@@ -257,6 +258,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
         });
       }
 
+      if (cancelled) return;
       setAllEvals(results);
       setBatchAnalyzing(false);
       setEvalHistory(results.map((r) => r.cpAfter));
@@ -296,8 +298,9 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
         }),
       }).then((r) => r.ok ? r.json() : null).then((data) => {
         if (data?.summary) { setLlmSummary(data); setLlmCommentary(data.commentary ?? {}); }
-      }).catch(() => {}).finally(() => setLlmLoading(false));
+      }).catch(() => {}).finally(() => { if (!cancelled) setLlmLoading(false); });
     })();
+    return () => { cancelled = true; };
   }, [gameLoaded, parsedMoves, meta]);
 
   // Current move data from pre-computed allEvals
