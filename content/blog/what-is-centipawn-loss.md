@@ -1,7 +1,7 @@
 ---
-title: "What Is Centipawn Loss? ACPL Explained With Board Examples"
-description: "What does centipawn loss mean? Learn how ACPL works, what each FireChess badge means, and how to use this metric to find and fix your biggest mistakes."
-date: "2026-07-11"
+title: "Centipawn Loss (ACPL) Explained: What It Means & How to Improve"
+description: "What does centipawn loss mean in chess? Learn how ACPL works, see real board examples, and use FireChess badges to fix your biggest mistakes."
+date: "2026-07-23"
 author: "FireChess Team"
 tags: ["analysis", "fundamentals", "improvement", "centipawn-loss"]
 canonical: https://firechess.com/blog/what-is-centipawn-loss
@@ -11,7 +11,7 @@ You've just finished a hard-fought 45-minute game. You open the analysis board, 
 
 What does that number actually mean? Is 72 good? Bad? How is it even calculated? And why should you care?
 
-If you've ever stared at a centipawn loss score and felt more confused than informed, you're not alone. The concept sits at the centre of modern chess analysis — every major platform from Lichess to Chess.com to FireChess uses it — but most players don't fully understand what the number represents or how to use it.
+If you've ever stared at a centipawn loss score and felt more confused than informed, you're not alone. Average centipawn loss (ACPL) sits at the centre of modern chess analysis — every major platform from Lichess to Chess.com to FireChess uses it — but most players don't fully understand what the number represents or how to use it.
 
 This guide fixes that. By the end, you'll know exactly what centipawn loss is, how Stockfish assigns those mysterious numbers, how FireChess translates centipawn loss into the move badges you see on the analysis board (Brilliant !!, Best !, Good ✓, Inaccuracy ?!, Mistake ?, Blunder ??), and — most importantly — how to use centipawn loss to find your biggest weaknesses and improve faster.
 
@@ -35,7 +35,7 @@ Think of it as the smallest meaningful unit of chess advantage. Just as a gram m
 
 These are starting points. The engine adjusts these values dynamically based on position, piece activity, king safety, pawn structure, and dozens of other factors. A knight on a perfect outpost might be evaluated at 350 cp; the same knight stuck on the edge of the board might drop to 280 cp.
 
-**Centipawn loss**, then, measures the difference between your move and the engine's best move, expressed in these units. If the best move in a position gives the engine +0.50 (a 50-centipawn advantage) and your move gives +0.20, your centipawn loss for that move is 30 cp — the difference between the optimal and what you played. For a detailed breakdown of how these values map to rating levels, see our [ACPL by rating guide](/blog/average-centipawn-loss-by-rating).
+**Centipawn loss**, then, measures the difference between your move and the engine's best move, expressed in these units. If the best move in a position gives the engine +0.50 (a 50-centipawn advantage) and your move gives +0.20, your centipawn loss for that move is 30 cp — the difference between the optimal and what you played. **Average centipawn loss (ACPL)** is simply the mean of these per-move losses across an entire game — the single number you see on your analysis report. For a detailed breakdown of how these values map to rating levels, see our [ACPL by rating guide](/blog/average-centipawn-loss-by-rating), or read our [complete ACPL guide](/blog/average-centipawn-loss-guide) for practical strategies to lower yours.
 
 ---
 
@@ -423,6 +423,10 @@ It depends entirely on your rating and time control. For a 1500-rated player in 
 ### Q: Is centipawn loss the same as accuracy?
 
 No. Accuracy percentage is a normalised score (0-100%) based on centipawn loss. Centipawn loss is the raw mathematical measure. They correlate strongly but aren't identical. The FireChess move badges sit between them — badges translate centipawn loss into a human-readable label. For a full breakdown of how accuracy works, see our [chess accuracy score guide](/blog/chess-accuracy-score-explained).
+
+### Q: What does average centipawn loss mean?
+
+Average centipawn loss (ACPL) is the mean difference per move between the move you played and the engine's best move, measured in centipawns (1/100 of a pawn). If your ACPL is 60, that means on average each move you played was 60 centipawns — about 0.6 pawns — worse than the engine's top choice. Lower is better: grandmasters average 15-25 ACPL, while club players typically score 50-80. FireChess translates each move's centipawn loss into a coloured badge (Best, Inaccuracy, Blunder, etc.) so you can see at a glance where you lost the most. See our [ACPL by rating guide](/blog/average-centipawn-loss-by-rating) for benchmarks at every level.
 
 ### Q: What is a centipawn loss of 100?
 
