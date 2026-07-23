@@ -199,9 +199,10 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
 
   // ── Batch analysis: evaluate ALL moves upfront (like Lichess) ──
   useEffect(() => {
-    if (!gameLoaded || parsedMoves.length === 0 || allEvals.length > 0) return;
+    if (!gameLoaded || parsedMoves.length === 0 || allEvals.length > 0 || batchAnalyzing) return;
     let cancelled = false;
     setBatchAnalyzing(true);
+    setLlmLoading(false);
 
     (async () => {
       const results: any[] = [];
@@ -604,13 +605,49 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
                   {wMove && (
                     <button onClick={() => setCurrentPly(wPly + 1)}
                       className={`flex items-center gap-1.5 rounded px-1.5 py-1 text-left transition ${currentPly === wPly + 1 ? "bg-orange-500/15" : ""}`}>
-                      <span className="text-white">{wMove.san}</span>
+                      <span className="truncate text-white">{wMove.san}</span>
+                      {allEvals[wPly] && (
+                        <span className={`shrink-0 text-[10px] ${
+                          allEvals[wPly].classification === "brilliant" ? "text-cyan-300" :
+                          allEvals[wPly].classification === "best" ? "text-emerald-300" :
+                          allEvals[wPly].classification === "good" ? "text-emerald-200/60" :
+                          allEvals[wPly].classification === "inaccuracy" ? "text-amber-300" :
+                          allEvals[wPly].classification === "mistake" ? "text-orange-300" :
+                          allEvals[wPly].classification === "blunder" ? "text-red-300" :
+                          "text-slate-400"
+                        }`}>
+                          {allEvals[wPly].classification === "brilliant" ? "💎" :
+                           allEvals[wPly].classification === "best" ? "✅" :
+                           allEvals[wPly].classification === "good" ? "👍" :
+                           allEvals[wPly].classification === "inaccuracy" ? "⚠️" :
+                           allEvals[wPly].classification === "mistake" ? "❌" :
+                           allEvals[wPly].classification === "blunder" ? "💀" : ""}
+                        </span>
+                      )}
                     </button>
                   )}
                   {bMove ? (
                     <button onClick={() => setCurrentPly(bPly + 1)}
                       className={`flex items-center gap-1.5 rounded px-1.5 py-1 text-left transition ${currentPly === bPly + 1 ? "bg-orange-500/15" : ""}`}>
-                      <span className="text-white">{bMove.san}</span>
+                      <span className="truncate text-white">{bMove.san}</span>
+                      {allEvals[bPly] && (
+                        <span className={`shrink-0 text-[10px] ${
+                          allEvals[bPly].classification === "brilliant" ? "text-cyan-300" :
+                          allEvals[bPly].classification === "best" ? "text-emerald-300" :
+                          allEvals[bPly].classification === "good" ? "text-emerald-200/60" :
+                          allEvals[bPly].classification === "inaccuracy" ? "text-amber-300" :
+                          allEvals[bPly].classification === "mistake" ? "text-orange-300" :
+                          allEvals[bPly].classification === "blunder" ? "text-red-300" :
+                          "text-slate-400"
+                        }`}>
+                          {allEvals[bPly].classification === "brilliant" ? "💎" :
+                           allEvals[bPly].classification === "best" ? "✅" :
+                           allEvals[bPly].classification === "good" ? "👍" :
+                           allEvals[bPly].classification === "inaccuracy" ? "⚠️" :
+                           allEvals[bPly].classification === "mistake" ? "❌" :
+                           allEvals[bPly].classification === "blunder" ? "💀" : ""}
+                        </span>
+                      )}
                     </button>
                   ) : <span />}
                 </div>
