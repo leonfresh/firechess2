@@ -322,6 +322,10 @@ button {
   }
 }
 
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out both;
+}
+
 /* Progress bar animation */
 @keyframes progress-indeterminate {
   0% {

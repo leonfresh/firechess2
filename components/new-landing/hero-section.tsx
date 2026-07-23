@@ -75,7 +75,7 @@ export function HeroSection({
             <div className="mb-3 h-32 sm:h-36 lg:h-40">
               <p
                 key={activeIndex}
-                className={`text-3xl font-bold leading-[1.1] tracking-tight text-white transition-all duration-500 sm:text-5xl lg:text-6xl ${mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}
+                className="animate-fade-in-up text-3xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl"
               >
                 {PROBLEMS[activeIndex].title}
               </p>
@@ -127,7 +127,7 @@ export function HeroSection({
 
             {/* Active card description below the cards */}
             <div className="mt-5 min-h-[72px]">
-              <p key={activeIndex} className={`text-sm leading-relaxed text-slate-400 transition-all duration-500 ${mounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}>
+              <p key={activeIndex} className="animate-fade-in-up text-sm leading-relaxed text-slate-400">
                 {PROBLEMS[activeIndex].text}
               </p>
             </div>
