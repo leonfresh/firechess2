@@ -5,7 +5,7 @@ import { Chess, type PieceSymbol } from "chess.js";
 import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { EvalBar } from "@/components/eval-bar";
 import { MoveBadge } from "@/components/move-badge";
-import { stockfishClient } from "@/lib/stockfish-client";
+import { stockfishClient, stockfishPool } from "@/lib/stockfish-client";
 import { useBoardSize } from "@/lib/use-board-size";
 import {
   classifyMoveQuality,
@@ -117,10 +117,10 @@ function ImportTab({ label, fetchFn, onLoad }: { label: string; fetchFn: (u: str
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        <input value={username} onChange={(e) => setUsername(e.target.value)}
+        <input value={username} onChange={(e) => setUsername(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && username.trim() && !loading) document.getElementById(`import-btn-${label}`)?.click(); }}
           placeholder={`${label} username`}
           className="flex-1 rounded-xl border border-white/[0.08] bg-black/30 px-4 py-3 text-sm text-slate-200 placeholder-slate-600 focus:border-orange-500/30 focus:outline-none" />
-        <button onClick={async () => { setLoading(true); setErr(null); setGames([]); const result = await fetchFn(username); if (result.length === 0) setErr("No games found."); else setGames(result); setLoading(false); }}
+        <button id={`import-btn-${label}`} onClick={async () => { setLoading(true); setErr(null); setGames([]); const result = await fetchFn(username); if (result.length === 0) setErr("No games found."); else setGames(result); setLoading(false); }}
           disabled={!username.trim() || loading}
           className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
           {loading ? "Loading..." : "Import"}
@@ -230,13 +230,14 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
         const fenBefore = move.fenBefore;
         const fenAfter = move.fenAfter;
 
-        // Evaluate position before the move (for best move comparison)
-        const beforeEval = await stockfishClient.evaluateFen(fenBefore, 14);
+        // Evaluate position before the move (for best move comparison + multi-PV)
+        const topMoves = await stockfishPool.getTopMoves(fenBefore, 3, 14);
         // Evaluate position after the move
         const afterEval = await stockfishClient.evaluateFen(fenAfter, 14);
 
+        const beforeEval = topMoves[0] ?? null;
         const cpBefore = toWhitePerspective(fenBefore, beforeEval?.cp ?? 20);
-        const cpAfter = toWhitePerspective(fenAfter, afterEval?.cp ?? (ply > 0 ? results[ply - 1].cpAfter : 20));
+        const cpAfter = toWhitePerspective(fenAfter, afterEval?.cp ?? (ply > 0 ? results[ply - 1]?.cpAfter ?? 20 : 20));
         const evalBeforeMover = move.color === "w" ? cpBefore : -cpBefore;
         const evalAfterMover = move.color === "w" ? cpAfter : -cpAfter;
         const cpLoss = Math.max(0, evalBeforeMover - evalAfterMover);
@@ -253,6 +254,14 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
         });
         const bestMoveSan = toSan(fenBefore, beforeEval?.bestMove ?? null);
 
+        // Build the multi-PV lines for display
+        const topLines = topMoves.slice(0, 3).map((l: any) => ({
+          uci: l.bestMove ?? "",
+          san: toSan(fenBefore, l.bestMove ?? null),
+          cp: l.cp,
+          mateIn: l.mateIn ?? null,
+        }));
+
         results.push({
           ply,
           san: move.san,
@@ -264,6 +273,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
           classification,
           bestMove: beforeEval?.bestMove ?? null,
           bestMoveSan,
+          topLines,
           uci: move.uci ?? "",
           commentary: buildMoveQualityCommentary({
             classification,
@@ -338,8 +348,17 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
       evalBefore: currentMoveEval.cpBefore,
       evalAfter: currentMoveEval.cpAfter,
       bestMoveSan: currentMoveEval.bestMoveSan,
+      topLines: currentMoveEval.topLines ?? [],
       commentary: currentMoveEval.commentary,
     };
+  }, [currentMoveEval]);
+
+  // Best move arrow: green arrow from source to dest if the player didn't play the best move
+  const bestMoveArrow = useMemo(() => {
+    if (!currentMoveEval || !currentMoveEval.bestMove || currentMoveEval.bestMove === currentMoveEval.uci) return [];
+    const uci = currentMoveEval.bestMove;
+    if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci)) return [];
+    return [[uci.slice(0, 2), uci.slice(2, 4), "rgba(34,197,94,0.7)"]] as any;
   }, [currentMoveEval]);
 
   // Update prev move squares when current ply changes
@@ -360,12 +379,6 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
     }
     return styles;
   }, [prevMoveSquares]);
-
-  // Best move arrow
-  const bestMoveArrow = useMemo(() => {
-    const bestMove = judgement?.bestMoveSan ? parsedMoves.find(m => m.san === judgement.bestMoveSan) : null;
-    return [] as [string, string, string][];
-  }, [judgement, parsedMoves]);
 
   // Piece badge on the destination square
   const customSquareRenderer = useMemo(() => {
@@ -478,6 +491,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
               customLightSquareStyle={{ backgroundColor: "#edeed1" }}
               customSquareStyles={squareStyles}
               customSquare={customSquareRenderer}
+              customArrows={bestMoveArrow}
             />
           </div>
           <EvalBar evalCp={judgement?.evalAfter ?? 20} height={boardSize} />
@@ -495,14 +509,39 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
                 <MoveBadge classification={judgement.classification} />
               </div>
               <div className="text-xs text-slate-400">
-                cp loss: {judgement.cpLoss} · {(judgement.evalAfter / 100).toFixed(1)}
+                {(judgement.evalAfter / 100).toFixed(1)} · loss: {judgement.cpLoss}
               </div>
             </div>
+
+            {/* Multi-PV: top engine lines */}
+            {judgement.topLines && judgement.topLines.length > 1 && (
+              <div className="mt-3 space-y-1">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Top engine lines</p>
+                {judgement.topLines.map((line: any, i: number) => {
+                  const isPlayed = line.san === lastMove?.san;
+                  const cpWhite = toWhitePerspective(currentFen, line.cp);
+                  return (
+                    <div key={i} className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs ${
+                      isPlayed ? "bg-orange-500/10 text-orange-200" : "text-slate-400"
+                    }`}>
+                      <span className="w-4 shrink-0 font-mono text-[10px] text-slate-500">{i + 1}.</span>
+                      <span className="font-semibold">{line.san || "(unknown)"}</span>
+                      <span className={`ml-auto font-mono ${cpWhite > 0 ? "text-emerald-400" : "text-red-400"}`}>
+                        {(cpWhite / 100).toFixed(1)}
+                      </span>
+                      {line.mateIn && <span className="text-yellow-400">M{Math.abs(line.mateIn)}</span>}
+                      {isPlayed && <span className="text-[10px] text-orange-400">played</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             <p className="mt-2 text-sm text-slate-400">
               {MOVE_CLASSIFICATION_EMOJI[judgement.classification]} {judgement.commentary}
             </p>
             {judgement.bestMoveSan && judgement.classification !== "best" && judgement.classification !== "book" && (
-              <p className="mt-1 text-xs text-emerald-400">Best: {judgement.bestMoveSan}</p>
+              <p className="mt-1 text-xs text-emerald-400">Best: {judgement.bestMoveSan} <span className="text-slate-500">(green arrow on board)</span></p>
             )}
             {/* LLM per-move commentary */}
             {llmCommentary[currentPly - 1] && (
