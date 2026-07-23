@@ -31,10 +31,42 @@ export function HeroSection({
 }) {
   const [mounted, setMounted] = useState(false);
 
+  // Auto-scroll the problem cards
+  useEffect(() => {
+    if (!mounted) return;
+    const scrollContainer = document.getElementById("problem-scroll");
+    if (!scrollContainer) return;
+    let interval = setInterval(() => {
+      if (scrollContainer.scrollLeft + scrollContainer.clientWidth >= scrollContainer.scrollWidth - 10) {
+        scrollContainer.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        scrollContainer.scrollBy({ left: 290, behavior: "smooth" });
+      }
+    }, 4000);
+    // Pause on hover
+    const onEnter = () => clearInterval(interval);
+    const onLeave = () => {
+      interval = setInterval(() => {
+        if (scrollContainer.scrollLeft + scrollContainer.clientWidth >= scrollContainer.scrollWidth - 10) {
+          scrollContainer.scrollTo({ left: 0, behavior: "smooth" });
+        } else {
+          scrollContainer.scrollBy({ left: 290, behavior: "smooth" });
+        }
+      }, 4000);
+    };
+    scrollContainer.addEventListener("mouseenter", onEnter);
+    scrollContainer.addEventListener("mouseleave", onLeave);
+    return () => {
+      clearInterval(interval);
+      scrollContainer.removeEventListener("mouseenter", onEnter);
+      scrollContainer.removeEventListener("mouseleave", onLeave);
+    };
+  }, [mounted]);
+
   useEffect(() => { setMounted(true); }, []);
 
   return (
-    <section className="relative overflow-hidden px-4 pb-24 pt-24 sm:px-6 sm:pt-32 lg:px-8">
+    <section className="relative overflow-hidden px-4 pb-16 pt-20 sm:px-6 sm:pt-28 lg:px-8">
       {/* Ambient background */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-1/4 top-0 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-orange-500/[0.03] blur-[150px]" />
@@ -87,15 +119,18 @@ export function HeroSection({
           <p className="mb-4 text-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
             Does any of this sound familiar?
           </p>
-          <div className="flex gap-4 overflow-x-auto pb-4 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/[0.08] [&::-webkit-scrollbar-track]:bg-transparent">
+          <div
+            id="problem-scroll"
+            className="flex gap-4 overflow-x-auto pb-4 scroll-smooth [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/[0.08] [&::-webkit-scrollbar-track]:bg-transparent"
+          >
             {PROBLEMS.map((problem, i) => (
               <div
                 key={i}
-                className="min-w-[260px] shrink-0 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 transition hover:border-white/[0.1] hover:bg-white/[0.04]"
+                className="group min-w-[260px] shrink-0 cursor-default rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-orange-500/20 hover:bg-orange-500/[0.04] hover:shadow-lg hover:shadow-orange-500/5"
               >
-                <span className="text-2xl">{problem.icon}</span>
-                <p className="mt-3 text-sm font-bold text-white">{problem.title}</p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-400">{problem.text}</p>
+                <span className="text-2xl transition-transform duration-300 group-hover:scale-110">{problem.icon}</span>
+                <p className="mt-3 text-sm font-bold text-white transition-colors group-hover:text-orange-100">{problem.title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-400 transition-colors group-hover:text-slate-300">{problem.text}</p>
               </div>
             ))}
           </div>
