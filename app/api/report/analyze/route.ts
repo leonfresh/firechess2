@@ -23,6 +23,9 @@ type ScanSummary = {
   topLeakOpenings: string[];
   playerUsername: string;
   scanMode: string;
+  endgameConversionRate: number | null;
+  endgameAvgCpLoss: number | null;
+  endgameWeakestType: string | null;
 };
 
 const SYSTEM_PROMPT = `You are a chess coach AI analyzing a player's scan results. Write with the tone of a friendly but direct coach — honest, encouraging, and specific.
@@ -121,6 +124,9 @@ export async function POST(req: NextRequest) {
       `RATING: ${summary.estimatedRating ?? "N/A"}`,
       `TOP MOTIF: ${summary.topMotif}`,
       `TOP OPENINGS WITH LEAKS: ${summary.topLeakOpenings.join(", ")}`,
+      `ENDGAME CONVERSION RATE: ${summary.endgameConversionRate ?? "N/A"} (this is a percentage 0-100, e.g. 77 means 77%)`,
+      `ENDGAME AVG CP LOSS: ${summary.endgameAvgCpLoss ?? "N/A"} (centipawns, divide by 100 to get pawns, e.g. 60 = 0.6 pawns)`,
+      `ENDGAME WEAKEST TYPE: ${summary.endgameWeakestType ?? "N/A"}`,
     ].join("\n");
 
     let raw = await callOpenRouter(userPrompt);

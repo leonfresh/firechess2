@@ -4429,16 +4429,14 @@ export async function analyzeOpeningLeaksInBrowser(
 
   // ── Compute Time Management Score (0-100) from clock data ──
   // Measures: consistency of move timing, avoiding time scrambles, not wasting time
-  if (doTimeOnly) {
-    emitProgress(options, {
-      phase: "time",
-      message: "⏱️ Analysing time management",
-      detail: `Scanning clock data from ${games.length} games...`,
-      current: 0,
+  emitProgress(options, {
+    phase: "time",
+    message: "⏱️ Analysing time management",
+    detail: `Scanning clock data from ${games.length} games...`,
+    current: 0,
       total: games.length,
       percent: 60,
     });
-  }
   const timeManagementScore = (() => {
     const allMoveTimesMs: number[] = [];
     let timeScrambleCount = 0;
@@ -4580,13 +4578,15 @@ export async function analyzeOpeningLeaksInBrowser(
       const game = games[gameIndex];
 
       if (
-        doTimeOnly &&
+        (doTimeOnly || gameIndex === 0) &&
         (gameIndex % 10 === 0 || gameIndex === games.length - 1)
       ) {
         emitProgress(options, {
           phase: "time",
           message: "⏱️ Analysing time management",
-          detail: `Game ${Math.min(gameIndex + 1, games.length)} of ${games.length}`,
+          detail: gamesWithClocks === 0
+            ? `Game ${Math.min(gameIndex + 1, games.length)} of ${games.length} (no clock data found yet)`
+            : `Game ${Math.min(gameIndex + 1, games.length)} of ${games.length}`,
           current: Math.min(gameIndex + 1, games.length),
           total: games.length,
           percent:

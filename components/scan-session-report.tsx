@@ -2794,6 +2794,11 @@ export function ScanSessionReport({
               description="How your win rate shifts depending on pawn structures, fianchetto patterns, castling types, and other positional features."
             />
             <ScanStructuralStats report={structuralReport} />
+
+            {/* Opposite-side castling — additional stat, not a replacement */}
+            {!isProcessing && result.games && result.games.length > 0 ? (
+              <OppositeCastlingCard games={result.games} />
+            ) : null}
           </section>
         ) : null}
 
@@ -2893,11 +2898,6 @@ export function ScanSessionReport({
 
             {analysis?.sectionNotes?.openings ? (
               <CoachStickyNote section="openings" note={analysis.sectionNotes.openings} />
-            ) : null}
-
-            {/* Opposite-side castling */}
-            {!isProcessing && result.games && result.games.length > 0 ? (
-              <OppositeCastlingCard games={result.games} />
             ) : null}
 
             {leaks.length > 0 ? (

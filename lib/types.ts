@@ -391,4 +391,14 @@ export type AnalyzeResponse = {
     whiteRating?: number;
     blackRating?: number;
   }>;
+  /** AI coach analysis summary, cached after first generation */
+  aiAnalysis?: {
+    badges: Array<{ label: string; tier: "positive" | "neutral" | "negative"; explanation: string }>;
+    verdict: string;
+    strengths: string[];
+    weaknesses: string[];
+    nextSteps: string[];
+    coachNote: string;
+    sectionNotes: Record<string, string>;
+  };
 };

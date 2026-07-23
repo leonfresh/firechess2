@@ -410,7 +410,7 @@ export function ScanPositionalMotifs({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-amber-500/12 bg-gradient-to-r from-amber-500/[0.05] to-transparent px-5 py-4">
+      <div className="rounded-2xl border border-transparent bg-gradient-to-r from-amber-500/[0.04] to-transparent px-5 py-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-400/70">
