@@ -99,6 +99,21 @@ function ImportTab({ label, fetchFn, onLoad }: { label: string; fetchFn: (u: str
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  // Restore saved username
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(`fc-review-username-${label.toLowerCase()}`);
+      if (saved) setUsername(saved);
+    } catch { /* ignore */ }
+  }, [label]);
+
+  // Save username on change
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(`fc-review-username-${label.toLowerCase()}`, username);
+    } catch { /* ignore */ }
+  }, [username, label]);
+
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
@@ -267,23 +282,18 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
 
       // Now fire LLM with all the data
       setLlmLoading(true);
-      // Client-side timeout: force loading off after 25s
-      const llmTimeout = setTimeout(() => { setLlmLoading(false); }, 25000);
-      const keyMoments = results
-        .filter((r) => r.classification === "blunder" || r.classification === "brilliant" || r.cpLoss > 100 || Math.abs(r.cpAfter - (r.ply > 0 ? results[r.ply - 1].cpAfter : 20)) > 150)
-        .slice(0, 20)
-        .map((r) => ({
-          moveNumber: Math.floor(r.ply / 2) + 1,
-          san: r.san,
-          color: r.ply % 2 === 0 ? "w" : "b",
-          classification: r.classification,
-          cpLoss: Math.round(r.cpLoss),
-          evalBefore: r.cpBefore,
-          evalAfter: r.cpAfter,
-          isCritical: true,
-        }));
-      const blunders = results.filter((r) => r.classification === "blunder").length;
-      const brilliants = results.filter((r) => r.classification === "brilliant").length;
+      const llmTimeout = setTimeout(() => { setLlmLoading(false); }, 30000);
+      const allMoves = results.map((r: any) => ({
+        ply: r.ply,
+        san: r.san,
+        color: r.ply % 2 === 0 ? "w" : "b",
+        classification: r.classification,
+        cpLoss: Math.round(r.cpLoss),
+        evalBefore: r.cpBefore,
+        evalAfter: r.cpAfter,
+      }));
+      const blunders = results.filter((r: any) => r.classification === "blunder").length;
+      const brilliants = results.filter((r: any) => r.classification === "brilliant").length;
       const avgLoss = results.reduce((s: number, r: any) => s + r.cpLoss, 0) / Math.max(1, results.length);
       const accuracy = Math.round(Math.max(0, Math.min(100, 100 - avgLoss / 5)));
 
@@ -295,7 +305,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
           black: meta?.black ?? "?",
           result: meta?.result ?? "*",
           totalMoves: parsedMoves.length,
-          keyMoments,
+          moves: allMoves,
           blunderCount: blunders,
           brilliantCount: brilliants,
           accuracy,

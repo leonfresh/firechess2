@@ -130,7 +130,8 @@ export function Navbar() {
     pathname === "/" ||
     isActive("/analyze") ||
     isActive("/analysis") ||
-    isActive("/my-openings");
+    isActive("/my-openings") ||
+    isActive("/review");
   const isTrainActive =
     isActive("/daily") ||
     isActive("/train") ||
@@ -238,6 +239,7 @@ export function Navbar() {
         { href: "/", label: "🔍 Analyze Games" },
         { href: "/analyze", label: "♟️ PGN Analyzer" },
         { href: "/analysis", label: "🧭 Analysis Board" },
+        { href: "/review", label: "📺 Game Review" },
         { href: "/my-openings", label: "🌲 My Opening Tree" },
       ],
     },
@@ -359,6 +361,12 @@ export function Navbar() {
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/analysis") ? "bg-cyan-500/[0.08] text-cyan-300" : "text-slate-400 hover:bg-cyan-500/[0.06] hover:text-cyan-300"}`}
                   >
                     🧭 Analysis Board
+                  </Link>
+                  <Link
+                    href="/review"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/review") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
+                  >
+                    📺 Game Review
                   </Link>
                   <Link
                     href="/my-openings"
