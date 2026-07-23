@@ -99,6 +99,14 @@ export function HeroSection({
                 <Search className="h-4 w-4" />
                 See sample reports
               </button>
+
+              <a
+                href="/review"
+                className="inline-flex h-14 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-8 text-base font-medium text-slate-300 backdrop-blur-sm transition-all duration-300 hover:border-white/20 hover:bg-white/[0.06] hover:text-white"
+              >
+                <Target className="h-4 w-4" />
+                Game Review
+              </a>
             </div>
 
             {/* Trust indicators */}
