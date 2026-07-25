@@ -1,7 +1,7 @@
 ---
 title: "Centipawn Loss (ACPL) Explained: What It Means & How to Improve"
 description: "What does centipawn loss mean in chess? Learn how ACPL works, see real board examples, and use FireChess badges to fix your biggest mistakes."
-date: "2026-07-23"
+date: "2026-07-25"
 author: "FireChess Team"
 tags: ["analysis", "fundamentals", "improvement", "centipawn-loss"]
 canonical: https://firechess.com/blog/what-is-centipawn-loss

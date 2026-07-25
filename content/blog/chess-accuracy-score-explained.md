@@ -1,7 +1,7 @@
 ---
 title: "Chess Accuracy Score Explained: What 90%+ Actually Means"
-description: "What is the chess accuracy score, how is it calculated, what does a 90%+ accuracy actually tell you about how well you played, and how does it differ from centipawn loss? A deep dive."
-date: "2026-06-04"
+description: "What does your chess accuracy score actually mean? How it's calculated, what 90%+ really tells you, and why accuracy differs from centipawn loss."
+date: "2026-07-25"
 author: "FireChess Team"
 tags: ["analysis", "fundamentals", "centipawn-loss"]
 ---
@@ -406,15 +406,19 @@ The accuracy number alone is a compass. The [centipawn loss breakdown](/blog/wha
 
 ## FAQ: Chess Accuracy Score
 
-### 1. Is chess accuracy the same as "percentage of best moves"?
+### Q: How do I find my accuracy score?
+
+Upload your games to [FireChess's scanner at /analyze](/analyze) — it shows your per-move accuracy, centipawn loss breakdown, and the badge distribution (how many Best, Good, Inaccuracy, Mistake, and Blunder moves you made). You can scan games from Lichess or Chess.com, or paste a PGN directly.
+
+### Q: Is chess accuracy the same as "percentage of best moves"?
 
 No. Accuracy % is not simply "number of best moves divided by total moves." Most platforms use a weighted formula that accounts for the severity of each mistake. A single 100-cp blunder drags your accuracy down much more than three 5-cp inaccuracies, even though the "best move percentage" would weigh them equally. Lichess uses a formula based on the sum of squared centipawn losses, while Chess.com applies a sigmoid-like curve to the average.
 
-### 2. Why does my accuracy sometimes increase after a blunder?
+### Q: Why does my accuracy sometimes increase after a blunder?
 
 It doesn't — the overall game accuracy always decreases after a blunder compared to where it would have been. But the *per-move* accuracy calculation can produce counterintuitive results if the blunder leads to a forced sequence where all remaining moves are obvious. For example, if you hang a queen and then all remaining moves are forced recaptures with 0 cp loss, the final accuracy might seem higher than expected — but it's still lower than it would have been without the blunder. The distortion comes from the forced nature of the subsequent play.
 
-### 3. What's a "good" accuracy for my rating level?
+### Q: What's a good accuracy for my rating level?
 
 See the chart at the top of this article for typical ranges, but broad guidelines:
 
@@ -429,11 +433,11 @@ See the chart at the top of this article for typical ranges, but broad guideline
 
 Remember: these vary significantly by time control and opening complexity.
 
-### 4. Can accuracy be negative? Can it go above 100%?
+### Q: Can accuracy be negative or go above 100%?
 
 Some platforms (like Chess.com) clamp accuracy to 0–100. Others (like Lichess) allow it to go slightly above 100% in theory if every move was better than the engine's top suggestion (which happens in rare cases where the engine changes its mind across iterations). In practice, values above 100% are essentially never shown. Ceiling values like 99.9% appear in very short, forced games. On the low end, a game with multiple queen-sized blunders can approach 0%, though most platforms display nothing below 1–5%.
 
-### 5. How is accuracy different from centipawn loss?
+### Q: How is accuracy different from centipawn loss?
 
 This is the most common question, and the answer is **accuracy % is a compressed, non-linear transformation of centipawn loss**:
 
