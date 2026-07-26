@@ -82,6 +82,22 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <LondonSystemArt />;
     case "queens-gambit-guide":
       return <QueensGambitArt />;
+    case "average-centipawn-loss-guide":
+      return <AverageCentipawnLossGuideArt />;
+    case "best-chess-variants-online-2026":
+      return <BestChessVariantsArt />;
+    case "chess-mistakes-by-rating":
+      return <MistakesByRatingArt />;
+    case "chess-opening-principles":
+      return <OpeningPrinciplesArt />;
+    case "chess-opening-traps":
+      return <OpeningTrapsArt />;
+    case "firechess-vs-aimchess-comparison-2026":
+      return <FirechessVsAimchessArt />;
+    case "how-to-review-chess-games":
+      return <ReviewGamesArt />;
+    case "my-opening-tree-chess-repertoire":
+      return <OpeningTreeArt />;
     default:
       return <DefaultArt />;
   }
@@ -2320,6 +2336,533 @@ function QueensGambitArt() {
       {[[70,30],[330,45],[360,140],[40,160],[300,30]].map(([x,y],i) => (
         <circle key={`sp${i}`} cx={x} cy={y} r={1.2} fill="#fbbf24" fillOpacity={0.2 + i*0.06}>
           <animate attributeName="opacity" values={`0.3;0.05;0.3`} dur={`${2+i*0.7}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Average Centipawn Loss Guide  gauge + accuracy rings              */
+/* ================================================================== */
+function AverageCentipawnLossGuideArt() {
+  return (
+    <svg viewBox="0 0 400 220" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="aclg-bg" x1="0" y1="0" x2="400" y2="220" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0c1220" /><stop offset="1" stopColor="#14102a" />
+        </linearGradient>
+        <linearGradient id="aclg-gauge" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#22c55e" /><stop offset="0.5" stopColor="#fbbf24" /><stop offset="1" stopColor="#ef4444" />
+        </linearGradient>
+        <radialGradient id="aclg-glow" cx="200" cy="110" r="120" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#f59e0b" stopOpacity="0.22" /><stop offset="1" stopColor="#f59e0b" stopOpacity="0" />
+        </radialGradient>
+        <filter id="aclg-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="220" fill="url(#aclg-bg)" />
+      <rect width="400" height="220" fill="url(#aclg-glow)" />
+      {/* Circular gauge arc */}
+      <path d="M 80 160 A 90 90 0 0 1 320 160" fill="none" stroke="url(#aclg-gauge)" strokeWidth="14" strokeLinecap="round" strokeOpacity="0.85" />
+      <path d="M 80 160 A 90 90 0 0 1 320 160" fill="none" stroke="#475569" strokeWidth="14" strokeLinecap="round" strokeOpacity="0.2" strokeDasharray="2 6" />
+      {/* Needle pointing to "average" zone */}
+      <line x1="200" y1="160" x2="255" y2="105" stroke="#fbbf24" strokeWidth="3" strokeLinecap="round" filter="url(#aclg-f)" />
+      <circle cx="200" cy="160" r="8" fill="#fbbf24" fillOpacity="0.9" />
+      {/* Tick labels */}
+      <text x="75" y="180" textAnchor="middle" fill="#22c55e" fillOpacity="0.6" fontSize="11" fontWeight="600">0</text>
+      <text x="200" y="55" textAnchor="middle" fill="#fbbf24" fillOpacity="0.6" fontSize="11" fontWeight="600">50</text>
+      <text x="325" y="180" textAnchor="middle" fill="#ef4444" fillOpacity="0.6" fontSize="11" fontWeight="600">100+</text>
+      {/* Center value */}
+      <text x="200" y="145" textAnchor="middle" fill="#f1f5f9" fontSize="28" fontWeight="700" fillOpacity="0.9">42</text>
+      <text x="200" y="165" textAnchor="middle" fill="#64748b" fontSize="10" fontWeight="500">ACPL</text>
+      {/* Floating accuracy rings */}
+      <circle cx="120" cy="70" r="18" fill="none" stroke="#22c55e" strokeWidth="2" strokeOpacity="0.4" strokeDasharray="4 3">
+        <animate attributeName="strokeDashoffset" from="14" to="0" dur="3s" repeatCount="indefinite" />
+      </circle>
+      <circle cx="290" cy="60" r="14" fill="none" stroke="#ef4444" strokeWidth="2" strokeOpacity="0.35" strokeDasharray="3 4">
+        <animate attributeName="strokeDashoffset" from="14" to="0" dur="2.5s" repeatCount="indefinite" />
+      </circle>
+      {/* Small pawn silhouette */}
+      <g transform="translate(340,120) scale(0.6)">
+        <circle cx="0" cy="-14" r="8" fill="#94a3b8" fillOpacity="0.4" />
+        <path d="M-5,-7 L-8,12 Q0,16 8,12 L5,-7 Z" fill="#94a3b8" fillOpacity="0.4" />
+        <ellipse cx="0" cy="14" rx="10" ry="3.5" fill="#94a3b8" fillOpacity="0.35" />
+      </g>
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Best Chess Variants  4 variant cards fanned out                   */
+/* ================================================================== */
+function BestChessVariantsArt() {
+  return (
+    <svg viewBox="0 0 400 240" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bcv-bg" x1="0" y1="0" x2="400" y2="240" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0c1220" /><stop offset="1" stopColor="#0f172a" />
+        </linearGradient>
+        <radialGradient id="bcv-glow" cx="200" cy="100" r="140" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#8b5cf6" stopOpacity="0.18" /><stop offset="1" stopColor="#8b5cf6" stopOpacity="0" />
+        </radialGradient>
+        <filter id="bcv-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="240" fill="url(#bcv-bg)" />
+      <rect width="400" height="240" fill="url(#bcv-glow)" />
+      {/* Card 1 - Chess960 (left, rotated) */}
+      <g transform="translate(90,100) rotate(-12)">
+        <rect x="-45" y="-65" width="90" height="130" rx="8" fill="#1e293b" stroke="#8b5cf6" strokeWidth="1.5" strokeOpacity="0.5" />
+        <text x="0" y="-45" textAnchor="middle" fill="#a78bfa" fontSize="10" fontWeight="700" fillOpacity="0.8">960</text>
+        {[0,1,2,3,4,5,6,7].map(i => (
+          <rect key={`f1${i}`} x={-35+i*9} y="-30" width="8" height="8" fill={i%2===0?"#334155":"#1e293b"} stroke="#475569" strokeWidth="0.3" />
+        ))}
+        {[0,1,2,3,4,5,6,7].map(i => (
+          <rect key={`f2${i}`} x={-35+i*9} y="-20" width="8" height="8" fill={i%2===1?"#334155":"#1e293b"} stroke="#475569" strokeWidth="0.3" />
+        ))}
+        <circle cx="-28" cy="-26" r="3" fill="#a78bfa" fillOpacity="0.6" />
+        <rect x="-19" y="-29" width="5" height="6" rx="1" fill="#a78bfa" fillOpacity="0.6" />
+        <circle cx="-5" cy="-26" r="3" fill="#a78bfa" fillOpacity="0.6" />
+        <rect x="5" y="-29" width="5" height="6" rx="1" fill="#a78bfa" fillOpacity="0.6" />
+        <circle cx="16" cy="-26" r="3" fill="#a78bfa" fillOpacity="0.6" />
+        <rect x="25" y="-29" width="5" height="6" rx="1" fill="#a78bfa" fillOpacity="0.6" />
+      </g>
+      {/* Card 2 - Crazyhouse (center-left, slightly rotated) */}
+      <g transform="translate(160,95) rotate(-4)">
+        <rect x="-45" y="-65" width="90" height="130" rx="8" fill="#1e293b" stroke="#f59e0b" strokeWidth="1.5" strokeOpacity="0.5" />
+        <text x="0" y="-45" textAnchor="middle" fill="#fbbf24" fontSize="10" fontWeight="700" fillOpacity="0.8">CRAZY</text>
+        <circle cx="-20" cy="-25" r="5" fill="#f59e0b" fillOpacity="0.5" />
+        <circle cx="0" cy="-25" r="5" fill="#f59e0b" fillOpacity="0.5" />
+        <circle cx="20" cy="-25" r="5" fill="#f59e0b" fillOpacity="0.5" />
+        <line x1="-20" y1="-18" x2="-20" y2="-5" stroke="#f59e0b" strokeWidth="1.5" strokeOpacity="0.6" />
+        <polygon points="-20,-5 -23,-10 -17,-10" fill="#f59e0b" fillOpacity="0.6" />
+        <line x1="20" y1="-18" x2="20" y2="-5" stroke="#f59e0b" strokeWidth="1.5" strokeOpacity="0.6" />
+        <polygon points="20,-5 17,-10 23,-10" fill="#f59e0b" fillOpacity="0.6" />
+      </g>
+      {/* Card 3 - King of the Hill (center-right) */}
+      <g transform="translate(240,95) rotate(4)">
+        <rect x="-45" y="-65" width="90" height="130" rx="8" fill="#1e293b" stroke="#22c55e" strokeWidth="1.5" strokeOpacity="0.5" />
+        <text x="0" y="-45" textAnchor="middle" fill="#4ade80" fontSize="10" fontWeight="700" fillOpacity="0.8">KOTH</text>
+        <path d="M-25,15 L0,-20 L25,15 Z" fill="#22c55e" fillOpacity="0.25" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.4" />
+        <g transform="translate(0,-20) scale(0.5)">
+          <rect x="-2" y="-14" width="4" height="6" fill="#4ade80" fillOpacity="0.7" />
+          <rect x="-5" y="-12" width="10" height="3" fill="#4ade80" fillOpacity="0.7" />
+          <circle cx="0" cy="-5" r="5" fill="#4ade80" fillOpacity="0.7" />
+          <path d="M-4,0 L-7,10 Q0,13 7,10 L4,0 Z" fill="#4ade80" fillOpacity="0.7" />
+        </g>
+      </g>
+      {/* Card 4 - Atomic (right, rotated) */}
+      <g transform="translate(310,100) rotate(12)">
+        <rect x="-45" y="-65" width="90" height="130" rx="8" fill="#1e293b" stroke="#ef4444" strokeWidth="1.5" strokeOpacity="0.5" />
+        <text x="0" y="-45" textAnchor="middle" fill="#f87171" fontSize="10" fontWeight="700" fillOpacity="0.8">ATOMIC</text>
+        <g transform="translate(0,-15)">
+          {[0,45,90,135,180,225,270,315].map((deg,i) => {
+            const rad = (deg * Math.PI) / 180;
+            const x1 = Math.cos(rad) * 8;
+            const y1 = Math.sin(rad) * 8;
+            const x2 = Math.cos(rad) * 16;
+            const y2 = Math.sin(rad) * 16;
+            return <line key={`ex${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#ef4444" strokeWidth="2" strokeOpacity="0.6" strokeLinecap="round" />;
+          })}
+          <circle cx="0" cy="0" r="6" fill="#ef4444" fillOpacity="0.5" />
+        </g>
+      </g>
+      {/* Sparkles */}
+      {[[50,40],[350,50],[200,30],[120,200],[280,210]].map(([x,y],i) => (
+        <circle key={`sp${i}`} cx={x} cy={y} r={1.5} fill="#a78bfa" fillOpacity={0.25+i*0.05}>
+          <animate attributeName="opacity" values={`0.3;0.05;0.3`} dur={`${2+i*0.6}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Mistakes by Rating  pyramid with piece tiers                      */
+/* ================================================================== */
+function MistakesByRatingArt() {
+  return (
+    <svg viewBox="0 0 400 240" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="mbr-bg" x1="0" y1="0" x2="400" y2="240" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0c1220" /><stop offset="1" stopColor="#14102a" />
+        </linearGradient>
+        <linearGradient id="mbr-pyr" x1="0.5" y1="0" x2="0.5" y2="1">
+          <stop offset="0" stopColor="#ef4444" stopOpacity="0.7" /><stop offset="0.5" stopColor="#f59e0b" stopOpacity="0.6" /><stop offset="1" stopColor="#22c55e" stopOpacity="0.5" />
+        </linearGradient>
+        <radialGradient id="mbr-glow" cx="200" cy="120" r="130" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#f59e0b" stopOpacity="0.15" /><stop offset="1" stopColor="#f59e0b" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="400" height="240" fill="url(#mbr-bg)" />
+      <rect width="400" height="240" fill="url(#mbr-glow)" />
+      {/* Pyramid tiers */}
+      <path d="M200,40 L280,200 L120,200 Z" fill="url(#mbr-pyr)" stroke="#475569" strokeWidth="1" strokeOpacity="0.4" />
+      {/* Tier dividers */}
+      <line x1="170" y1="120" x2="230" y2="120" stroke="#475569" strokeWidth="0.8" strokeOpacity="0.5" />
+      <line x1="150" y1="160" x2="250" y2="160" stroke="#475569" strokeWidth="0.8" strokeOpacity="0.5" />
+      {/* Tier labels */}
+      <text x="200" y="110" textAnchor="middle" fill="#f87171" fontSize="11" fontWeight="700" fillOpacity="0.85">BLUNDERS</text>
+      <text x="200" y="150" textAnchor="middle" fill="#fbbf24" fontSize="10" fontWeight="600" fillOpacity="0.75">MISTAKES</text>
+      <text x="200" y="190" textAnchor="middle" fill="#4ade80" fontSize="9" fontWeight="500" fillOpacity="0.65">INACCURACIES</text>
+      {/* Rating labels on left */}
+      <text x="70" y="80" textAnchor="middle" fill="#64748b" fontSize="9" fillOpacity="0.6">1200</text>
+      <text x="70" y="140" textAnchor="middle" fill="#64748b" fontSize="9" fillOpacity="0.6">1600</text>
+      <text x="70" y="200" textAnchor="middle" fill="#64748b" fontSize="9" fillOpacity="0.6">2000+</text>
+      {/* Blunder icon at top */}
+      <g transform="translate(200,60) scale(0.7)">
+        <circle cx="0" cy="0" r="8" fill="#ef4444" fillOpacity="0.7" />
+        <text x="0" y="4" textAnchor="middle" fill="white" fontSize="12" fontWeight="700">??</text>
+      </g>
+      {/* Mistake icon middle */}
+      <g transform="translate(200,140) scale(0.6)">
+        <circle cx="0" cy="0" r="8" fill="#f59e0b" fillOpacity="0.6" />
+        <text x="0" y="4" textAnchor="middle" fill="white" fontSize="12" fontWeight="700">?</text>
+      </g>
+      {/* Inaccuracy icon bottom */}
+      <g transform="translate(200,180) scale(0.5)">
+        <circle cx="0" cy="0" r="8" fill="#22c55e" fillOpacity="0.5" />
+        <text x="0" y="4" textAnchor="middle" fill="white" fontSize="12" fontWeight="700">?!</text>
+      </g>
+      {/* Falling pieces from top (blunders) */}
+      <g transform="translate(150,70) rotate(30)">
+        <circle cx="0" cy="0" r="4" fill="#94a3b8" fillOpacity="0.4" />
+        <path d="M-3,3 L-5,14 Q0,17 5,14 L3,3 Z" fill="#94a3b8" fillOpacity="0.4" />
+      </g>
+      <g transform="translate(260,90) rotate(-45)">
+        <path d="M-4,5 L-6,-10 Q-7,-18 -2,-22 L0,-24 Q2,-21 4,-18 L6,-12 Q8,-8 6,-4 L6,2 Q3,5 -2,5 Z" fill="#94a3b8" fillOpacity="0.35" />
+      </g>
+      {/* Rising graph line */}
+      <path d="M60,210 Q120,180 200,150 Q280,120 340,80" fill="none" stroke="#22c55e" strokeWidth="2" strokeOpacity="0.4" strokeDasharray="6 4">
+        <animate attributeName="strokeDashoffset" from="20" to="0" dur="2s" repeatCount="indefinite" />
+      </path>
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Opening Principles  compass + board with arrows                   */
+/* ================================================================== */
+function OpeningPrinciplesArt() {
+  return (
+    <svg viewBox="0 0 400 220" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="op-bg" x1="0" y1="0" x2="400" y2="220" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0c1220" /><stop offset="1" stopColor="#0f172a" />
+        </linearGradient>
+        <radialGradient id="op-glow" cx="200" cy="110" r="120" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#06b6d4" stopOpacity="0.2" /><stop offset="1" stopColor="#06b6d4" stopOpacity="0" />
+        </radialGradient>
+        <filter id="op-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="220" fill="url(#op-bg)" />
+      <rect width="400" height="220" fill="url(#op-glow)" />
+      {/* Mini chess board */}
+      {[0,1,2,3,4,5,6,7].map(r =>
+        [0,1,2,3,4,5,6,7].map(c => (
+          <rect key={`b${r}${c}`} x={120+c*20} y={40+r*18} width="20" height="18" fill={(r+c)%2===0?"#334155":"#1e293b"} stroke="#475569" strokeWidth="0.3" />
+        ))
+      )}
+      {/* Center squares highlighted */}
+      <rect x="180" y="76" width="20" height="18" fill="#06b6d4" fillOpacity="0.3" />
+      <rect x="200" y="76" width="20" height="18" fill="#06b6d4" fillOpacity="0.3" />
+      <rect x="180" y="94" width="20" height="18" fill="#06b6d4" fillOpacity="0.3" />
+      <rect x="200" y="94" width="20" height="18" fill="#06b6d4" fillOpacity="0.3" />
+      {/* Development arrows */}
+      <line x1="140" y1="170" x2="180" y2="100" stroke="#22c55e" strokeWidth="2" strokeOpacity="0.7" strokeDasharray="4 3">
+        <animate attributeName="strokeDashoffset" from="14" to="0" dur="1.5s" repeatCount="indefinite" />
+      </line>
+      <polygon points="180,100 175,108 183,106" fill="#22c55e" fillOpacity="0.7" />
+      <line x1="260" y1="170" x2="220" y2="100" stroke="#22c55e" strokeWidth="2" strokeOpacity="0.7" strokeDasharray="4 3">
+        <animate attributeName="strokeDashoffset" from="14" to="0" dur="1.5s" repeatCount="indefinite" />
+      </line>
+      <polygon points="220,100 217,108 225,106" fill="#22c55e" fillOpacity="0.7" />
+      {/* Pawn advances */}
+      <line x1="200" y1="160" x2="200" y2="115" stroke="#fbbf24" strokeWidth="2" strokeOpacity="0.6" strokeDasharray="3 3" />
+      <polygon points="200,115 196,122 204,122" fill="#fbbf24" fillOpacity="0.6" />
+      {/* Knight jump */}
+      <path d="M150,165 Q160,140 175,110" fill="none" stroke="#06b6d4" strokeWidth="2" strokeOpacity="0.6" strokeDasharray="4 3" />
+      <polygon points="175,110 170,118 178,116" fill="#06b6d4" fillOpacity="0.6" />
+      {/* Compass rose at top */}
+      <g transform="translate(200,28)" filter="url(#op-f)">
+        <circle cx="0" cy="0" r="16" fill="none" stroke="#67e8f9" strokeWidth="1.5" strokeOpacity="0.7" />
+        <line x1="0" y1="-14" x2="0" y2="14" stroke="#67e8f9" strokeWidth="1" strokeOpacity="0.6" />
+        <line x1="-14" y1="0" x2="14" y2="0" stroke="#67e8f9" strokeWidth="1" strokeOpacity="0.6" />
+        <polygon points="0,-14 3,-6 0,-8 -3,-6" fill="#67e8f9" fillOpacity="0.8" />
+      </g>
+      {/* Principle labels */}
+      <text x="80" y="190" textAnchor="middle" fill="#64748b" fontSize="8" fillOpacity="0.6">CENTER</text>
+      <text x="200" y="200" textAnchor="middle" fill="#64748b" fontSize="8" fillOpacity="0.6">DEVELOP</text>
+      <text x="320" y="190" textAnchor="middle" fill="#64748b" fontSize="8" fillOpacity="0.6">CASTLE</text>
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Opening Traps  bear trap + chess pieces                           */
+/* ================================================================== */
+function OpeningTrapsArt() {
+  return (
+    <svg viewBox="0 0 400 220" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ot-bg" x1="0" y1="0" x2="400" y2="220" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0c1220" /><stop offset="1" stopColor="#1c1008" />
+        </linearGradient>
+        <radialGradient id="ot-glow" cx="200" cy="100" r="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#ef4444" stopOpacity="0.2" /><stop offset="1" stopColor="#ef4444" stopOpacity="0" />
+        </radialGradient>
+        <filter id="ot-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="220" fill="url(#ot-bg)" />
+      <rect width="400" height="220" fill="url(#ot-glow)" />
+      {/* Ground */}
+      <rect x="0" y="150" width="400" height="70" fill="#1e293b" fillOpacity="0.5" />
+      <line x1="0" y1="150" x2="400" y2="150" stroke="#475569" strokeWidth="0.8" strokeOpacity="0.5" />
+      {/* Trap jaws - open */}
+      <g transform="translate(200,145)">
+        {/* Left jaw */}
+        <path d="M-60,0 L-50,-35 L-20,-15 L0,-40 L20,-15 L50,-35 L60,0" fill="none" stroke="#94a3b8" strokeWidth="3" strokeOpacity="0.7" strokeLinecap="round" strokeLinejoin="round" />
+        {/* Right jaw (mirrored, slightly offset for open effect) */}
+        <path d="M-60,5 L-50,40 L-20,20 L0,45 L20,20 L50,40 L60,5" fill="none" stroke="#94a3b8" strokeWidth="3" strokeOpacity="0.5" strokeLinecap="round" strokeLinejoin="round" />
+        {/* Trap base */}
+        <ellipse cx="0" cy="5" rx="55" ry="12" fill="none" stroke="#64748b" strokeWidth="2" strokeOpacity="0.4" />
+        {/* Bait - pawn on a string */}
+        <g transform="translate(0,-55)">
+          <line x1="0" y1="0" x2="0" y2="20" stroke="#64748b" strokeWidth="1" strokeOpacity="0.5" strokeDasharray="3 2" />
+          <g transform="translate(0,25) scale(0.8)">
+            <circle cx="0" cy="-10" r="7" fill="#fbbf24" fillOpacity="0.8" />
+            <path d="M-5,-4 L-8,14 Q0,18 8,14 L5,-4 Z" fill="#fbbf24" fillOpacity="0.7" />
+            <ellipse cx="0" cy="16" rx="10" ry="3.5" fill="#fbbf24" fillOpacity="0.6" />
+          </g>
+        </g>
+      </g>
+      {/* Warning signs */}
+      <g transform="translate(80,80)">
+        <path d="M0,-20 L18,15 L-18,15 Z" fill="none" stroke="#ef4444" strokeWidth="2" strokeOpacity="0.7" />
+        <line x1="0" y1="-8" x2="0" y2="5" stroke="#ef4444" strokeWidth="2.5" strokeOpacity="0.8" strokeLinecap="round" />
+        <circle cx="0" cy="10" r="1.5" fill="#ef4444" fillOpacity="0.8" />
+      </g>
+      <g transform="translate(320,85) scale(0.8)">
+        <path d="M0,-20 L18,15 L-18,15 Z" fill="none" stroke="#ef4444" strokeWidth="2" strokeOpacity="0.6" />
+        <line x1="0" y1="-8" x2="0" y2="5" stroke="#ef4444" strokeWidth="2.5" strokeOpacity="0.7" strokeLinecap="round" />
+        <circle cx="0" cy="10" r="1.5" fill="#ef4444" fillOpacity="0.7" />
+      </g>
+      {/* Unsuspecting knight approaching */}
+      <g transform="translate(120,120) scale(0.6)">
+        <path d="M-5,6 L-7,-12 Q-8,-22 -2,-26 L0,-28 Q3,-25 5,-22 L7,-16 Q9,-12 7,-8 L7,0 Q4,3 -3,3 Z" fill="#cbd5e1" fillOpacity="0.6" />
+        <circle cx="-1" cy="-20" r="1.5" fill="#0c1220" fillOpacity="0.7" />
+        <ellipse cx="0" cy="6" rx="8" ry="3" fill="#cbd5e1" fillOpacity="0.5" />
+      </g>
+      {/* Motion lines */}
+      <line x1="140" y1="115" x2="160" y2="110" stroke="#64748b" strokeWidth="1" strokeOpacity="0.4" />
+      <line x1="140" y1="125" x2="160" y2="120" stroke="#64748b" strokeWidth="1" strokeOpacity="0.3" />
+      {/* Snap lines (jaw closing animation hint) */}
+      <line x1="170" y1="140" x2="230" y2="140" stroke="#ef4444" strokeWidth="1.5" strokeOpacity="0.4" strokeDasharray="4 3">
+        <animate attributeName="strokeDashoffset" from="14" to="0" dur="0.8s" repeatCount="indefinite" />
+      </line>
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  FireChess vs AimChess  VS scene with two platforms                */
+/* ================================================================== */
+function FirechessVsAimchessArt() {
+  return (
+    <svg viewBox="0 0 400 220" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="fva-bg" x1="0" y1="0" x2="400" y2="220" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0c1220" /><stop offset="1" stopColor="#14102a" />
+        </linearGradient>
+        <linearGradient id="fva-left" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#f97316" stopOpacity="0.3" /><stop offset="1" stopColor="#f97316" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="fva-right" x1="1" y1="0" x2="0" y2="0">
+          <stop offset="0" stopColor="#3b82f6" stopOpacity="0.3" /><stop offset="1" stopColor="#3b82f6" stopOpacity="0" />
+        </linearGradient>
+        <filter id="fva-f"><feGaussianBlur stdDeviation="4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="220" fill="url(#fva-bg)" />
+      <rect width="200" height="220" fill="url(#fva-left)" />
+      <rect x="200" width="200" height="220" fill="url(#fva-right)" />
+      {/* VS circle in center */}
+      <circle cx="200" cy="110" r="28" fill="#0c1220" stroke="#f59e0b" strokeWidth="2.5" strokeOpacity="0.8" filter="url(#fva-f)" />
+      <text x="200" y="118" textAnchor="middle" fill="#f59e0b" fontSize="18" fontWeight="800" fillOpacity="0.9">VS</text>
+      {/* Left side - FireChess */}
+      <g transform="translate(100,110)">
+        {/* Flame/knight hybrid */}
+        <path d="M-20,30 Q-25,10 -15,-5 Q-20,-20 -10,-30 Q-5,-35 0,-32 Q5,-35 10,-30 Q20,-20 15,-5 Q25,10 20,30 Q0,40 -20,30 Z" fill="#f97316" fillOpacity="0.5" />
+        <path d="M-8,-15 Q-5,-25 0,-28 Q5,-25 8,-15" fill="none" stroke="#fbbf24" strokeWidth="2" strokeOpacity="0.7" strokeLinecap="round" />
+        {/* Knight head silhouette */}
+        <g transform="translate(0,-5) scale(0.9)">
+          <path d="M-6,8 L-8,-10 Q-9,-20 -2,-24 L0,-26 Q3,-23 6,-20 L8,-14 Q10,-10 8,-6 L8,2 Q4,6 -4,6 Z" fill="#fbbf24" fillOpacity="0.6" />
+          <circle cx="-1" cy="-18" r="2" fill="#0c1220" fillOpacity="0.8" />
+        </g>
+        <text x="0" y="55" textAnchor="middle" fill="#f97316" fontSize="11" fontWeight="700" fillOpacity="0.8">FIRECHESS</text>
+        {/* Feature dots */}
+        <circle cx="-30" cy="45" r="2" fill="#f97316" fillOpacity="0.5" />
+        <circle cx="-15" cy="50" r="2" fill="#f97316" fillOpacity="0.5" />
+        <circle cx="0" cy="52" r="2" fill="#f97316" fillOpacity="0.5" />
+        <circle cx="15" cy="50" r="2" fill="#f97316" fillOpacity="0.5" />
+        <circle cx="30" cy="45" r="2" fill="#f97316" fillOpacity="0.5" />
+      </g>
+      {/* Right side - AimChess */}
+      <g transform="translate(300,110)">
+        {/* Target/crosshair */}
+        <circle cx="0" cy="-10" r="22" fill="none" stroke="#3b82f6" strokeWidth="2" strokeOpacity="0.6" />
+        <circle cx="0" cy="-10" r="14" fill="none" stroke="#3b82f6" strokeWidth="1.5" strokeOpacity="0.5" />
+        <circle cx="0" cy="-10" r="6" fill="none" stroke="#3b82f6" strokeWidth="1.5" strokeOpacity="0.4" />
+        <line x1="0" y1="-32" x2="0" y2="12" stroke="#3b82f6" strokeWidth="1" strokeOpacity="0.4" />
+        <line x1="-22" y1="-10" x2="22" y2="-10" stroke="#3b82f6" strokeWidth="1" strokeOpacity="0.4" />
+        <circle cx="0" cy="-10" r="3" fill="#3b82f6" fillOpacity="0.5" />
+        <text x="0" y="55" textAnchor="middle" fill="#3b82f6" fontSize="11" fontWeight="700" fillOpacity="0.8">AIMCHESS</text>
+        {/* Feature dots */}
+        <circle cx="-30" cy="45" r="2" fill="#3b82f6" fillOpacity="0.5" />
+        <circle cx="-15" cy="50" r="2" fill="#3b82f6" fillOpacity="0.5" />
+        <circle cx="0" cy="52" r="2" fill="#3b82f6" fillOpacity="0.5" />
+        <circle cx="15" cy="50" r="2" fill="#3b82f6" fillOpacity="0.5" />
+        <circle cx="30" cy="45" r="2" fill="#3b82f6" fillOpacity="0.5" />
+      </g>
+      {/* Comparison bars at bottom */}
+      <rect x="60" y="180" width="80" height="6" rx="3" fill="#f97316" fillOpacity="0.6" />
+      <rect x="60" y="192" width="65" height="6" rx="3" fill="#f97316" fillOpacity="0.4" />
+      <rect x="260" y="180" width="60" height="6" rx="3" fill="#3b82f6" fillOpacity="0.5" />
+      <rect x="260" y="192" width="75" height="6" rx="3" fill="#3b82f6" fillOpacity="0.35" />
+      {/* Lightning bolts between */}
+      <path d="M175,95 L170,105 L178,102 L172,115" fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeOpacity="0.5" />
+      <path d="M225,95 L220,105 L228,102 L222,115" fill="none" stroke="#3b82f6" strokeWidth="1.5" strokeOpacity="0.5" />
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  How to Review Games  magnifier + replay arrows                    */
+/* ================================================================== */
+function ReviewGamesArt() {
+  return (
+    <svg viewBox="0 0 400 220" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="hrg-bg" x1="0" y1="0" x2="400" y2="220" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0c1220" /><stop offset="1" stopColor="#0f172a" />
+        </linearGradient>
+        <radialGradient id="hrg-glow" cx="200" cy="100" r="120" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#8b5cf6" stopOpacity="0.2" /><stop offset="1" stopColor="#8b5cf6" stopOpacity="0" />
+        </radialGradient>
+        <filter id="hrg-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="220" fill="url(#hrg-bg)" />
+      <rect width="400" height="220" fill="url(#hrg-glow)" />
+      {/* Game notation sheet */}
+      <rect x="80" y="40" width="120" height="140" rx="4" fill="#1e293b" stroke="#475569" strokeWidth="1" strokeOpacity="0.5" />
+      {/* Notation lines */}
+      {[0,1,2,3,4,5,6,7,8,9].map(i => (
+        <line key={`nl${i}`} x1="90" y1={58+i*13} x2="180" y2={58+i*13} stroke="#475569" strokeWidth="0.5" strokeOpacity="0.4" />
+      ))}
+      {/* Highlighted move */}
+      <rect x="88" y="100" width="100" height="12" rx="2" fill="#8b5cf6" fillOpacity="0.25" />
+      <text x="95" y="110" fill="#a78bfa" fontSize="8" fontFamily="monospace" fillOpacity="0.8">12. Nf3?</text>
+      {/* Rewind/replay arrows */}
+      <g transform="translate(280,80)" filter="url(#hrg-f)">
+        <path d="M0,0 A20,20 0 1,1 -15,15" fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeOpacity="0.7" strokeLinecap="round" />
+        <polygon points="-15,15 -20,8 -12,5" fill="#8b5cf6" fillOpacity="0.7" />
+      </g>
+      <g transform="translate(280,140)">
+        <path d="M0,0 A20,20 0 1,0 15,-15" fill="none" stroke="#06b6d4" strokeWidth="2.5" strokeOpacity="0.6" strokeLinecap="round" />
+        <polygon points="15,-15 20,-8 12,-5" fill="#06b6d4" fillOpacity="0.6" />
+      </g>
+      {/* Magnifying glass over notation */}
+      <circle cx="140" cy="106" r="25" fill="none" stroke="#a78bfa" strokeWidth="2.5" strokeOpacity="0.7" filter="url(#hrg-f)" />
+      <circle cx="140" cy="106" r="25" fill="#8b5cf6" fillOpacity="0.08" />
+      <line x1="158" y1="124" x2="180" y2="146" stroke="#a78bfa" strokeWidth="5" strokeOpacity="0.6" strokeLinecap="round" />
+      {/* Thought bubble with question mark */}
+      <g transform="translate(320,50)">
+        <ellipse cx="0" cy="0" rx="18" ry="14" fill="#1e293b" stroke="#64748b" strokeWidth="1" strokeOpacity="0.5" />
+        <ellipse cx="-12" cy="16" rx="6" ry="5" fill="#1e293b" stroke="#64748b" strokeWidth="0.8" strokeOpacity="0.4" />
+        <ellipse cx="-20" cy="26" rx="4" ry="3" fill="#1e293b" stroke="#64748b" strokeWidth="0.6" strokeOpacity="0.3" />
+        <text x="0" y="5" textAnchor="middle" fill="#a78bfa" fontSize="16" fontWeight="700" fillOpacity="0.8">?</text>
+      </g>
+      {/* Correction arrow */}
+      <line x1="240" y1="170" x2="280" y2="150" stroke="#22c55e" strokeWidth="2" strokeOpacity="0.6" strokeDasharray="5 3">
+        <animate attributeName="strokeDashoffset" from="16" to="0" dur="1.2s" repeatCount="indefinite" />
+      </line>
+      <polygon points="280,150 272,152 276,146" fill="#22c55e" fillOpacity="0.6" />
+      <text x="295" y="145" fill="#4ade80" fontSize="8" fillOpacity="0.7">Better!</text>
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Opening Tree  branching repertoire tree                           */
+/* ================================================================== */
+function OpeningTreeArt() {
+  return (
+    <svg viewBox="0 0 400 240" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ot2-bg" x1="0" y1="0" x2="400" y2="240" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0c1220" /><stop offset="1" stopColor="#0f172a" />
+        </linearGradient>
+        <radialGradient id="ot2-glow" cx="200" cy="120" r="130" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#22c55e" stopOpacity="0.15" /><stop offset="1" stopColor="#22c55e" stopOpacity="0" />
+        </radialGradient>
+        <filter id="ot2-f"><feGaussianBlur stdDeviation="2" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="240" fill="url(#ot2-bg)" />
+      <rect width="400" height="240" fill="url(#ot2-glow)" />
+      {/* Tree trunk */}
+      <path d="M200,220 L200,180" stroke="#94a3b8" strokeWidth="4" strokeOpacity="0.6" strokeLinecap="round" />
+      {/* Main branches */}
+      <path d="M200,180 Q160,150 120,120" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeOpacity="0.5" strokeLinecap="round" />
+      <path d="M200,180 Q240,150 280,120" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeOpacity="0.5" strokeLinecap="round" />
+      <path d="M200,180 Q200,140 200,100" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeOpacity="0.5" strokeLinecap="round" />
+      {/* Sub-branches left */}
+      <path d="M120,120 Q100,100 80,90" fill="none" stroke="#64748b" strokeWidth="1.5" strokeOpacity="0.4" strokeLinecap="round" />
+      <path d="M120,120 Q130,95 140,80" fill="none" stroke="#64748b" strokeWidth="1.5" strokeOpacity="0.4" strokeLinecap="round" />
+      {/* Sub-branches right */}
+      <path d="M280,120 Q300,100 320,90" fill="none" stroke="#64748b" strokeWidth="1.5" strokeOpacity="0.4" strokeLinecap="round" />
+      <path d="M280,120 Q270,95 260,80" fill="none" stroke="#64748b" strokeWidth="1.5" strokeOpacity="0.4" strokeLinecap="round" />
+      {/* Sub-branches center */}
+      <path d="M200,100 Q180,80 170,60" fill="none" stroke="#64748b" strokeWidth="1.5" strokeOpacity="0.4" strokeLinecap="round" />
+      <path d="M200,100 Q220,80 230,60" fill="none" stroke="#64748b" strokeWidth="1.5" strokeOpacity="0.4" strokeLinecap="round" />
+      {/* Leaf nodes - opening names */}
+      <g filter="url(#ot2-f)">
+        <circle cx="80" cy="85" r="10" fill="#22c55e" fillOpacity="0.5" />
+        <text x="80" y="89" textAnchor="middle" fill="#4ade80" fontSize="7" fontWeight="600" fillOpacity="0.9">e4</text>
+      </g>
+      <g filter="url(#ot2-f)">
+        <circle cx="140" cy="75" r="10" fill="#22c55e" fillOpacity="0.5" />
+        <text x="140" y="79" textAnchor="middle" fill="#4ade80" fontSize="7" fontWeight="600" fillOpacity="0.9">d4</text>
+      </g>
+      <g filter="url(#ot2-f)">
+        <circle cx="170" cy="55" r="10" fill="#f59e0b" fillOpacity="0.5" />
+        <text x="170" y="59" textAnchor="middle" fill="#fbbf24" fontSize="7" fontWeight="600" fillOpacity="0.9">Nf3</text>
+      </g>
+      <g filter="url(#ot2-f)">
+        <circle cx="230" cy="55" r="10" fill="#f59e0b" fillOpacity="0.5" />
+        <text x="230" y="59" textAnchor="middle" fill="#fbbf24" fontSize="7" fontWeight="600" fillOpacity="0.9">c4</text>
+      </g>
+      <g filter="url(#ot2-f)">
+        <circle cx="260" cy="75" r="10" fill="#06b6d4" fillOpacity="0.5" />
+        <text x="260" y="79" textAnchor="middle" fill="#67e8f9" fontSize="7" fontWeight="600" fillOpacity="0.9">g3</text>
+      </g>
+      <g filter="url(#ot2-f)">
+        <circle cx="320" cy="85" r="10" fill="#06b6d4" fillOpacity="0.5" />
+        <text x="320" y="89" textAnchor="middle" fill="#67e8f9" fontSize="7" fontWeight="600" fillOpacity="0.9">b3</text>
+      </g>
+      {/* Root node */}
+      <circle cx="200" cy="220" r="12" fill="#f59e0b" fillOpacity="0.6" filter="url(#ot2-f)" />
+      <text x="200" y="224" textAnchor="middle" fill="#fbbf24" fontSize="8" fontWeight="700" fillOpacity="0.9">YOU</text>
+      {/* Percentage labels on branches */}
+      <text x="155" y="145" fill="#64748b" fontSize="7" fillOpacity="0.6">45%</text>
+      <text x="245" y="145" fill="#64748b" fontSize="7" fillOpacity="0.6">30%</text>
+      <text x="200" y="135" fill="#64748b" fontSize="7" fillOpacity="0.6">25%</text>
+      {/* Small board icons on some leaves */}
+      <rect x="75" y="80" width="4" height="4" fill="#334155" stroke="#475569" strokeWidth="0.3" />
+      <rect x="79" y="80" width="4" height="4" fill="#1e293b" stroke="#475569" strokeWidth="0.3" />
+      <rect x="75" y="84" width="4" height="4" fill="#1e293b" stroke="#475569" strokeWidth="0.3" />
+      <rect x="79" y="84" width="4" height="4" fill="#334155" stroke="#475569" strokeWidth="0.3" />
+      {/* Decorative sparkles */}
+      {[[60,50],[340,40],[200,30],[120,200],[280,190]].map(([x,y],i) => (
+        <circle key={`sp${i}`} cx={x} cy={y} r={1.2} fill="#4ade80" fillOpacity={0.2+i*0.05}>
+          <animate attributeName="opacity" values={`0.25;0.05;0.25`} dur={`${2+i*0.5}s`} repeatCount="indefinite" />
         </circle>
       ))}
     </svg>

@@ -27,11 +27,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       publishedTime: post.date,
       authors: [post.author],
       tags: post.tags,
+      images: [
+        {
+          url: `https://firechess.com/api/og?title=${encodeURIComponent(post.title)}&slug=${encodeURIComponent(slug)}`,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
       description: post.description,
+      images: [`https://firechess.com/api/og?title=${encodeURIComponent(post.title)}&slug=${encodeURIComponent(slug)}`],
     },
     alternates: {
       canonical: `https://firechess.com/blog/${slug}`,

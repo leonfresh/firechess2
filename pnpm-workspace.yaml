@@ -1,0 +1,7 @@
+allowBuilds:
+  esbuild: true
+  msedge-tts: false
+  sharp: true
+  stockfish: false
+  unrs-resolver: true
+  workerd: false
