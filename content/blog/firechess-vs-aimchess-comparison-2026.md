@@ -1,7 +1,7 @@
 ---
 title: "FireChess vs Aimchess: Which Chess Analysis Tool Is Actually Better in 2026?"
-description: "A detailed head-to-head comparison of FireChess and Aimchess — covering free tier limits, locked features, engine depth, and overall value for chess improvers."
-date: "2026-03-12"
+description: "FireChess vs Aimchess compared: free tier limits, features, engine depth, and value for chess improvement. See which analysis tool wins in 2026."
+date: "2026-07-27"
 author: "FireChess Team"
 tags: ["tools", "comparison", "guide"]
 ---
@@ -97,6 +97,12 @@ With a free FireChess account (or even without one, just entering your username)
 
 All of that is free. No paywall on any category. No padlocks.
 
+To give you a concrete example of what "endgame mistakes" looks like in practice, consider this king and pawn position — the kind of endgame that decides hundreds of thousands of online games every day:
+
+<chess-position fen="8/8/4k3/3p1p2/3K1P2/8/8/8 w - - 0 1" caption="White to move in a king and pawn endgame. This is a classic opposition position — the side NOT to move has the advantage because the opposing king must step aside. Club players routinely misplay these positions, losing games they should draw or drawing games they should win." orientation="white"></chess-position>
+
+FireChess scans your endgame positions like this one and flags the exact move where you went wrong — not just "you lost a pawn endgame" but "you played Kd3 here instead of Ke3, losing the opposition and the game." That specificity is what makes improvement possible. For more on these patterns, see our guide to [endgame patterns club players miss](/blog/endgame-patterns-club-players-miss). If you want to understand how the engine grades each move, our explainer on [average centipawn loss](/blog/what-is-centipawn-loss) breaks down the full scoring system.
+
 The engine running the analysis is **Stockfish 18**, running locally in your browser via WebAssembly. Your games never leave your machine for the analysis phase — it's private, fast, and doesn't depend on our servers being available.
 
 ## Feature-by-Feature Breakdown
@@ -186,6 +192,12 @@ FireChess's **Opening Leak Detection** works differently. Across all the games i
 
 When a leak is found, FireChess surfaces it as a card showing the exact position, the moves you played, the engine evaluation at each branch, and a link to the Drill Mode so you can practice the correct continuation. Over a 300-game scan, this typically surfaces between 5 and 15 genuine opening leaks — positions you should be studying.
 
+Take this typical Italian Game position that club players reach frequently:
+
+<chess-position fen="r1bqk2r/ppp2ppp/2np1n2/2b1p3/2B1P3/2PP1N2/PP3PPP/RNBQ1RK1 b kq - 0 6" caption="A Giuoco Piano position reached after 1.e4 e5 2.Nf3 Nc6 3.Bc4 Nf6 4.d3 Bc5 5.O-O d6 6.c3. Black has several plans here — O-O, a6, or Bb6 — but club players often waste moves like h6 or a5, losing time in a position where piece coordination matters more than flank pawn moves." orientation="black"></chess-position>
+
+FireChess would flag this as an opening leak if you reach it 5+ times and consistently play inaccurate moves. Aimchess would show you a win-rate percentage for the Italian Game and nothing more. The difference between knowing "you play the Italian" and knowing "you waste tempo in this exact position" is the difference between generic advice and targeted improvement. For a deeper look at identifying these patterns yourself, see our guide on [finding opening weaknesses](/blog/how-to-find-opening-weaknesses).
+
 Aimchess has nothing equivalent. Its opening section shows you what you played, not what you should fix.
 
 ### Stockfish 18: The Latest Engine, Locally
@@ -206,6 +218,12 @@ For clubs, coaches, or privacy-conscious players who don't want their entire gam
 Aimchess shows you what you did wrong and moves on. FireChess goes one step further with **Drill Mode** — a feature that converts any position you blundered into an interactive exercise.
 
 After a scan, every mistake card (tactics, endgame, opening leak) includes a \"Drill This Position\" button. Clicking it opens the position on a board where you must find the correct move. The drill records what you played, shows the engine's best line, and lets you play through the correct variation until you understand it. This transforms passive analysis (reading a report) into active learning (solving the problem yourself).
+
+Consider this middlegame from an Italian Game — a position that appears in thousands of club games every week:
+
+<chess-position fen="r1bq1rk1/bpp2ppp/p1np1n2/4p3/2B1P3/2PP1N1P/PP3PP1/RNBQR1K1 w - - 1 9" caption="White to move in a typical Italian Game middlegame. After 8...Ba7, the bishop has retreated but the position is still complex. Many club players autopilot here with moves like Nbd2 or Bg5, missing that the position demands concrete calculation — not routine development." orientation="white"></chess-position>
+
+When FireChess flags a tactic you missed in a position like this, Drill Mode puts you right back on the board. You see the exact position, you try to find the move, and the engine shows you the full line whether you get it right or wrong. Aimchess tells you "you missed a tactic" and shows a percentage. There's no way to practice the specific position, no way to test whether you've actually learned the pattern. For players who want to go deeper into calculation training, our [chess calculation guide](/blog/chess-calculation-training-calculate-variations) covers structured approaches to building this skill.
 
 Drill Mode is not locked behind any paywall. Every free scan includes drill access for every mistake detected.
 
@@ -322,25 +340,33 @@ As the chart shows, FireChess's free tier scores significantly higher across eve
 
 ## FAQ: FireChess vs Aimchess
 
-### 1. Does FireChess require an account to start analyzing?
+### Q: Does FireChess require an account to start analyzing?
 
 No. FireChess is designed to work instantly — enter your Lichess or Chess.com username on the home page and click Scan. There is no sign-up step, no email verification, and no password. Aimchess requires you to create an account and connect your chess profile before any analysis runs. This makes FireChess significantly faster to get started with, especially for casual users who want a quick post-game review without managing another account.
 
-### 2. How does the engine depth compare between the two tools?
+### Q: How does the engine depth compare between the two tools?
 
-FireChess runs Stockfish 18 locally via WebAssembly, with adjustable depth: free users get up to depth 12, Pro users can go to depth 24. Aimchess does not expose engine depth as a user-adjustable setting; their proprietary engine runs server-side at whatever depth their infrastructure decides. FireChess's approach gives you more control, faster results on capable hardware, and the assurance that you're using the strongest chess engine available.
+FireChess runs Stockfish 18 locally via WebAssembly, with adjustable depth: free users get up to depth 12, Pro users can go to depth 24. Aimchess does not expose engine depth as a user-adjustable setting; their proprietary engine runs server-side at whatever depth their infrastructure decides. FireChess's approach gives you more control, faster results on capable hardware, and the assurance that you're using the strongest chess engine available. See our guide on [how to read chess engine analysis](/blog/how-to-read-chess-engine-analysis) for help interpreting the numbers.
 
-### 3. Which tool has better opening preparation features?
+### Q: Which tool has better opening preparation features?
 
 FireChess wins here for serious improvers. Its Opening Leak Detection identifies positions where you repeatedly blunder — not just what you played, but what you need to fix. Each leak surfaces with the exact position, your history of mistakes in that position, and a Drill Mode link to practice the correct response. Aimchess's opening section shows a basic repertoire table with win rates. For players focused on patching specific holes in their opening repertoire, FireChess provides actionable, targeted data that Aimchess lacks.
 
-### 4. Can I analyze from both Lichess and Chess.com on both platforms?
+### Q: Can I analyze from both Lichess and Chess.com on both platforms?
 
 Yes, both tools support Lichess and Chess.com game imports. The key difference is in the mechanics. Aimchess requires you to connect each platform to your account via OAuth, and then selects games from the connected profiles. FireChess lets you type any username from either platform and scan their games immediately — no connection step needed. This makes FireChess especially useful for analyzing opponents' games, coaching students, or switching between accounts without managing multiple profile connections.
 
-### 5. How does FireChess handle my data privacy compared to Aimchess?
+### Q: How does FireChess handle my data privacy compared to Aimchess?
 
 This is one of the biggest differences between the two tools. FireChess runs all analysis locally in your browser via WebAssembly — your game data is fetched from Lichess or Chess.com and processed entirely on your machine. No game data, positions, or personal information is sent to FireChess servers. Aimchess processes all analysis on their backend servers, meaning your full game history is transmitted to and stored on their infrastructure. For privacy-conscious players, coaches handling student data, or anyone who prefers not to have their chess habits stored on a third-party server, FireChess's local architecture is a significant advantage.
+
+### Q: How many games can I analyze for free on each platform?
+
+Aimchess caps free scans at 40 games — roughly two bullet sessions or two weeks of rapid. FireChess gives you up to 300 games per scan for free, which is 7.5× more data. This matters because chess improvement requires identifying patterns across many games. A mistake that appears 3 times in 40 games might be noise; the same mistake appearing 15 times in 300 games is a clear pattern you need to fix. Upload your games to [FireChess's scanner at /analyze](/analyze) and see the difference for yourself.
+
+### Q: Is FireChess a good Aimchess alternative?
+
+If you're looking for an [Aimchess alternative](/blog/firechess-vs-aimchess-comparison-2026), FireChess is the strongest option in 2026. It offers more features on the free tier, runs the latest Stockfish engine locally, supports unlimited drill practice, and requires no account to start. The main tradeoff is that Aimchess has more established rating-tracking features over time, but for active game analysis and improvement, FireChess provides more actionable data at every tier.
 
 ---
 
