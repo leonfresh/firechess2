@@ -169,7 +169,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
   const [batchAnalyzing, setBatchAnalyzing] = useState(false);
   const moveReviewRequestRef = useRef(0);
 
-  const { ref: boardContainerRef, size: boardSize } = useBoardSize(440, { evalBar: true, minSize: 240 });
+  const { ref: boardContainerRef, size: boardSize } = useBoardSize(520, { evalBar: true, minSize: 320 });
 
   // Parse PGN
   const loadGame = useCallback((pgnText: string) => {

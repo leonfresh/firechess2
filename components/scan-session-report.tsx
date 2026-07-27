@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { AnalysisBoardModal } from "@/components/analysis-board-modal";
 import { BrilliantMoveCard } from "@/components/brilliant-move-card";
+import { ShareHighlights } from "@/components/share-highlights";
 import { CardCarousel } from "@/components/card-carousel";
 import type { CardViewMode } from "@/components/card-carousel";
 import type { CommunityPostComposerSeed } from "@/components/community-post-composer-modal";
@@ -3431,6 +3432,14 @@ export function ScanSessionReport({
               isProcessing={isProcessing}
             />
           </section>
+        ) : null}
+
+        {!isProcessing && result ? (
+          <ShareHighlights
+            reportId={scan.id}
+            result={result}
+            reportMeta={reportMeta}
+          />
         ) : null}
       </div>
       ) : null}

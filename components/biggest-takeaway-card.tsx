@@ -11,7 +11,14 @@ import {
 
 const STYLES: Record<
   BiggestTakeaway["severity"],
-  { ring: string; glow: string; accent: string; chip: string; label: string }
+  {
+    ring: string;
+    glow: string;
+    accent: string;
+    chip: string;
+    label: string;
+    dot: string;
+  }
 > = {
   critical: {
     ring: "border-red-500/30",
@@ -19,6 +26,7 @@ const STYLES: Record<
     accent: "text-red-300",
     chip: "border-red-500/30 bg-red-500/10 text-red-300",
     label: "Critical",
+    dot: "bg-red-400",
   },
   major: {
     ring: "border-amber-500/30",
@@ -26,6 +34,7 @@ const STYLES: Record<
     accent: "text-amber-300",
     chip: "border-amber-500/30 bg-amber-500/10 text-amber-300",
     label: "Major",
+    dot: "bg-amber-400",
   },
   moderate: {
     ring: "border-cyan-500/30",
@@ -33,6 +42,7 @@ const STYLES: Record<
     accent: "text-cyan-300",
     chip: "border-cyan-500/30 bg-cyan-500/10 text-cyan-300",
     label: "Worth fixing",
+    dot: "bg-cyan-400",
   },
   good: {
     ring: "border-emerald-500/30",
@@ -40,6 +50,7 @@ const STYLES: Record<
     accent: "text-emerald-300",
     chip: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
     label: "Looking solid",
+    dot: "bg-emerald-400",
   },
 };
 
@@ -54,15 +65,17 @@ export function BiggestTakeawayCard({
 
   return (
     <section
-      className={`relative mt-6 overflow-hidden rounded-[1.75rem] border ${s.ring} bg-white/[0.03] p-6 sm:p-7`}
+      className={`relative mt-6 overflow-hidden rounded-[1.75rem] border ${s.ring} bg-[linear-gradient(180deg,_#121214_0%,_#0A0A0B_100%)] p-6 sm:p-8`}
     >
       <div
-        className={`pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full ${s.glow} blur-[100px]`}
+        className={`pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full ${s.glow} blur-[110px]`}
       />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       <div className="relative">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-            🎯 Your biggest takeaway
+          <p className="flex items-center gap-2.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8A8578]">
+            <span className={`inline-block h-1.5 w-1.5 rounded-full ${s.dot}`} />
+            Your biggest takeaway
           </p>
           <span
             className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wider ${s.chip}`}
@@ -71,11 +84,11 @@ export function BiggestTakeawayCard({
           </span>
         </div>
 
-        <h2 className="mt-4 text-2xl font-black leading-tight tracking-tight text-white sm:text-3xl">
+        <h2 className="mt-4 max-w-3xl text-3xl font-black leading-[1.1] tracking-tight text-[#F4F1EA] sm:text-4xl">
           {t.headline}
         </h2>
 
-        <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-300 sm:text-base">
+        <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[#B7B2A5] sm:text-base">
           {t.detail}
         </p>
 
@@ -92,7 +105,7 @@ export function BiggestTakeawayCard({
               <span className="rounded-lg border border-red-500/20 bg-red-500/[0.07] px-3 py-1.5 font-mono font-semibold text-red-300 line-through">
                 {t.evidenceMove.user}
               </span>
-              <span className="text-slate-500">→</span>
+              <span className="text-[#8A8578]">→</span>
               <span className="rounded-lg border border-emerald-500/20 bg-emerald-500/[0.07] px-3 py-1.5 font-mono font-semibold text-emerald-300">
                 {t.evidenceMove.best ?? "study it"}
               </span>
@@ -101,10 +114,10 @@ export function BiggestTakeawayCard({
         </div>
 
         <div
-          className={`mt-5 flex items-start gap-2.5 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5`}
+          className={`mt-5 flex items-start gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] px-4 py-4`}
         >
-          <span className="text-lg leading-none">💡</span>
-          <p className="text-sm leading-relaxed text-slate-200">
+          <span className={`mt-0.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full ${s.dot}`} />
+          <p className="text-sm leading-relaxed text-[#D8D3C6]">
             <span className={`font-semibold ${s.accent}`}>Fix this next: </span>
             {t.fix}
           </p>

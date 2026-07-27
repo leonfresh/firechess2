@@ -749,110 +749,96 @@ export function ScanSessionPage({
   };
 
   return (
-    <div className="min-h-screen bg-[#030712] text-white">
+    <div className="min-h-screen bg-[#0A0A0B] text-[#F4F1EA]">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-        <nav className="mb-5 flex items-center gap-2 text-xs text-slate-500">
-          <Link href="/" className="transition-colors hover:text-slate-300">
+        <nav className="mb-5 flex items-center gap-2 text-xs text-[#8A8578]">
+          <Link href="/" className="transition-colors hover:text-[#C9C4B6]">
             Home
           </Link>
           <span>/</span>
-          <span className="text-slate-300">Report</span>
+          <span className="text-[#C9C4B6]">Report</span>
         </nav>
 
-        <section className="relative overflow-hidden rounded-[2rem] border border-white/[0.08] bg-[radial-gradient(circle_at_top_right,_rgba(34,211,238,0.16),_rgba(15,23,42,0.92)_40%,_rgba(2,6,23,0.98)_100%)] p-6 sm:p-7">
-          <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-cyan-500/10 blur-[110px]" />
-          <div className="pointer-events-none absolute -left-24 bottom-0 h-56 w-56 rounded-full bg-fuchsia-500/10 blur-[100px]" />
+        <section className="relative overflow-hidden rounded-[2rem] border border-white/[0.07] bg-[radial-gradient(ellipse_80%_60%_at_70%_-10%,_rgba(255,107,53,0.13),_transparent_60%),linear-gradient(180deg,_#121214_0%,_#0A0A0B_100%)] p-6 sm:p-8">
+          <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#FF6B35]/[0.10] blur-[120px]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FF6B35]/40 to-transparent" />
           <div className="relative">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-3xl">
-                <div className="flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+                <div className="flex flex-wrap items-center gap-2.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8A8578]">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#FF6B35]" />
                   <span>{formatSource(scan.source)}</span>
-                  <span className="text-slate-600">/</span>
+                  <span className="text-[#4A463C]">/</span>
                   <span>{formatScanMode(scan.scanMode)}</span>
                 </div>
-                <h1 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl">
-                  Report for {scan.chessUsername}
+                <h1 className="mt-4 text-4xl font-black tracking-tight text-[#F4F1EA] sm:text-5xl">
+                  Report for{" "}
+                  <span className="bg-gradient-to-r from-[#FF6B35] to-[#FFB25A] bg-clip-text text-transparent">
+                    {scan.chessUsername}
+                  </span>
                 </h1>
-                <div className="mt-4 flex flex-wrap gap-3">
+                <div className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
                   {/* Key stats */}
                   {scan.result?.gamesAnalyzed ? (
-                    <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2">
-                      <span className="text-lg leading-none">♟</span>
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                          Games
-                        </p>
-                        <p className="text-sm font-bold text-white">
-                          {scan.result.gamesAnalyzed.toLocaleString()}
-                        </p>
-                      </div>
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8A8578]">
+                        Games
+                      </p>
+                      <p className="mt-1.5 text-2xl font-black tabular-nums text-[#F4F1EA]">
+                        {scan.result.gamesAnalyzed.toLocaleString()}
+                      </p>
                     </div>
                   ) : null}
                   {liveReportMeta?.estimatedAccuracy ? (
-                    <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.07] px-3.5 py-2">
-                      <span className="text-lg leading-none">🎯</span>
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-500/70">
-                          Accuracy
-                        </p>
-                        <p className="text-sm font-bold text-emerald-300">
-                          {liveReportMeta.estimatedAccuracy.toFixed(1)}%
-                        </p>
-                      </div>
+                    <div className="rounded-xl border border-emerald-500/[0.18] bg-emerald-500/[0.05] px-4 py-3.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-400/70">
+                        Accuracy
+                      </p>
+                      <p className="mt-1.5 text-2xl font-black tabular-nums text-emerald-300">
+                        {liveReportMeta.estimatedAccuracy.toFixed(1)}%
+                      </p>
                     </div>
                   ) : null}
                   {liveReportMeta?.estimatedRating ? (
-                    <div className="flex items-center gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.07] px-3.5 py-2">
-                      <span className="text-lg leading-none">📈</span>
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-cyan-500/70">
-                          Est. Rating
-                        </p>
-                        <p className="text-sm font-bold text-cyan-300">
-                          {liveReportMeta.estimatedRating.toLocaleString()}
-                        </p>
-                      </div>
+                    <div className="rounded-xl border border-[#FF6B35]/[0.22] bg-[#FF6B35]/[0.06] px-4 py-3.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#FF6B35]/80">
+                        Est. Rating
+                      </p>
+                      <p className="mt-1.5 text-2xl font-black tabular-nums text-[#FFB25A]">
+                        {liveReportMeta.estimatedRating.toLocaleString()}
+                      </p>
                     </div>
                   ) : null}
                   {scan.result && scan.result.leaks.length > 0 ? (
-                    <div className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/[0.07] px-3.5 py-2">
-                      <span className="text-lg leading-none">📚</span>
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-500/70">
-                          Opening Leaks
-                        </p>
-                        <p className="text-sm font-bold text-amber-300">
-                          {scan.result.leaks.length}
-                        </p>
-                      </div>
+                    <div className="rounded-xl border border-amber-500/[0.18] bg-amber-500/[0.05] px-4 py-3.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-400/70">
+                        Opening Leaks
+                      </p>
+                      <p className="mt-1.5 text-2xl font-black tabular-nums text-amber-300">
+                        {scan.result.leaks.length}
+                      </p>
                     </div>
                   ) : null}
                   {scan.result && scan.result.missedTactics.length > 0 ? (
-                    <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/[0.07] px-3.5 py-2">
-                      <span className="text-lg leading-none">⚔️</span>
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-red-500/70">
-                          Missed Tactics
-                        </p>
-                        <p className="text-sm font-bold text-red-300">
-                          {scan.result.missedTactics.length}
-                        </p>
-                      </div>
+                    <div className="rounded-xl border border-red-500/[0.18] bg-red-500/[0.05] px-4 py-3.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-red-400/70">
+                        Missed Tactics
+                      </p>
+                      <p className="mt-1.5 text-2xl font-black tabular-nums text-red-300">
+                        {scan.result.missedTactics.length}
+                      </p>
                     </div>
                   ) : null}
                   {scan.result &&
                   scan.result.brilliantMoves &&
                   scan.result.brilliantMoves.length > 0 ? (
-                    <div className="flex items-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/[0.07] px-3.5 py-2">
-                      <span className="text-lg leading-none">💎</span>
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-cyan-400/70">
-                          Brilliant Moves
-                        </p>
-                        <p className="text-sm font-bold text-cyan-300">
-                          {scan.result.brilliantMoves.length}
-                        </p>
-                      </div>
+                    <div className="rounded-xl border border-cyan-400/[0.18] bg-cyan-400/[0.05] px-4 py-3.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-400/70">
+                        Brilliant Moves
+                      </p>
+                      <p className="mt-1.5 text-2xl font-black tabular-nums text-cyan-300">
+                        {scan.result.brilliantMoves.length}
+                      </p>
                     </div>
                   ) : null}
                 </div>

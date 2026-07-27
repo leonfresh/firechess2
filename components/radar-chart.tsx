@@ -268,8 +268,8 @@ export function StrengthsRadar(props: RadarProps) {
                 color: "#fff",
                 fontSize: "13px",
               }}
-              formatter={(value: number | undefined) => [
-                `${value ?? 0}/100`,
+              formatter={(value) => [
+                `${typeof value === "number" ? value : 0}/100`,
                 "Score",
               ]}
             />
