@@ -1,7 +1,7 @@
 ---
 title: "Chess Mistakes by Rating: The Errors That Keep You Stuck at Every Level"
 description: "See the exact blunders, inaccuracies, and habits that trap players from 800 to 1800. Real positions, real data, and a concrete plan to fix your rating's biggest leaks."
-date: "2026-07-21"
+date: "2026-07-29"
 author: "FireChess Team"
 tags: ["improvement", "mistakes", "rating", "tactics", "blunders"]
 canonical: https://firechess.com/blog/chess-mistakes-by-rating
@@ -275,33 +275,45 @@ For a step-by-step breakdown of how to use centipawn loss data to diagnose your 
 
 ## FAQ: Chess Mistakes by Rating
 
-### What is the most common chess mistake at 1000 rating?
+### Q: What is the most common chess mistake at 1000 rating?
 
 At 1000, the most common mistake is **hanging pieces** — moving a piece to a square where it can be captured for free, or leaving it undefended after an exchange. In FireChess scans, 1000-rated players average 4.1 Blunder badges per game, and the majority are simple tactical oversights rather than complex miscalculations. The fix: before every move, scan for undefended pieces on both sides.
 
-### Why do I keep making the same chess mistakes?
+### Q: Why do I keep making the same chess mistakes?
 
 Because you're not reviewing your games with an engine. Players who don't analyse their games repeat the same patterns for months. Upload your games to [FireChess at /analyze](/analyze) and look at the moves with red Blunder (??) and orange Mistake (?) badges. If the same type of mistake appears in 3+ games out of 10, that's your training target. For a deeper dive, see [why you keep losing the same openings](/blog/why-you-keep-losing-same-openings).
 
-### What ACPL should a 1400-rated player have?
+### Q: What ACPL should a 1400-rated player have?
 
 A 1400-rated player in rapid time control typically averages 55-70 ACPL. Below 55 is strong for the rating (you're playing above your level and your rating will climb). Above 70 suggests your tactical or positional play has a specific leak. Check the [ACPL by rating benchmarks](/blog/average-centipawn-loss-by-rating) to see where you stand.
 
-### At what rating do positional mistakes matter more than tactical ones?
+### Q: At what rating do positional mistakes matter more than tactical ones?
 
 The crossover happens around **1200-1300**. Below 1200, tactical blunders (200+ cp loss per move) are the primary rating bottleneck. Above 1300, positional errors (25-200 cp loss) become more frequent than tactical ones and start costing more total centipawns per game. This is why tactics training has diminishing returns above 1300 — you need strategy and endgame study to keep improving.
 
-### How many blunders per game is normal for my rating?
+### Q: How many blunders per game is normal for my rating?
 
 Based on FireChess scan data across 14,000+ games: 800-1000 averages 6.2 Blunder badges per game; 1000-1200 averages 4.1; 1200-1400 averages 2.4; 1400-1600 averages 1.2; 1600-1800 averages 0.8. If your Blunder count is significantly above these averages for your rating, tactical training should be your priority. If it's at or below average, focus on reducing Inaccuracy and Mistake badges instead.
 
-### Why is my endgame ACPL higher than my middlegame ACPL?
+### Q: Why is my endgame ACPL higher than my middlegame ACPL?
 
 Because you haven't studied endgame technique. At 1600+, most players have decent middlegame intuition but weak endgame knowledge. The result: centipawn loss spikes in the endgame because you're guessing instead of following established technique. Learn the 10 most common endgame positions (Lucena, Philidor, opposition, triangulation) and your endgame ACPL will drop below your middlegame ACPL within a month.
 
-### How do I stop blundering in time pressure?
+### Q: How do I stop blundering in time pressure?
 
 Time pressure blunders are a **planning** problem, not a speed problem. You run low on time because you spent too long on earlier moves — usually because you didn't have a plan and were calculating aimlessly. Work on your middlegame planning (see [how to find a plan in chess](/blog/chess-middlegame-strategy-finding-a-plan)) and your time management will improve as a side effect. Also: if you have less than 2 minutes on the clock, play the safe move, not the best move.
+
+### Q: What is centipawn loss and how does it relate to chess mistakes?
+
+Centipawn loss (often abbreviated ACPL for Average Centipawn Loss) measures how far each of your moves deviates from the engine's best move, in hundredths of a pawn. A move that loses 50 centipawns means the engine evaluated the position 0.5 pawns worse after your move than the best alternative. In the context of chess mistakes, every Blunder badge on FireChess represents a move with 200+ centipawn loss, every Mistake badge is 75-200 cp, and every Inaccuracy badge is 25-75 cp. Your overall ACPL is the single best proxy for how many mistakes you're making per game. See our [complete centipawn loss guide](/blog/what-is-centipawn-loss) for a deeper breakdown.
+
+### Q: What does average centipawn loss mean in chess?
+
+Average centipawn loss (ACPL) is the mean centipawn loss across all your moves in a game. If you play 40 moves and your total centipawn loss is 2,400, your ACPL is 60. Lower is better — a grandmaster might average 15-25 ACPL in a classical game, while a 1200-rated player averages 80-120. The number captures both tactical blunders and subtle positional errors in a single metric, which is why chess improvement tools like FireChess use it as a core benchmark. Read more in our [ACPL by rating guide](/blog/average-centipawn-loss-by-rating).
+
+### Q: How do I find my centipawn loss for free?
+
+Upload your PGN to [FireChess's free analysis tool at /analyze](/analyze). After the scan completes, your average centipawn loss is displayed at the top of the results page alongside your accuracy score and badge breakdown. You'll see exactly how many Brilliant (!!), Best (!), Good (✓), Inaccuracy (?!), Mistake (?), and Blunder (??) moves you made — each badge corresponds to a centipawn loss range. The scanner also shows centipawn loss per move on the move-by-move timeline, so you can pinpoint exactly where your game fell apart.
 
 ---
 
