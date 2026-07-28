@@ -5,6 +5,7 @@ import { Chess, type PieceSymbol } from "chess.js";
 import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { EvalBar } from "@/components/eval-bar";
 import { MoveBadge } from "@/components/move-badge";
+import { VRMCoach } from "@/components/vrm-coach";
 import { stockfishClient, stockfishPool } from "@/lib/stockfish-client";
 import { useBoardSize } from "@/lib/use-board-size";
 import {
@@ -15,7 +16,7 @@ import {
   MOVE_CLASSIFICATION_LABELS,
   type MoveClassification,
 } from "@/lib/move-quality";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Upload } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Upload, X } from "lucide-react";
 import type { CSSProperties } from "react";
 
 const PUZZLE_BADGE_ASSET: Partial<Record<MoveClassification, string>> = {
@@ -48,6 +49,7 @@ export type GameMeta = {
   event?: string | null;
   eco?: string | null;
   pgn?: string;
+  orientation?: "white" | "black";
 };
 
 async function fetchLichessGames(username: string): Promise<GameMeta[]> {
@@ -58,7 +60,15 @@ async function fetchLichessGames(username: string): Promise<GameMeta[]> {
     return text.trim().split("\n").filter(Boolean).map((line) => {
       try {
         const g = JSON.parse(line);
-        return { white: g.players?.white?.user?.name ?? "?", black: g.players?.black?.user?.name ?? "?", result: g.winner ? `${g.winner} wins` : "draw", date: g.createdAt ? new Date(g.createdAt).toLocaleDateString() : null, pgn: g.pgn, eco: g.opening?.eco ?? null };
+        const w = g.players?.white?.user?.name ?? "?";
+        const b = g.players?.black?.user?.name ?? "?";
+        return {
+          white: w, black: b,
+          result: g.winner ? `${g.winner} wins` : "draw",
+          date: g.createdAt ? new Date(g.createdAt).toLocaleDateString() : null,
+          pgn: g.pgn, eco: g.opening?.eco ?? null,
+          orientation: b.toLowerCase() === username.toLowerCase() ? "black" as const : "white" as const,
+        };
       } catch { return null; }
     }).filter(Boolean) as GameMeta[];
   } catch { return []; }
@@ -70,14 +80,21 @@ async function fetchChesscomGames(username: string): Promise<GameMeta[]> {
     const res = await fetch(`/api/proxy?url=${encodeURIComponent(`https://api.chess.com/pub/player/${encodeURIComponent(username)}/games/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}`)}`);
     if (!res.ok) throw new Error("Chess.com user not found");
     const data = await res.json();
-    return (data.games ?? []).slice(-20).map((g: any) => ({
-      white: g.white?.username ?? "?", black: g.black?.username ?? "?", result: g.white?.result === "win" ? "1-0" : g.black?.result === "win" ? "0-1" : "½-½",
-      date: g.end_time ? new Date(g.end_time * 1000).toLocaleDateString() : null, pgn: g.pgn, eco: g.eco ?? null,
-    }));
+    return (data.games ?? []).slice(-20).map((g: any) => {
+      const w = g.white?.username ?? "?";
+      const b = g.black?.username ?? "?";
+      return {
+        white: w, black: b,
+        result: g.white?.result === "win" ? "1-0" : g.black?.result === "win" ? "0-1" : "½-½",
+        date: g.end_time ? new Date(g.end_time * 1000).toLocaleDateString() : null,
+        pgn: g.pgn, eco: g.eco ?? null,
+        orientation: b.toLowerCase() === username.toLowerCase() ? "black" as const : "white" as const,
+      };
+    });
   } catch { return []; }
 }
 
-// ── PGN input screen (unchanged) ──
+// ── PGN input screen ──
 function PgnTab({ onLoad }: { onLoad: (pgn: string) => void }) {
   const [text, setText] = useState("");
   return (
@@ -93,13 +110,12 @@ function PgnTab({ onLoad }: { onLoad: (pgn: string) => void }) {
   );
 }
 
-function ImportTab({ label, fetchFn, onLoad }: { label: string; fetchFn: (u: string) => Promise<GameMeta[]>; onLoad: (pgn: string) => void }) {
+function ImportTab({ label, fetchFn, onLoad }: { label: string; fetchFn: (u: string) => Promise<GameMeta[]>; onLoad: (pgn: string, orientation?: "white" | "black") => void }) {
   const [username, setUsername] = useState("");
   const [games, setGames] = useState<GameMeta[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // Restore saved username
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(`fc-review-username-${label.toLowerCase()}`);
@@ -107,7 +123,6 @@ function ImportTab({ label, fetchFn, onLoad }: { label: string; fetchFn: (u: str
     } catch { /* ignore */ }
   }, [label]);
 
-  // Save username on change
   useEffect(() => {
     try {
       window.localStorage.setItem(`fc-review-username-${label.toLowerCase()}`, username);
@@ -130,7 +145,7 @@ function ImportTab({ label, fetchFn, onLoad }: { label: string; fetchFn: (u: str
       {games.length > 0 && (
         <div className="max-h-[300px] space-y-1 overflow-y-auto rounded-xl border border-white/[0.08] bg-black/20 p-2">
           {games.map((g, i) => (
-            <button key={i} onClick={() => g.pgn && onLoad(g.pgn)}
+            <button key={i} onClick={() => g.pgn && onLoad(g.pgn, g.orientation)}
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-xs text-slate-300 transition hover:bg-white/[0.06]">
               <span className="shrink-0 font-semibold text-slate-400">{g.white} vs {g.black}</span>
               <span className="text-slate-500">{g.result}</span>
@@ -144,9 +159,18 @@ function ImportTab({ label, fetchFn, onLoad }: { label: string; fetchFn: (u: str
   );
 }
 
-// ── Move type (unchanged) ──
+// ── Move type ──
 type ParsedMove = { san: string; fenBefore: string; fenAfter: string; moveNumber: number; color: "w" | "b"; uci?: string };
-type MoveJudgement = { square: string; classification: MoveClassification; cpLoss: number; evalBefore: number; evalAfter: number; bestMoveSan: string | null; commentary: string };
+
+const CLASSIFICATION_DOT: Record<MoveClassification, string> = {
+  brilliant: "bg-cyan-400",
+  best: "bg-emerald-400",
+  good: "bg-emerald-300/60",
+  inaccuracy: "bg-amber-400",
+  mistake: "bg-orange-400",
+  blunder: "bg-red-400",
+  book: "bg-slate-500",
+};
 
 export function GameReview({ initialPgn }: { initialPgn?: string }) {
   const [gameLoaded, setGameLoaded] = useState(false);
@@ -168,16 +192,23 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
   const [allEvals, setAllEvals] = useState<any[]>([]);
   const [batchAnalyzing, setBatchAnalyzing] = useState(false);
   const moveReviewRequestRef = useRef(0);
+  const moveListRef = useRef<HTMLDivElement>(null);
 
   const { ref: boardContainerRef, size: boardSize } = useBoardSize(520, { evalBar: true, minSize: 320 });
 
+  const [boardOrientation, setBoardOrientation] = useState<"white" | "black">("white");
+
   // Parse PGN
-  const loadGame = useCallback((pgnText: string) => {
+  const loadGame = useCallback((pgnText: string, orientation?: "white" | "black") => {
     setError(null);
     try {
       const chess = new Chess();
       chess.loadPgn(pgnText);
       const history = chess.history({ verbose: true });
+      if (history.length === 0) {
+        setError("Invalid PGN. Check the format.");
+        return;
+      }
       const parsed: ParsedMove[] = [];
       const replay = new Chess();
       for (const m of history) {
@@ -202,6 +233,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
       setPrevMoveSquares([]);
       setEvalHistory([]);
       setGameLoaded(true);
+      setBoardOrientation(orientation ?? "white");
       setLlmSummary(null);
       setLlmCommentary({});
       setShowCoachModal(false);
@@ -211,6 +243,13 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
       setError("Invalid PGN. Check the format.");
     }
   }, []);
+
+  // Auto-load initialPgn (e.g. from ?pgn= query param)
+  useEffect(() => {
+    if (initialPgn && !gameLoaded && parsedMoves.length === 0) {
+      loadGame(initialPgn);
+    }
+  }, [initialPgn, gameLoaded, parsedMoves.length, loadGame]);
 
   // Play PV animation: step through best continuation FENs
   useEffect(() => {
@@ -224,6 +263,8 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
     }, 900);
     return () => clearInterval(interval);
   }, [playingPv]);
+
+  // Batch analysis
   useEffect(() => {
     if (!gameLoaded || parsedMoves.length === 0 || allEvals.length > 0 || batchAnalyzing) return;
     let cancelled = false;
@@ -233,116 +274,128 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
     (async () => {
       try {
         const results: any[] = [];
-      const chess = new Chess();
+        const chess = new Chess();
 
-      // Evaluate starting position
-      const startEval = await stockfishClient.evaluateFen(chess.fen(), 14);
+        const startEval = await stockfishClient.evaluateFen(chess.fen(), 14);
 
-      for (let ply = 0; ply < parsedMoves.length; ply++) {
-        const move = parsedMoves[ply];
-        const fenBefore = move.fenBefore;
-        const fenAfter = move.fenAfter;
+        for (let ply = 0; ply < parsedMoves.length; ply++) {
+          const move = parsedMoves[ply];
+          const fenBefore = move.fenBefore;
+          const fenAfter = move.fenAfter;
 
-        // Evaluate position before the move (for best move comparison + multi-PV)
-        const topMoves = await stockfishPool.getTopMoves(fenBefore, 3, 14);
-        // Evaluate position after the move
-        const afterEval = await stockfishClient.evaluateFen(fenAfter, 14);
+          const topMoves = await stockfishPool.getTopMoves(fenBefore, 3, 14);
+          const afterEval = await stockfishClient.evaluateFen(fenAfter, 14);
 
-        const beforeEval = topMoves[0] ?? null;
-        const cpBefore = toWhitePerspective(fenBefore, beforeEval?.cp ?? 20);
-        const cpAfter = toWhitePerspective(fenAfter, afterEval?.cp ?? (ply > 0 ? results[ply - 1]?.cpAfter ?? 20 : 20));
-        const evalBeforeMover = move.color === "w" ? cpBefore : -cpBefore;
-        const evalAfterMover = move.color === "w" ? cpAfter : -cpAfter;
-        const cpLoss = Math.max(0, evalBeforeMover - evalAfterMover);
-        const isBestMove = beforeEval?.bestMove === move.uci ||
-          (beforeEval?.bestMove && move.uci?.startsWith(beforeEval.bestMove.slice(0, 4)) && cpLoss <= 5);
-        const classification = classifyMoveQuality({
-          cpLoss,
-          isBestMove: !!isBestMove,
-          evalBeforeMover,
-          evalAfterMover,
-          fenBefore,
-          moveUci: move.uci ?? null,
-          moveIndex: ply,
-        });
-        const bestMoveSan = toSan(fenBefore, beforeEval?.bestMove ?? null);
-
-        // Build the multi-PV lines for display
-        const topLines = topMoves.slice(0, 3).map((l: any) => ({
-          uci: l.bestMove ?? "",
-          san: toSan(fenBefore, l.bestMove ?? null),
-          cp: l.cp,
-          mateIn: l.mateIn ?? null,
-          pv: l.pvMoves ?? [],
-        }));
-
-        results.push({
-          ply,
-          san: move.san,
-          fenBefore,
-          fenAfter,
-          cpBefore,
-          cpAfter,
-          cpLoss,
-          classification,
-          bestMove: beforeEval?.bestMove ?? null,
-          bestMoveSan,
-          topLines,
-          uci: move.uci ?? "",
-          commentary: buildMoveQualityCommentary({
-            classification,
+          const beforeEval = topMoves[0] ?? null;
+          const cpBefore = toWhitePerspective(fenBefore, beforeEval?.cp ?? 20);
+          const cpAfter = toWhitePerspective(fenAfter, afterEval?.cp ?? (ply > 0 ? results[ply - 1]?.cpAfter ?? 20 : 20));
+          const evalBeforeMover = move.color === "w" ? cpBefore : -cpBefore;
+          const evalAfterMover = move.color === "w" ? cpAfter : -cpAfter;
+          const cpLoss = Math.max(0, evalBeforeMover - evalAfterMover);
+          const isBestMove = beforeEval?.bestMove === move.uci ||
+            (beforeEval?.bestMove && move.uci?.startsWith(beforeEval.bestMove.slice(0, 4)) && cpLoss <= 5);
+          const classification = classifyMoveQuality({
             cpLoss,
-            evalBefore: cpBefore,
-            evalAfter: cpAfter,
+            isBestMove: !!isBestMove,
+            evalBeforeMover,
+            evalAfterMover,
+            fenBefore,
+            moveUci: move.uci ?? null,
+            moveIndex: ply,
+          });
+          const bestMoveSan = toSan(fenBefore, beforeEval?.bestMove ?? null);
+
+          const topLines = topMoves.slice(0, 3).map((l: any) => ({
+            uci: l.bestMove ?? "",
+            san: toSan(fenBefore, l.bestMove ?? null),
+            cp: l.cp,
+            mateIn: l.mateIn ?? null,
+            pv: l.pvMoves ?? [],
+          }));
+
+          results.push({
+            ply,
+            san: move.san,
+            fenBefore,
+            fenAfter,
+            cpBefore,
+            cpAfter,
+            cpLoss,
+            classification,
+            bestMove: beforeEval?.bestMove ?? null,
             bestMoveSan,
+            topLines,
+            uci: move.uci ?? "",
+            commentary: buildMoveQualityCommentary({
+              classification,
+              cpLoss,
+              evalBefore: cpBefore,
+              evalAfter: cpAfter,
+              bestMoveSan,
+            }),
+          });
+        }
+
+        if (cancelled) return;
+        setAllEvals(results);
+        setBatchAnalyzing(false);
+        setEvalHistory(results.map((r) => r.cpAfter));
+
+        // Fire LLM
+        setLlmLoading(true);
+        const llmTimeout = setTimeout(() => { setLlmLoading(false); }, 30000);
+        const allMoves = results.map((r: any) => ({
+          ply: r.ply,
+          san: r.san,
+          color: r.ply % 2 === 0 ? "w" : "b",
+          classification: r.classification,
+          cpLoss: Math.round(r.cpLoss),
+          evalBefore: r.cpBefore,
+          evalAfter: r.cpAfter,
+        }));
+        const blunders = results.filter((r: any) => r.classification === "blunder").length;
+        const brilliants = results.filter((r: any) => r.classification === "brilliant").length;
+        const avgLoss = results.reduce((s: number, r: any) => s + r.cpLoss, 0) / Math.max(1, results.length);
+        const accuracy = Math.round(Math.max(0, Math.min(100, 100 - avgLoss / 5)));
+
+        fetch("/api/review/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            white: meta?.white ?? "?",
+            black: meta?.black ?? "?",
+            result: meta?.result ?? "*",
+            totalMoves: parsedMoves.length,
+            moves: allMoves,
+            blunderCount: blunders,
+            brilliantCount: brilliants,
+            accuracy,
           }),
-        });
-      }
-
-      if (cancelled) return;
-      setAllEvals(results);
-      setBatchAnalyzing(false);
-      setEvalHistory(results.map((r) => r.cpAfter));
-
-      // Now fire LLM with all the data
-      setLlmLoading(true);
-      const llmTimeout = setTimeout(() => { setLlmLoading(false); }, 30000);
-      const allMoves = results.map((r: any) => ({
-        ply: r.ply,
-        san: r.san,
-        color: r.ply % 2 === 0 ? "w" : "b",
-        classification: r.classification,
-        cpLoss: Math.round(r.cpLoss),
-        evalBefore: r.cpBefore,
-        evalAfter: r.cpAfter,
-      }));
-      const blunders = results.filter((r: any) => r.classification === "blunder").length;
-      const brilliants = results.filter((r: any) => r.classification === "brilliant").length;
-      const avgLoss = results.reduce((s: number, r: any) => s + r.cpLoss, 0) / Math.max(1, results.length);
-      const accuracy = Math.round(Math.max(0, Math.min(100, 100 - avgLoss / 5)));
-
-      fetch("/api/review/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          white: meta?.white ?? "?",
-          black: meta?.black ?? "?",
-          result: meta?.result ?? "*",
-          totalMoves: parsedMoves.length,
-          moves: allMoves,
-          blunderCount: blunders,
-          brilliantCount: brilliants,
-          accuracy,
-        }),
-      }).then((r) => r.ok ? r.json() : null).then((data) => {
-        if (data?.summary) { setLlmSummary(data); setLlmCommentary(data.commentary ?? {}); setShowCoachModal(true); }
-      }).catch(() => {}).finally(() => { clearTimeout(llmTimeout); if (!cancelled) setLlmLoading(false); });
+        }).then((r) => r.ok ? r.json() : null).then((data) => {
+          if (data?.summary) { setLlmSummary(data); setLlmCommentary(data.commentary ?? {}); setShowCoachModal(true); }
+        }).catch(() => {}).finally(() => { clearTimeout(llmTimeout); if (!cancelled) setLlmLoading(false); });
       } catch (e) {
         if (!cancelled) { setBatchAnalyzing(false); setLlmLoading(false); }
       }
     })();
     return () => { cancelled = true; };
   }, [gameLoaded, parsedMoves, meta]);
+
+  // Auto-scroll move list to current move
+  useEffect(() => {
+    if (!moveListRef.current || currentPly === 0) return;
+    const el = moveListRef.current;
+    const row = el.children[Math.floor((currentPly - 1) / 2)] as HTMLElement | undefined;
+    if (row) {
+      const rowTop = row.offsetTop;
+      const rowHeight = row.offsetHeight;
+      const viewTop = el.scrollTop;
+      const viewHeight = el.clientHeight;
+      if (rowTop < viewTop || rowTop + rowHeight > viewTop + viewHeight) {
+        el.scrollTo({ top: rowTop - viewHeight / 2 + rowHeight, behavior: "smooth" });
+      }
+    }
+  }, [currentPly]);
 
   // Current move data from pre-computed allEvals
   const lastMove = currentPly > 0 ? parsedMoves[currentPly - 1] : null;
@@ -352,10 +405,8 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
     return parsedMoves[currentPly - 1]?.fenAfter ?? new Chess().fen();
   }, [parsedMoves, currentPly]);
 
-  // The FEN to display: either current game position or PV animation position
   const displayFen = pvFenIndex >= 0 && playingPv ? playingPv.fens[pvFenIndex] : currentFen;
 
-  // Derive judgement from pre-computed eval
   const judgement = useMemo(() => {
     if (!currentMoveEval) return null;
     return {
@@ -371,7 +422,6 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
     };
   }, [currentMoveEval]);
 
-  // Best move arrow: green arrow from source to dest if the player didn't play the best move
   const bestMoveArrow = useMemo(() => {
     if (!currentMoveEval || !currentMoveEval.bestMove || currentMoveEval.bestMove === currentMoveEval.uci) return [];
     const uci = currentMoveEval.bestMove;
@@ -379,18 +429,15 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
     return [[uci.slice(0, 2), uci.slice(2, 4), "rgba(34,197,94,0.7)"]] as any;
   }, [currentMoveEval]);
 
-  // Update prev move squares when current ply changes
   useEffect(() => {
     if (currentMoveEval) {
       setPrevMoveSquares([currentMoveEval.uci.slice(0, 2), currentMoveEval.uci.slice(2, 4)]);
     } else {
       setPrevMoveSquares([]);
     }
-    // Stop PV playback when navigating
     if (playingPv) setPlayingPv(null);
   }, [currentMoveEval]);
 
-  // Square styles: last move highlight
   const squareStyles = useMemo(() => {
     const styles: Record<string, CSSProperties> = {};
     if (prevMoveSquares.length >= 2) {
@@ -400,7 +447,6 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
     return styles;
   }, [prevMoveSquares]);
 
-  // Piece badge on the destination square
   const customSquareRenderer = useMemo(() => {
     return ((props: any) => {
       const square = props?.square as string | undefined;
@@ -434,6 +480,24 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
 
   useEffect(() => { window.addEventListener("keydown", keyboardHandler); return () => window.removeEventListener("keydown", keyboardHandler); }, [keyboardHandler]);
 
+  // Stats
+  const stats = useMemo(() => {
+    if (allEvals.length === 0) return null;
+    const blunders = allEvals.filter((r) => r.classification === "blunder").length;
+    const mistakes = allEvals.filter((r) => r.classification === "mistake").length;
+    const inaccuracies = allEvals.filter((r) => r.classification === "inaccuracy").length;
+    const brilliants = allEvals.filter((r) => r.classification === "brilliant").length;
+    const avgLoss = allEvals.reduce((s, r) => s + r.cpLoss, 0) / allEvals.length;
+    const accuracy = Math.round(Math.max(0, Math.min(100, 100 - avgLoss / 5)));
+    return { blunders, mistakes, inaccuracies, brilliants, accuracy };
+  }, [allEvals]);
+
+  // Coach commentary for current move
+  const coachCommentary = useMemo(() => {
+    if (currentPly === 0) return null;
+    return llmCommentary[currentPly - 1] ?? null;
+  }, [llmCommentary, currentPly]);
+
   if (!gameLoaded) {
     return (
       <div className="mx-auto max-w-2xl space-y-4">
@@ -461,7 +525,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+    <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
       {/* Board panel */}
       <div className="space-y-4">
         {/* Game header */}
@@ -470,31 +534,45 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
             <p className="text-sm font-bold text-white">{meta?.white ?? "?"} vs {meta?.black ?? "?"}</p>
             <p className="text-xs text-slate-400">{meta?.result ?? "*"} · {parsedMoves.length} moves</p>
           </div>
-          {batchAnalyzing && <span className="rounded-full bg-amber-500/10 px-3 py-1 text-[10px] text-amber-300">Analyzing {allEvals.length}/{parsedMoves.length} moves...</span>}
-          {!batchAnalyzing && llmLoading && <span className="rounded-full bg-sky-500/10 px-3 py-1 text-[10px] text-sky-300">Coach analyzing...</span>}
+          {batchAnalyzing && (
+            <span className="rounded-full bg-amber-500/10 px-3 py-1 text-[10px] text-amber-300">
+              Analyzing {allEvals.length}/{parsedMoves.length}...
+            </span>
+          )}
+          {!batchAnalyzing && llmLoading && (
+            <span className="rounded-full bg-sky-500/10 px-3 py-1 text-[10px] text-sky-300">Coach analyzing...</span>
+          )}
           {!batchAnalyzing && !llmLoading && llmSummary && (
             <button onClick={() => setShowCoachModal(true)}
-              className="rounded-full bg-sky-500/15 px-3 py-1 text-[10px] font-semibold text-sky-300 transition hover:bg-sky-500/25">
-              🧠 Coach
+              className="rounded-full bg-orange-500/15 px-3 py-1 text-[10px] font-semibold text-orange-300 transition hover:bg-orange-500/25">
+              Coach Notes
             </button>
           )}
         </div>
 
-        {/* LLM Summary */}
-        {llmSummary && (
-          <div className="rounded-2xl border border-sky-500/15 bg-gradient-to-r from-sky-500/[0.05] to-transparent p-5">
-            <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-sky-400">Coach Summary</p>
-            <p className="text-sm leading-relaxed text-slate-200">{llmSummary.summary}</p>
-            {llmSummary.verdict && (
-              <p className="mt-2 text-sm font-semibold text-sky-200">&ldquo;{llmSummary.verdict}&rdquo;</p>
-            )}
-            {llmSummary.moveAdvice && (
-              <div className="mt-3 flex flex-wrap gap-2 text-[10px] text-slate-400">
-                {llmSummary.moveAdvice.opening && <span>♟ {llmSummary.moveAdvice.opening}</span>}
-                {llmSummary.moveAdvice.middlegame && <span>⚔ {llmSummary.moveAdvice.middlegame}</span>}
-                {llmSummary.moveAdvice.endgame && <span>🏁 {llmSummary.moveAdvice.endgame}</span>}
-              </div>
-            )}
+        {/* Stats bar */}
+        {stats && (
+          <div className="grid grid-cols-5 gap-2">
+            <div className="rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2 text-center">
+              <p className="text-[10px] text-slate-500">Accuracy</p>
+              <p className="text-sm font-bold text-white">{stats.accuracy}%</p>
+            </div>
+            <div className="rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2 text-center">
+              <p className="text-[10px] text-slate-500">Brilliant</p>
+              <p className="text-sm font-bold text-cyan-300">{stats.brilliants}</p>
+            </div>
+            <div className="rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2 text-center">
+              <p className="text-[10px] text-slate-500">Mistakes</p>
+              <p className="text-sm font-bold text-amber-300">{stats.mistakes}</p>
+            </div>
+            <div className="rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2 text-center">
+              <p className="text-[10px] text-slate-500">Blunders</p>
+              <p className="text-sm font-bold text-red-300">{stats.blunders}</p>
+            </div>
+            <div className="rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2 text-center">
+              <p className="text-[10px] text-slate-500">Moves</p>
+              <p className="text-sm font-bold text-slate-300">{parsedMoves.length}</p>
+            </div>
           </div>
         )}
 
@@ -506,6 +584,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
               position={displayFen}
               boardWidth={boardSize}
               arePiecesDraggable={false}
+              boardOrientation={boardOrientation}
               customBoardStyle={{ borderRadius: "12px", boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}
               customDarkSquareStyle={{ backgroundColor: "#779952" }}
               customLightSquareStyle={{ backgroundColor: "#edeed1" }}
@@ -578,175 +657,168 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
             {judgement.bestMoveSan && judgement.classification !== "best" && judgement.classification !== "book" && (
               <p className="mt-1 text-xs text-emerald-400">Best: {judgement.bestMoveSan} <span className="text-slate-500">(green arrow on board)</span></p>
             )}
-            {/* LLM per-move commentary */}
-            {llmCommentary[currentPly - 1] && (
-              <div className="mt-3 rounded-lg border border-sky-500/10 bg-sky-500/[0.04] p-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-sky-400">Coach</p>
-                <p className="mt-0.5 text-xs leading-relaxed text-slate-300">{llmCommentary[currentPly - 1]}</p>
-              </div>
-            )}
           </div>
         )}
 
         {/* Eval graph */}
         {evalHistory.length > 0 && (
           <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
-            <p className="mb-2 text-xs font-semibold text-slate-400">Evaluation graph</p>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-semibold text-slate-400">Evaluation graph</p>
+              <p className="text-[10px] text-slate-500">White advantage →</p>
+            </div>
             <div className="relative h-24 overflow-hidden rounded-lg bg-black/40">
               <svg viewBox={`0 ${-60} ${Math.max(1, evalHistory.length - 1)} 120`} className="h-full w-full" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="evalFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="rgb(249,115,22)" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="rgb(249,115,22)" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
                 <polyline points={evalHistory.map((cp, i) => `${i},${-cp / 30}`).join(" ")}
                   fill="none" stroke="rgb(249, 115, 22)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
                 <line x1="0" y1="0" x2={Math.max(1, evalHistory.length - 1)} y2="0" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+                {/* Fill under curve */}
+                <polygon
+                  points={`0,60 ${evalHistory.map((cp, i) => `${i},${-cp / 30}`).join(" ")} ${evalHistory.length - 1},60`}
+                  fill="url(#evalFill)"
+                />
+                {/* Current position marker */}
+                {currentPly > 0 && (
+                  <circle cx={currentPly - 1} cy={-evalHistory[currentPly - 1] / 30} r="4" fill="rgb(249,115,22)" stroke="white" strokeWidth="1.5" />
+                )}
               </svg>
             </div>
           </div>
         )}
-
-        {/* Coach modal */}
-        {showCoachModal && llmSummary && (
-          <div className="fixed inset-0 z-[100] flex items-start justify-center bg-[rgba(2,6,23,0.82)] px-4 py-8 backdrop-blur-sm sm:items-center" onClick={() => setShowCoachModal(false)}>
-            <div className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-[2rem] border border-sky-500/20 bg-[rgba(6,11,26,0.97)] p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-              <button onClick={() => setShowCoachModal(false)} className="absolute right-4 top-4 text-slate-500 transition hover:text-white">✕</button>
-              <div className="mb-4 flex items-center gap-2">
-                <span className="text-xl">🧠</span>
-                <div>
-                  <p className="text-sm font-bold text-white">Coach Analysis</p>
-                  <p className="text-xs text-slate-400">{meta?.white} vs {meta?.black}</p>
-                </div>
-              </div>
-
-              <p className="mb-4 text-sm leading-relaxed text-slate-200">{llmSummary.summary}</p>
-
-              {llmSummary.verdict && (
-                <div className="mb-4 rounded-xl border border-sky-500/10 bg-sky-500/[0.04] p-4">
-                  <p className="text-sm font-semibold text-sky-200">&ldquo;{llmSummary.verdict}&rdquo;</p>
-                </div>
-              )}
-
-              {llmSummary.moveAdvice && (llmSummary.moveAdvice.opening || llmSummary.moveAdvice.middlegame || llmSummary.moveAdvice.endgame) && (
-                <div className="mb-4 space-y-2">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Phase Advice</p>
-                  {llmSummary.moveAdvice.opening && <p className="rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-slate-300"><span className="font-semibold text-slate-400">Opening:</span> {llmSummary.moveAdvice.opening}</p>}
-                  {llmSummary.moveAdvice.middlegame && <p className="rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-slate-300"><span className="font-semibold text-slate-400">Middlegame:</span> {llmSummary.moveAdvice.middlegame}</p>}
-                  {llmSummary.moveAdvice.endgame && <p className="rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-slate-300"><span className="font-semibold text-slate-400">Endgame:</span> {llmSummary.moveAdvice.endgame}</p>}
-                </div>
-              )}
-
-              {Object.keys(llmCommentary).length > 0 && (
-                <div>
-                  <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Key Move Notes</p>
-                  <div className="space-y-1.5">
-                    {Object.entries(llmCommentary).slice(0, 8).map(([ply, note]) => {
-                      const move = allEvals[parseInt(ply)];
-                      if (!move) return null;
-                      return (
-                        <button key={ply} onClick={() => { setCurrentPly(parseInt(ply) + 1); setShowCoachModal(false); }}
-                          className="flex w-full gap-2 rounded-lg px-3 py-2 text-left text-xs text-slate-300 transition hover:bg-white/[0.04]">
-                          <span className="shrink-0 font-semibold text-slate-500">{Math.floor(parseInt(ply) / 2) + 1}{parseInt(ply) % 2 === 0 ? "." : "..."}</span>
-                          <span>{note}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Move list sidebar */}
+      {/* Right sidebar: Moves */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3">
-          <p className="text-xs font-semibold text-slate-400">Moves</p>
-          <span className="text-xs text-slate-500">{currentPly > 0 ? `${currentPly}/${parsedMoves.length}` : "Start"}</span>
+        {/* Coach (avatar + notes) — fixed height, scrollable so it never shifts layout */}
+        <div className="h-[430px] overflow-y-auto">
+          <VRMCoach
+            classification={judgement?.classification ?? null}
+            commentary={coachCommentary ?? judgement?.commentary ?? null}
+            bestMoveSan={judgement?.bestMoveSan ?? null}
+            cpLoss={judgement?.cpLoss}
+            isVisible={gameLoaded}
+          />
         </div>
-
-        {/* Nav buttons */}
-        <div className="flex items-center justify-center gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3">
-          <button onClick={() => setCurrentPly(0)} disabled={currentPly === 0}
-            className="rounded-lg p-2 text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30"> <ChevronsLeft className="h-4 w-4" /> </button>
-          <button onClick={() => setCurrentPly((p) => Math.max(p - 1, 0))} disabled={currentPly === 0}
-            className="rounded-lg p-2 text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30"> <ChevronLeft className="h-5 w-5" /> </button>
-          <span className="min-w-[80px] text-center text-[11px] font-medium text-slate-400">
-            {currentPly === 0 ? "Start" : `Move ${Math.ceil(currentPly / 2)}`}
-          </span>
-          <button onClick={() => setCurrentPly((p) => Math.min(p + 1, parsedMoves.length))} disabled={currentPly === parsedMoves.length}
-            className="rounded-lg p-2 text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30"> <ChevronRight className="h-5 w-5" /> </button>
-          <button onClick={() => setCurrentPly(parsedMoves.length)} disabled={currentPly === parsedMoves.length}
-            className="rounded-lg p-2 text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30"> <ChevronsRight className="h-4 w-4" /> </button>
-        </div>
-
         {/* Move list */}
-        <div className="max-h-[500px] overflow-y-auto rounded-2xl border border-white/[0.08] bg-white/[0.03]">
-          <div className="divide-y divide-white/[0.04]">
-            {Array.from({ length: Math.ceil(parsedMoves.length / 2) }).map((_, round) => {
-              const wMove = parsedMoves[round * 2];
-              const bMove = parsedMoves[round * 2 + 1];
-              const wPly = round * 2;
-              const bPly = round * 2 + 1;
-              return (
-                <div key={round} className={`grid grid-cols-[40px_1fr_1fr] gap-1 px-3 py-1.5 text-xs transition-colors ${currentPly === wPly + 1 || currentPly === bPly + 1 ? "bg-orange-500/10" : "hover:bg-white/[0.02]"}`}>
-                  <span className="text-slate-500">{round + 1}.</span>
-                  {wMove && (
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03]">
+          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+            <p className="text-xs font-semibold text-slate-400">Moves</p>
+            <span className="text-xs text-slate-500">{currentPly > 0 ? `${currentPly}/${parsedMoves.length}` : "Start"}</span>
+          </div>
+
+          {/* Nav buttons */}
+          <div className="flex items-center justify-center gap-2 border-b border-white/[0.06] px-4 py-2.5">
+            <button onClick={() => setCurrentPly(0)} disabled={currentPly === 0}
+              className="rounded-lg p-2 text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30"> <ChevronsLeft className="h-4 w-4" /> </button>
+            <button onClick={() => setCurrentPly((p) => Math.max(p - 1, 0))} disabled={currentPly === 0}
+              className="rounded-lg p-2 text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30"> <ChevronLeft className="h-5 w-5" /> </button>
+            <span className="min-w-[80px] text-center text-[11px] font-medium text-slate-400">
+              {currentPly === 0 ? "Start" : `Move ${Math.ceil(currentPly / 2)}`}
+            </span>
+            <button onClick={() => setCurrentPly((p) => Math.min(p + 1, parsedMoves.length))} disabled={currentPly === parsedMoves.length}
+              className="rounded-lg p-2 text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30"> <ChevronRight className="h-5 w-5" /> </button>
+            <button onClick={() => setCurrentPly(parsedMoves.length)} disabled={currentPly === parsedMoves.length}
+              className="rounded-lg p-2 text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30"> <ChevronsRight className="h-4 w-4" /> </button>
+          </div>
+
+          {/* Move list */}
+          <div ref={moveListRef} className="max-h-[380px] overflow-y-auto">
+            <div className="divide-y divide-white/[0.04]">
+              {Array.from({ length: Math.ceil(parsedMoves.length / 2) }).map((_, round) => {
+                const wMove = parsedMoves[round * 2];
+                const bMove = parsedMoves[round * 2 + 1];
+                const wPly = round * 2;
+                const bPly = round * 2 + 1;
+                const isCurrentRow = currentPly === wPly + 1 || currentPly === bPly + 1;
+                return (
+                  <div key={round} className={`grid grid-cols-[36px_1fr_1fr] gap-1 px-3 py-2 text-xs transition-colors ${isCurrentRow ? "bg-orange-500/[0.08]" : "hover:bg-white/[0.02]"}`}>
+                    <span className="flex items-center text-slate-500">{round + 1}.</span>
                     <button onClick={() => setCurrentPly(wPly + 1)}
-                      className={`flex items-center gap-1.5 rounded px-1.5 py-1 text-left transition ${currentPly === wPly + 1 ? "bg-orange-500/15" : ""}`}>
-                      <span className="truncate text-white">{wMove.san}</span>
-                      {allEvals[wPly] && (
-                        <span className={`shrink-0 text-[10px] ${
-                          allEvals[wPly].classification === "brilliant" ? "text-cyan-300" :
-                          allEvals[wPly].classification === "best" ? "text-emerald-300" :
-                          allEvals[wPly].classification === "good" ? "text-emerald-200/60" :
-                          allEvals[wPly].classification === "inaccuracy" ? "text-amber-300" :
-                          allEvals[wPly].classification === "mistake" ? "text-orange-300" :
-                          allEvals[wPly].classification === "blunder" ? "text-red-300" :
-                          "text-slate-400"
-                        }`}>
-                          {allEvals[wPly].classification === "brilliant" ? "💎" :
-                           allEvals[wPly].classification === "best" ? "✅" :
-                           allEvals[wPly].classification === "good" ? "👍" :
-                           allEvals[wPly].classification === "inaccuracy" ? "⚠️" :
-                           allEvals[wPly].classification === "mistake" ? "❌" :
-                           allEvals[wPly].classification === "blunder" ? "💀" : ""}
-                        </span>
-                      )}
+                      className={`flex min-w-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-left transition ${currentPly === wPly + 1 ? "bg-orange-500/15 text-orange-200" : "text-white hover:bg-white/[0.04]"}`}>
+                      <span className="min-w-[3ch] truncate font-medium">{wMove.san}</span>
+                      <span className={`ml-auto h-2 w-2 shrink-0 rounded-full ${allEvals[wPly] ? (CLASSIFICATION_DOT[allEvals[wPly].classification as MoveClassification] ?? "bg-slate-500") : "bg-transparent"}`} />
                     </button>
-                  )}
-                  {bMove ? (
-                    <button onClick={() => setCurrentPly(bPly + 1)}
-                      className={`flex items-center gap-1.5 rounded px-1.5 py-1 text-left transition ${currentPly === bPly + 1 ? "bg-orange-500/15" : ""}`}>
-                      <span className="truncate text-white">{bMove.san}</span>
-                      {allEvals[bPly] && (
-                        <span className={`shrink-0 text-[10px] ${
-                          allEvals[bPly].classification === "brilliant" ? "text-cyan-300" :
-                          allEvals[bPly].classification === "best" ? "text-emerald-300" :
-                          allEvals[bPly].classification === "good" ? "text-emerald-200/60" :
-                          allEvals[bPly].classification === "inaccuracy" ? "text-amber-300" :
-                          allEvals[bPly].classification === "mistake" ? "text-orange-300" :
-                          allEvals[bPly].classification === "blunder" ? "text-red-300" :
-                          "text-slate-400"
-                        }`}>
-                          {allEvals[bPly].classification === "brilliant" ? "💎" :
-                           allEvals[bPly].classification === "best" ? "✅" :
-                           allEvals[bPly].classification === "good" ? "👍" :
-                           allEvals[bPly].classification === "inaccuracy" ? "⚠️" :
-                           allEvals[bPly].classification === "mistake" ? "❌" :
-                           allEvals[bPly].classification === "blunder" ? "💀" : ""}
-                        </span>
-                      )}
-                    </button>
-                  ) : <span />}
-                </div>
-              );
-            })}
+                    {bMove ? (
+                      <button onClick={() => setCurrentPly(bPly + 1)}
+                        className={`flex min-w-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-left transition ${currentPly === bPly + 1 ? "bg-orange-500/15 text-orange-200" : "text-white hover:bg-white/[0.04]"}`}>
+                        <span className="min-w-[3ch] truncate font-medium">{bMove.san}</span>
+                        <span className={`ml-auto h-2 w-2 shrink-0 rounded-full ${allEvals[bPly] ? (CLASSIFICATION_DOT[allEvals[bPly].classification as MoveClassification] ?? "bg-slate-500") : "bg-transparent"}`} />
+                      </button>
+                    ) : <span />}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        <button onClick={() => { setGameLoaded(false); setParsedMoves([]); setCurrentPly(0); setMeta(null); setEvalHistory([]); setAllEvals([]); }}
+        <button onClick={() => { setGameLoaded(false); setParsedMoves([]); setCurrentPly(0); setMeta(null); setEvalHistory([]); setAllEvals([]); setLlmSummary(null); setLlmCommentary({}); }}
           className="w-full rounded-xl border border-white/[0.08] px-4 py-2.5 text-xs text-slate-400 transition hover:bg-white/[0.04] hover:text-white">
           ← New game
         </button>
       </div>
+
+      {/* Coach modal */}
+      {showCoachModal && llmSummary && (
+        <div className="fixed inset-0 z-[100] flex items-start justify-center bg-[rgba(2,6,23,0.82)] px-4 py-8 backdrop-blur-sm sm:items-center" onClick={() => setShowCoachModal(false)}>
+          <div className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-[2rem] border border-orange-500/20 bg-[rgba(6,11,26,0.97)] p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowCoachModal(false)} className="absolute right-4 top-4 text-slate-500 transition hover:text-white">
+              <X className="h-5 w-5" />
+            </button>
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-orange-500/20 to-red-500/20">
+                <span className="text-lg">🧠</span>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white">Coach Analysis</p>
+                <p className="text-xs text-slate-400">{meta?.white} vs {meta?.black}</p>
+              </div>
+            </div>
+
+            <p className="mb-4 text-sm leading-relaxed text-slate-200">{llmSummary.summary}</p>
+
+            {llmSummary.verdict && (
+              <div className="mb-4 rounded-xl border border-orange-500/10 bg-orange-500/[0.04] p-4">
+                <p className="text-sm font-semibold text-orange-200">&ldquo;{llmSummary.verdict}&rdquo;</p>
+              </div>
+            )}
+
+            {llmSummary.moveAdvice && (llmSummary.moveAdvice.opening || llmSummary.moveAdvice.middlegame || llmSummary.moveAdvice.endgame) && (
+              <div className="mb-4 space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Phase Advice</p>
+                {llmSummary.moveAdvice.opening && <p className="rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-slate-300"><span className="font-semibold text-slate-400">Opening:</span> {llmSummary.moveAdvice.opening}</p>}
+                {llmSummary.moveAdvice.middlegame && <p className="rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-slate-300"><span className="font-semibold text-slate-400">Middlegame:</span> {llmSummary.moveAdvice.middlegame}</p>}
+                {llmSummary.moveAdvice.endgame && <p className="rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-slate-300"><span className="font-semibold text-slate-400">Endgame:</span> {llmSummary.moveAdvice.endgame}</p>}
+              </div>
+            )}
+
+            {Object.keys(llmCommentary).length > 0 && (
+              <div>
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Key Move Notes</p>
+                <div className="space-y-1.5">
+                  {Object.entries(llmCommentary).slice(0, 10).map(([ply, note]) => {
+                    const move = allEvals[parseInt(ply)];
+                    if (!move) return null;
+                    return (
+                      <button key={ply} onClick={() => { setCurrentPly(parseInt(ply) + 1); setShowCoachModal(false); }}
+                        className="flex w-full gap-2 rounded-lg px-3 py-2 text-left text-xs text-slate-300 transition hover:bg-white/[0.04]">
+                        <span className="shrink-0 font-semibold text-slate-500">{Math.floor(parseInt(ply) / 2) + 1}{parseInt(ply) % 2 === 0 ? "." : "..."}</span>
+                        <span>{note}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

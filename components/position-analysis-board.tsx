@@ -59,6 +59,166 @@ type VariationPlaybackState = {
   label: string | null;
 };
 
+/* ================================================================
+ * Move tree — enables Lichess-style branching. Each node is one ply;
+ * `children[0]` is the mainline continuation, further children are
+ * variations that deviate from that position.
+ * ================================================================ */
+type MoveNode = {
+  id: string;
+  parentId: string | null;
+  san: string;
+  uci: string;
+  fenBefore: string;
+  fenAfter: string;
+  moveNumber: number;
+  color: "w" | "b";
+  classification?: MoveClassification;
+  cpLoss?: number;
+  bestMoveSan?: string | null;
+  commentary?: string;
+  children: MoveNode[];
+};
+
+type TreeRoot = { children: MoveNode[] };
+
+const ROOT_ID = "__root__";
+
+let __nodeCounter = 0;
+function nextNodeId() {
+  __nodeCounter += 1;
+  return `n${Date.now().toString(36)}_${__nodeCounter}`;
+}
+
+function findNodeInList(nodes: MoveNode[], id: string): MoveNode | null {
+  for (const n of nodes) {
+    if (n.id === id) return n;
+    const inner = findNodeInList(n.children, id);
+    if (inner) return inner;
+  }
+  return null;
+}
+
+function findNode(root: TreeRoot, id: string): MoveNode | null {
+  if (id === ROOT_ID) return null;
+  return findNodeInList(root.children, id);
+}
+
+function childrenOf(root: TreeRoot, id: string): MoveNode[] {
+  if (id === ROOT_ID) return root.children;
+  return findNode(root, id)?.children ?? [];
+}
+
+/** Path of nodes from a root-level move down to (and including) `id`. */
+function pathTo(root: TreeRoot, id: string): MoveNode[] {
+  if (id === ROOT_ID) return [];
+  const out: MoveNode[] = [];
+  const walk = (nodes: MoveNode[]): boolean => {
+    for (const n of nodes) {
+      out.push(n);
+      if (n.id === id) return true;
+      if (walk(n.children)) return true;
+      out.pop();
+    }
+    return false;
+  };
+  walk(root.children);
+  return out;
+}
+
+/** Clone-on-write remove: returns a new root without the node (or same root if absent). */
+function removeNode(root: TreeRoot, id: string): TreeRoot {
+  const walk = (nodes: MoveNode[]): { nodes: MoveNode[]; changed: boolean } => {
+    const idx = nodes.findIndex((n) => n.id === id);
+    if (idx >= 0) {
+      return { nodes: nodes.filter((n) => n.id !== id), changed: true };
+    }
+    let changed = false;
+    const next = nodes.map((n) => {
+      const res = walk(n.children);
+      if (!res.changed) return n;
+      changed = true;
+      return { ...n, children: res.nodes };
+    });
+    return { nodes: changed ? next : nodes, changed };
+  };
+  const res = walk(root.children);
+  return res.changed ? { children: res.nodes } : root;
+}
+
+/** Clone-on-write update: returns a new root with `patch` applied to the node. */
+function updateNode(
+  root: TreeRoot,
+  id: string,
+  patch: Partial<MoveNode>,
+): TreeRoot {
+  const walk = (nodes: MoveNode[]): { nodes: MoveNode[]; changed: boolean } => {
+    let changed = false;
+    const next = nodes.map((n) => {
+      if (n.id === id) {
+        changed = true;
+        return { ...n, ...patch };
+      }
+      const res = walk(n.children);
+      if (!res.changed) return n;
+      changed = true;
+      return { ...n, children: res.nodes };
+    });
+    return { nodes: changed ? next : nodes, changed };
+  };
+  const res = walk(root.children);
+  return res.changed ? { children: res.nodes } : root;
+}
+
+/** Clone-on-write append of `node` under `parentId`. */
+function addNode(root: TreeRoot, parentId: string, node: MoveNode): TreeRoot {
+  if (parentId === ROOT_ID) {
+    return { children: [...root.children, node] };
+  }
+  const walk = (nodes: MoveNode[]): { nodes: MoveNode[]; changed: boolean } => {
+    let changed = false;
+    const next = nodes.map((n) => {
+      if (n.id === parentId) {
+        changed = true;
+        return { ...n, children: [...n.children, node] };
+      }
+      const res = walk(n.children);
+      if (!res.changed) return n;
+      changed = true;
+      return { ...n, children: res.nodes };
+    });
+    return { nodes: changed ? next : nodes, changed };
+  };
+  const res = walk(root.children);
+  return res.changed ? { children: res.nodes } : root;
+}
+
+/** One rendered ply, tagged with whether it starts a new variation line. */
+type FlatPly = {
+  node: MoveNode;
+  depth: number;
+  lineStart: boolean;
+};
+
+/**
+ * Depth-first flatten. Mainline (children[0]) continues the current line;
+ * deeper children start indented variation lines, Lichess-style.
+ */
+function flattenTree(root: TreeRoot): FlatPly[] {
+  const out: FlatPly[] = [];
+  const walk = (nodes: MoveNode[], depth: number) => {
+    nodes.forEach((n, i) => {
+      // Variations (i>0) sit one level deeper than the mainline sibling they
+      // break from, so they render indented under it.
+      const d = i === 0 ? depth : depth + 1;
+      out.push({ node: n, depth: d, lineStart: i > 0 });
+      walk(n.children, d);
+    });
+  };
+  walk(root.children, 0);
+  return out;
+}
+
 const STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 const PUZZLE_BADGE_ASSET: Partial<Record<MoveClassification, string>> = {
@@ -152,10 +312,8 @@ export function PositionAnalysisBoard({
   const [orientation, setOrientation] = useState<"white" | "black">(
     initialOrientation,
   );
-  const [moveHistory, setMoveHistory] = useState<AnalysisMove[]>([]);
-  const [historyStack, setHistoryStack] = useState<string[]>([
-    initialFen || STARTING_FEN,
-  ]);
+  const [tree, setTree] = useState<TreeRoot>({ children: [] });
+  const [cursorId, setCursorId] = useState<string>(ROOT_ID);
   const [fenInput, setFenInput] = useState(initialFen || STARTING_FEN);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [legalTargets, setLegalTargets] = useState<string[]>([]);
@@ -179,12 +337,19 @@ export function PositionAnalysisBoard({
   const moveReviewRequestRef = useRef(0);
   const variationTimeoutRef = useRef<number | null>(null);
 
+  // The active path (line) from the root down to the cursor.
+  const activePath = useMemo(() => pathTo(tree, cursorId), [tree, cursorId]);
+  const lastMove = activePath[activePath.length - 1] ?? null;
+  const currentNode = cursorId === ROOT_ID ? null : findNode(tree, cursorId);
+  const cursorChildren = childrenOf(tree, cursorId);
+  const flatPlies = useMemo(() => flattenTree(tree), [tree]);
+
   useEffect(() => {
     setFen(initialFen || STARTING_FEN);
     setFenInput(initialFen || STARTING_FEN);
     setOrientation(initialOrientation);
-    setMoveHistory([]);
-    setHistoryStack([initialFen || STARTING_FEN]);
+    setTree({ children: [] });
+    setCursorId(ROOT_ID);
     setSelectedSquare(null);
     setLegalTargets([]);
     setLastMoveJudgement(null);
@@ -228,10 +393,9 @@ export function PositionAnalysisBoard({
   }, [fen, engineDepth, variationPlayback.active]);
 
   const currentTurn = fen.includes(" w ") ? "White" : "Black";
-  const lastMove = moveHistory[moveHistory.length - 1] ?? null;
   const boardPosition = useMemo(() => new Chess(fen), [fen]);
   const lastMoveReviewKey = lastMove
-    ? `${lastMove.fenBefore}|${lastMove.fenAfter}|${lastMove.uci}|${moveHistory.length}`
+    ? `${lastMove.fenBefore}|${lastMove.fenAfter}|${lastMove.uci}|${activePath.length}`
     : null;
 
   useEffect(() => {
@@ -286,7 +450,7 @@ export function PositionAnalysisBoard({
           evalAfterMover,
           fenBefore: lastMove.fenBefore,
           moveUci: lastMove.uci,
-          moveIndex: moveHistory.length - 1,
+          moveIndex: activePath.length - 1,
         });
         const bestMoveSan = toSan(lastMove.fenBefore, beforeEval.bestMove);
         const commentary = buildMoveQualityCommentary({
@@ -306,18 +470,14 @@ export function PositionAnalysisBoard({
           bestMoveSan,
           commentary,
         });
-        setMoveHistory((prev) => {
-          if (prev.length === 0) return prev;
-          const next = [...prev];
-          next[next.length - 1] = {
-            ...next[next.length - 1],
+        setTree((prev) =>
+          updateNode(prev, lastMove.id, {
             classification,
             cpLoss,
             bestMoveSan,
             commentary,
-          };
-          return next;
-        });
+          }),
+        );
       })
       .catch(() => {
         if (requestId === moveReviewRequestRef.current) {
@@ -426,13 +586,36 @@ export function PositionAnalysisBoard({
     setLegalTargets([]);
   };
 
+  // Push a move onto the tree. If a child with the same UCI already exists at
+  // the cursor we just descend into it (no duplicate); otherwise we append a
+  // new child — creating a branch when the cursor isn't at a line tip.
   const pushMove = (move: AnalysisMove, nextFen: string) => {
     setFen(nextFen);
     setFenInput(nextFen);
-    setMoveHistory((prev) => [...prev, move]);
-    setHistoryStack((prev) => [...prev, nextFen]);
     setSelectedSquare(null);
     setLegalTargets([]);
+
+    setTree((prev) => {
+      const siblings = childrenOf(prev, cursorId);
+      const existing = siblings.find((c) => c.uci === move.uci);
+      if (existing) {
+        setCursorId(existing.id);
+        return prev;
+      }
+      const node: MoveNode = {
+        id: nextNodeId(),
+        parentId: cursorId === ROOT_ID ? null : cursorId,
+        san: move.san,
+        uci: move.uci,
+        fenBefore: move.fenBefore,
+        fenAfter: move.fenAfter,
+        moveNumber: move.moveNumber,
+        color: move.color,
+        children: [],
+      };
+      setCursorId(node.id);
+      return addNode(prev, cursorId, node);
+    });
   };
 
   const stopVariationPlayback = () => {
@@ -508,43 +691,64 @@ export function PositionAnalysisBoard({
     return true;
   };
 
-  const undoMove = () => {
+  // Move the cursor to a node and sync the board to its position.
+  const goToNode = (id: string) => {
     stopVariationPlayback();
-
-    if (historyStack.length <= 1) return;
-
-    setHistoryStack((prev) => {
-      const next = prev.slice(0, -1);
-      const fallbackFen = next[next.length - 1] ?? initialFen;
-      setFen(fallbackFen);
-      setFenInput(fallbackFen);
-      return next;
-    });
-    setMoveHistory((prev) => prev.slice(0, -1));
+    const node = id === ROOT_ID ? null : findNode(tree, id);
+    const targetFen = node ? node.fenAfter : initialFen || STARTING_FEN;
+    setCursorId(id);
+    setFen(targetFen);
+    setFenInput(targetFen);
     setSelectedSquare(null);
     setLegalTargets([]);
   };
 
+  const stepBackward = () => {
+    if (cursorId === ROOT_ID) return;
+    goToNode(currentNode?.parentId ?? ROOT_ID);
+  };
+  const stepForward = () => {
+    if (cursorChildren.length === 0) return;
+    goToNode(cursorChildren[0].id);
+  };
+  const goToStart = () => goToNode(ROOT_ID);
+  const goToEnd = () => {
+    let id = cursorId;
+    let kids = childrenOf(tree, id);
+    while (kids.length > 0) {
+      id = kids[0].id;
+      kids = childrenOf(tree, id);
+    }
+    if (id !== cursorId) goToNode(id);
+  };
+
+  // Undo removes the current node (and its subtree) from the tree.
+  const undoMove = () => {
+    stopVariationPlayback();
+    if (cursorId === ROOT_ID) return;
+    const parent = currentNode?.parentId ?? ROOT_ID;
+    setTree((prev) => removeNode(prev, cursorId));
+    goToNode(parent);
+  };
+
   const resetBoard = () => {
     stopVariationPlayback();
-
+    setTree({ children: [] });
+    setCursorId(ROOT_ID);
     setFen(initialFen || STARTING_FEN);
     setFenInput(initialFen || STARTING_FEN);
-    setMoveHistory([]);
-    setHistoryStack([initialFen || STARTING_FEN]);
     setSelectedSquare(null);
     setLegalTargets([]);
   };
 
   const applyFenInput = () => {
     stopVariationPlayback();
-
     try {
       const chess = new Chess(fenInput.trim());
       const nextFen = chess.fen();
       setFen(nextFen);
-      setHistoryStack([nextFen]);
-      setMoveHistory([]);
+      setTree({ children: [] });
+      setCursorId(ROOT_ID);
       setSelectedSquare(null);
       setLegalTargets([]);
     } catch {
@@ -625,30 +829,56 @@ export function PositionAnalysisBoard({
     }
   };
 
-  const rows = useMemo(() => {
-    const result: Array<{
-      moveNumber: number;
-      white?: AnalysisMove;
-      black?: AnalysisMove;
-    }> = [];
+  // Group the flattened tree into move-number rows for each line. Variations
+  // render as their own indented block (Lichess-style), with a leading "…"
+  // cell when the line starts on Black's move.
+  type RenderRow = {
+    key: string;
+    depth: number;
+    lineStart: boolean;
+    moveNumber: number;
+    white?: FlatPly;
+    black?: FlatPly;
+  };
 
-    for (const move of moveHistory) {
-      const lastRow = result[result.length - 1];
-      if (!lastRow || lastRow.moveNumber !== move.moveNumber) {
-        result.push({
-          moveNumber: move.moveNumber,
-          white: move.color === "w" ? move : undefined,
-          black: move.color === "b" ? move : undefined,
-        });
+  const renderRows = useMemo(() => {
+    const result: RenderRow[] = [];
+    let pending: RenderRow | null = null;
+
+    for (const ply of flatPlies) {
+      const cur = pending;
+      const needsNewRow =
+        !cur ||
+        ply.lineStart ||
+        cur.moveNumber !== ply.node.moveNumber ||
+        (ply.node.color === "w" && !!cur.white) ||
+        (ply.node.color === "b" && !!cur.black);
+
+      if (needsNewRow) {
+        if (cur) result.push(cur);
+        pending = {
+          key: ply.node.id,
+          depth: ply.depth,
+          lineStart: ply.lineStart,
+          moveNumber: ply.node.moveNumber,
+          white: ply.node.color === "w" ? ply : undefined,
+          black: ply.node.color === "b" ? ply : undefined,
+        };
         continue;
       }
 
-      if (move.color === "w") lastRow.white = move;
-      else lastRow.black = move;
+      if (ply.node.color === "w") cur.white = ply;
+      else cur.black = ply;
+      cur.lineStart = cur.lineStart || ply.lineStart;
     }
-
+    if (pending) result.push(pending);
     return result;
-  }, [moveHistory]);
+  }, [flatPlies]);
+
+  const onPathSet = useMemo(
+    () => new Set(activePath.map((n) => n.id)),
+    [activePath],
+  );
 
   const topLineSummary = topLines.map((line, index) => ({
     key: `${line.bestMove ?? "none"}-${index}`,
@@ -752,10 +982,49 @@ export function PositionAnalysisBoard({
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={goToStart}
+                  disabled={cursorId === ROOT_ID}
+                  title="Go to start"
+                  className="rounded-lg border border-white/[0.1] bg-white/[0.04] px-2.5 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  ⇤
+                </button>
+                <button
+                  type="button"
+                  onClick={stepBackward}
+                  disabled={cursorId === ROOT_ID}
+                  title="Previous move"
+                  className="rounded-lg border border-white/[0.1] bg-white/[0.04] px-2.5 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  ←
+                </button>
+                <button
+                  type="button"
+                  onClick={stepForward}
+                  disabled={cursorChildren.length === 0}
+                  title="Next move"
+                  className="rounded-lg border border-white/[0.1] bg-white/[0.04] px-2.5 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  →
+                </button>
+                <button
+                  type="button"
+                  onClick={goToEnd}
+                  disabled={cursorChildren.length === 0}
+                  title="Go to end of line"
+                  className="rounded-lg border border-white/[0.1] bg-white/[0.04] px-2.5 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  ⇥
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={undoMove}
-                disabled={moveHistory.length === 0}
+                disabled={cursorId === ROOT_ID}
+                title="Delete this move and its continuation"
                 className="rounded-lg border border-white/[0.1] bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Undo
@@ -950,72 +1219,84 @@ export function PositionAnalysisBoard({
             </p>
           </div>
           <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-slate-300">
-            {moveHistory.length} ply
+            {flatPlies.length} ply
           </span>
         </div>
 
-        <div className="mt-4 max-h-[42rem] overflow-y-auto space-y-2 pr-1">
-          {rows.length > 0 ? (
-            rows.map((row) => (
-              <div
-                key={row.moveNumber}
-                className="grid grid-cols-[2.5rem_minmax(0,1fr)_minmax(0,1fr)] items-start gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2"
-              >
-                <span className="text-xs font-bold text-slate-500">
-                  {row.moveNumber}.
-                </span>
-                <div className="min-w-0">
-                  {row.white ? (
-                    <>
-                      <div className="flex items-center gap-1.5">
-                        <p className="truncate text-sm font-semibold text-white">
-                          {row.white.san}
-                        </p>
-                        {row.white.classification ? (
-                          <span className="shrink-0">
-                            <MoveBadge
-                              classification={row.white.classification}
-                              variant="pill"
-                              className="px-2 py-0.5 text-[10px]"
-                            />
-                          </span>
-                        ) : null}
-                      </div>
-                      <p className="truncate text-[11px] font-mono text-slate-500">
-                        {row.white.uci}
-                      </p>
-                    </>
-                  ) : (
-                    <span className="text-xs text-slate-600">—</span>
-                  )}
+        <div className="mt-4 max-h-[42rem] overflow-y-auto space-y-1.5 pr-1">
+          {renderRows.length > 0 ? (
+            renderRows.map((row) => {
+              const cell = (ply: FlatPly | undefined, showEllipsis: boolean) => {
+                if (!ply) {
+                  return (
+                    <span className="text-xs text-slate-600">
+                      {showEllipsis ? "…" : "—"}
+                    </span>
+                  );
+                }
+                const n = ply.node;
+                const isActive = n.id === cursorId;
+                const onPath = onPathSet.has(n.id);
+                return (
+                  <button
+                    type="button"
+                    onClick={() => goToNode(n.id)}
+                    title={`${n.moveNumber}${n.color === "w" ? "." : "..."} ${n.san}`}
+                    className={`w-full min-w-0 rounded-lg px-1.5 py-1 text-left transition ${
+                      isActive
+                        ? "bg-cyan-500/20 ring-1 ring-cyan-400/40"
+                        : onPath
+                          ? "bg-white/[0.05] hover:bg-white/[0.1]"
+                          : "opacity-60 hover:bg-white/[0.06] hover:opacity-100"
+                    }`}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <span
+                        className={`truncate text-sm font-semibold ${
+                          isActive ? "text-cyan-100" : "text-white"
+                        }`}
+                      >
+                        {n.san}
+                      </span>
+                      {n.classification ? (
+                        <span className="shrink-0">
+                          <MoveBadge
+                            classification={n.classification}
+                            variant="pill"
+                            className="px-2 py-0.5 text-[10px]"
+                          />
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className="block truncate text-[11px] font-mono text-slate-500">
+                      {n.uci}
+                    </span>
+                  </button>
+                );
+              };
+
+              return (
+                <div
+                  key={row.key}
+                  style={{ marginLeft: `${Math.min(row.depth, 6) * 0.9}rem` }}
+                  className={`grid grid-cols-[2.5rem_minmax(0,1fr)_minmax(0,1fr)] items-start gap-2 rounded-xl border px-3 py-1.5 ${
+                    row.depth > 0
+                      ? "border-cyan-500/[0.14] bg-cyan-500/[0.03] border-l-2 border-l-cyan-500/30"
+                      : "border-white/[0.06] bg-white/[0.02]"
+                  }`}
+                >
+                  <span className="text-xs font-bold text-slate-500">
+                    {row.moveNumber}.
+                  </span>
+                  <div className="min-w-0">
+                    {cell(row.white, !row.white && row.depth > 0)}
+                  </div>
+                  <div className="min-w-0">
+                    {cell(row.black, !row.black && row.depth > 0)}
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  {row.black ? (
-                    <>
-                      <div className="flex items-center gap-1.5">
-                        <p className="truncate text-sm font-semibold text-white">
-                          {row.black.san}
-                        </p>
-                        {row.black.classification ? (
-                          <span className="shrink-0">
-                            <MoveBadge
-                              classification={row.black.classification}
-                              variant="pill"
-                              className="px-2 py-0.5 text-[10px]"
-                            />
-                          </span>
-                        ) : null}
-                      </div>
-                      <p className="truncate text-[11px] font-mono text-slate-500">
-                        {row.black.uci}
-                      </p>
-                    </>
-                  ) : (
-                    <span className="text-xs text-slate-600">—</span>
-                  )}
-                </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 text-sm text-slate-400">
               Start playing moves from the board to build a new branch from this

@@ -1,9 +1,25 @@
-import { createClient } from "@libsql/client";
+import { createClient, type Client } from "@libsql/client";
 
-export const turso = createClient({
-  url: process.env.TURSO_URL!,
-  authToken: process.env.TURSO_TOKEN,
-});
+let _turso: Client | null = null;
+
+function getTurso(): Client {
+  if (!_turso) {
+    const url = process.env.TURSO_URL;
+    if (!url) throw new Error("TURSO_URL is not set");
+    _turso = createClient({ url, authToken: process.env.TURSO_TOKEN });
+  }
+  return _turso;
+}
+
+export const turso = {
+  execute: ((
+    arg: string | { sql: string; args?: (string | number)[] },
+    args?: (string | number)[],
+  ) =>
+    typeof arg === "string"
+      ? getTurso().execute(arg, args)
+      : getTurso().execute(arg)) as Client["execute"],
+};
 
 export interface LichessPuzzle {
   id: string;
