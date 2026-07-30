@@ -1,7 +1,7 @@
 ---
 title: "How to Improve at Chess: The Only Guide You Actually Need"
 description: "The most effective path to chess improvement isn't studying harder — it's studying the right things. Here's a structured approach that actually works."
-date: "2026-06-10"
+date: "2026-07-30"
 author: "FireChess Team"
 tags: ["improvement", "fundamentals", "deliberate-practice"]
 ---
@@ -81,7 +81,7 @@ The 1200 player's mistake isn't a lack of chess knowledge — it's a thinking ha
 
 Consider this typical fork pattern that decides games at the club level:
 
-`FEN: r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/2NP4/PPP2PPP/R1BQK2R w KQkq - 0 5`
+<chess-position fen="r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/2NP4/PPP2PPP/R1BQK2R w KQkq - 0 5" orientation="white" caption="White to move in the Italian Game with an early Nc3. The knight on f6 defends h7, which is the key square White targets with ideas like Ng5. Recognising which pieces defend which squares is a pattern that repeats across thousands of openings." ></chess-position>
 
 White can already consider ideas like Ng5 threatening Nxf7, or simply continue development. The key is recognising that the knight on f6 is the only defender of h7 — a pattern that repeats across thousands of games.
 
@@ -105,7 +105,7 @@ Not "plug it into an engine and click through the moves." Real analysis:
 
 The game analysis process builds the mental library you need to stop repeating the same mistakes. Without it, you're playing 500 games and making the same error on move 20 all 500 times.
 
-[Use our game analyzer](/analyze) to break down your games move by move and identify the exact moments where your win probability shifted.
+[Use our game analyzer](/analyze) to break down your games move by move and identify the exact moments where your win probability shifted. If you're not sure what those engine numbers mean, our guide to [average centipawn loss](/blog/average-centipawn-loss-guide) explains how to interpret the accuracy metrics — and what your ACPL says about your rating.
 
 ### 3. Opening Basics — Not Memorization
 
@@ -129,7 +129,7 @@ The endgames you *must* know:
 
 Here's a position every player at 1500+ should know cold:
 
-`FEN: 4k3/8/8/8/8/8/4P3/4K3 w - - 0 1`
+<chess-position fen="4k3/8/8/8/8/8/4P3/4K3 w - - 0 1" orientation="white" caption="White to move. This king and pawn endgame is a must-know position. White wins by seizing the opposition: 1.Kd2! Ke7 2.Ke3! Kf6 3.Kf4! — the king approaches and promotes the pawn. Without knowing this technique, players routinely draw or even lose won endings." ></chess-position>
 
 White's only winning plan involves the opposition. If you don't know how to play this, you're likely to draw — or even lose — a position that should be a routine win.
 
@@ -276,27 +276,39 @@ The gap isn't about talent. It's about whether you're practising or just playing
 
 ## Frequently Asked Questions
 
-### 1. How long does it take to reach 1500 Elo?
+### Q: How long does it take to reach 1500 Elo?
 
 For a player doing deliberate practice (structured tactics, game analysis, and basic endgame study) for 4–6 hours per week, reaching 1500 from a starting point of 800–1000 typically takes 6–12 months. The key variable isn't IQ or "talent" — it's consistency. Players who skip weeks lose progress. Players who do a little every day compound their gains.
 
 We've written a detailed breakdown of the [1200 to 1500 journey](/blog/chess-rating-1200-to-1500) that covers the specific skills and habits needed for that critical rating band.
 
-### 2. Should I study openings if I'm under 1200?
+### Q: Should I study openings if I'm under 1200?
 
 No. If you're under 1200, your games are decided by tactics — hanging pieces, missed captures, and basic forks — not by whether you played the Najdorf correctly on move 12. Spend that opening study time on puzzles instead. Focus on learning one or two openings to a depth of 6–8 moves so you reach a playable middlegame, and put the rest of your time into tactics and game analysis. A 1100-rated player who knows 20 moves of the Berlin Defence but misses a knight fork on move 25 hasn't gained anything.
 
-### 3. Is it worth paying for a chess coach?
+### Q: Is it worth paying for a chess coach?
 
 A good coach accelerates improvement dramatically — they can spot blind spots in your thinking that self-analysis never catches. However, a coach is only valuable if you're already doing the basics: solving tactics daily, analysing your own games before the session, and playing thoughtful time controls. A coach is an accelerator, not a substitute for personal work. For players under 1500 who are not yet doing structured self-study, a coach is usually premature. Start with the free tools available on [FireChess](/analyze) and consider coaching once you've hit a plateau that self-analysis can't break.
 
-### 4. How many puzzles should I do per day?
+### Q: How many puzzles should I do per day?
 
 Quality over quantity — 15–20 well-solved puzzles per day beats 100 rapidly-guessed ones. The key metric is not "how many puzzles did I do" but "how many patterns can I now recognise in my games." If you can do 15 puzzles and explain the winning idea behind each one without looking at the board again, that's more valuable than clicking through 100 puzzle rush positions. Use spaced repetition to revisit puzzles you got wrong. A single puzzle understood deeply is worth ten skimmed.
 
-### 5. Why did my rating drop after I started studying?
+### Q: Why did my rating drop after I started studying?
 
 This is extremely common and completely normal. When you start studying deliberately, you often become *less* confident in your decisions because you're now aware of things you weren't before — tactical risks, positional subtleties, endgame nuances. Your rating may temporarily drop 50–100 points while your conscious understanding outpaces your instinct. This is called the "conscious competence" phase, and it's a sign of progress, not regression. Stick with it. Your rating will climb back past your old peak within weeks as the new patterns become automatic.
+
+### Q: What is average centipawn loss and how does it relate to chess improvement?
+
+Average centipawn loss (ACPL) measures how many evaluation points you lose per move compared to the engine's best move. A lower ACPL means more accurate play. For club players, the typical ACPL ranges from 40-80 depending on rating — [our detailed ACPL breakdown](/blog/average-centipawn-loss-by-rating) shows exactly where you stand. Tracking your ACPL over time is one of the most reliable ways to measure whether your improvement efforts are working.
+
+### Q: What does average centipawn loss mean for my rating?
+
+Your average centipawn loss is directly correlated with your rating. Players rated 1000-1200 typically have an ACPL of 70-100, while 1600-1800 players average 30-50. If your ACPL is higher than the typical range for your rating, you're likely losing games to blunders rather than strategic mistakes. [Upload your games to FireChess](/analyze) to see your ACPL and find the specific moves that are costing you the most points.
+
+### Q: How do I use game analysis to improve my chess rating?
+
+The most effective analysis workflow is: play a game, review it yourself first without an engine, then compare your assessment to the engine's evaluation. Focus on the moves where your evaluation differed most from the engine's — those are your blind spots. [FireChess's analysis tool](/analyze) automates this by flagging your biggest centipawn-loss moves and grouping them by opening, middlegame, and endgame phase, so you know exactly which phase to study next.
 
 ## The Five Worst Time-Wasters in Chess Improvement
 
@@ -332,7 +344,7 @@ Breaking through requires diagnosis first. What's actually costing you points? I
 
 The answer is different for every player, and the only way to find it is to analyze the games where you lost points — not to study whatever feels interesting or comfortable.
 
-Ready to break your plateau? [Analyze your games with FireChess](/analyze) and get a data-driven picture of where your rating is actually leaking.
+Ready to break your plateau? [Analyze your games with FireChess](/analyze) and get a data-driven picture of where your rating is actually leaking. Not sure what the numbers mean? Start with our explainer on [what centipawn loss is](/blog/what-is-centipawn-loss) — it's the single metric that best predicts your rating band.
 
 ---
 
