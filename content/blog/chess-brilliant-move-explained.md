@@ -1,7 +1,7 @@
 ---
 title: "Brilliant Moves in Chess: What They Are and How to Find Them"
 description: "What makes a move 'brilliant' in chess? How do Stockfish and Chess.com detect them, and can you train yourself to find brilliant moves more often?"
-date: "2026-06-16"
+date: "2026-07-31"
 author: "FireChess Team"
 tags: ["analysis", "tactics", "improvement", "stockfish"]
 ---
@@ -409,25 +409,43 @@ The players who find the most brilliant moves in amateur games are rarely the on
 
 ## Frequently Asked Questions
 
-### 1. Do all chess platforms use the same criteria for brilliant moves?
+### Q: Do all chess platforms use the same criteria for brilliant moves?
 
 No. Chess.com, Lichess, and FireChess each have slightly different thresholds. Chess.com's algorithm has changed over the years — early implementations were more generous, awarding brilliants for sacrifices that maintained any advantage. Modern versions (post-2023) are stricter: the sacrifice must be the *only* good move, and the gap between the best and second-best move must be substantial. FireChess uses a similar approach but exposes the centipawn threshold in the analysis settings so power users can tune the sensitivity.
 
-### 2. Can a blunder ever be flagged as brilliant?
+### Q: Can a blunder ever be flagged as brilliant?
 
 In well-tuned engines: no. A sacrifice that loses material without sufficient compensation will fail the "maintains or improves advantage" check and be classified as a blunder or mistake. However, if an engine runs at insufficient depth (e.g., depth 12 instead of depth 24), it might mis-evaluate a sacrificial line and incorrectly award a brilliant. That's why platforms run deep analysis before assigning classifications.
 
-### 3. Why don't opening moves ever receive brilliant tags?
+### Q: Why don't opening moves ever receive brilliant tags?
 
 Brilliant moves are, by definition, non-obvious. Opening moves that reach depth 10+ of established theory fall under "book" classification — the engine considers them neither brilliant nor bad because they're following known theory. However, an *innovation* in a well-known opening — a novelty that sacrifices a pawn for an attack and is the engine's top choice — can absolutely earn a brilliant tag. The key is that the move breaks from known theory in a way that is both correct and surprising.
 
-### 4. Is it possible to get more than one brilliant move in a single game?
+### Q: Is it possible to get more than one brilliant move in a single game?
 
 Yes, though it's rare. Grandmaster games occasionally feature two or three brilliants when the game involves complex, multi-phase sacrifices. For example, a game might have one brilliant sacrificial attack in the middlegame and another brilliant defensive resource (a quiet retreat that's the only move to avoid checkmate) in the endgame. The FireChess record for most brilliants in a single analyzed amateur game is 4, in a 40-move game that involved three consecutive piece sacrifices.
 
-### 5. Can Stockfish or other engines find brilliant moves *themselves* during play?
+### Q: Can Stockfish or other engines find brilliant moves *themselves* during play?
 
 Stockfish does not "hunt" for brilliant moves during play — it simply finds the best move at each turn. Brilliant classification is a *post-hoc* analysis applied after the game. When analyzing, Stockfish re-evaluates the position at higher depth and in Multi-PV mode to calculate the gap between the first and second-best move. During live play, Stockfish only computes the single best line (Single-PV mode) for performance reasons. So the engine plays brilliant moves without knowing they're brilliant — only the post-game analysis reveals the diamond.
+
+
+
+### Q: How does centipawn loss affect brilliant move detection?
+
+Centipawn loss is central to how engines decide if a move is brilliant. The engine measures the gap between the best move and the second-best move — if that gap is 100-200+ centipawns and the best move involves a sacrifice, it earns the brilliant tag. A player with high [average centipawn loss](/blog/what-is-centipawn-loss) is less likely to find brilliant moves because they're not reaching positions where deep sacrifices work. Lower ACPL means you're creating the kinds of sharp positions where brilliants become possible.
+
+### Q: What is average centipawn loss and how does it relate to move quality?
+
+[Average centipawn loss (ACPL)](/blog/average-centipawn-loss-guide) measures how many centipawns of evaluation you lose per move on average compared to the engine's best choice. A player averaging 30 ACPL is making mostly accurate moves with occasional small errors, while a player at 80 ACPL frequently misses the best move by a significant margin. The relationship is inverse: the lower your ACPL, the more often you're playing engine-approved moves — and occasionally, those moves will be brilliant.
+
+### Q: How can I lower my centipawn loss to find better moves?
+
+The most effective way to lower your [centipawn loss](/blog/average-centipawn-loss-by-rating) is to slow down in tactical positions and calculate forcing sequences (checks, captures, threats) before committing. Upload your games to [FireChess's analyzer](/analyze) and look at the moves flagged with inaccuracy (?!) and mistake (?) badges — those represent your biggest centipawn leaks. Fixing just 2-3 recurring mistake patterns per game can drop your ACPL by 15-20 points.
+
+### Q: What ACPL should I have at my rating level?
+
+ACPL benchmarks vary by rating: 800-1000 rated players average 80-120 ACPL, 1200-1400 players average 55-75 ACPL, 1400-1600 players average 40-60 ACPL, and 1800+ players average 25-40 ACPL. These are [benchmarked by rating](/blog/average-centipawn-loss-by-rating) from thousands of FireChess scans. If your ACPL is significantly above the range for your rating, you're leaving points on the table through recurring tactical or positional errors.
 
 ## Putting It All Together
 
