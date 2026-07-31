@@ -19,12 +19,13 @@ const useIsomorphicLayoutEffect =
  */
 export function useBoardSize(
   fallback = 400,
-  opts?: { evalBar?: boolean; minSize?: number },
+  opts?: { evalBar?: boolean; minSize?: number; maxWidth?: number },
 ) {
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(fallback);
   const hasEvalBar = opts?.evalBar !== false;
   const minSize = opts?.minSize ?? 260;
+  const maxWidth = opts?.maxWidth;
 
   useIsomorphicLayoutEffect(() => {
     const el = ref.current;
@@ -44,11 +45,13 @@ export function useBoardSize(
       // Use viewport-relative sizing so the board scales dynamically with any window size.
       const vw = window.innerWidth;
       const vh = window.visualViewport?.height ?? window.innerHeight;
-      // Board should be at most 88% of viewport width (leave side padding)
-      const maxByWidth = vw * 0.88;
-      // Cap by height on ALL screen sizes — subtract enough for navbar + surrounding UI
-      // (navbar ~56px + board chrome above/below ~230px = ~286px; use 280 for a clean number)
-      const maxByHeight = Math.max(260, vh - 280);
+      // Wide screens sit beside text in the learn runner, so cap width usage there.
+      const widthShare = vw >= 1024 ? 0.5 : 0.88;
+      let maxByWidth = vw * widthShare;
+      if (maxWidth != null) maxByWidth = Math.min(maxByWidth, maxWidth);
+      // Cap by height on ALL screen sizes — subtract enough for navbar + surrounding UI.
+      // On /learn we want everything on one screen: reserve ~240px for top bar + controls + padding.
+      const maxByHeight = Math.max(320, vh - 240);
       const maxSize = Math.min(maxByWidth, maxByHeight, fallback);
 
       setSize(Math.max(minSize, Math.min(available, maxSize)));
@@ -67,7 +70,7 @@ export function useBoardSize(
       window.removeEventListener("resize", update);
       window.visualViewport?.removeEventListener("resize", update);
     };
-  }, [fallback, hasEvalBar, minSize]);
+  }, [fallback, hasEvalBar, minSize, maxWidth]);
 
   return { ref, size };
 }

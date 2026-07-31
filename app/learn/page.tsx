@@ -1258,41 +1258,40 @@ const BAND_LABELS: Record<RatingBand, string> = {
 };
 
 const BAND_DESCRIPTIONS: Record<RatingBand, string> = {
-  "800": "Fundamentals — basic tactics and piece safety",
+  "800": "Fundamentals — the moves and basic tactics",
   "1200": "Patterns — pawn structure and coordination",
   "1600": "Strategy — planning and complex positions",
   "2000": "Mastery — initiative, dynamics, and compensation",
 };
 
-const BAND_COLORS: Record<
-  RatingBand,
-  { bg: string; text: string; ring: string; pill: string }
-> = {
-  "800": {
-    bg: "bg-emerald-500/[0.08]",
-    text: "text-emerald-300",
-    ring: "ring-emerald-500/30",
-    pill: "bg-emerald-500/20 text-emerald-300",
-  },
-  "1200": {
-    bg: "bg-sky-500/[0.08]",
-    text: "text-sky-300",
-    ring: "ring-sky-500/30",
-    pill: "bg-sky-500/20 text-sky-300",
-  },
-  "1600": {
-    bg: "bg-amber-500/[0.08]",
-    text: "text-amber-300",
-    ring: "ring-amber-500/30",
-    pill: "bg-amber-500/20 text-amber-300",
-  },
-  "2000": {
-    bg: "bg-purple-500/[0.08]",
-    text: "text-purple-300",
-    ring: "ring-purple-500/30",
-    pill: "bg-purple-500/20 text-purple-300",
-  },
-};
+/* ─────────────────────────────────────────────────────────────── */
+/*  Design tokens — Brilliant-inspired minimalism                 */
+/* ─────────────────────────────────────────────────────────────── */
+
+const LEARN = {
+  // Surfaces
+  bg: "bg-[#0a0a0a]",
+  card: "bg-[#111113]",
+  cardHover: "hover:bg-[#161618]",
+  border: "border-[#1f1f22]",
+  borderSubtle: "border-[#161618]",
+  // Text
+  text: "text-[#e4e4e7]",
+  textMuted: "text-[#8b8b93]",
+  textDim: "text-[#5c5c64]",
+  // Accent — single warm neutral, no gradients
+  accent: "bg-[#e4e4e7]",
+  accentText: "text-[#0a0a0a]",
+  accentHover: "hover:bg-[#ffffff]",
+  // Feedback
+  correct: "bg-[#0c1a12] border-[#14532d]",
+  correctText: "text-[#4ade80]",
+  wrong: "bg-[#1a0c0c] border-[#7f1d1d]",
+  wrongText: "text-[#f87171]",
+  // Insight
+  insight: "bg-[#12141a] border-[#1e293b]",
+  insightText: "text-[#7dd3fc]",
+} as const;
 
 /* ─────────────────────────────────────────────────────────────── */
 /*  LessonBoard                                                     */
@@ -1310,6 +1309,7 @@ function LessonBoard({
   showEval = false,
   badgeSquare,
   badgeClassification,
+  maxWidth,
 }: {
   fen: string;
   orientation?: "white" | "black";
@@ -1322,10 +1322,21 @@ function LessonBoard({
   showEval?: boolean;
   badgeSquare?: string;
   badgeClassification?: MoveClassification;
+  maxWidth?: number;
 }) {
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
-  const { ref, size } = useBoardSize(1200);
+  // Clamp maxWidth by viewport height so board + chrome always fits 100vh.
+  // Board column also carries controls (~90px) + lesson top bar (~57px).
+  const [vh, setVh] = useState(800);
+  useEffect(() => {
+    const upd = () => setVh(window.visualViewport?.height ?? window.innerHeight);
+    upd();
+    window.addEventListener("resize", upd);
+    return () => window.removeEventListener("resize", upd);
+  }, []);
+  const effMax = maxWidth ? Math.min(maxWidth, Math.max(320, vh - 160)) : undefined;
+  const { ref, size } = useBoardSize(1400, { maxWidth: effMax });
   const [evalCp, setEvalCp] = useState<number | null>(null);
 
   useEffect(() => {
@@ -1366,11 +1377,11 @@ function LessonBoard({
   }, [badgeSquare, badgeClassification]);
 
   return (
-    <div className="flex gap-2 items-start">
+    <div ref={ref} className="flex w-full min-w-0 gap-3 items-start justify-center">
       {showEval && <EvalBar evalCp={evalCp} height={size} />}
       <div
-        ref={ref}
-        className="relative flex-1 overflow-hidden rounded-2xl ring-1 ring-white/[0.08]"
+        className="relative shrink-0 overflow-hidden rounded-xl border border-[#1f1f22]"
+        style={{ width: size, height: size }}
       >
         <Chessboard
           position={fen}
@@ -1384,7 +1395,7 @@ function LessonBoard({
           customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
           customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
           customPieces={customPieces}
-          animationDuration={200}
+          animationDuration={250}
           customSquare={squareRenderer as any}
         />
       </div>
@@ -1410,9 +1421,9 @@ function TextSlideView({
 
   if (slide.fen) {
     return (
-      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6">
-        {/* Board — the hero */}
-        <div className="w-full flex justify-center">
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
+        {/* Board — left on desktop, top on mobile */}
+        <div className="w-full min-w-0 flex justify-center lg:w-[54%] lg:shrink-0">
           <LessonBoard
             fen={slide.fen}
             orientation={slide.orientation}
@@ -1420,23 +1431,24 @@ function TextSlideView({
             arrows={slide.arrows}
             draggable={false}
             showEval
+            maxWidth={560}
           />
         </div>
 
-        {/* Text — below board, scrollable if long */}
-        <div className="flex w-full flex-col gap-4 text-center max-h-[35dvh] overflow-y-auto">
-          <h2 className="text-xl font-black tracking-tight text-white leading-snug shrink-0">
+        {/* Text — right column on desktop, scrolls within the viewport */}
+        <div className="flex w-full min-w-0 flex-col items-center gap-4 text-center lg:w-[46%] lg:max-h-full lg:overflow-y-auto lg:items-start lg:text-left lg:pr-1">
+          <h2 className="text-xl font-semibold tracking-tight text-[#e4e4e7] leading-tight shrink-0 lg:text-2xl">
             {slide.heading}
           </h2>
-          <p className="text-[15px] leading-7 text-slate-300 whitespace-pre-line max-w-2xl mx-auto">
+          <p className="text-sm leading-6 text-[#a1a1aa] whitespace-pre-line max-w-xl mx-auto lg:mx-0 lg:text-[15px] lg:leading-7">
             {slide.body}
           </p>
           {slide.insight && (
-            <div className="mx-auto max-w-xl rounded-xl border border-purple-500/25 bg-purple-500/[0.07] px-4 py-3.5">
-              <p className="text-[11px] font-black uppercase tracking-widest text-purple-400 mb-1">
-                💡 Key insight
+            <div className={`w-full max-w-md rounded-xl border ${LEARN.insight} px-4 py-3 lg:max-w-none`}>
+              <p className="text-[11px] font-medium uppercase tracking-wider text-[#7dd3fc] mb-1">
+                Key insight
               </p>
-              <p className="text-sm leading-relaxed text-purple-200/80">
+              <p className="text-sm leading-relaxed text-[#94b8d8]">
                 {slide.insight}
               </p>
             </div>
@@ -1444,9 +1456,9 @@ function TextSlideView({
           <button
             type="button"
             onClick={handleAdvance}
-            className="mx-auto w-full max-w-sm rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-3.5 text-base font-bold text-white shadow-lg shadow-purple-500/20 hover:brightness-110 active:scale-[0.98] transition-all"
+            className={`mt-1 w-full max-w-xs rounded-xl ${LEARN.accent} py-3 text-sm font-semibold ${LEARN.accentText} ${LEARN.accentHover} transition-colors lg:mx-0 shrink-0`}
           >
-            Got it →
+            Continue
           </button>
         </div>
       </div>
@@ -1455,45 +1467,43 @@ function TextSlideView({
 
   if (slide.photo) {
     return (
-      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6">
-        {/* Photo */}
-        <div className="w-full max-w-lg flex flex-col gap-2">
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
+        {/* Photo — left on desktop */}
+        <div className="w-full max-w-lg min-w-0 flex flex-col gap-2 lg:w-[46%] lg:shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={slide.photo.src}
             alt={slide.heading}
-            className="w-full rounded-2xl object-cover"
+            className="w-full rounded-xl object-cover border border-[#1f1f22]"
           />
-          <p className="text-[10px] leading-relaxed text-slate-500 px-0.5">
+          <p className="text-[10px] leading-relaxed text-[#5c5c64] px-0.5">
             {slide.photo.credit}
           </p>
         </div>
-        {/* Text */}
-        <div className="flex w-full flex-col items-center gap-4 text-center max-h-[35dvh] overflow-y-auto">
-          <div className="w-full max-w-lg">
-            <h2 className="text-xl font-black tracking-tight text-white leading-snug shrink-0">
-              {slide.heading}
-            </h2>
-            <p className="mt-2 text-[15px] leading-7 text-slate-300 whitespace-pre-line">
-              {slide.body}
-            </p>
-            {slide.insight && (
-              <div className="mt-4 rounded-xl border border-purple-500/25 bg-purple-500/[0.07] px-4 py-3.5">
-                <p className="text-[11px] font-black uppercase tracking-widest text-purple-400 mb-1">
-                  💡 Key insight
-                </p>
-                <p className="text-sm leading-relaxed text-purple-200/80">
-                  {slide.insight}
-                </p>
-              </div>
-            )}
-          </div>
+        {/* Text — right column */}
+        <div className="flex w-full min-w-0 flex-col items-center gap-4 text-center lg:w-[54%] lg:max-h-full lg:overflow-y-auto lg:items-start lg:text-left lg:pr-1">
+          <h2 className="text-xl font-semibold tracking-tight text-[#e4e4e7] leading-tight shrink-0 lg:text-2xl">
+            {slide.heading}
+          </h2>
+          <p className="text-sm leading-6 text-[#a1a1aa] whitespace-pre-line lg:text-[15px] lg:leading-7">
+            {slide.body}
+          </p>
+          {slide.insight && (
+            <div className={`w-full rounded-xl border ${LEARN.insight} px-4 py-3`}>
+              <p className="text-[11px] font-medium uppercase tracking-wider text-[#7dd3fc] mb-1">
+                Key insight
+              </p>
+              <p className="text-sm leading-relaxed text-[#94b8d8]">
+                {slide.insight}
+              </p>
+            </div>
+          )}
           <button
             type="button"
             onClick={handleAdvance}
-            className="w-full max-w-sm rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-3.5 text-base font-bold text-white shadow-lg shadow-purple-500/20 hover:brightness-110 active:scale-[0.98] transition-all"
+            className={`mt-1 w-full max-w-xs rounded-xl ${LEARN.accent} py-3 text-sm font-semibold ${LEARN.accentText} ${LEARN.accentHover} transition-colors lg:mx-0 shrink-0`}
           >
-            Got it →
+            Continue
           </button>
         </div>
       </div>
@@ -1501,23 +1511,23 @@ function TextSlideView({
   }
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-5 cursor-pointer select-none text-center"
+    <div className="mx-auto flex max-w-2xl flex-col gap-6 cursor-pointer select-none text-center px-4"
       onClick={handleAdvance}
     >
-      <h2 className="text-2xl font-black tracking-tight text-white leading-snug">
+      <h2 className="text-2xl font-semibold tracking-tight text-[#e4e4e7] leading-tight">
         {slide.heading}
       </h2>
 
-      <p className="text-[15px] leading-7 text-slate-300 whitespace-pre-line">
+      <p className="text-[15px] leading-7 text-[#a1a1aa] whitespace-pre-line">
         {slide.body}
       </p>
 
       {slide.insight && (
-        <div className="rounded-2xl border border-purple-500/25 bg-purple-500/[0.07] px-5 py-4">
-          <p className="text-[11px] font-black uppercase tracking-widest text-purple-400 mb-1.5">
-            💡 Key insight
+        <div className="rounded-xl border border-[#1f1f22] bg-[#111113] px-5 py-4 text-left">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-[#5c5c64] mb-1.5">
+            Key idea
           </p>
-          <p className="text-sm leading-relaxed text-purple-200/80">
+          <p className="text-sm leading-relaxed text-[#a1a1aa]">
             {slide.insight}
           </p>
         </div>
@@ -1529,9 +1539,9 @@ function TextSlideView({
           e.stopPropagation();
           handleAdvance();
         }}
-        className="w-full rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-3.5 text-base font-bold text-white shadow-lg shadow-purple-500/20 hover:brightness-110 active:scale-[0.98] transition-all"
+        className={`w-full max-w-xs mx-auto rounded-xl ${LEARN.accent} py-3 text-sm font-semibold ${LEARN.accentText} ${LEARN.accentHover} transition-colors`}
       >
-        I see it →
+        Continue
       </button>
     </div>
   );
@@ -1684,9 +1694,9 @@ function ReplaySlideView({
   const badge = slide.badges?.[idx] ?? autoBadge;
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6">
-      {/* Board + controls */}
-      <div className="w-full flex flex-col items-center gap-4">
+    <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
+      {/* Board + controls — left on desktop */}
+      <div className="w-full min-w-0 flex flex-col items-center gap-4 lg:w-[54%] lg:shrink-0">
         <LessonBoard
           fen={frame.fen}
           orientation={slide.orientation ?? "white"}
@@ -1695,33 +1705,42 @@ function ReplaySlideView({
           showEval
           badgeSquare={badge?.sq}
           badgeClassification={badge?.cls}
+          maxWidth={520}
         />
 
         {/* Move label + counter */}
-        <div className="flex items-center justify-between w-full max-w-[480px] px-1">
-          <span className="text-[13px] font-semibold text-slate-300">
+        <div className="flex items-center justify-between w-full max-w-[520px] px-1">
+          <span className="text-[13px] font-medium text-[#e4e4e7]">
             {moveLabel}
           </span>
-          <span className="text-[11px] text-slate-600">
+          <span className="text-[11px] text-[#5c5c64]">
             {idx} / {frames.length - 1}
           </span>
         </div>
 
-        {/* Playback controls */}
-        <div className="flex items-center justify-center gap-2">
+        {/* Playback controls — minimal icons */}
+        <div className="flex items-center justify-center gap-3">
           <button
             type="button"
             onClick={() => { playSound("select"); setPlaying(false); setIdx(0); }}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.06] text-slate-400 hover:bg-white/[0.10] transition-colors"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-[#5c5c64] hover:text-[#e4e4e7] hover:bg-[#111113] transition-colors"
             title="Reset"
-          >⏮</button>
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-9-7 9-7m10 14l-9-7 9-7" />
+            </svg>
+          </button>
           <button
             type="button"
             onClick={() => { playSound("select"); setPlaying(false); setIdx((i) => Math.max(0, i - 1)); }}
             disabled={idx <= 0}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.06] text-slate-400 hover:bg-white/[0.10] disabled:opacity-30 transition-colors"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-[#5c5c64] hover:text-[#e4e4e7] hover:bg-[#111113] disabled:opacity-30 transition-colors"
             title="Previous move"
-          >◀</button>
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -1729,9 +1748,23 @@ function ReplaySlideView({
               if (done) { setIdx(0); setPlaying(true); }
               else { setPlaying((p) => !p); }
             }}
-            className="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-600 text-white hover:brightness-110 transition-all shadow-lg shadow-purple-500/20"
+            className={`flex h-12 w-12 items-center justify-center rounded-full ${LEARN.accent} ${LEARN.accentText} ${LEARN.accentHover} transition-colors`}
             title={playing ? "Pause" : done ? "Replay" : "Play"}
-          >{playing ? "⏸" : done ? "↺" : "▶"}</button>
+          >
+            {playing ? (
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+              </svg>
+            ) : done ? (
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            )}
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -1740,41 +1773,47 @@ function ReplaySlideView({
               setPlaying(false); setIdx(nextIdx);
             }}
             disabled={done}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.06] text-slate-400 hover:bg-white/[0.10] disabled:opacity-30 transition-colors"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-[#5c5c64] hover:text-[#e4e4e7] hover:bg-[#111113] disabled:opacity-30 transition-colors"
             title="Next move"
-          >▶</button>
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
           <button
             type="button"
             onClick={() => { playSound("select"); setPlaying(false); setIdx(frames.length - 1); }}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.06] text-slate-400 hover:bg-white/[0.10] transition-colors"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-[#5c5c64] hover:text-[#e4e4e7] hover:bg-[#111113] transition-colors"
             title="Skip to end"
-          >⏭</button>
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
       </div>
 
-      {/* Text panel — visible below once replay ends, scrollable */}
-      <div className="flex w-full flex-col items-center gap-4 text-center max-h-[30dvh] overflow-y-auto">
-        <div className="w-full max-w-lg">
-          <h2 className="text-xl font-black tracking-tight text-white leading-snug shrink-0">
-            {slide.heading}
-          </h2>
-          {done ? (
-            <p className="mt-2 text-[15px] leading-7 text-slate-300 whitespace-pre-line">
-              {slide.body}
-            </p>
-          ) : (
-            <p className="mt-2 text-sm text-slate-500">
-              Watch the moves play out, then continue when ready.
-            </p>
-          )}
-        </div>
+      {/* Text panel — right column on desktop, scrolls within viewport */}
+      <div className="flex w-full min-w-0 flex-col items-center gap-4 text-center lg:w-[46%] lg:max-h-full lg:overflow-y-auto lg:items-start lg:text-left lg:pr-1">
+        <h2 className="text-xl font-semibold tracking-tight text-[#e4e4e7] leading-tight shrink-0 lg:text-2xl">
+          {slide.heading}
+        </h2>
+        {done ? (
+          <p className="text-sm leading-6 text-[#a1a1aa] whitespace-pre-line lg:text-[15px] lg:leading-7">
+            {slide.body}
+          </p>
+        ) : (
+          <p className="text-sm text-[#5c5c64]">
+            Watch the moves play out, then continue when ready.
+          </p>
+        )}
         {done && (
           <button
             type="button"
             onClick={() => { playSound("select"); onNext(); }}
-            className="w-full max-w-sm rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-3.5 text-base font-bold text-white shadow-lg shadow-purple-500/20 hover:brightness-110 active:scale-[0.98] transition-all"
+            className={`w-full max-w-xs rounded-xl ${LEARN.accent} py-3 text-sm font-semibold ${LEARN.accentText} ${LEARN.accentHover} transition-colors lg:mx-0 shrink-0`}
           >
-            Got it →
+            Continue
           </button>
         )}
       </div>
@@ -2018,15 +2057,15 @@ function LiveInteractSlide({
 
   if (loadState === "fetching")
     return (
-      <div className="flex flex-col items-center gap-3 py-16">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
-        <p className="text-sm text-slate-500">Loading position…</p>
+      <div className="flex flex-col items-center gap-4 py-16">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#1f1f22] border-t-[#e4e4e7]" />
+        <p className="text-sm text-[#5c5c64]">Loading puzzle…</p>
       </div>
     );
   if (loadState === "error")
     return (
       <div className="flex flex-col items-center gap-4 py-12 text-center">
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-[#5c5c64]">
           Couldn't load puzzle. Try refreshing.
         </p>
         <button
@@ -2035,17 +2074,17 @@ function LiveInteractSlide({
             playSound("select");
             onNext();
           }}
-          className="rounded-xl bg-white/[0.06] px-6 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/[0.1]"
+          className="rounded-xl bg-[#111113] px-6 py-2.5 text-sm font-medium text-[#a1a1aa] hover:bg-[#161618] transition-colors"
         >
-          Skip →
+          Skip
         </button>
       </div>
     );
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6">
-      {/* Board */}
-      <div className="w-full flex justify-center">
+    <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
+      {/* Board — left on desktop */}
+      <div className="w-full min-w-0 flex justify-center lg:w-[54%] lg:shrink-0">
         <LessonBoard
           fen={
             fen || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -2055,52 +2094,51 @@ function LiveInteractSlide({
           onSquareClick={handleSquareClick}
           draggable={triggerPlayed && solveState === "playing"}
           customSquareStyles={sqStyles}
+          maxWidth={560}
         />
       </div>
 
-      {/* Instruction + status — scrollable */}
-      <div className="flex w-full flex-col items-center gap-3 text-center max-h-[30dvh] overflow-y-auto">
-        <div className="w-full max-w-lg">
-          <h2 className="text-xl font-black tracking-tight text-white shrink-0">
-            {slide.heading}
-          </h2>
-          <p className="mt-1 text-sm text-slate-400">{slide.instruction}</p>
-          <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-widest text-slate-600">
-            {!triggerPlayed ? "Opponent is moving…" : `${orientation === "white" ? "White" : "Black"} to move`}
-          </p>
-        </div>
+      {/* Instruction + status — right column on desktop */}
+      <div className="flex w-full min-w-0 flex-col items-center gap-4 text-center lg:w-[46%] lg:max-h-full lg:overflow-y-auto lg:items-start lg:text-left lg:pr-1">
+        <h2 className="text-xl font-semibold tracking-tight text-[#e4e4e7] leading-tight shrink-0 lg:text-2xl">
+          {slide.heading}
+        </h2>
+        <p className="text-sm leading-6 text-[#a1a1aa] lg:text-[15px] lg:leading-7">{slide.instruction}</p>
+        <p className="text-[11px] font-medium uppercase tracking-wider text-[#5c5c64]">
+          {!triggerPlayed ? "Opponent is moving…" : `${orientation === "white" ? "White" : "Black"} to move`}
+        </p>
         {triggerPlayed && solveState === "playing" && (
           <div className="flex items-center gap-2">
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
-                className={`h-2 w-2 rounded-full transition-colors ${i < attempts ? "bg-red-500" : "bg-white/[0.10]"}`}
+                className={`h-1.5 w-1.5 rounded-full transition-colors ${i < attempts ? "bg-[#f87171]" : "bg-[#1f1f22]"}`}
               />
             ))}
             {hintSq && (
-              <span className="ml-1 text-xs text-amber-400">
-                💡 Move the highlighted piece
+              <span className="ml-2 text-xs text-[#fbbf24]">
+                Move the highlighted piece
               </span>
             )}
           </div>
         )}
         {!triggerPlayed && (
-          <p className="text-xs text-slate-600">Opponent&apos;s move is coming…</p>
+          <p className="text-xs text-[#5c5c64]">Opponent&apos;s move is coming…</p>
         )}
         {triggerPlayed && solveState === "playing" && (
-          <p className="text-xs text-slate-600">Find the best move — drag or click</p>
+          <p className="text-xs text-[#5c5c64]">Find the best move — drag or click</p>
         )}
       </div>
 
       {/* Correct modal */}
       {solveState === "correct" && (
         <>
-          <div className="fixed inset-0 z-40 bg-black/50" />
-          <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl border-t border-emerald-500/30 bg-[#060f0a] px-6 pb-10 pt-5">
-            <p className="text-[11px] font-black uppercase tracking-widest text-emerald-500 mb-1.5">
-              ✓ Correct
+          <div className="fixed inset-0 z-40 bg-black/60" />
+          <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl border-t border-[#14532d] bg-[#0c1a12] px-6 pb-10 pt-5">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-[#4ade80] mb-1.5">
+              Correct
             </p>
-            <p className="text-sm leading-relaxed text-slate-200">
+            <p className="text-sm leading-relaxed text-[#a1a1aa]">
               {slide.correctExplanation}
             </p>
           </div>
@@ -2323,9 +2361,9 @@ function InteractSlideView({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6">
-      {/* Board */}
-      <div className="w-full flex justify-center">
+    <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
+      {/* Board — left on desktop */}
+      <div className="w-full min-w-0 flex justify-center lg:w-[54%] lg:shrink-0">
         <LessonBoard
           fen={fen}
           orientation={orientation}
@@ -2341,25 +2379,24 @@ function InteractSlideView({
           badgeClassification={
             state === "correct" ? moveClassification : undefined
           }
+          maxWidth={560}
         />
       </div>
 
-      {/* Instruction + status — scrollable */}
-      <div className="flex w-full flex-col items-center gap-3 text-center max-h-[30dvh] overflow-y-auto">
-        <div className="w-full max-w-lg">
-          <h2 className="text-xl font-black tracking-tight text-white shrink-0">
-            {slide.heading}
-          </h2>
-          <p className="mt-1 text-sm text-slate-400">{slide.instruction}</p>
-          <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-widest text-slate-600">
-            {(slide.fen ?? "").split(" ")[1] === "b" ? "Black" : "White"} to move
-          </p>
-        </div>
-        <p className="text-xs text-slate-600">
+      {/* Instruction + status — right column on desktop */}
+      <div className="flex w-full min-w-0 flex-col items-center gap-4 text-center lg:w-[46%] lg:max-h-full lg:overflow-y-auto lg:items-start lg:text-left lg:pr-1">
+        <h2 className="text-xl font-semibold tracking-tight text-[#e4e4e7] leading-tight shrink-0 lg:text-2xl">
+          {slide.heading}
+        </h2>
+        <p className="text-sm leading-6 text-[#a1a1aa] lg:text-[15px] lg:leading-7">{slide.instruction}</p>
+        <p className="text-[11px] font-medium uppercase tracking-wider text-[#5c5c64]">
+          {(slide.fen ?? "").split(" ")[1] === "b" ? "Black" : "White"} to move
+        </p>
+        <p className="text-xs text-[#5c5c64]">
           {state === "evaluating"
             ? "Analysing…"
             : attempts >= 2 && state === "idle"
-              ? "💡 Move the highlighted piece"
+              ? "Move the highlighted piece"
               : "Drag a piece or click to select"}
         </p>
       </div>
@@ -2368,26 +2405,26 @@ function InteractSlideView({
       {showFeedback && state !== "idle" && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black/50"
+            className="fixed inset-0 z-40 bg-black/60"
             onClick={() => {
               if (state === "wrong") resetToIdle();
             }}
           />
           <div
-            className={`fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl px-6 pb-10 pt-5 border-t ${
+            className={`fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl px-6 pb-10 pt-5 border-t ${
               state === "correct"
-                ? "border-emerald-500/30 bg-[#060f0a]"
-                : "border-red-500/30 bg-[#0f0606]"
+                ? "border-[#14532d] bg-[#0c1a12]"
+                : "border-[#7f1d1d] bg-[#1a0c0c]"
             }`}
           >
             <p
-              className={`text-[11px] font-black uppercase tracking-widest mb-1.5 ${
-                state === "correct" ? "text-emerald-500" : "text-red-500"
+              className={`text-[11px] font-medium uppercase tracking-wider mb-1.5 ${
+                state === "correct" ? "text-[#4ade80]" : "text-[#f87171]"
               }`}
             >
-              {state === "correct" ? "✓ Correct" : "✗ Not quite"}
+              {state === "correct" ? "Correct" : "Not quite"}
             </p>
-            <p className="text-sm leading-relaxed text-slate-200">
+            <p className="text-sm leading-relaxed text-[#a1a1aa]">
               {state === "correct"
                 ? slide.correctExplanation
                 : slide.wrongExplanation}
@@ -2399,17 +2436,17 @@ function InteractSlideView({
                   playSound("select");
                   onNext();
                 }}
-                className="mt-5 w-full rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-3.5 text-base font-bold text-white shadow-lg shadow-purple-500/20 hover:brightness-110 active:scale-[0.98] transition-all"
+                className={`mt-5 w-full rounded-xl ${LEARN.accent} py-3 text-sm font-semibold ${LEARN.accentText} ${LEARN.accentHover} transition-colors`}
               >
-                Continue →
+                Continue
               </button>
             ) : (
               <button
                 type="button"
                 onClick={resetToIdle}
-                className="mt-5 w-full rounded-2xl border border-red-500/30 bg-red-500/10 py-3.5 text-base font-bold text-red-400 hover:bg-red-500/20 active:scale-[0.98] transition-all"
+                className="mt-5 w-full rounded-xl border border-[#7f1d1d] bg-[#1a0c0c] py-3 text-sm font-semibold text-[#f87171] hover:bg-[#2a0e0e] transition-colors"
               >
-                Try again →
+                Try again
               </button>
             )}
           </div>
@@ -2434,24 +2471,24 @@ function ChoiceSlideView({
   const answered = selected !== null;
 
   const choicesBlock = (
-    <div className="flex flex-col gap-2.5">
+    <div className="flex flex-col gap-3">
       {slide.choices.map((choice, i) => {
         const isSelected = selected === i;
         const isCorrect = i === slide.correctIndex;
         let cls =
-          "rounded-2xl border px-5 py-4 text-left text-sm font-semibold transition-all duration-200 ";
+          "rounded-xl border px-5 py-4 text-left text-sm font-medium transition-colors duration-150 ";
         if (!answered) {
           cls +=
-            "border-white/[0.08] bg-white/[0.03] text-slate-200 hover:border-purple-500/40 hover:bg-purple-500/[0.06] cursor-pointer";
+            "border-[#1f1f22] bg-[#111113] text-[#e4e4e7] hover:border-[#3f3f46] hover:bg-[#161618] cursor-pointer";
         } else if (isCorrect) {
           cls +=
-            "border-emerald-500/40 bg-emerald-500/[0.08] text-emerald-200 cursor-default lesson-choice-correct";
+            "border-[#14532d] bg-[#0c1a12] text-[#4ade80] cursor-default lesson-choice-correct";
         } else if (isSelected && !isCorrect) {
           cls +=
-            "border-red-500/40 bg-red-500/[0.08] text-red-300 cursor-default";
+            "border-[#7f1d1d] bg-[#1a0c0c] text-[#f87171] cursor-default";
         } else {
           cls +=
-            "border-white/[0.04] bg-white/[0.01] text-slate-600 cursor-default";
+            "border-[#161618] bg-[#0a0a0a] text-[#5c5c64] cursor-default";
         }
 
         return (
@@ -2467,7 +2504,7 @@ function ChoiceSlideView({
             }}
             disabled={answered}
           >
-            <span className="mr-2 font-black text-slate-600">
+            <span className="mr-3 font-mono text-[11px] text-[#5c5c64] uppercase">
               {answered
                 ? isCorrect
                   ? "✓"
@@ -2475,7 +2512,6 @@ function ChoiceSlideView({
                     ? "✗"
                     : String.fromCharCode(65 + i)
                 : String.fromCharCode(65 + i)}
-              .
             </span>
             {choice}
           </button>
@@ -2486,8 +2522,8 @@ function ChoiceSlideView({
 
   const explanationAndNext = answered ? (
     <>
-      <div className="rounded-2xl border border-purple-500/20 bg-purple-500/[0.06] px-5 py-4">
-        <p className="text-sm leading-relaxed text-purple-200/80">
+      <div className={`rounded-xl border ${LEARN.insight} px-5 py-4`}>
+        <p className="text-sm leading-relaxed text-[#94b8d8]">
           {slide.explanation}
         </p>
       </div>
@@ -2497,37 +2533,36 @@ function ChoiceSlideView({
           playSound("select");
           onNext();
         }}
-        className="w-full rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-3.5 text-base font-bold text-white shadow-lg shadow-purple-500/20 hover:brightness-110 active:scale-[0.98] transition-all"
+        className={`w-full rounded-xl ${LEARN.accent} py-3 text-sm font-semibold ${LEARN.accentText} ${LEARN.accentHover} transition-colors`}
       >
-        Next →
+        Continue
       </button>
     </>
   ) : null;
 
   if (slide.fen) {
     return (
-      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6">
-        {/* Board */}
-        <div className="w-full flex justify-center">
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
+        {/* Board — left on desktop */}
+        <div className="w-full min-w-0 flex justify-center lg:w-[54%] lg:shrink-0">
           <LessonBoard
             fen={slide.fen}
             orientation={slide.orientation}
             highlights={slide.highlights}
             arrows={slide.arrows}
             draggable={false}
+            maxWidth={560}
           />
         </div>
-        {/* Choices + question — scrollable */}
-        <div className="flex w-full flex-col items-center gap-4 text-center max-h-[35dvh] overflow-y-auto">
-          <div className="w-full max-w-lg">
-            <h2 className="text-xl font-black tracking-tight text-white shrink-0">
-              {slide.heading}
-            </h2>
-            <p className="mt-2 text-sm text-slate-200">
-              {slide.question}
-            </p>
-          </div>
-          <div className="w-full max-w-lg">
+        {/* Choices + question — right column, scrolls within viewport */}
+        <div className="flex w-full min-w-0 flex-col items-center gap-4 text-center lg:w-[46%] lg:max-h-full lg:overflow-y-auto lg:items-start lg:text-left lg:pr-1">
+          <h2 className="text-xl font-semibold tracking-tight text-[#e4e4e7] leading-tight shrink-0 lg:text-2xl">
+            {slide.heading}
+          </h2>
+          <p className="text-sm leading-6 text-[#a1a1aa] lg:text-[15px] lg:leading-7">
+            {slide.question}
+          </p>
+          <div className="w-full max-w-lg lg:max-w-none">
             {choicesBlock}
           </div>
           {explanationAndNext}
@@ -2537,12 +2572,12 @@ function ChoiceSlideView({
   }
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-5">
+    <div className="mx-auto flex max-w-2xl flex-col gap-6">
       <div className="text-center">
-        <h2 className="text-2xl font-black tracking-tight text-white">
+        <h2 className="text-2xl font-semibold tracking-tight text-[#e4e4e7] leading-tight">
           {slide.heading}
         </h2>
-        <p className="mt-3 text-[15px] leading-7 text-slate-200">
+        <p className="mt-4 text-[15px] leading-7 text-[#a1a1aa]">
           {slide.question}
         </p>
       </div>
@@ -2722,37 +2757,37 @@ function KojiChat({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-all hover:scale-110 active:scale-95 ${
+        className={`fixed bottom-4 right-4 z-50 flex h-11 w-11 items-center justify-center rounded-full border transition-colors hover:scale-105 active:scale-95 ${
           open
-            ? "bg-purple-700 ring-2 ring-purple-400"
-            : "bg-gradient-to-br from-purple-600 to-violet-500"
+            ? "border-[#2a2a2e] bg-[#161618]"
+            : "border-[#1f1f22] bg-[#111113]"
         }`}
         title="Ask Koji (AI tutor)"
       >
         {open ? (
-          <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="h-4 w-4 text-[#a1a1aa]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         ) : (
-          <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          <svg className="h-4 w-4 text-[#a1a1aa]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4-.849L3 20l1.845-3.632A7.94 7.94 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
         )}
       </button>
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-20 right-4 z-50 w-80 rounded-2xl border border-white/[0.08] bg-[#0d0d11]/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col"
+        <div className="fixed bottom-20 right-4 z-50 w-80 rounded-xl border border-[#1f1f22] bg-[#0d0d11]/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col"
           style={{ maxHeight: "min(500px, calc(100vh - 120px))" }}
         >
           {/* Header */}
-          <div className="flex items-center gap-2.5 border-b border-white/[0.06] px-4 py-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-amber-400 text-sm font-black text-white">
+          <div className="flex items-center gap-2.5 border-b border-[#1f1f22] px-4 py-3">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#1a1a1c] text-[11px] font-semibold text-[#a1a1aa]">
               K
             </div>
             <div>
-              <p className="text-[13px] font-bold text-white">Koji</p>
-              <p className="text-[10px] text-slate-500">AI Tutor</p>
+              <p className="text-[13px] font-medium text-[#e4e4e7]">Koji</p>
+              <p className="text-[10px] text-[#5c5c64]">AI tutor</p>
             </div>
           </div>
 
@@ -2764,10 +2799,10 @@ function KojiChat({
                 className={`flex ${msg.role === "bot" ? "justify-start" : "justify-end"}`}
               >
                 <div
-                  className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                  className={`max-w-[85%] rounded-lg px-3.5 py-2.5 text-sm leading-relaxed ${
                     msg.role === "bot"
-                      ? "bg-white/[0.06] text-slate-200 rounded-tl-sm"
-                      : "bg-purple-600/80 text-white rounded-tr-sm"
+                      ? "bg-[#161618] text-[#d4d4d8]"
+                      : "bg-[#1f1f22] text-[#e4e4e7]"
                   }`}
                 >
                   {msg.text}
@@ -2775,16 +2810,16 @@ function KojiChat({
               </div>
             ))}
             {messages.length === 1 && (
-              <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] px-3 py-2">
-                <p className="text-[11px] text-amber-400/70">
-                  💡 Try asking &ldquo;give me a hint&rdquo; or &ldquo;why is this the right move?&rdquo;
+              <div className="rounded-lg border border-[#1f1f22] bg-[#111113] px-3 py-2">
+                <p className="text-[11px] text-[#5c5c64]">
+                  Try asking &ldquo;give me a hint&rdquo; or &ldquo;why is this the right move?&rdquo;
                 </p>
               </div>
             )}
           </div>
 
           {/* Input */}
-          <div className="border-t border-white/[0.06] p-2">
+          <div className="border-t border-[#1f1f22] p-2">
             <div className="flex gap-2">
               <input
                 ref={inputRef}
@@ -2795,13 +2830,13 @@ function KojiChat({
                   if (e.key === "Enter") handleSend(input);
                 }}
                 placeholder="Ask Koji..."
-                className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white placeholder-slate-600 outline-none focus:border-purple-500/50 transition-colors"
+                className="flex-1 rounded-lg border border-[#1f1f22] bg-[#111113] px-3 py-2 text-sm text-[#e4e4e7] placeholder-[#5c5c64] outline-none focus:border-[#3f3f46] transition-colors"
               />
               <button
                 type="button"
                 onClick={() => handleSend(input)}
                 disabled={!input.trim()}
-                className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-600 text-white hover:brightness-110 disabled:opacity-40 transition-all shrink-0"
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1f1f22] text-[#a1a1aa] hover:bg-[#2a2a2e] hover:text-[#e4e4e7] disabled:opacity-40 transition-colors shrink-0"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
@@ -2860,41 +2895,41 @@ function LessonRunner({
 
   if (done) {
     return (
-      <div className="mx-auto flex max-w-sm flex-col items-center gap-6 py-12 text-center">
+      <div className="mx-auto flex max-w-sm flex-col items-center gap-8 py-16 text-center">
         <Confetti />
-        <div className="flex h-28 w-28 items-center justify-center rounded-3xl bg-gradient-to-br from-amber-400 to-orange-500 text-6xl shadow-2xl shadow-amber-500/30">
-          🏆
+        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#111113] border border-[#1f1f22] text-4xl">
+          ✓
         </div>
         <div>
-          <h2 className="text-3xl font-black tracking-tight text-white">
-            Lesson Complete!
+          <h2 className="text-2xl font-semibold tracking-tight text-[#e4e4e7]">
+            Lesson complete
           </h2>
-          <p className="mt-2 text-sm text-slate-400">{lesson.title}</p>
+          <p className="mt-2 text-sm text-[#8b8b93]">{lesson.title}</p>
         </div>
-        <div className="w-full rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] px-5 py-4">
-          <p className="text-sm font-black text-emerald-400">
+        <div className="w-full rounded-xl border border-[#14532d] bg-[#0c1a12] px-5 py-4">
+          <p className="text-sm font-medium text-[#4ade80]">
             +10 coins earned
           </p>
-          <p className="mt-0.5 text-[11px] text-emerald-300/50">
+          <p className="mt-0.5 text-[11px] text-[#4ade80]/60">
             Keep practicing daily
           </p>
         </div>
-        <div className="flex w-full flex-col gap-2.5">
+        <div className="flex w-full flex-col gap-3">
           <button
             type="button"
             onClick={() => {
               playSound("select");
               onComplete();
             }}
-            className="w-full rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-4 text-sm font-bold text-white hover:brightness-110"
+            className={`w-full rounded-xl ${LEARN.accent} py-3.5 text-sm font-semibold ${LEARN.accentText} ${LEARN.accentHover} transition-colors`}
           >
-            Back to Lessons →
+            Back to lessons
           </button>
           <Link
             href="/train"
-            className="block w-full rounded-2xl border border-white/[0.08] bg-white/[0.02] py-3.5 text-sm font-semibold text-slate-400 hover:bg-white/[0.05] transition-colors text-center"
+            className="block w-full rounded-xl border border-[#1f1f22] bg-[#111113] py-3 text-sm font-medium text-[#a1a1aa] hover:bg-[#161618] transition-colors text-center"
           >
-            Training Hub
+            Training hub
           </Link>
         </div>
       </div>
@@ -2902,16 +2937,16 @@ function LessonRunner({
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col bg-[#0a0a0a]">
       {/* Minimal top bar — X icon + progress dots + points */}
-      <div className="flex items-center gap-3 px-3 pt-2 pb-1">
+      <div className="flex items-center gap-4 px-4 pt-3 pb-2 border-b border-[#161618]">
         <button
           type="button"
           onClick={() => {
             playSound("select");
             onBack();
           }}
-          className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-600 hover:text-slate-400 hover:bg-white/[0.05] transition-colors shrink-0"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-[#5c5c64] hover:text-[#e4e4e7] hover:bg-[#111113] transition-colors shrink-0"
           title="Exit lesson"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -2919,38 +2954,30 @@ function LessonRunner({
           </svg>
         </button>
 
-        {/* Progress dots */}
-        <div className="flex-1 flex items-center gap-1.5">
+        {/* Progress dots — thin, calm */}
+        <div className="flex-1 flex items-center gap-1">
           {Array.from({ length: total }).map((_, i) => (
             <div
               key={i}
-              className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${
-                i <= idx ? "bg-purple-500" : "bg-white/[0.08]"
+              className={`flex-1 h-1 rounded-full transition-colors duration-200 ${
+                i <= idx ? "bg-[#e4e4e7]" : "bg-[#1f1f22]"
               }`}
             />
           ))}
         </div>
 
         {/* Step counter */}
-        <span className="text-[11px] text-slate-600 shrink-0 font-medium">
-          {idx + 1}/{total}
+        <span className="text-[11px] text-[#5c5c64] shrink-0 font-medium tabular-nums">
+          {idx + 1} / {total}
         </span>
-
-        {/* Points placeholder (matches Brilliant's style) */}
-        <div className="flex items-center gap-1 text-slate-600 shrink-0">
-          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-          </svg>
-          <span className="text-[10px]">0</span>
-        </div>
       </div>
 
       {/* Slide — fills remaining height, centered */}
-      <div className="flex-1 flex items-center justify-center overflow-y-auto px-3 pb-4">
+      <div className="flex-1 flex items-center justify-center overflow-y-auto px-4 py-4 lg:overflow-hidden lg:py-2">
         <div
           key={idx}
-          className="w-full lesson-slide"
-          style={{ maxWidth: "min(96vw, 1600px)" }}
+          className="w-full lesson-slide lg:h-full lg:flex lg:items-center"
+          style={{ maxWidth: "min(100%, 1400px)" }}
         >
           {slide?.kind === "text" && (
             <TextSlideView slide={slide} onNext={handleNext} />
@@ -2984,41 +3011,39 @@ function LessonCatalog({ onSelect }: { onSelect: (lesson: Lesson) => void }) {
   const bands: RatingBand[] = ["800", "1200", "1600", "2000"];
 
   return (
-    <div className="mx-auto max-w-lg space-y-10">
-      <div className="pt-2 text-center">
-        <p className="text-[11px] font-black uppercase tracking-widest text-purple-400">
-          ✦ Learn Chess
+    <div className="mx-auto max-w-lg space-y-12 px-4">
+      <div className="pt-8 text-center">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-[#5c5c64]">
+          Chess lessons
         </p>
-        <h1 className="mt-1 text-3xl font-black tracking-tight text-white">
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#e4e4e7]">
           Lessons
         </h1>
-        <p className="mt-2 text-sm text-slate-500">
+        <p className="mt-3 text-sm text-[#8b8b93]">
           Structured lessons on the topics that matter most at your level.
         </p>
       </div>
 
       {bands.map((band) => {
         const bandLessons = LESSONS.filter((l) => l.band === band);
-        const colors = BAND_COLORS[band];
         return (
           <div key={band} className="space-y-3">
-            <div
-              className={`flex items-center gap-2.5 rounded-xl px-4 py-2.5 ring-1 ${colors.bg} ${colors.ring}`}
-            >
+            <div className="flex items-baseline justify-between border-b border-[#1f1f22] pb-3">
               <div>
-                <p
-                  className={`text-xs font-black uppercase tracking-widest ${colors.text}`}
-                >
+                <p className="text-xs font-medium uppercase tracking-wider text-[#5c5c64]">
                   {BAND_LABELS[band]}
                 </p>
-                <p className="text-[11px] text-slate-500">
+                <p className="mt-0.5 text-[11px] text-[#5c5c64]">
                   {BAND_DESCRIPTIONS[band]}
                 </p>
               </div>
+              <span className="text-[11px] text-[#5c5c64]">
+                {bandLessons.length} lesson{bandLessons.length !== 1 ? "s" : ""}
+              </span>
             </div>
             {bandLessons.length === 0 ? (
-              <div className="rounded-2xl border border-white/[0.04] bg-white/[0.01] px-5 py-4 text-center">
-                <p className="text-[12px] text-slate-700">
+              <div className="rounded-xl border border-[#161618] bg-[#0a0a0a] px-5 py-6 text-center">
+                <p className="text-[12px] text-[#5c5c64]">
                   More lessons coming soon
                 </p>
               </div>
@@ -3031,26 +3056,24 @@ function LessonCatalog({ onSelect }: { onSelect: (lesson: Lesson) => void }) {
                     playSound("select");
                     onSelect(lesson);
                   }}
-                  className={`group w-full flex items-center gap-4 rounded-2xl px-5 py-4 text-left transition-all hover:brightness-110 active:scale-[0.99] ring-1 ${colors.bg} ${colors.ring}`}
+                  className="group w-full flex items-center gap-4 rounded-xl border border-[#1f1f22] bg-[#111113] px-5 py-4 text-left transition-colors hover:bg-[#161618] hover:border-[#2a2a2e]"
                 >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/[0.06] text-2xl">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#1a1a1c] text-xl">
                     {lesson.icon}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-white">{lesson.title}</p>
-                    <p className="mt-0.5 text-[12px] text-slate-500 line-clamp-1">
+                    <p className="font-medium text-[#e4e4e7]">{lesson.title}</p>
+                    <p className="mt-0.5 text-[12px] text-[#5c5c64] line-clamp-1">
                       {lesson.subtitle}
                     </p>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      <span
-                        className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${colors.pill}`}
-                      >
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <span className="rounded-md bg-[#1a1a1c] px-2 py-0.5 text-[10px] text-[#8b8b93]">
                         {lesson.estimatedMinutes} min
                       </span>
                       {lesson.tags.slice(0, 2).map((tag) => (
                         <span
                           key={tag}
-                          className="rounded-md bg-white/[0.05] px-2 py-0.5 text-[10px] text-slate-500"
+                          className="rounded-md bg-[#1a1a1c] px-2 py-0.5 text-[10px] text-[#5c5c64]"
                         >
                           {tag}
                         </span>
@@ -3058,7 +3081,7 @@ function LessonCatalog({ onSelect }: { onSelect: (lesson: Lesson) => void }) {
                     </div>
                   </div>
                   <svg
-                    className="h-4 w-4 shrink-0 text-slate-600 group-hover:text-slate-400 transition-colors"
+                    className="h-4 w-4 shrink-0 text-[#5c5c64] group-hover:text-[#a1a1aa] transition-colors"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -3077,13 +3100,13 @@ function LessonCatalog({ onSelect }: { onSelect: (lesson: Lesson) => void }) {
         );
       })}
 
-      <p className="text-center text-[11px] text-slate-700">
-        🧪 Early preview ·{" "}
+      <p className="pb-12 text-center text-[11px] text-[#5c5c64]">
+        Early preview ·{" "}
         <a
           href="https://discord.gg/YS8fc4FtEk"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-slate-600 hover:text-slate-400 underline"
+          className="text-[#8b8b93] hover:text-[#e4e4e7] underline"
         >
           give feedback in Discord
         </a>
@@ -3117,6 +3140,12 @@ function LearnPageInner() {
     }
   }, [searchParams]);
 
+  // Fullscreen lesson mode: hide site header/footer so the lesson fits 100vh
+  useEffect(() => {
+    document.body.classList.toggle("lesson-active", phase === "lesson");
+    return () => document.body.classList.remove("lesson-active");
+  }, [phase]);
+
   const handleSelect = useCallback(
     (lesson: Lesson) => {
       router.push(`/learn?lesson=${lesson.id}`);
@@ -3133,7 +3162,7 @@ function LearnPageInner() {
   return (
     <div
       className={`bg-[#0a0a0a] ${
-        phase === "lesson" ? "h-screen overflow-hidden" : "min-h-screen"
+        phase === "lesson" ? "h-[100dvh] overflow-hidden" : "min-h-screen"
       }`}
     >
       {/* Top bar — hidden during lessons, minimal when catalog */}

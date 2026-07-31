@@ -10,6 +10,17 @@
   --accent-crimson: #dc2626;
 }
 
+/* Fullscreen lesson mode: hide site chrome so the lesson fits exactly 100vh */
+body.lesson-active header[role="banner"],
+body.lesson-active > header,
+body.lesson-active footer[role="contentinfo"],
+body.lesson-active > footer {
+  display: none !important;
+}
+body.lesson-active {
+  overflow: hidden;
+}
+
 * {
   scrollbar-width: auto;
   scrollbar-color: rgba(255, 255, 255, 0.15) rgba(255, 255, 255, 0.03);
@@ -1203,18 +1214,29 @@ body {
   animation: chip-pop 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* ── Lesson slide enter animation ── */
-.lesson-slide {
-  animation: fade-in-up 0.22s ease-out both;
+/* ── Lesson slide enter animation — calm, Brilliant-style ── */
+@keyframes lesson-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-/* ── Lesson choice correct pop ── */
+.lesson-slide {
+  animation: lesson-slide-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Lesson choice correct pop — subtle, no bounce ── */
 @keyframes lesson-choice-pop {
   0% {
     transform: scale(1);
   }
-  50% {
-    transform: scale(1.03);
+  40% {
+    transform: scale(1.015);
   }
   100% {
     transform: scale(1);
@@ -1222,7 +1244,7 @@ body {
 }
 
 .lesson-choice-correct {
-  animation: lesson-choice-pop 0.35s ease-out both;
+  animation: lesson-choice-pop 0.28s ease-out both;
 }
 
 /* ── Confetti particle ── */
