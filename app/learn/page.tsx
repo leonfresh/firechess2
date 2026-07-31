@@ -1474,7 +1474,7 @@ function TextSlideView({
           <img
             src={slide.photo.src}
             alt={slide.heading}
-            className="w-full rounded-xl object-cover border border-[#1f1f22]"
+            className="w-full rounded-xl object-cover border border-[#1f1f22] max-h-[45vh] sm:max-h-[50vh] lg:max-h-[70vh]"
           />
           <p className="text-[10px] leading-relaxed text-[#5c5c64] px-0.5">
             {slide.photo.credit}
@@ -2972,11 +2972,11 @@ function LessonRunner({
         </span>
       </div>
 
-      {/* Slide — fills remaining height, centered */}
-      <div className="flex-1 flex items-center justify-center overflow-y-auto px-4 py-4 lg:overflow-hidden lg:py-2">
+      {/* Slide — fills remaining height; on mobile content scrolls from the top so nothing clips */}
+      <div className="flex-1 flex flex-col overflow-y-auto px-4 py-4 lg:flex-row lg:items-center lg:justify-center lg:overflow-hidden lg:py-2">
         <div
           key={idx}
-          className="w-full lesson-slide lg:h-full lg:flex lg:items-center"
+          className="w-full lesson-slide my-auto lg:h-full lg:flex lg:items-center"
           style={{ maxWidth: "min(100%, 1400px)" }}
         >
           {slide?.kind === "text" && (
