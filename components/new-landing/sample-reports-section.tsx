@@ -109,7 +109,7 @@ function ReportCard({ report, isActive, onClick }: { report: SampleReport; isAct
   return (
     <Link
       href={`/report/${report.reportId}`}
-      onClick={(e) => { e.preventDefault(); onClick(); }}
+      onClick={() => onClick()}
       className={`group relative cursor-pointer overflow-hidden rounded-2xl border bg-gradient-to-b p-6 transition-all duration-500 ${tierColors[report.tier]} ${borderColors[report.tier]} ${
         isActive
           ? "scale-[1.02] shadow-2xl"
