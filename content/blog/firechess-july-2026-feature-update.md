@@ -249,4 +249,4 @@ The best way to experience everything FireChess now offers is to [scan your game
 
 - [Average Centipawn Loss by Elo: What's a Good ACPL Rating?](/blog/average-centipawn-loss-by-elo) — Understand your accuracy metrics
 - [FireChess vs Aimchess Comparison](/blog/firechess-vs-aimchess-comparison-2026) — See how FireChess stacks up against the competition
-- [Guess the Elo from PGN](/blog/guess-elo-from-pgn) — Estimate rating from game data alone
+- [Guess the Elo from PGN](/blog/guess-elo-from-pgn) — Estimate rating from game data alone, and learn [what rating looks like on the board](/blog/guess-the-elo-chess)

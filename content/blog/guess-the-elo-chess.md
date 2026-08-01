@@ -1,7 +1,7 @@
 ---
 title: "Guess the Elo Chess: How to Estimate Rating from a Position"
-description: "Learn to guess the Elo in chess by spotting rating tells — blunder frequency, plan quality, endgame technique, and your PGN's hidden style signals. Train with FireChess's Guess the Elo mode."
-date: "2026-07-04"
+description: "Learn to guess Elo in chess by spotting blunder frequency, plan quality, and endgame tells. Real positions from beginner to master with FireChess."
+date: "2026-08-02"
 author: "FireChess Team"
 tags: ["guess the elo", "chess rating estimator", "guess elo from position", "chess improvement", "chess training", "PGN analysis", "chess playing style"]
 ---
@@ -35,6 +35,12 @@ The defining characteristic of sub-1200 play is **frequent, obvious blunders**. 
 
 If you're watching a game where a knight hangs on a square with no defender and neither player notices for three moves, you're looking at Beginner territory.
 
+Here's a classic beginner position from an Italian Game — Black just played 7...g5??, pushing a pawn to attack the bishop but completely forgetting that the bishop on c5 is now undefended:
+
+<chess-position fen="r1bqk2r/ppp2p2/2np1n1p/2b1p1p1/2B1P2B/3P1N2/PPP2PPP/RN1Q1RK1 w kq - 0 8" caption="Beginner trap: Black played 7...g5?? attacking the bishop, but left the c5 bishop hanging. White wins a piece with Bxc5. This kind of one-move thinking — attacking without checking if your own pieces are safe — is the hallmark of sub-1200 play." orientation="white"></chess-position>
+
+A 1400 would spot Bxc5 immediately. A 1000 might play h5, not realising the bishop is gone. If you see this kind of oversight happening multiple times per game, you're watching Beginner-level chess.
+
 ### Intermediate (1200–1500) — The Plan Emerges
 
 This is the most common club rating range. Players at this level have moved past hanging pieces every game, but their play is still inconsistent:
@@ -45,6 +51,12 @@ This is the most common club rating range. Players at this level have moved past
 - **Endgames are shaky** — basic rook endgames and pawn endgames are mishandled regularly
 
 The telltale sign of an Intermediate player: they play ten good moves in a row, then one move that makes no sense.
+
+Here's a typical Intermediate-level Sicilian middlegame. White has just played Bg5, pinning the f6 knight. The position is roughly equal — but White has a strong idea with Nd5, exploiting the outpost on d5:
+
+<chess-position fen="rnbq1rk1/1p2bppp/p2p1n2/4p1B1/4P3/2N2N2/PPP1BPPP/R2Q1RK1 b - - 5 9" caption="Intermediate test: White just played Bg5, pinning the knight. Can you spot the plan? Nd5 is coming — a 1200 sees the pin, a 1500 sees the follow-up. The difference is calculating one move deeper." orientation="white"></chess-position>
+
+A 1200 sees the pin and thinks "good." A 1500 sees Nd5 coming and starts calculating the consequences. This one-move depth difference — seeing the follow-up, not just the immediate threat — is the single biggest jump between rating tiers.
 
 ### Advanced (1500–1800) — The Gap Between Tactics and Strategy
 
@@ -57,6 +69,12 @@ This is where positional chess starts to matter as much as tactics. The defining
 
 The Advanced player's weakness: they know what the right plan is, but they lack the technique to execute it precisely.
 
+Here's a position from the Queen's Gambit Declined that separates 1500s from 1800s. Black has just played ...Nd5, offering a trade. The question isn't whether the position is good or bad — it's *which plan to choose*:
+
+<chess-position fen="r1bq1rk1/pp1nbppp/2p1p3/3n2B1/2BP4/2N1PN2/PP3PPP/2RQK2R w K - 1 10" caption="Advanced decision point: Black offered a trade with ...Nd5. A 1500 trades automatically. A 1700+ considers Bxe7, maintaining the pin and keeping the bishop pair. Strategic nuance, not tactics, is what separates these levels." orientation="white"></chess-position>
+
+A 1500 plays Bxf6 without thinking — "trade, simplify." A 1700+ considers Bxe7 first, maintaining tension and keeping the powerful dark-squared bishop. This isn't about calculation depth; it's about understanding that some trades help your opponent more than you.
+
 ### Expert (1800–2100) — Subtle Errors Decide Games
 
 At Expert level, the mistakes become hard for casual players to spot:
@@ -67,6 +85,12 @@ At Expert level, the mistakes become hard for casual players to spot:
 - **Consistency across openings** — opening preparation goes 8–12 moves deep in main lines
 
 If you're watching an Expert game and thinking "this looks pretty good to me," that's the point. The mistakes are small enough that only strong players can spot them.
+
+Here's a Ruy Lopez position where both sides have completed their development. To a club player, this looks like "normal chess." To an Expert, every move carries weight:
+
+<chess-position fen="r1bq1rk1/2pnbppp/p2p1n2/1p2p3/3PP3/1BP2N1P/PP3PP1/RNBQR1K1 w - - 1 11" caption="Expert-level Ruy Lopez: everything looks equal, but White's next move reveals rating. An 1800+ sees that d5 is the critical break — but timing it requires understanding when the centre is ready. Premature d5? Blunder. Delayed d5? Passive." orientation="white"></chess-position>
+
+The move d5 is the key break here, but *when* to play it separates an 1800 from a 2000. Play it too early and Black gets a strong knight on d5. Wait too long and Black consolidates with ...Re8 and ...Bf8. The Expert finds the exact moment — and that precision is invisible to anyone below 1700.
 
 ### Master+ (2100+) — The Grandmaster Glide
 
@@ -283,23 +307,23 @@ Pair this with regular [PGN analysis](/analyze) to get the full picture: rating 
 
 ## Frequently Asked Questions About Guess the Elo
 
-**Q1: Can you really guess a player's Elo rating accurately just from watching a few moves?**
+### Q: Can you really guess a player's Elo rating accurately just from watching a few moves?
 
 Yes — within a range of about 200–300 points, which is precise enough to be useful. The key is that you're not guessing a single number; you're placing the player into one of the five broad buckets (Under 1200, 1200–1500, 1500–1800, 1800–2100, 2100+). Studies of the [Guess the Elo format on YouTube](https://firechess.com/dungeon) show that experienced guessers land in the correct bucket roughly 70% of the time. The accuracy drops when a player has an unusually lopsided skill profile — for instance, a 1600 with master-level endgame technique but 1200-level opening knowledge — which is why cross-referencing multiple signals (blunder rate, plan coherence, endgame quality) is essential.
 
-**Q2: What's the single strongest signal for guessing Elo from a PGN file?**
+### Q: What's the single strongest signal for guessing Elo from a PGN file?
 
 Blunder rate, followed closely by average centipawn loss. These two metrics alone can place a player in the correct rating bucket with surprising accuracy. Our analysis of over 50,000 games shows that blunder rate and ACPL have a 0.87 correlation with actual rating — stronger than any other single metric, including opening depth, time usage, or tactical vision. That's why the first step in [estimating rating from any PGN file](/blog/guess-elo-from-pgn) is always the same: run it through an engine and count the blunders.
 
-**Q3: How does time control affect my ability to guess the Elo?**
+### Q: How does time control affect my ability to guess the Elo?
 
 Significantly. Blitz games (3–5 minutes per player) introduce a much higher noise floor — a 2000-rated player in a blitz time scramble can look like a 1400. Rapid games (10–15 minutes) give the most reliable rating signal because there's enough time for strategic thinking but not so much that engine-level play becomes expected. Classical games (60+ minutes) show the cleanest rating differentiation at the expert level and above, but can make lower-rated players look better than they are, since they have time to catch their own mistakes. If you're practising the guess-the-elo skill, filter for rapid games — they provide the truest signal.
 
-**Q4: Can I use guess-the-elo to track my own improvement over time?**
+### Q: Can I use guess-the-elo to track my own improvement over time?
 
 Absolutely, and it's one of the most motivating ways to measure progress. Every month, export your last 20 rated rapid games and run them through the FireChess [PGN analyser](/analyze). Track your estimated rating bucket alongside your actual rating. If your PGN-estimated bucket starts climbing before your actual rating changes, you're developing the underlying skills — the rating will catch up. This leading-indicator effect is incredibly useful: it tells you your improvement is real months before your rating graph confirms it.
 
-**Q5: Can a computer guess Elo better than a human?**
+### Q: Can a computer guess Elo better than a human?
 
 In raw accuracy, yes — a neural network trained on game data can predict rating within about 100–150 points, which beats the human 200–300 point range. But the computer can't tell you *why* a game looks like a certain rating. The value of human guess-the-elo is that it develops your intuition for quality of play. When you correctly identify that a move is 1800-level rather than 1400-level, you're training the same pattern recognition that helps you find better moves in your own games. The computer gives you the answer; the human exercise builds the skill. Use the [FireChess analyser](/analyze) to get the machine verdict, but don't skip the mental exercise of guessing first.
 
