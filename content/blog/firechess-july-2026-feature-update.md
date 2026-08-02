@@ -215,19 +215,19 @@ If you have a feature request, the [Discord community](https://discord.gg/y9NCXc
 
 ## Frequently Asked Questions
 
-### Is FireChess really free?
+### Q: Is FireChess really free?
 
 Yes. The core features — game scanning, Daily Training (with puzzles and streak tracking), Chaos Chess, and Roast My Elo — are all available without a subscription. Free users get one full unified report per week and access to 2 Chaos Chess anomalies per session. Pro unlocks unlimited scanning, all 4 anomalies per Chaos game, deeper Stockfish analysis (up to depth 24), and priority on new features during beta. You can see the full breakdown on the [pricing page](/pricing).
 
-### How is Daily Training different from doing puzzles on Lichess or Chess.com?
+### Q: How is Daily Training different from doing puzzles on Lichess or Chess.com?
 
 The key difference is **personalisation**. Lichess puzzles are a random sample from the entire database, sorted by rating. Chess.com's puzzle rush is speed-oriented. Daily Training on FireChess draws exclusively from positions where *you* have made mistakes in your own games — your personal blunder history. The 5 puzzles each day are also matched to the tactical themes you're weakest at, based on your unified report data. It's less content per day than a puzzle rush session, but every single position is one you could have faced in a real game and got wrong.
 
-### Do I need a Lichess or Chess.com account to use FireChess?
+### Q: Do I need a Lichess or Chess.com account to use FireChess?
 
 You need at least one — FireChess analyses games from your Lichess or Chess.com history. You don't need to install anything or grant any special permissions; just enter your username on the [analysis page](/analyze) and FireChess pulls your recent games from the public APIs. If you don't have an account on either platform, you can still play Chaos Chess and explore the site, but the core analysis features (unified reports, Daily Training blunder drills, Roast My Elo) require game data to work with.
 
-### How does Roast My Elo decide what to say?
+### Q: How does Roast My Elo decide what to say?
 
 Roast My Elo feeds each move of the game to Stockfish 17 at depth 18 and compares the actual move to the engine's top 3 recommendations. The difference in evaluation (centipawn loss) determines which category of roast fires. A 300+ centipawn loss triggers a "blunder roast" — the most savage tier. The specific line is chosen from a pool of 600+ pre-written roasts, filtered by the game's Elo bracket, phase of the game, and how many blunders have already occurred. The animated avatar reacts based on a running "roast severity score" that accumulates across the game.
 

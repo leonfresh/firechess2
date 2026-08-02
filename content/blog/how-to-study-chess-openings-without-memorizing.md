@@ -252,15 +252,15 @@ And that is the part that actually matters.
 
 ## Frequently Asked Questions
 
-### How many opening lines should I know?
+### Q: How many opening lines should I know?
 
 For each opening you play, know one main line to about twelve moves and one or two solid alternatives for the most common deviations. That is usually enough to reach a playable middlegame. More is not better — it is just heavier.
 
-### Should I study openings played by grandmasters?
+### Q: Should I study openings played by grandmasters?
 
 Yes, but focus on the plans, not the exact move orders. Grandmaster games show you what the resulting middlegame should look like. Watch how they handle the pawn structure after theory ends — that is where the real learning lives.
 
-### How often should I review my openings?
+### Q: How often should I review my openings?
 
 Review each opening you play at least once a month. If you have a tournament or serious match coming up, review your target openings in the three days before. The goal is not to memorize — it is to keep the plans fresh so you spend your thinking time on the board, not on recall.
 
@@ -268,7 +268,7 @@ Review each opening you play at least once a month. If you have a tournament or 
 
 Do not panic. Stop, look at what the move actually threatens, and ask yourself: does this fit my opponent's plan, or are they improvising? Usually, offbeat moves come with a concrete drawback. If you find the threat and respond with a developing move that also addresses it, you will be fine.
 
-### Is it okay to switch openings frequently?
+### Q: Is it okay to switch openings frequently?
 
 Switching openings too often is a common trap. Every time you switch, you reset your Layer 2 learning — the recurring middlegame patterns you have built up in the old opening. Stick with an opening for at least a few months. If it is not working, fix your understanding of it before you abandon it.
 

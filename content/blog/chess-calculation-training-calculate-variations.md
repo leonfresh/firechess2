@@ -43,7 +43,7 @@ The most common calculation mistake is also the most fixable: **picking a move w
 
 The fix is simple: before calculating _any_ line, spend 30-60 seconds listing every plausible candidate move.
 
-### How It Works
+### Q: How It Works
 
 1. Scan all checks, captures, and threats (the forcing moves)
 2. Add any quiet moves that improve your position
@@ -80,7 +80,7 @@ For more on positional decision-making in these kinds of positions, see our guid
 
 Once you have your candidate list, the next rule is: **calculate forcing moves first**. Checks, captures, and direct threats have the most concrete outcomes — they're easier to calculate to termination because the opponent's responses are limited.
 
-### Why This Works
+### Q: Why This Works
 
 In a position with a forced tactical win, your non-forcing candidate (like a quiet move) wastes your time. Calculating the forcing line first means you either find the knockout or rule it out before moving on to quiet positional maneuvers.
 
@@ -116,7 +116,7 @@ Once you have your candidates and you're examining a forcing line, the next skil
 
 The tree-of-variations method, popularized by Soviet grandmaster Alexander Kotov in his classic _Think Like a Grandmaster_, forces you to calculate each line to its logical conclusion before moving on.
 
-### How to Build a Tree
+### Q: How to Build a Tree
 
 1. Pick one candidate move
 2. Calculate the main forcing response (the opponent's most testing reply)
@@ -266,11 +266,11 @@ After 30 days, these methods will feel automatic. You'll naturally generate cand
 
 ## Frequently Asked Questions
 
-### How long does it take to improve calculation ability?
+### Q: How long does it take to improve calculation ability?
 
 Most players see measurable improvement within 2-4 weeks of consistent daily practice. The 30-day routine in this guide builds all four methods into habit. After one month, expect your blunder rate to drop noticeably and your ability to calculate forcing sequences to deepen by 1-2 moves. Rating improvement typically follows within 2-3 months as the skills transfer to tournament play.
 
-### Can I improve calculation without playing games?
+### Q: Can I improve calculation without playing games?
 
 Yes — dedicated calculation training (puzzles, visualization drills, and position analysis) is one of the most effective ways to improve. The 30-day visualization drill and tactical puzzle work described above train the same neural pathways as game play. However, combining structured training with regular games gives you the best results, because games test your calculation under time pressure and emotional stress — conditions puzzles can't fully replicate.
 
@@ -278,11 +278,11 @@ Yes — dedicated calculation training (puzzles, visualization drills, and posit
 
 Tactics are specific patterns — forks, pins, skewers, discovered attacks — that win material or deliver checkmate. Calculation is the broader mental process of evaluating moves by mentally playing them out to a logical conclusion. You use calculation to find tactics, but calculation also applies to quiet positions where no tactical pattern exists. A player strong in tactics but weak in calculation will miss positional advantages that require 4-5 moves of careful analysis to realize.
 
-### How deep should I calculate in a typical game?
+### Q: How deep should I calculate in a typical game?
 
 For most positions, 2-3 moves deep is sufficient. Reserve deeper calculation (4-6 moves) for the 3-5 critical moments per game where the position demands it — usually when tactics are available, the position is sharp, or you're converting an advantage. Trying to calculate deeply on every move leads to time trouble and mental exhaustion. The key skill is recognizing which positions deserve deep calculation and which ones only need a quick blunder check.
 
-### Why do I calculate well in puzzles but blunder in games?
+### Q: Why do I calculate well in puzzles but blunder in games?
 
 Puzzle positions are pre-selected to have a tactical solution, so your brain knows something is there. In games, no such signal exists — you must evaluate whether calculation is even needed. The fix is twofold: first, always apply the blunder check before every move (10 seconds catches most oversights). Second, practice candidate generation in non-tactical positions so you build the habit of looking for alternatives even when nothing seems to be happening. FireChess's [puzzles page](/puzzles) includes mixed sets that train both tactical spotting and positional calculation.
 

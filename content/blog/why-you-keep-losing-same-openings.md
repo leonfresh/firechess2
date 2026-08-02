@@ -98,7 +98,7 @@ The real danger of the "bad matchup" belief is that it becomes self-fulfilling. 
 
 ## Three Reasons You Keep Losing
 
-### 1. You Don't Have a Plan
+### Q: You Don't Have a Plan
 
 The most common cause. You know the opening moves — maybe even 8-10 moves of theory — but when a position becomes non-theoretical, you don't know what you're trying to achieve.
 
@@ -119,7 +119,7 @@ Knowing which plan fits which pawn structure is more valuable than memorizing 15
 
 The key insight is that most middlegame positions arising from a given opening share common themes. In the Sicilian Dragon, you're looking for ...Rc8, ...Ne5, and a queenside pawn storm. In the Caro-Kann, you're aiming for a solid structure with ...c5 or ...e5 breaks. These plans don't change based on your opponent's exact move order — they're baked into the pawn structure itself. If you understand the structure, the plans follow naturally.
 
-### 2. You Have a Specific Blind Spot
+### Q: You Have a Specific Blind Spot
 
 There's a particular move, pawn structure, or tactical motif in this opening that you consistently handle poorly. You might not even be aware of it because it looks different each time — but the underlying pattern is the same.
 
@@ -135,7 +135,7 @@ Better yet, use bulk analysis to scan all your games in this opening simultaneou
 
 Blind spots are sneaky because they often masquerade as "just one bad game." You might lose to the same tactical idea three times without realizing it's the same idea — because the surrounding position looks different each time. This is why bulk comparison is so powerful. When you line up 10 games side by side, the pattern becomes obvious. "Oh — every time my opponent plays Bg5 before h3, I get into trouble." That's a blind spot you can now study specifically.
 
-### 3. Your Opponent Knows the Traps (and You Don't)
+### Q: Your Opponent Knows the Traps (and You Don't)
 
 Some openings have well-known traps, tactical motifs, or forcing sequences that one side needs to know. If your opponent has studied these and you haven't, you'll keep walking into them.
 
@@ -360,13 +360,13 @@ Also consider your opponent pool. At the club level (1200-1600), certain opening
 
 ## Frequently Asked Questions About Opening Study
 
-### How many openings should I learn as a beginner?
+### Q: How many openings should I learn as a beginner?
 
 **Far fewer than you think.** As a beginner (under 1200), you need exactly two openings: one with White (e.g., 1.e4 followed by simple development) and one response each to 1.e4 and 1.d4 as Black. That's it. The goal isn't to have a repertoire covering every possibility — it's to reach the middlegame with a playable position and a basic plan.
 
 A common mistake is learning 5-6 different openings before understanding the middlegame ideas behind any of them. You're better off playing the same opening 50 times and learning its plans deeply than playing 10 different openings 5 times each.
 
-### Should I memorize lines or understand plans?
+### Q: Should I memorize lines or understand plans?
 
 **Plans first, always.** Memorized lines without understanding are fragile — as soon as your opponent plays a move you haven't memorized, you're lost. Understanding plans gives you a framework for finding good moves in unfamiliar positions.
 
@@ -374,7 +374,7 @@ That said, there's a minimum amount of memorization required. You need to know t
 
 A good approach: learn the first 5 moves by heart, then study the middlegame plans for the positions that arise. If you keep losing from a specific position, extend your memorized knowledge a few moves further in that specific line.
 
-### How long should I spend studying openings?
+### Q: How long should I spend studying openings?
 
 **At most 20-30% of your total study time.** For most club players (under 1800), tactics and endgames are far more impactful study targets than openings. If you have 5 hours per week for chess study, spend at most 1-1.5 hours on openings.
 
@@ -382,7 +382,7 @@ The exception is when you have a specific, identified problem — like the proce
 
 The trap to avoid is passive opening study — watching YouTube opening videos without playing any games. Watching a 40-minute video on the Sicilian Dragon is entertaining but doesn't build the muscle memory you need. Active study (analyzing your games, practicing specific positions) always beats passive study (watching videos, reading books).
 
-### Is it worth learning openings at my rating?
+### Q: Is it worth learning openings at my rating?
 
 **Yes, but with the right focus.** Under 1200, focus on basic opening principles (control the center, develop pieces, castle) rather than specific lines. Between 1200-1600, learn one specific opening for each color to a depth of 10-12 moves, plus the main middlegame plans. Above 1600, deeper preparation starts to pay off.
 

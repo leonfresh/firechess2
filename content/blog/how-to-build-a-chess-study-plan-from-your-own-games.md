@@ -219,7 +219,7 @@ You do not need a spreadsheet with thirty columns. Three numbers per week are en
 2. **Average game quality** — Subjective 1–5 rating of how often you reached a playable position out of the opening
 3. **Rating trend** — Not daily noise, but the 4-week moving average
 
-### How to track
+### Q: How to track
 
 After every session, spend two minutes updating this. You can use a notebook, a note on your phone, or the stats FireChess already surfaces on the [analyze page](/analyze). The important thing is consistency, not elegance.
 
@@ -234,7 +234,7 @@ A simple weekly log looks like this:
 
 After week 4, the fork-drill phase is clearly working: the mistake rate dropped by 75%, game quality improved, and the rating followed. At this point you might switch the primary weakness to something else (say, endgame conversion) while keeping fork drills in maintenance mode.
 
-### When to change course
+### Q: When to change course
 
 If your tracked number does not budge after three weeks, do not keep grinding the same drill. The likely reasons are:
 
@@ -301,7 +301,7 @@ That weekly check does double duty: it forces you to prioritize, and it keeps yo
 
 ## Frequently Asked Questions
 
-### How many games should I review before building a plan?
+### Q: How many games should I review before building a plan?
 
 At least 15–20 rapid or classical games. Fewer than that and a single bad loss can skew your perception of where the real weakness is. With 20 games, the statistical noise averages out and the genuine patterns — the ones worth studying — become visible.
 
@@ -309,15 +309,15 @@ At least 15–20 rapid or classical games. Fewer than that and a single bad loss
 
 Pick one. If you try to fix fork blindness, endgame technique, and opening leaks all in the same week, you will improve at none of them. The 80/20 rule applies: one weakness usually causes more damage than the others. Hit that one first, build it into a habit, then move to the next. Most improvers overestimate how much they can fix at once.
 
-### Should I study openings or tactics first?
+### Q: Should I study openings or tactics first?
 
 For most club players (under 1800), tactics first. Tactical patterns appear in every phase of the game — opening, middlegame, and endgame — and tactical mistakes are the single largest source of lost points below master level. Once your tactical recognition is solid enough that you stop hanging pieces and start punishing opponent blunders, opening study becomes much more effective because you can actually reach the positions you prepared.
 
-### How do I know if my study plan is actually working?
+### Q: How do I know if my study plan is actually working?
 
 Use the tracking method described above. If your target mistake frequency drops over four weeks and your average game quality improves, the plan is working. If your rating drops or your mistake count stays flat, the plan needs adjustment. The key is not to judge after one bad session — look for a trend. Three steps forward and one step back still means progress.
 
-### How long should I stick with one study focus before switching?
+### Q: How long should I stick with one study focus before switching?
 
 At least three to four weeks, unless it is clearly the wrong target. It takes time for new patterns to move from conscious effort to automatic recognition. Switching too fast means you never internalize anything. The exception is if your tracking shows zero improvement after three weeks — in that case, cycle back to the review phase and check whether you identified the right weakness.
 

@@ -132,7 +132,7 @@ Every position has a piece (or two) that's doing nothing useful. It might be a b
 
 **The principle:** Before looking for flashy attacks or complex plans, identify your worst piece and improve it. A good plan in chess is often simply "reroute my worst piece to a better square." This is the single most actionable advice for intermediate players — you don't need deep calculation, just honest assessment of which piece is underperforming.
 
-### How to evaluate piece activity:
+### Q: How to evaluate piece activity:
 
 - **Bishops:** Are they blocked by their own pawns (bad bishop) or shooting across the board (good bishop)? Can you trade the bad bishop or move pawns to free it? A "bad" bishop behind its own pawns is worth roughly a knight in middlegame positions. If you have a bad bishop, ask whether you can trade it for the opponent's good bishop — that exchange alone can transform your position.
 - **Knights:** Are they on the edge (bad) or in the center (good)? Is there an outpost square they can reach — a central square protected by a pawn where they can't be chased away? Knights on the rim are dim, as the saying goes. A knight on d5 or e5, supported by a pawn and unassailable by enemy pawns, can dominate a position.
@@ -169,7 +169,7 @@ Based on your assessment of pawn structure, piece activity, and king safety, you
 - **"I should prepare the endgame"** — I'm slightly better, trading pieces benefits me
 - **"I should trade my bad bishop"** — it's blocked by my own pawns and doing nothing
 
-### How to commit without overcommitting
+### Q: How to commit without overcommitting
 
 Once you've chosen a plan, commit to it — but stay flexible. A plan isn't a suicide pact. If your opponent makes a surprising move that changes the position's character, reassess. The framework is a starting point, not a cage. The strongest players in the world follow plans for 10-15 moves, then pivot when the position demands it. Don't be so fixated on your plan that you miss a simple tactic.
 
@@ -237,7 +237,7 @@ Sometimes, even after going through the framework, the position feels equal and 
 
 These four fallback strategies won't win you a brilliancy prize, but they'll keep your position healthy and often nudge you toward a slight advantage. The point is to keep making purposeful moves, even when the purpose is small.
 
-### Why Prophylaxis Is Your Secret Weapon
+### Q: Why Prophylaxis Is Your Secret Weapon
 
 That third card — "What does my opponent want?" — is the most underrated planning tool in chess. Before you make your move, ask yourself what your opponent would do if it were their turn. Would they push a pawn break? Reroute a knight? Attack your king? If the answer is clear, consider preventing it. This is called prophylaxis, and it's what separates strong positional players from the rest.
 
@@ -268,7 +268,7 @@ Ready to see where your middlegame planning breaks down? [Upload your games to F
 
 ## Frequently Asked Questions
 
-### How do I know which side of the board to play on?
+### Q: How do I know which side of the board to play on?
 
 Look at the pawn structure — it tells you everything. If you have a pawn majority on the queenside (3 vs. 2), that's where your long-term advantage lies. If your opponent's king is on the kingside with weakened pawns, attack there. The general rule: play on the side where you have more space, more pawns, or a weaker enemy king. When in doubt, play on the side where your pawn chain points — in a King's Indian structure, White's chain points queenside (play there) while Black's points kingside (play there).
 
@@ -276,7 +276,7 @@ Look at the pawn structure — it tells you everything. If you have a pawn major
 
 When the position is dead equal and there's no clear plan, focus on prophylaxis — ask what your opponent wants to do and prevent it. This is especially effective because in equal positions, the first player to create an imbalance often gains the initiative. You can also improve your worst piece, place a rook on the only open file, or slowly create a small space advantage. These "nothing" moves often lead to your opponent making a mistake. Upload your equal positions to [FireChess's analyzer](/analyze) — you'll often find that what felt equal was actually +0.5 for one side, and the plan was hiding in the pawn structure.
 
-### How do I attack a castled king?
+### Q: How do I attack a castled king?
 
 You need at least three pieces aimed at the king and a way to open lines. The most common attacking patterns are: pawn storm (g4-g5 or h4-h5 to open the h-file), piece sacrifice to blow open the pawn shield (Bxh7+, Nxf7), or a rook lift to the third rank (Rf1-f3-g3). Before attacking, count your attackers vs. defenders — if they have more defenders than you have attackers, wait and build up. Premature attacks with only one or two pieces almost always fail and leave your position worse.
 
@@ -284,6 +284,6 @@ You need at least three pieces aimed at the king and a way to open lines. The mo
 
 A tactic is a short sequence of moves (2-5 moves) that wins material or checkmates, usually involving a forced combination. A plan is a long-term strategic idea (5-20 moves) that improves your position based on structural features. You execute a tactic immediately; you build toward a plan over many moves. A plan might create the conditions for a tactic — for example, your plan to control the d-file might eventually lead to a back-rank tactic when your rook reaches d8. The framework in this article teaches you to find plans; [tactics training](/analyze) sharpens your ability to spot the combinations that plans set up.
 
-### How long should I spend finding a plan before I just make a move?
+### Q: How long should I spend finding a plan before I just make a move?
 
 In a practical game, spend 30-60 seconds on the framework steps at the start of each new phase (after the opening ends, after a pawn break, after a trade). That's enough time to identify the pawn structure, find your worst piece, and check king safety. Don't spend 5 minutes on the framework every move — that's a time management disaster. The framework should become automatic over time, like a checklist you run through in your head before each move. If you're truly stuck after 60 seconds, play the best "general principle" move you can find (improve a piece, control a file) and move on. A decent move played in 30 seconds is better than a slightly better move found after 10 minutes of agonizing.

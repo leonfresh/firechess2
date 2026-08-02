@@ -72,7 +72,7 @@ In this position, White's king on d5 and Black's king on d8 face each other with
 
 Now flip it: if it were **White to move**, the position would be drawn. White would have to step back (Kc4 or Ke4), and Black would maintain opposition. The entire evaluation of the position depends on whose turn it is.
 
-### How to Gain the Opposition
+### Q: How to Gain the Opposition
 
 The most common way to gain opposition is to **approach the opponent's king from a distance.** If the kings are on the same file with three squares between them (e.g., Ke1 and Ke4), the player who is NOT to move has the "distant opposition" — they can maintain it by always moving to the square that keeps an odd number of squares between the kings.
 
@@ -122,7 +122,7 @@ When you reach a king and pawn endgame, ask yourself: *"Can my king reach a key 
 
 When you have a passed pawn racing to promote and the opponent's king is chasing it, you need a quick way to know if the king can catch it. The **Rule of the Square** gives you the answer in seconds — no calculation required.
 
-### How It Works
+### Q: How It Works
 
 1. Draw an imaginary diagonal from your pawn to the promotion square.
 2. Extend that diagonal to form a square on the board.
@@ -158,7 +158,7 @@ White plays **1.a5!** and the a-pawn becomes a diversion:
 
 The key insight: **the outside passed pawn doesn't need to promote itself.** Its job is to distract the opponent's king long enough for your king to gobble up the pawns on the other side.
 
-### When to Create an Outside Passed Pawn
+### Q: When to Create an Outside Passed Pawn
 
 If you have pawns on both sides of the board and your opponent has pawns only on one side, you already have a potential outside passed pawn. Push the pawn that's farthest from the opponent's pawns. The opponent's king will have to leave its post to stop it — and that's when your king invades.
 
@@ -178,7 +178,7 @@ The breakthrough works because the pawns support each other:
 - **1.b6! Kb8 2.c6!** — Now there are two runners. 2...Kc8 3.b7+ Kb8 4.Kb6! and the a-pawn or b-pawn promotes.
 - **1.b6! a6 2.c6!** — Same idea. The connected pawns create at least one passed pawn.
 
-### When to Look for Breakthroughs
+### Q: When to Look for Breakthroughs
 
 Pawn breakthroughs typically occur when:
 1. You have **three connected pawns** (like a5-b5-c5) against a pawn on the a-file or c-file.
@@ -209,7 +209,7 @@ But if it were **White to move**, White must step back:
 
 The position goes from winning to drawn depending on who moves. This is why **counting tempi** is essential in king and pawn endgames.
 
-### How Zugzwang Connects to Other Concepts
+### Q: How Zugzwang Connects to Other Concepts
 
 Zugzwang is the mechanism behind opposition and triangulation. When you "have the opposition," your opponent is in zugzwang — they must step aside. When you triangulate (take three moves instead of one to return to the same square), you're creating zugzwang by giving the move to your opponent.
 

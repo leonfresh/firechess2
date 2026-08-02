@@ -170,7 +170,7 @@ The advantage is speed and completeness. Instead of hours of manual work, you ge
 
 Once automated scanning surfaces your suspected leaks, the Lichess Opening Database is your best tool for verification. It's free, runs instantly, and draws from over 5 billion master and amateur games — giving you statistical confidence that a pattern is real.
 
-### How to Use It
+### Q: How to Use It
 
 1. Go to [lichess.org/analysis](https://lichess.org/analysis) and click the "Openings" tab (or use the board editor)
 2. Navigate to the position where you suspect a leak
@@ -295,7 +295,7 @@ The inflection point — where the red line steepens and the green line flattens
 
 Finding the leak is half the battle. Here's how to fix it:
 
-### 1. Understand Why the Engine Move Is Better
+### Q: Understand Why the Engine Move Is Better
 
 Don't just memorize the computer's suggestion. Understand the *reasoning*:
 
@@ -305,15 +305,15 @@ Don't just memorize the computer's suggestion. Understand the *reasoning*:
 
 **Concrete example:** In the Exchange French (1.e4 e6 2.d4 d5 3.exd5 exd5), Stockfish says Black should play 3...Nf6 before recapturing on d5. Why? Because after 3...exd5 4.Bd3 Nf6 5.Nf3 Be7 6.0-0 0-0 7.Bg5, White has comfortable development and Black's light-squared bishop is passively placed behind the pawn chain. By inserting 3...Nf6, you prevent White from playing Bd3 immediately and keep more dynamic options. Understanding this positional reasoning lets you apply the same principle in analogous positions, not just this one line.
 
-### 2. Study the Resulting Positions
+### Q: Study the Resulting Positions
 
 Play through the engine's recommended line for 5-10 moves. Get comfortable with the types of positions that arise. Understanding the middlegame plans makes the opening move feel natural rather than memorized.
 
-### 3. Practice the Correct Move
+### Q: Practice the Correct Move
 
 Use drilling or spaced repetition to ingrain the correction. Play through the position several times, each time choosing the right move deliberately. Some tools offer a "drill mode" where you're presented with your leak positions and must find the correct response.
 
-### 4. Review After One Month
+### Q: Review After One Month
 
 After playing ~30 games with the correction, check whether you're consistently choosing the right move. If the leak has closed, move on to the next one. If you're still reverting to the old move under time pressure, drill it more. Use the [Analyze](/analyze) dashboard to track whether the evaluation line in your recent games shows improvement in the patched positions.
 

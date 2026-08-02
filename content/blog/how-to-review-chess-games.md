@@ -205,31 +205,31 @@ The evaluation graph (sometimes called the "eval bar" or "evaluation chart") plo
 
 After reviewing 20+ games with this routine, you'll notice your mistakes fall into five categories. Each one requires a different study approach.
 
-### 1. Tactical Oversights (Hangs and Missed Tactics)
+### Q: Tactical Oversights (Hangs and Missed Tactics)
 
 **What it looks like:** You left a piece undefended, missed a fork, or didn't see your opponent's threat. The eval bar drops by 200+ centipawns in one move.
 
 **How to fix it:** Before each move, do a **safety check** — are any of your pieces undefended? Is any piece attacked twice but defended once? This 5-second habit eliminates 80% of one-move blunders. For missed tactics, solve 10 puzzles per day on your puzzle rating level (not higher).
 
-### 2. Opening Knowledge Gaps
+### Q: Opening Knowledge Gaps
 
 **What it looks like:** You're out of book by move 8, and the engine shows your last 3 moves were inaccuracies. You end up in a position with no clear plan.
 
 **How to fix it:** Use the [FireChess scanner](/analyze) to find your most common opening positions, then study the first 3-5 moves of deviation from theory. Don't memorise 20 moves of theory — learn the **ideas** behind the first critical decision in your opening.
 
-### 3. Positional Misjudgements
+### Q: Positional Misjudgements
 
 **What it looks like:** Your ACPL is low (you didn't blunder), but you lost slowly. The eval gradually shifted against you over 15 moves. You traded a good bishop for a bad knight, or you pushed pawns that created weaknesses.
 
 **How to fix it:** Study pawn structures for your openings. If you play the Sicilian, learn the typical pawn breaks (d5 for Black, f4-f5 for White). If you play the London, learn when to push e4 vs when to keep the pawn on e3.
 
-### 4. Time Management Failures
+### Q: Time Management Failures
 
 **What it looks like:** You spent 8 minutes on move 12 (a non-critical position) and then had 30 seconds for the entire endgame. Your endgame centipawn loss is 150+ because you were in time trouble.
 
 **How to fix it:** Set a personal clock rule: never spend more than 3 minutes on a single move in the opening or middlegame (unless it's a forcing sequence). Save at least 5 minutes for the endgame. Most games at club level are decided in the endgame, not the opening.
 
-### 5. Endgame Technique Errors
+### Q: Endgame Technique Errors
 
 **What it looks like:** You had a winning endgame but couldn't convert. You traded into a drawn position, or you pushed the wrong pawn, or your king was in the wrong place.
 

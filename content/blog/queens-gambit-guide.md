@@ -35,7 +35,7 @@ The Queen's Gambit begins with the moves **1.d4 d5 2.c4**. White offers a pawn (
 
 The name "Queen's Gambit" dates back to the 15th century, when Spanish chess treatises first documented the opening. The "gambit" label stuck even though modern analysis shows White can always regain the pawn — making it technically a "false gambit" or "accepted gambit" where the pawn is only temporarily sacrificed.
 
-### Why Play the Queen's Gambit?
+### Q: Why Play the Queen's Gambit?
 
 The Queen's Gambit offers several advantages that make it ideal for club players:
 
@@ -177,7 +177,7 @@ The Albin has one famous trap that catches unprepared White players:
 
 **4.Nf3 Nc6 5.g3?? Bg4 6.Bg2 Qd7 7.O-O? d3!** — and Black traps the White queen with ...O-O-O and ...Bh3. This is the famous **Lasker Trap**, named after Emanuel Lasker who employed it in 1902.
 
-### How to Refute the Albin
+### Q: How to Refute the Albin
 
 White's best response is simply **4.e3!** — immediately challenging the advanced d4 pawn. After 4...Bb4+ 5.Bd2 dxe3 6.fxe3, White has a comfortable position with an extra pawn. Black gets some compensation through development, but nowhere near enough. The Albin is considered unsound at master level precisely because of this 4.e3 refutation.
 
@@ -311,7 +311,7 @@ The Queen's Gambit is fundamentally about pawn structures — the Carlsbad, the 
 
 ## Frequently Asked Questions
 
-### Is the Queen's Gambit good for beginners?
+### Q: Is the Queen's Gambit good for beginners?
 
 Absolutely. The Queen's Gambit is one of the best openings for players of all levels, including beginners. Its core ideas — controlling the centre with pawns, developing pieces naturally, and playing for long-term positional advantages — teach you fundamental chess principles that apply to every opening. Start with the QGD main line (4.Bg5) and the QGA (3.Nf3 4.e3) to build a solid foundation.
 
@@ -319,11 +319,11 @@ Absolutely. The Queen's Gambit is one of the best openings for players of all le
 
 The **Queen's Gambit** is the opening itself — 1.d4 d5 2.c4. The **Queen's Gambit Declined (QGD)** is Black's most popular response, 2...e6, where Black declines to capture the c4 pawn and instead reinforces the centre. Think of the Queen's Gambit as the parent opening, and the QGD, QGA, and Slav as Black's specific responses to it.
 
-### Should I play the Queen's Gambit or the London System as my main 1.d4 opening?
+### Q: Should I play the Queen's Gambit or the London System as my main 1.d4 opening?
 
 Both are excellent choices, but they suit different players. The **Queen's Gambit** is more principled and teaches deeper strategic concepts — pawn structures, piece activity, and long-term planning. The **London System** is easier to learn and more system-based — you play the same setup regardless of Black's moves. For club players who want to improve at chess, the Queen's Gambit is the better long-term investment. For players who want an immediate, low-maintenance weapon, the London is a great shortcut.
 
-### Can Black equalise in the Queen's Gambit?
+### Q: Can Black equalise in the Queen's Gambit?
 
 At the club level (under 2200), the Queen's Gambit gives White a lasting edge in most variations. Black can equalise with precise play in certain lines — particularly the QGD Orthodox Defense and the Semi-Slav — but in practice, White's space advantage and easier development provide comfortable winning chances. At the grandmaster level, some variations are closer to equal, but the Queen's Gambit remains one of the most testing openings for White at any rating.
 

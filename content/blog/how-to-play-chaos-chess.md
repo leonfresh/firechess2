@@ -85,7 +85,7 @@ Chaos Chess punishes "ooh, shiny." The players who win treat the draft like a re
 
 Your pawn structure is the skeleton of any chess position, and Chaos Chess turns it into a weapon that evolves every 5 turns.
 
-### Why pawns matter more here
+### Q: Why pawns matter more here
 
 In standard chess, pawns are the weakest piece — slow, vulnerable, and directionally limited. In Chaos Chess, common-tier modifiers like **Torpedo Pawns** turn every pawn into a two-square threat from any rank. A pawn on d5 that can still dash to d7 puts instant pressure on the opponent's back-rank pieces. The psychological effect is as real as the tactical one: your opponent can never assume your pawns are "done" developing.
 
@@ -128,7 +128,7 @@ An unmodified piece in Chaos Chess keeps its standard value. But once a modifier
 
 These are rough estimates — the actual value depends on board state. A Queen Cannon on a crowded board dominates; on an open board with few pieces, its leap-capture goes unused and it's barely worth 10.
 
-### When to trade, when to hold
+### Q: When to trade, when to hold
 
 In standard chess, trading a bishop for a knight is a marginal decision decided by pawn structure. In Chaos Chess, the decision tree is wider:
 

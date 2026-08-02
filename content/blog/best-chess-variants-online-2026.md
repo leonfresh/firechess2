@@ -281,23 +281,23 @@ Horde has a dedicated community on Lichess with its own ELO ratings, and the pos
 
 ## Frequently Asked Questions
 
-### 1. Which chess variant is best for a complete beginner?
+### Q: Which chess variant is best for a complete beginner?
 
 If you are new to chess altogether, stick with **standard chess** or **Chess960**. Standard chess gives you the foundation you need, and Chess960 removes the intimidation of opening theory. Among the variants on this list, **King of the Hill** and **Three-Check** are the easiest to pick up because they add only one simple rule to standard chess. If you have already learned how the pieces move, you can start playing either variant immediately without studying any new rules — just remember that your king can now win the game by reaching the centre (King of the Hill) or that three checks end the match (Three-Check). For something more approachable that still feels completely different, try our [Chaos Chess](/play) — the core rules stay the same, and the modifier cards teach themselves through gameplay.
 
-### 2. Can playing chess variants actually improve my standard chess?
+### Q: Can playing chess variants actually improve my standard chess?
 
 Absolutely — yes, but it depends on the variant. **Chess960** directly improves your positional understanding because you cannot rely on memorised lines and must evaluate positions from first principles. **Three-Check** sharpens your tactical vision and your ability to spot checks from unusual angles. **Crazyhouse** dramatically improves your piece coordination and your understanding of piece values, since dropping pieces forces you to think about development differently. However, playing **Antichess** or **Atomic** exclusively probably will not translate back to standard chess — they are more about pure fun and creative thinking. The best approach is to use variants as tactical training tools: spend 70% of your chess time on standard and 30% on variants to develop different mental muscles.
 
-### 3. Why do you need a separate Chaos Chess variant when Crazyhouse already exists?
+### Q: Why do you need a separate Chaos Chess variant when Crazyhouse already exists?
 
 It is a fair question and one we hear a lot. Crazyhouse and Chaos Chess serve completely different purposes despite both involving "extra" elements on the board. Crazyhouse is about **piece drops** — you recapture and redeploy enemy pieces that you have captured, making it a game of material recycling and deep positional memory. Chaos Chess is about **modifier drafting** — you pick permanent upgrades from a rotating selection every 5 turns, which means the rules of the game literally change as you play. Crazyhouse rewards deep tactical calculation in drop-heavy positions. Chaos Chess rewards adaptability, long-term planning under uncertainty, and creative use of synergies between modifiers. They complement each other rather than competing. If you enjoy both, check out the [Chaos Chess Roguelike Draft Mode](/blog/chaos-chess-roguelike-draft-mode), which adds the persistence and progression of a roguelike game on top of the core draft mechanic.
 
-### 4. Do chess variants have their own rating systems?
+### Q: Do chess variants have their own rating systems?
 
 Yes. Both **Lichess** and **chess.com** maintain separate ELO/Glicko ratings for each variant. This means your standard chess rating and your Crazyhouse rating are tracked independently — the 2400 standard player who just discovered Atomic will start at the bottom of the Atomic ladder, which is fair to everyone. **Chaos Chess** also has its own ranked ELO system starting at 1200 with full matchmaking across five time controls. One practical tip: your variant rating often stabilises faster than your standard rating because the player pools are smaller, so you will get an accurate ranking after fewer games. However, because of the smaller pools, rating inflation and deflation can be more pronounced in niche variants like Antichess or Horde.
 
-### 5. What is the difference between playing variants on Lichess vs chess.com?
+### Q: What is the difference between playing variants on Lichess vs chess.com?
 
 Both platforms offer excellent variant support, but there are meaningful differences. **Lichess** is fully open-source and free with no ads — it offers the widest selection of variants (including Fog of War, Horde, and Crazyhouse with the best implementation) and has the most active variant communities. Variant tournaments on Lichess run around the clock. **chess.com** has a more polished UI and larger overall player base, but its variant selection is narrower (no Fog of War or Horde) and some variant features are restricted to paid subscribers. For Chaos Chess, the best place to play is [firechess.com/play](/play), because it is the only platform where the modifier drafting system and Opening Anomalies exist — no other site has implemented these mechanics.
 

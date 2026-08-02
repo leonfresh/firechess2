@@ -190,7 +190,7 @@ When you analyse a game on FireChess, each move gets a coloured badge next to it
 </svg>
 </div>
 
-### How the Badges Connect to Your Game Report
+### Q: How the Badges Connect to Your Game Report
 
 When you upload a game to FireChess and run the analysis, the summary panel at the top of the page shows you a breakdown:
 

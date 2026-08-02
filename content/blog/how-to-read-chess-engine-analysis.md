@@ -95,7 +95,7 @@ A PV always starts with the move for the side to move. So if it's White's turn a
 
 Each pair of moves represents one full move. A PV of 10 moves means the engine has calculated 5 full moves ahead.
 
-### Why the PV Matters for Your Improvement
+### Q: Why the PV Matters for Your Improvement
 
 The PV shows you **what the engine thinks is the best sequence of moves.** When you review a game and see a PV that differs from what you actually played, you've found a learning opportunity:
 
@@ -295,15 +295,15 @@ One of the most confusing things in engine analysis is when the evaluation **cha
 
 The answer is almost always one of these:
 
-### 1. The Engine Found a Deep Tactical Shot
+### Q: The Engine Found a Deep Tactical Shot
 
 At lower depth, the engine couldn't see a combination that extends 8-10 moves deep. Once it calculated far enough, it discovered a forcing sequence that wins material or delivers checkmate. This is common in complex middlegame positions with many pieces on the board.
 
-### 2. The Engine Found a Defensive Resource
+### Q: The Engine Found a Defensive Resource
 
 The reverse also happens: the eval drops from +3.0 to +0.6 because the engine discovered a clever defensive move at depth 22 that it missed at depth 14. This is why you shouldn't trust shallow evaluations — the "winning" position might not actually be winning.
 
-### 3. The Engine Is Switching Between Equal Top Moves
+### Q: The Engine Is Switching Between Equal Top Moves
 
 Sometimes two moves are nearly identical in evaluation (say +0.41 vs +0.38), and the engine flips between them as depth increases. The evaluation might look like it's jumping around, but it's actually staying within a narrow band. Don't panic if the eval fluctuates by less than 0.3 pawns — that's normal engine behaviour.
 

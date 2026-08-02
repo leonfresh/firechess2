@@ -387,7 +387,7 @@ Notice the pattern: as rating increases, **both the median and the spread shrink
 
 Consider this: a 1600 player with an ACPL range of 40–70 (IQR 50–65) is much closer to 1800 strength than a 1600 player whose ACPL swings from 30 to 100. The first player can be trusted to perform in critical tournament games. The second is a wild card — capable of beating anyone on a good day, but also capable of losing to a 1200 on a bad one.
 
-### How to measure your own spread
+### Q: How to measure your own spread
 
 To get a meaningful picture of your ACPL variance, use [FireChess's game analysis tools](/analyze) to scan at least 20 of your recent games at the same time control. Don't just look at the average — look at the standard deviation. Here's what the numbers mean:
 

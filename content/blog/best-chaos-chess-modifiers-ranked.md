@@ -751,11 +751,11 @@ Modifier combinations are where Chaos Chess really shines. Here are the most eff
 
 New to Chaos Chess? The modifier system can feel overwhelming. Here are five rules to get you through your first 20 games.
 
-### 1. Always Develop First
+### Q: Always Develop First
 
 No matter what modifiers are active, the most common beginner mistake is chasing modifier-specific tactics before you've developed your pieces. A Torpedo pawn charge is useless if you can't back it up. Develop your knights and bishops, castle, connect your rooks — **then** activate your modifier strategy.
 
-### 2. Pick Modifiers That Match Your Position
+### Q: Pick Modifiers That Match Your Position
 
 Don't just pick the most powerful modifier in a vacuum — pick the one that fits your current board state.
 
@@ -764,15 +764,15 @@ Don't just pick the most powerful modifier in a vacuum — pick the one that fit
 - **Equal position and confident?** Pick a skill-expressive modifier (Night Rider, Sniper Bishop) and outplay them
 - **Desperately behind?** Pick a comeback modifier (Undead Army, Regicide) for a chance to swing the game
 
-### 3. Watch Your King Safety
+### Q: Watch Your King Safety
 
 Standard chess king safety rules still apply — more so, in fact. Many modifiers punish exposed kings ruthlessly. Keep your king shielded. Only march it forward when you have a specific plan.
 
-### 4. Don't Hoard One-Time Abilities
+### Q: Don't Hoard One-Time Abilities
 
 Modifiers like Warp Queen, Usurper, and Railgun are one-time use. Don't save them forever waiting for the "perfect moment" — if a good opportunity arises, take it. A slightly suboptimal Railgun is better than one you never fire.
 
-### 5. Learn the Synergy Combos
+### Q: Learn the Synergy Combos
 
 Modifier combinations are where Chaos Chess gets truly wild. Study the synergy table above and learn to spot combo opportunities in your drafts. A single modifier is good — two that synergize are game-winning.
 
@@ -803,23 +803,23 @@ Counter-intuitively, the best Chaos Chess players sometimes **ignore** their mod
 
 ## FAQ: Chaos Chess Modifiers
 
-### 1. Can I play Chaos Chess without modifiers?
+### Q: Can I play Chaos Chess without modifiers?
 
 Strictly speaking, no — modifiers are the defining feature of Chaos Chess. But you can play the **Siege** variant (on [our platform](/play/chaos)) which uses only Opening Anomalies without mid-game modifier drafts. It's a gentler introduction to the format.
 
-### 2. Which modifier is best for beginners?
+### Q: Which modifier is best for beginners?
 
 **Torpedo Pawns** or **Dragon Bishop**. Both are intuitive, don't require special rules knowledge to use, and teach good chess habits (active pieces, central control). Avoid legendary modifiers until you have 20+ games under your belt — their one-time nature requires good timing.
 
-### 3. Are modifiers balanced?
+### Q: Are modifiers balanced?
 
 We actively balance the modifier pool based on win-rate data. The chart at the top of this article shows the current tier impact. Legendary modifiers are intentionally stronger — they appear much less frequently in drafts. The draft system (choosing from three random options) is the real balancing mechanism: a weaker modifier is fine if you're offered it alongside two even worse options.
 
-### 4. Can modifiers be countered or removed once drafted?
+### Q: Can modifiers be countered or removed once drafted?
 
 No — once a modifier is drafted, it's active for the rest of the game. This is intentional: each choice is permanent and shapes the game irrevocably. The only exception is the **Absolution** Opening Anomaly, which lets you remove one of your own modifiers once per game (at a material cost).
 
-### 5. What's the best modifier combo in the game?
+### Q: What's the best modifier combo in the game?
 
 Based on win-rate data and community voting, the top three combos are:
 
@@ -827,15 +827,15 @@ Based on win-rate data and community voting, the top three combos are:
 2. **Night Rider + The Archbishop** (+6.4% win rate) — Two multi-movement pieces that create impossible-to-defend threats
 3. **Torpedo Pawns + Battlefield Promotion** (+5.8% win rate) — Pawns become promotion threats from the middlegame onward
 
-### 6. Do both players get the same modifier options?
+### Q: Do both players get the same modifier options?
 
 Yes — at each draft phase, both players see the same three modifier cards. You each pick one, so you might end up with different modifiers from the same pool. This creates interesting strategic decisions: do you pick the best modifier for yourself, or deny the one that would help your opponent most?
 
-### 7. How rare are Legendary modifiers?
+### Q: How rare are Legendary modifiers?
 
 Legendary modifiers have approximately a 5% chance of appearing in any given draft phase. Over the course of a full game (5 draft phases), you'll see a legendary modifier roughly 23% of the time. They're rare enough to feel special, common enough that you'll get to play with them regularly.
 
-### 8. Can I get multiple Legendary modifiers?
+### Q: Can I get multiple Legendary modifiers?
 
 Yes — modifiers from different draft phases are independent. You could theoretically end up with five Legendary modifiers, though the odds are astronomically low (roughly 1 in 3.2 million). In practice, most players end up with a mix of tiers by the end of the game.
 

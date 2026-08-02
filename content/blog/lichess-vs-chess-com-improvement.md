@@ -274,11 +274,11 @@ The best platform is the one you'll actually use consistently. Pick the one that
 
 No. Lichess and Chess.com use different rating systems (Glicko-2 vs Glicko-1) and have different player pools, so the numbers aren't directly comparable. A Lichess rating is typically 150–300 points lower than the equivalent Chess.com rating. A 1500 on Lichess roughly corresponds to a 1700–1800 on Chess.com. Don't compare raw numbers between platforms — track your improvement within a single platform instead.
 
-### Can I import my games between Lichess and Chess.com?
+### Q: Can I import my games between Lichess and Chess.com?
 
 Yes. Both platforms let you export games as PGN files, and both support importing PGNs from the other. You can download your entire game history from either site (Settings → Export on Chess.com, or the API/game download on Lichess) and upload it to the other. This is useful if you want to switch platforms but keep your game history, or if you want to analyze Chess.com games with Lichess's free engine.
 
-### Is Chess.com worth paying for if I already use Lichess?
+### Q: Is Chess.com worth paying for if I already use Lichess?
 
 It depends on your level and learning style. Below 1500, Chess.com's structured lessons and Game Review feature genuinely add value that Lichess doesn't replicate — guided video instruction and plain-English explanations of your mistakes. Above 1500, the gap narrows significantly because you can interpret engine analysis on your own. If you're budget-conscious, Lichess alone covers 90%+ of what you need for improvement. The Chess.com Diamond subscription is worth it primarily for the curated learning content and larger tournament pool.
 
@@ -286,7 +286,7 @@ It depends on your level and learning style. Below 1500, Chess.com's structured 
 
 Both platforms invest heavily in anti-cheating, but Lichess is generally considered to have the stronger automated detection system. Lichess's open-source anti-cheat engine catches most engine-assisted players quickly, and their tournament protection is highly rated by the community. Chess.com also has robust detection, and their larger staff means manual reviews are more common. In practice, both platforms handle cheating reasonably well at standard time controls, though faster time controls (bullet, blitz) are harder to police on either platform.
 
-### Do professional and titled players prefer one platform over the other?
+### Q: Do professional and titled players prefer one platform over the other?
 
 It's split. Many top GMs stream and play on Chess.com because of sponsorship deals and the larger casual audience. However, a significant number of titled players — including some of the world's best — actively use Lichess for serious training because of the superior analysis tools and open-source transparency. Magnus Carlsen has been associated with Chess.com, while many strong European and Asian players prefer Lichess. For improvement purposes, the platform a titled player uses doesn't matter as much as the training habits they describe. Both platforms are used at the highest levels.
 

@@ -212,23 +212,23 @@ This type of blunder — choosing the wrong move in a theoretically won position
 
 The data points at a clear method. These aren't vague "study more" tips — they're specific strategies backed by the blunder patterns we measured across 60,000 games.
 
-### 1. Find your repeat blunders
+### Q: Find your repeat blunders
 
 Most players don't hang pieces randomly — they hang them in the *same* situations (the same pin, the same back-rank, the same overloaded defender). Patterns are fixable; randomness isn't. When you scan your games on [FireChess at /analyze](/analyze), the "Opening Leaks" section groups every repeated position you've played. If you've blundered in the same Italian Game position three times, that's not bad luck — it's a knowledge gap you can close in 10 minutes of targeted study. Our guide on [why you keep losing in the same openings](/blog/why-you-keep-losing-same-openings) digs deeper into this pattern.
 
-### 2. The one-second safety check
+### Q: The one-second safety check
 
 Do a one-second check before every move: **is anything of mine hanging?** This single habit is worth more rating than any opening course below 1800. The data shows that 38% of beginner blunders are hanging pieces — and almost all of them are preventable with this one mental step. It doesn't require deep calculation, just a quick scan of the board for undefended pieces. After 100 games of consciously doing this, it becomes automatic.
 
-### 3. Review the turning-point move
+### Q: Review the turning-point move
 
 Review your own losses for the *turning-point* move — the one blunder that flipped the eval — instead of the whole game. A typical 40-move game has one or two decisive blunders surrounded by 38 moves of reasonable play. Spending 20 minutes reviewing all 40 moves is inefficient; spending 3 minutes understanding *why* you made that one blunder is how you actually improve. FireChess's scan highlights these turning points automatically — look for the red **?? Blunder** badge in your game timeline.
 
-### 4. Play slower time controls
+### Q: Play slower time controls
 
 As our time-control data shows, switching from blitz to classical alone can cut your blunder rate in half. Build the habits in slow chess, then speed up. A 20-minute game gives you time to actually use your calculation ability instead of relying on instinct. Most sub-1500 blunders in blitz aren't calculation errors — they're moves the player *would have caught* with three extra seconds of thought. If you're serious about improvement, make rapid (10+ minutes) your primary training time control and reserve blitz for fun.
 
-### 5. Study the middlegame, not the opening
+### Q: Study the middlegame, not the opening
 
 The data is unambiguous: middlegame blunders outnumber opening blunders by 2:1 at every rating level. Yet most club players spend 80% of their study time on openings. That's backwards. If you have an hour to study, spend 40 minutes on middlegame tactics (forks, pins, discovered attacks) and 20 minutes on opening principles. You'll see faster rating gains because you're attacking where the blunders actually cluster. For a structured approach, see our [chess middlegame strategy guide](/blog/chess-middlegame-strategy-finding-a-plan).
 

@@ -107,23 +107,23 @@ The Master+ tell: they make the most natural-looking move every time, because th
 
 Developing a "rating eye" is a skill you can actively train. Here's how:
 
-### 1. Use FireChess's Guess the Elo Dungeon Mode
+### Q: Use FireChess's Guess the Elo Dungeon Mode
 
 The [Guess the Elo dungeon](https://firechess.com/dungeon) mode on FireChess is built explicitly for this. You see a position from a real Lichess game, watch the last few moves replay, and choose from the five rating buckets. The feedback is immediate — you see how close you were to the actual rating, and over time you develop intuition for what different rating levels look like.
 
-### 2. Look for Blunder Density First
+### Q: Look for Blunder Density First
 
 Before analysing deep positional factors, ask: **how many clearly bad moves happened?** Count the outright blunders. A game with 3+ obvious mistakes is almost certainly below 1500. A game with 0 obvious mistakes is likely 1800+. Blunder frequency is the single strongest rating signal.
 
-### 3. Check for Plan Coherence
+### Q: Check for Plan Coherence
 
 Higher-rated players don't just respond to threats — they execute plans. Look at moves 10–20. Do Black's moves connect? Are pieces being developed to natural squares, or do they look reactive? The presence of a coherent multi-move plan is a strong signal for 1600+ play.
 
-### 4. Watch the Endgame
+### Q: Watch the Endgame
 
 Nothing reveals rating like how players handle simplified positions. A player who converts a winning endgame efficiently is almost certainly 1700+. A player who fumbles a rook endgame with equal material might be anywhere from 1000 to 1500. Use FireChess to [scan your own endgame performance](/blog/what-is-centipawn-loss) and see where your centipawn loss spikes — the endgame is where rating gaps widen.
 
-### 5. Cross-Reference with Average Centipawn Loss
+### Q: Cross-Reference with Average Centipawn Loss
 
 If you want to know where you stand objectively, nothing beats the numbers. FireChess analyses your games and computes your average centipawn loss by rating bracket. A 1400 player averaging 55 ACPL is punching above their weight; a 1400 averaging 85 has specific tactical weaknesses to target. Upload a PGN and let the numbers speak — you can [analyse any game file](/analyze) in seconds.
 

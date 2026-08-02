@@ -294,19 +294,19 @@ The goal is not to memorize the most theory — it's to build a foundation of un
 
 The Italian Game for White and the Caro-Kann for Black. Both teach fundamental principles and don't require heavy memorization.
 
-### Should I memorize opening lines as a beginner?
+### Q: Should I memorize opening lines as a beginner?
 
 No. At under 1200, focus on development principles and basic tactics. Memorization without understanding is useless because your opponent will deviate on move 4 anyway.
 
-### When should I switch from the London System to a main line?
+### Q: When should I switch from the London System to a main line?
 
 Around 1200–1400. The London System is great for learning, but it doesn't teach the rich strategic themes of open pawn structures. Switch to 1.e4 or 1.d4 main lines when you feel your opening understanding has plateaued.
 
-### Is 1.e4 or 1.d4 better for beginners?
+### Q: Is 1.e4 or 1.d4 better for beginners?
 
 Both are excellent. 1.e4 leads to more open, tactical games. 1.d4 leads to more closed, strategic positions. Choose based on your natural style, or play both and see which you prefer.
 
-### How many openings should I learn at once?
+### Q: How many openings should I learn at once?
 
 Focus on **one opening as White and two as Black** (one against 1.e4, one against 1.d4). Don't add more until you're comfortable with your current repertoire. A narrow, well-understood repertoire beats a broad, shallow one every time.
 

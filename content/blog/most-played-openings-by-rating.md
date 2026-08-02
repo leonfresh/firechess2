@@ -343,23 +343,23 @@ That's exactly what FireChess does: [scan your Lichess or Chess.com games](/) an
 
 ## Frequently Asked Questions
 
-### 1. Why is the Van't Kruijs opening so popular if it's bad for White?
+### Q: Why is the Van't Kruijs opening so popular if it's bad for White?
 
 The Van't Kruijs (1.e3) is the third-most-played opening in our dataset, yet White scores below 50% at nearly every rating band. It's popular for the same reason the London System is: **it's easy.** You can play 1.e3 without knowing any theory, without worrying about Black's response, and without facing sharp tactical battles. For beginners who just want to finish a game without blundering in the first five moves, that comfort is worth more than a percentage point of expected score. The problem is that as you climb, the comfort becomes a ceiling — your opponents know how to exploit your passive setup, and you haven't learned how to fight for an advantage.
 
-### 2. Did the London System really have more games than the Sicilian Defense?
+### Q: Did the London System really have more games than the Sicilian Defense?
 
 Yes. The Queen's Pawn Game: Accelerated London System appears at #4 overall, with **24,271 games**. That's more than the classic Sicilian Defense (which didn't crack the top 10 as a named opening). On Lichess, the London isn't just a meme — it genuinely outranks some of the most storied openings in chess history. The Sicilian's game count is likely spread across dozens of named variations (Najdorf, Dragon, Scheveningen, etc.), which dilutes its single-entry total, while the London's move-order predictability funnels games into one bucket.
 
-### 3. At what rating do draws become common?
+### Q: At what rating do draws become common?
 
 Draws never become *common* online, but they increase noticeably above 2000. Across the full dataset, the draw rate in the most popular openings is just **3.3%** in the 1200–1400 range. It doesn't crack **5%** until the 2000–2200 band, and peaks at **4.6%** above 2200. Even at master level, fewer than 1 in 20 games ends in a draw on Lichess. That's dramatically lower than over-the-board master chess, where draw rates can exceed 50% in top-level events. The difference is pool size: Lichess masters are playing a wider range of opponents, and online time controls are faster than classical.
 
-### 4. Which opening should I play to raise my rating?
+### Q: Which opening should I play to raise my rating?
 
 Based on the data, the Queen's Pawn Game is your best bet with White if your goal is to win. It has the highest game count in our dataset *and* the strongest upward trend — White's win rate climbs from 48% at under-1000 to **51.8%** at 2200+. Unlike system openings, it rewards study and understanding, which means the effort you put into it compounds over time. With Black, the Philidor Defense offers the strongest win-rate trajectory, climbing from 50.7% White success (meaning about 49.3% for Black) under 1000 to a strong showing at 1600+. For a full breakdown, check our [beginners' opening guide by rating](/blog/best-chess-openings-for-beginners-by-rating).
 
-### 5. Does the data include bullet and blitz, or only classical?
+### Q: Does the data include bullet and blitz, or only classical?
 
 The dataset is **standard-rated Lichess games** from May 2026, which on Lichess means games played with a time control of at least 5 minutes per player (rapid or longer). Bullet and blitz games are not included. The patterns would likely be even more extreme in bullet, where simple systems like the Van't Kruijs and London probably appear at even higher rates, and White's first-move advantage may be smaller. But this dataset reflects the time control where most improvement happens, so it's the right window for players who want to get better.
 

@@ -315,23 +315,23 @@ Track these three metrics over time:
 
 ## FAQ: The 1200 to 1500 Journey
 
-### 1. How long does it take to go from 1200 to 1500?
+### Q: How long does it take to go from 1200 to 1500?
 
 With consistent practice (the 3-hour/week plan above), most players reach 1500 in 6–12 months. Players who are diligent about blunder elimination and game analysis tend to see results faster — some break 1500 in 3–4 months. The biggest variable is how honestly you analyze your losses. If you skip the Friday game-analysis session, expect the journey to take twice as long.
 
-### 2. Should I study grandmaster games at this level?
+### Q: Should I study grandmaster games at this level?
 
 No. Most 1200–1500 players waste hours watching master games without understanding the context. Grandmaster games involve deep positional maneuvering and multi-move prophylaxis that you'll rarely see in your own games. Instead, analyze your own games and games of players 100–200 points above your rating. Their mistakes are more similar to yours, and their plans are more instructive. Once you hit 1600, start adding annotated master games to your routine.
 
-### 3. Can I get to 1500 playing only blitz (3+0)?
+### Q: Can I get to 1500 playing only blitz (3+0)?
 
 Technically yes, but it's dramatically harder. Blitz rewards intuition and pattern recognition you haven't built yet. At 1200–1500, every game should be at least 15+10 or longer. The pre-move checklist and the middlegame thinking framework both require time to execute. Playing blitz at this stage reinforces bad habits — you're practicing your mistakes faster, not improving. Reserve blitz for warm-up (5 minutes before a serious game) or for drilling endgames you already know.
 
-### 4. What's the #1 thing holding 1400-rated players back from 1500?
+### Q: What's the #1 thing holding 1400-rated players back from 1500?
 
 Conversion technique and pawn structure understanding — in that order. Most 1400s can play equal positions reasonably well, but they can't convert a winning position reliably. They relax, play too fast, and give the opponent counterplay. The second issue is pawn structure blindness — they don't know whether an isolated pawn is a strength or a weakness in a given position. Fixing conversion technique alone is usually worth 50–80 rating points. See our [detailed breakdown of the 1400 plateau](/blog/breaking-chess-rating-plateau) for a full treatment.
 
-### 5. How many puzzles should I do per day?
+### Q: How many puzzles should I do per day?
 
 20 high-quality puzzles at or slightly below your tactical rating is the sweet spot. More than 30 leads to diminishing returns and mental fatigue. The key is *quality and analysis*: solve each puzzle, understand *why* the solution works, and note the tactical motif (fork, pin, skewer, discovered attack). Blasting through 100 easy puzzles without reflection builds speed but not understanding. Use the [FireChess puzzle trainer](/puzzles) which tracks your motif weaknesses and adjusts difficulty to your level.
 

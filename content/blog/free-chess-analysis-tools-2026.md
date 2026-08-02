@@ -430,23 +430,23 @@ The matrix makes it clear that no single tool covers everything. Lichess and Fir
 
 ## Frequently Asked Questions
 
-### 1. Is Stockfish really better than a human Grandmaster?
+### Q: Is Stockfish really better than a human Grandmaster?
 
 Yes, and by a wide margin. Stockfish 18's Elo rating of 3600+ is approximately 600 points higher than the world's top human players. In practical terms, Stockfish sees tactics and positions that no human can match. However, this doesn't make human analysis obsolete — engines find the *objectively* best move, while human coaches can explain ideas, plans, and concepts in a way that helps you improve.
 
-### 2. Can I use these tools completely offline?
+### Q: Can I use these tools completely offline?
 
 If you need offline analysis, download Stockfish directly from stockfishchess.org — it runs on Windows, macOS, Linux, and even Android (DroidFish). Lichess and Chess.com require an internet connection, as does FireChess (which runs Stockfish WASM in your browser but needs to load the engine and your game data). For offline tactical puzzles, Chess Tempo offers downloadable puzzle sets. For AI-powered explanations (LLMs), you'd need a local model like Llama or offline ChatGPT access — most require connectivity by default.
 
-### 3. How many free game reviews do I get across all tools?
+### Q: How many free game reviews do I get across all tools?
 
 Between Lichess (unlimited manual analysis), FireChess (25 bulk games per scan), and Chess.com (1 automatic review per day), you could comfortably analyze over 30 games per day for free. That's more than enough for serious improvement — most club players should focus on deep analysis of 1–3 games per week rather than racing through dozens.
 
-### 4. Which free tool is best for a beginner?
+### Q: Which free tool is best for a beginner?
 
 For a complete beginner (under 1000 rating), start with Lichess. It offers unlimited puzzles, full game analysis, and an opening explorer — all free, all in one place. Add FireChess once you have 25+ games played and want to find patterns in your mistakes. Avoid LLM-based analysis until you're comfortable with basic chess concepts; Lichess's engine analysis and practice modules provide a more structured learning path.
 
-### 5. Do AI tools like ChatGPT make chess coaches obsolete?
+### Q: Do AI tools like ChatGPT make chess coaches obsolete?
 
 Not at all. LLMs are excellent for explaining concepts, answering "why" questions, and providing motivational training plans, but they cannot replicate the personalized feedback of a human coach. A good coach watches your thought process, identifies behavioral patterns (like time pressure blunders), and adjusts your training dynamically. Think of AI tools as a *force multiplier* for coaching — they can reduce the time you spend on basic analysis so coach sessions focus on higher-level strategy.
 

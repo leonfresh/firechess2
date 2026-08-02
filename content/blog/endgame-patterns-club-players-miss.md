@@ -316,7 +316,7 @@ Endgame knowledge has the highest improvement-per-hour-studied of any chess area
 
 Start with the **Lucena position** (rook and pawn vs. rook). It is the single highest-value endgame pattern to memorize because rook endings are by far the most common endgame type — they occur in roughly 50% of all games that reach an endgame. The Lucena's "bridge" technique is a concrete, repeatable method that works every time you reach the position. Once you can execute it without thinking, move on to king and pawn opposition, then Tarrasch's rook placement rule. This sequence gives you the best return on study time because each pattern builds on the previous one and covers the most frequently occurring endgame scenarios.
 
-### How many hours should I spend studying endgames versus openings?
+### Q: How many hours should I spend studying endgames versus openings?
 
 For club players rated under 1800, a good rule of thumb is a **2:1 ratio of endgame study to opening study**. Most improvement guides and coaches agree that endgame knowledge provides the highest rating gain per hour invested. You don't need to memorize 20 moves of opening theory to reach 1800 — but you absolutely need to know how to convert a rook ending or recognize a drawn bishop-and-pawn position. Spend 30 minutes a day on endgame patterns (the five in this article are a perfect starting set) and you'll see measurable improvement within a few weeks. Openings can wait until you've built a solid endgame foundation.
 
@@ -324,10 +324,10 @@ For club players rated under 1800, a good rule of thumb is a **2:1 ratio of endg
 
 The **Lucena** is a *winning* position for the side with the rook and pawn. The pawn is on the 7th rank, the king is in front of it, and the "bridge" technique forces promotion. The **Philidor** is a *drawing* position for the defending side. In the Philidor, the defender's rook sits on the 6th rank (cutting off the enemy king) and waits — once the pawn advances to the 6th rank, the rook retreats to the back rank and gives checks from behind, drawing the game. Confusing these two is a classic club player mistake: players try to win from the Philidor (impossible with correct defense) or fail to win from the Lucena (a forced win with the bridge). Learn both and you'll never mix them up again.
 
-### When should I trade queens and enter an endgame?
+### Q: When should I trade queens and enter an endgame?
 
 Trade queens when you have a **structural or positional advantage** that matters in the endgame but is neutralized in the middlegame. Good reasons to trade: your king is safer, you have a better pawn structure, you have an outside passed pawn, or your pieces (especially rooks) are more active. Bad reasons to trade: you're ahead on material but your position is passive, or the resulting endgame has opposite-colored bishops (which tend to draw). A useful heuristic: if your king can march forward and your opponent's cannot, simplify. If both kings are safe, keep the queens on — the attacking chances may be worth more than the positional edge.
 
-### Why do I keep drawing winning endgames at my level?
+### Q: Why do I keep drawing winning endgames at my level?
 
 The three most common reasons club players draw winning endgames are: **(1) not knowing theoretical positions** like the Lucena or the wrong-bishop draw, leading to incorrect technique; **(2) passive king play** — keeping the king sheltered when it should be centralized and active; and **(3) premature pawn exchanges** that simplify into drawn structures. The fix is targeted study of the five patterns in this article, combined with analyzing your own endgame losses to identify which pattern you're missing. Most players find that just one or two of these patterns account for the majority of their endgame failures. Focus on those first, and your conversion rate will jump significantly.

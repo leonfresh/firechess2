@@ -67,7 +67,7 @@ It's not that they're not putting in effort. It's that they're putting their eff
 
 Chess improvement isn't random. There's a clear hierarchy of what gives you the most rating points per hour invested.
 
-### 1. Tactics First, Always
+### Q: Tactics First, Always
 
 If you're under 1800, tactics should be 40–60% of your study time. Full stop.
 
@@ -93,7 +93,7 @@ White can already consider ideas like Ng5 threatening Nxf7, or simply continue d
 
 The goal isn't to see the same tactics again. It's to recognize **the patterns** that produce tactics in the first place: undefended pieces, back-rank pressure, pin/fork setups, overloaded defenders.
 
-### 2. Analyze Your Own Games
+### Q: Analyze Your Own Games
 
 This is the single highest-leverage activity that most players skip.
 
@@ -107,7 +107,7 @@ The game analysis process builds the mental library you need to stop repeating t
 
 [Use our game analyzer](/analyze) to break down your games move by move and identify the exact moments where your win probability shifted. If you're not sure what those engine numbers mean, our guide to [average centipawn loss](/blog/average-centipawn-loss-guide) explains how to interpret the accuracy metrics — and what your ACPL says about your rating.
 
-### 3. Opening Basics — Not Memorization
+### Q: Opening Basics — Not Memorization
 
 The most common mistake intermediate players make is spending hours memorizing 15-move opening variations when they'd be better off understanding the *principles* behind the first 10 moves.
 
@@ -118,7 +118,7 @@ What you actually need from opening study:
 
 If you're under 1500, knowing 8–10 solid moves in 3–4 openings is enough. You're not losing to opening theory. You're losing to tactics.
 
-### 4. Basic Endgames
+### Q: Basic Endgames
 
 Most players avoid endgame study because it's less exciting than openings. But here's the thing: if you can't convert a won ending, you're giving back half your hard work.
 
@@ -135,7 +135,7 @@ White's only winning plan involves the opposition. If you don't know how to play
 
 These come up constantly. Players who know them win the games they should. Players who don't draw — or lose — games they already won.
 
-### 5. Positional Understanding (Advanced)
+### Q: Positional Understanding (Advanced)
 
 Once you're consistently above 1600–1700, positional concepts start mattering more. These include:
 - Outpost squares for knights
@@ -255,7 +255,7 @@ This is the core difference between guessing and calculating. The guesser's brai
 </svg>
 </div>
 
-### Why the Curves Look This Way
+### Q: Why the Curves Look This Way
 
 The deliberate practice curve rises steeply in the first 6–12 months because you're building a foundation of patterns that compound. Each tactic you learn makes it easier to learn the next. Each analysed game teaches you principles that apply to dozens of future games. This is what creates the S-curve shape: slow start as you learn *how* to learn, then rapid gains as patterns connect, then a gradual plateau as you approach the limits of your current study methods.
 

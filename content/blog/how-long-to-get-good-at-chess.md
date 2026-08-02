@@ -322,7 +322,7 @@ You can't improve what you don't measure. Here are the metrics that matter most:
 5. **Opening performance** — Track your win rate in each opening. If you're 30% with the Sicilian but 55% with the French, maybe switch.
 6. **Endgame conversion rate** — How often do you win when you have a material advantage in the endgame? Low conversion = endgame weakness.
 
-### How to Use FireChess for Tracking
+### Q: How to Use FireChess for Tracking
 
 [Upload your games to FireChess](/analyze) after each session. The scanner automatically calculates your ACPL, accuracy score, and move-by-move quality breakdown. Look at these specific sections:
 

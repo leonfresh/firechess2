@@ -28,7 +28,7 @@ The core idea is simple: White develops the dark-squared bishop to f4 before blo
 
 <chess-position fen="rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR w KQkq - 0 4" caption="The London System after 1.d4 d5 2.Bf4 Nf6 3.e3 — White already has a solid, flexible position with clear development plans." arrows="c2c4:green,f4c7:red" badge="best"></chess-position>
 
-### Why Club Players Love the London
+### Q: Why Club Players Love the London
 
 The London System has exploded in popularity over the past decade, and for good reason:
 
@@ -119,7 +119,7 @@ Why h3? It prevents ...Bg4 pinning the knight and prepares g4 in some variations
 
 White has a strong attack. The doubled rooks on the h-file, the bishop on h2 pointing at h8, and the knight ready to jump to g5 or f3 create serious threats. Black must defend accurately to survive.
 
-### When Black Plays ...c5 Instead of ...d5
+### Q: When Black Plays ...c5 Instead of ...d5
 
 One of the most challenging lines for London players is when Black plays an early ...c5 without committing to ...d5:
 
@@ -186,7 +186,7 @@ White has a solid position with flexible plans. The knight on c3 can support e4,
 
 And now White can play **9.Nb5!** with ideas of Nc7 or Nd6, or simply 9.Nd4 followed by b3 and Bb2.
 
-### When to Play the Jobava
+### Q: When to Play the Jobava
 
 The Jobava London works best when:
 - You want sharper, more tactical positions
@@ -333,11 +333,11 @@ The London System is waiting. Learn it, play it, and watch your rating climb.
 
 The London System is ideal for players from **1000 to 1800+**. Beginners at 1000 benefit because the setup is nearly automatic — you don't need to memorise long theoretical lines. If you're below 1000, focus on basic tactics and endgame fundamentals first, then add the London around 1000 when you start playing structured openings.
 
-### Is the London System too passive for improving players?
+### Q: Is the London System too passive for improving players?
 
 This is a common myth. While the London is solid, it's far from passive. The **e4 break**, the **h4-h5 attack** against fianchetto setups, and the **Jobava London** variation all create dynamic, aggressive play. The key is knowing *when* to attack — the London gives you a safe position from which to launch assaults at the right moment.
 
-### Can I play the London System in classical (over-the-board) tournaments?
+### Q: Can I play the London System in classical (over-the-board) tournaments?
 
 Absolutely. GMs like Magnus Carlsen, Hikaru Nakamura, and Wesley So have used the London in classical events. At the club level, it's an excellent tournament weapon because your opponents are less likely to know deep anti-London theory. Just be prepared for opponents who play ...c5 early or adopt the King's Indian setup — both covered in this guide.
 
@@ -345,6 +345,6 @@ Absolutely. GMs like Magnus Carlsen, Hikaru Nakamura, and Wesley So have used th
 
 In the **classical London**, knights go to d2 and f3, maintaining a solid pawn triangle (d4-e3-c3). In the **Jobava London**, the knight goes to c3 instead, creating more central pressure and sharper tactical chances. The Jobava is better when you want to complicate the position and surprise opponents; the classical London is safer and more consistent for long-term improvement.
 
-### How do I handle opponents who prepare specifically against my London?
+### Q: How do I handle opponents who prepare specifically against my London?
 
 At the club level, deep anti-London preparation is rare. If you do face it, learn two responses: (1) the **h4-h5 plan** against ...g6 setups, and (2) the **e4 break** against ...d5 setups. These two plans cover the vast majority of games. For extra surprise value, mix in the **Jobava London** — opponents preparing for the classical London will be caught off guard.

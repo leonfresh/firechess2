@@ -143,7 +143,7 @@ Stockfish is the open-source chess engine that powers most analysis platforms (i
 
 Stockfish does not "look" at a position the way a human does. It builds a **search tree** — a branching web of future moves and counter-moves extending 20–30 half-moves deep. At each branch, Stockfish evaluates the resulting position using a hand-crafted **evaluation function** that considers material balance, piece activity, king safety, pawn structure, and dozens of other weighted features.
 
-### How It Finds the Brilliant Candidate
+### Q: How It Finds the Brilliant Candidate
 
 The algorithm works in three layers:
 

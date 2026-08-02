@@ -289,23 +289,23 @@ The second major shift is **opening theory dependency**. Standard chess has deca
 
 ## Frequently Asked Questions
 
-### 1. How does the modifier draft actually work in real time?
+### Q: How does the modifier draft actually work in real time?
 
 When a draft phase triggers (at turns 5, 10, 15, 20, and 25), both players see three modifier cards simultaneously. Each card belongs to a tier — Common, Rare, Epic, or Legendary — and shows which piece it affects, what it does, and its rarity. You have until the draft timer expires to pick one. Your opponent picks at the same time, and neither of you can see the other's choice until both have locked in. Once both picks are confirmed, the modifiers activate immediately and the game resumes. The draft timer depends on your time control: in Bullet it's 5 seconds, in Rapid it's 15 seconds, and in Unlimited there's no timer pressure. If you don't pick before time runs out, a random modifier is assigned.
 
-### 2. What happens when two modifiers affect the same piece?
+### Q: What happens when two modifiers affect the same piece?
 
 Modifiers stack. If you draft Queen Teleport at turn 10 and then get Nuclear Queen at turn 20, your queen can both teleport once AND trigger a blast zone on every capture. The modifier badges stack visually — you'll see both the teleport arc animation and the radioactive glow. Some modifier combinations are intentionally more powerful than the sum of their parts. The game tracks which modifier was applied first and processes effects in that order. If a modifier would conflict (for example, two different movement modifiers on the same piece), the more recent one takes precedence, but the original modifier's non-movement effects still apply.
 
-### 3. Is Chaos Chess rated? Does it affect my regular chess rating?
+### Q: Is Chaos Chess rated? Does it affect my regular chess rating?
 
 Chaos Chess has its own separate ELO rating system starting at 1200. It does not affect your standard chess rating on FireChess. The Chaos rating has its own leaderboard, tier system, and season resets. Casual (unrated) games are also available if you want to practice modifier combinations without risking rating points.
 
-### 4. Can I play Chaos Chess against friends?
+### Q: Can I play Chaos Chess against friends?
 
 Yes. You can create a private room with a room code and invite a friend to play Chaos Chess with full modifier drafting. Private games use the same modifier pool and draft rules as ranked matches, but they're unrated by default. You can also set custom draft parameters — like starting the draft at turn 3 instead of turn 5, or guaranteeing an Epic modifier in the first draft phase — for a more chaotic experience.
 
-### 5. How does Stockfish handle the modified pieces?
+### Q: How does Stockfish handle the modified pieces?
 
 Stockfish evaluates positions using standard chess rules, so it can't directly reason about modifier abilities. We built a custom threat-scoring layer that runs after each Stockfish evaluation: it identifies squares threatened by modifier-empowered pieces (like the Nuclear Queen's blast radius or a Ghost Rook's ability to slide through pieces) and applies penalty/bonus adjustments to the engine's raw score. This means the AI at least *responds* to modifier threats rather than being completely blind to them — but it's not perfect, which is actually part of the fun. You can still surprise the AI with creative modifier plays it doesn't see coming. The AI also uses its own modifier selections strategically, preferring modifiers that complement its existing pieces rather than picking randomly.
 

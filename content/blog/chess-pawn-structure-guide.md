@@ -69,7 +69,7 @@ Doubled pawns occur when you have two pawns on the same file — typically after
 
 <chess-position fen="r1bqkbnr/1pp2ppp/p1p5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 5" caption="After 1.e4 e5 2.Nf3 Nc6 3.Bb5 a6 4.Bxc6 dxc6 in the Ruy Lopez Exchange Variation. Black has doubled c-pawns (c6 and c7), but gains the bishop pair and an open d-file for the rook." orientation="white"></chess-position>
 
-### When doubled pawns are a weakness
+### Q: When doubled pawns are a weakness
 
 Doubled pawns are genuinely bad when:
 
@@ -80,7 +80,7 @@ Doubled pawns are genuinely bad when:
 
 A classic example: doubled f-pawns after a kingside castle often weaken the king's shelter. Two pawns on f2 and f3 (or f7 and f6) are slower to advance, can't protect each other, and leave the king more exposed to piece attacks.
 
-### When doubled pawns are acceptable
+### Q: When doubled pawns are acceptable
 
 In the Ruy Lopez Exchange position above, Black's doubled c-pawns come with real compensation:
 
@@ -234,7 +234,7 @@ Backward pawns are weak because:
 - The square in front of them (the "hole") becomes an outpost for enemy pieces
 - They need constant piece protection, tying down your forces
 
-### When a backward pawn is acceptable
+### Q: When a backward pawn is acceptable
 
 Not every backward pawn is a disaster. A backward pawn on e6 in the French Defense is a structural feature that Black accepts in exchange for a solid pawn chain (d5, e6, c5). The backward pawn is defended by pieces, and the closed nature of the position means enemy rooks can't easily attack it.
 
@@ -253,7 +253,7 @@ Club players often create backward pawns unnecessarily by pushing pawns that lea
 
 A pawn island is a group of connected pawns — pawns that can defend each other or are on adjacent files. The fewer pawn islands you have, the better your structure generally is.
 
-### Why fewer islands matter
+### Q: Why fewer islands matter
 
 A player with one pawn island (all pawns connected) has a compact, cohesive structure. A player with three or four pawn islands has scattered, disconnected pawns that can't support each other. This matters especially in endgames:
 
@@ -261,7 +261,7 @@ A player with one pawn island (all pawns connected) has a compact, cohesive stru
 - **Fewer islands = more flexible** — connected pawns can create passed pawns through majority advances; isolated pawns are stuck
 - **Fewer islands = better king coverage** — a king can protect connected pawns more efficiently than scattered ones
 
-### How pawn islands form
+### Q: How pawn islands form
 
 Every time a pawn is traded (captured) or pushed past its neighbor, a new island forms:
 
@@ -355,15 +355,15 @@ The data shows a clear pattern: structural errors spike at 1200-1400, where play
 
 You don't need to memorize every structure. Instead, learn these three habits:
 
-### 1. Identify the structure before making a plan
+### Q: Identify the structure before making a plan
 
 Before you move a piece, ask: "What kind of pawn structure do I have?" The answer tells you where your pieces belong, which side to play on, and whether to keep the position closed or open it up.
 
-### 2. Look at master games in YOUR openings
+### Q: Look at master games in YOUR openings
 
 If you play the French Defense, study games by Petrosian, Botvinnik, and modern GMs who specialize in that structure. If you play the Sicilian Dragon, study how the Yugoslav Attack pawn storm works against your pawn formation. [Chess opening principles](/blog/chess-opening-principles) start with the first few moves, but the pawn structure determines everything that follows.
 
-### 3. Review your structural mistakes
+### Q: Review your structural mistakes
 
 After every loss, check whether a pawn move created a lasting weakness. Upload your games to [FireChess's analysis tool](/analyze) and look at the moments where your evaluation dropped sharply — in many cases, a pawn push that weakened your structure was the root cause. The [average centipawn loss](/blog/what-is-centipawn-loss) from structural errors is often the difference between a close game and a blowout.
 

@@ -57,7 +57,7 @@ You can be tactically sharp and still lose rapid games because you keep reaching
 
 This is where the gap becomes concrete. Puzzle positions and real-game positions look different in systematic ways, and understanding those differences is key to bridging the gap.
 
-### How Puzzles Are Constructed
+### Q: How Puzzles Are Constructed
 
 Every puzzle on a major platform like Chess.com, Lichess, or ChessTempo shares the same structural DNA:
 
@@ -71,7 +71,7 @@ Every puzzle on a major platform like Chess.com, Lichess, or ChessTempo shares t
 
 **5. One clean solution.** There is exactly one winning line. If you find it, the puzzle ends. There is no second-guessing, no "is this good enough?", no evaluating whether the win is worth the risk.
 
-### How Real Games Work
+### Q: How Real Games Work
 
 Compare that to what happens in an actual rapid game:
 
@@ -218,7 +218,7 @@ The good news is that this is very fixable.
 
 ## How to Turn Puzzle Skill Into Game Rating
 
-### 1. Add a forcing-moves check before every move
+### Q: Add a forcing-moves check before every move
 
 Before you play anything quiet, ask:
 
@@ -228,7 +228,7 @@ Before you play anything quiet, ask:
 
 That one habit alone closes a surprising amount of the puzzle-to-game gap.
 
-### 2. Review missed tactical moments from your own games
+### Q: Review missed tactical moments from your own games
 
 Random puzzles help. Your own missed tactics help more.
 
@@ -236,17 +236,17 @@ If you scan your games and find the positions where you *could* have won materia
 
 That is one reason the FireChess scan workflow is useful: it does not just tell you that you blundered. It also surfaces the tactical chances you left on the board.
 
-### 3. Keep your openings simple enough to reach playable middlegames
+### Q: Keep your openings simple enough to reach playable middlegames
 
 If your opening play is shaky, your tactical skill never gets a fair chance to matter.
 
 For most club players, clean structures from beginner openings or a stable improvement plan produce more rating growth than memorizing long engine lines.
 
-### 4. Train under a little time pressure
+### Q: Train under a little time pressure
 
 Unlimited-time puzzles and real games are not the same sport. Mix in some faster tactical sets where you solve quickly but still accurately. The goal is not speed for its own sake. The goal is building fast recognition.
 
-### 5. Study the misses, not only the solves
+### Q: Study the misses, not only the solves
 
 A high puzzle rating can hide a blind spot if you skip your failures too quickly. When you miss a motif repeatedly, that pattern deserves extra attention.
 
@@ -279,23 +279,23 @@ Games decide whether you ever get to use them.
 
 ## Frequently Asked Questions
 
-### 1. Is it normal for my puzzle rating to be 800+ points higher than my rapid rating?
+### Q: Is it normal for my puzzle rating to be 800+ points higher than my rapid rating?
 
 Yes, completely normal. Gaps of 500–1000 points are common, especially at lower rapid ratings. The puzzle format artificially inflates your tactical performance by removing everything else that makes chess hard: opening preparation, positional judgment, time management, and emotional control. A gap that large is not a sign that you are bad at chess — it is a sign that your tactical eye outpaces the rest of your game, which is exactly the right problem to have if you want to know what to work on next.
 
-### 2. Why do I solve puzzles at a 2000 level but play like a 1200?
+### Q: Why do I solve puzzles at a 2000 level but play like a 1200?
 
 Because puzzle solving is a narrow, optimized skill. A 2000 puzzle rating means you have excellent tactical pattern recognition *in isolation* — when the position is curated, you know a tactic exists, and all pieces matter. But a rapid game demands that skill alongside a dozen others, and the game does not tell you when to switch into tactical mode. You are essentially a specialist who performs brilliantly in one specific environment. The good news is that bridging this gap is the fastest path to real rating gains.
 
-### 3. Should I stop doing puzzles since they do not translate to rating?
+### Q: Should I stop doing puzzles since they do not translate to rating?
 
 No. Puzzles are still one of the most efficient training tools available. The problem is not puzzle training itself — it is that puzzle training alone is insufficient. You need to bridge the gap by adding real games, post-game analysis, and the forcing-moves habit described above. Think of puzzles as strength training in the gym and rapid games as the actual sport. Gym strength does not automatically mean you can run a marathon, but it certainly helps once you start training for the distance too.
 
-### 4. How many puzzles per day should I do to close the gap?
+### Q: How many puzzles per day should I do to close the gap?
 
 Quality matters more than quantity. 10–15 well-solved puzzles with post-solution reflection is more effective than 50 rushed solves. The key is the forcing-moves habit during actual games — that is where the transfer happens. For a structured approach that combines puzzles, openings, and game analysis into a single improvement path, see our guide on [how to improve at chess](/blog/how-to-improve-at-chess).
 
-### 5. What is the single biggest change I can make starting today?
+### Q: What is the single biggest change I can make starting today?
 
 Add a one-second pause before every move to scan for checks, captures, and threats — both your own *and* your opponent's. This single habit converts puzzle pattern recognition into game tactical awareness. It costs you almost no time on the clock and catches the majority of missed tactics below 1600. If you do nothing else from this article, do this.
 

@@ -145,13 +145,13 @@ The final position is beautiful in its clarity: Black's king on b3 supports the 
 
 This game teaches several critical endgame concepts that directly apply to your own games:
 
-### 1. King Activity Trumps Material in Endgames
+### Q: King Activity Trumps Material in Endgames
 
 This is the single most important lesson from Shirov's sacrifice. He gave up a full bishop — normally a decisive material advantage — for a single tempo. In the middlegame, this would be catastrophic. But in the endgame, especially in opposite-colored bishop endgames, the **active king is worth more than a minor piece**.
 
 **Practical application:** When you reach an endgame where material is roughly balanced, actively ask yourself: "Which king is more active?" If your king is stuck defending pawns while the opponent's king is free to roam, consider sacrificing a pawn or even a piece to activate your king. The Shirov game proves that this trade can be winning.
 
-### 2. Opposite-Colored Bishops Favor the Attacker
+### Q: Opposite-Colored Bishops Favor the Attacker
 
 When both sides have only one bishop each, and they run on different colored squares, the defender faces a structural problem: the defending bishop can never attack the opponent's pawns if they're on the opposite color. This means:
 
@@ -163,7 +163,7 @@ In the Shirov game, White's bishop was on c3 (a dark square), while Black's pass
 
 **Practical application:** In opposite-colored bishop endgames, prioritize getting your passed pawns onto the opposite color from the enemy bishop. Create two passed pawns as far apart as possible — the defending bishop can only stop one at a time.
 
-### 3. Don't Trust Static Evaluations in King-and-Pawn Races
+### Q: Don't Trust Static Evaluations in King-and-Pawn Races
 
 This game is a perfect example of why you should **calculate concretely** rather than trust material evaluation. Even a modern 2000-rated player glancing at a quick Stockfish evaluation might think "bishop for nothing? That's losing." But the concrete calculation proves otherwise.
 
@@ -171,7 +171,7 @@ This game is a perfect example of why you should **calculate concretely** rather
 
 **Practical application:** When you see a move that gives away material but activates your king, don't dismiss it out of hand. Calculate the king-and-pawn race concretely. Count: "If I sacrifice here, how many moves does it take my king to reach the key square? How many moves for the opponent?" If your king arrives first, the sacrifice works regardless of the material count.
 
-### 4. Recognize When King Centralization Becomes Critical
+### Q: Recognize When King Centralization Becomes Critical
 
 In the opening and middlegame, king safety is paramount — you keep your king hidden behind pawns and pieces. But in the endgame, the king transforms from a liability into a fighting piece. The transition point usually comes when queens are off the board and fewer than 5 pieces remain per side.
 
@@ -183,7 +183,7 @@ In the opening and middlegame, king safety is paramount — you keep your king h
 
 If you answer Y-Y-Y-Y, start marching your king forward immediately.
 
-### 5. Opposite-Colored Bishops Weaken the Defender — Exploit It
+### Q: Opposite-Colored Bishops Weaken the Defender — Exploit It
 
 The Topalov-Shirov game is the ultimate demonstration of this principle. White's bishop on c3 was on dark squares, while Black's threats were on dark squares too — but the d4-pawn was on a dark square, meaning White's bishop could theoretically attack it. Except Black's king on c4 defended the pawn, and White's king was too far away to help.
 
@@ -223,11 +223,11 @@ You can [play through the complete Shirov vs Topalov 1998 game on FireChess](htt
 
 The game ended with Shirov winning after 53 moves. Topalov resigned in the position after 53...Kb3, where Black's king supported the a4-pawn and the d4-pawn was unstoppable. The full game lasted 53 moves from a Grünfeld Defense, Exchange Variation. Shirov's victory was a crucial result at the Linares super-tournament, which featured the world's strongest players.
 
-### Why is 47...Bh3!! considered the greatest endgame move ever played?
+### Q: Why is 47...Bh3!! considered the greatest endgame move ever played?
 
 The sacrifice is extraordinary because it gives up a full bishop for zero immediate material compensation — the piece is attacked by two pawns and defended by none. What makes it immortal is the depth of the idea: by forcing White's g-pawn to capture on h3, Shirov gains exactly one tempo in the king march to e4. That single tempo is the difference between a draw and a win. No other famous endgame sacrifice is as pure — it trades a bishop solely for the right to move first in a king-and-pawn race.
 
-### Why couldn't chess engines evaluate 47...Bh3!! correctly in 1998?
+### Q: Why couldn't chess engines evaluate 47...Bh3!! correctly in 1998?
 
 In 1998, engines like Fritz and Rebel relied heavily on material counting. A bishop is worth roughly 3 pawns, so sacrificing it with no check, capture, or direct threat registered as a catastrophic blunder. The sacrifice works for purely positional reasons — king activity and tempo in an opposite-colored bishop endgame — concepts that early engines lacked the evaluation depth to recognize. Modern engines like Stockfish 18 instantly evaluate it as winning for Black at roughly -5.0.
 

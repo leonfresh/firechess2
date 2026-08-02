@@ -150,7 +150,7 @@ The key insight is: **White has no constructive plan**. Every possible move crea
 
 This is **practical zugzwang** — not in the strict sense of having no legal moves, but in the positional sense of having no *good* moves. Every option damages White's position in some way.
 
-### How Black Exploits the Bind
+### Q: How Black Exploits the Bind
 
 Nimzowitsch now has a clear plan: **improve piece placement while forcing White to weaken**. The method is patient maneuvering — what Nimzowitsch called "prophylaxis" — anticipating and preventing White's counterplay before it happens.
 
@@ -170,11 +170,11 @@ Accounts vary on the exact move of resignation, but the key point is: **Sämisch
 
 ## What Makes the Immortal Zugzwang Game So Important?
 
-### 1. Middlegame Zugzwang Is Extraordinarily Rare
+### Q: Middlegame Zugzwang Is Extraordinarily Rare
 
 Zugzwang is usually an endgame phenomenon. To create it in the middlegame — with queens, rooks, bishops, and knights still on the board — requires a level of positional control that few players in history have achieved. Nimzowitsch's game remains the most cited example.
 
-### 2. A Practical Demonstration of *My System*
+### Q: A Practical Demonstration of *My System*
 
 The game was played two years before *My System* was published, but it reads like a textbook illustration of Nimzowitsch's core concepts:
 
@@ -183,41 +183,41 @@ The game was played two years before *My System* was published, but it reads lik
 - **Prophylaxis**: Every Black move anticipated and neutralized White's potential counterplay
 - **Overprotection**: Key squares (especially c6 and d5) were so well-defended that White couldn't challenge them
 
-### 3. The Power of the Bishop Pair
+### Q: The Power of the Bishop Pair
 
 This game is a masterclass in leveraging the bishop pair in a closed position. Black's bishops on c6 and e7 (and later on g5/h6) controlled both diagonals and out-posted White's knights and bishop. Even in the endgame, the bishops dominated the board.
 
-### 4. "The Threat Is Stronger Than the Execution"
+### Q: "The Threat Is Stronger Than the Execution"
 
 Nimzowitsch's famous principle — often quoted loosely as "the threat is stronger than the execution" — is perfectly illustrated here. At several points, Nimzowitsch could have captured material, but he chose to maintain the **positional bind** instead. The threat of capturing was more powerful than the capture itself because it kept White paralyzed.
 
 ## 5 Key Lessons from the Immortal Zugzwang
 
-### 1. Restrain Before You Attack
+### Q: Restrain Before You Attack
 
 Nimzowitsch didn't attack Sämisch's position directly. First, he **restrained** White's pawns and pieces, limiting their mobility. Only when White had no constructive plans did Black start increasing the pressure.
 
 **Practical takeaway**: Before launching an attack, ask yourself whether your opponent has useful counterplay. If they do, restrain it first.
 
-### 2. Fix Your Opponent's Pawn Structure
+### Q: Fix Your Opponent's Pawn Structure
 
 The locked queenside (a4 vs a5, b4 vs b2) was essential to White's paralysis. Black's pawn on b4 fixed White's b2 pawn on a vulnerable square, and a5 prevented a4-a5 from freeing White's position.
 
 **Practical takeaway**: When you have a spatial advantage, look for ways to **fix** your opponent's pawn weaknesses so they can't be resolved by pawn advances.
 
-### 3. The Bishop Pair Is a Long-Term Asset
+### Q: The Bishop Pair Is a Long-Term Asset
 
 Sämisch's decision to trade his dark-squared bishop for Black's was a strategic error. Black's bishops — one controlling the a8-h1 diagonal, the other controlling the a3-f8 diagonal — dominated every critical square. In the endgame, the bishop pair's power only increased.
 
 **Practical takeaway**: Don't give up the bishop pair without concrete compensation, especially in positions with fixed pawn structures.
 
-### 4. Prophylaxis Wins Slow Games
+### Q: Prophylaxis Wins Slow Games
 
 Every one of Nimzowitsch's moves answered the question: "What does my opponent want to do, and how can I prevent it?" He prevented Sämisch from playing e4, from advancing the queenside pawns, and from activating the knight.
 
 **Practical takeaway**: In quiet positions, spend your thinking time on your opponent's plans, not your own. Stopping their counterplay often makes your advantages decisive.
 
-### 5. Know When the Position Is Over
+### Q: Know When the Position Is Over
 
 The most instructive aspect of this game for club players is Sämisch's resignation. He didn't wait for checkmate or a clearly lost material count. He recognized that the **positional deficit** was insurmountable and resigned.
 
@@ -247,7 +247,7 @@ The Immortal Zugzwang Game demonstrates all three phases in perfect harmony.
 
 Zugzwang is a position in chess where the player whose turn it is to move would prefer to pass, because every legal move worsens their position. The term comes from the German words *Zug* (move) and *Zwang* (compulsion). While zugzwang occurs regularly in king-and-pawn endgames, achieving it in the middlegame — with most pieces still on the board — is exceptionally rare and requires near-perfect positional play.
 
-### Why is the Sämisch vs Nimzowitsch game called the "Immortal Zugzwang"?
+### Q: Why is the Sämisch vs Nimzowitsch game called the "Immortal Zugzwang"?
 
 The game earned this title because Nimzowitsch achieved something nearly impossible: a middlegame zugzwang where Sämisch had no good moves despite having all his major pieces still on the board. White resigned without losing a single piece, purely because every legal move led to a worse position. No other game in chess history demonstrates the zugzwang concept so completely in the middlegame phase.
 
@@ -255,11 +255,11 @@ The game earned this title because Nimzowitsch achieved something nearly impossi
 
 The zugzwang built up gradually through moves 18–25. After the rook exchanges (moves 23–24), White's pieces became progressively restricted — the knight on d1 had no useful squares, the bishop on g2 was blocked by its own pawns, and the rook was tied to defending the b2 pawn. By the time Nimzowitsch's queen threatened to penetrate via the c-file, Sämisch recognized that every move was a concession and resigned.
 
-### Can zugzwang happen with queens and rooks still on the board?
+### Q: Can zugzwang happen with queens and rooks still on the board?
 
 Yes, but it is extraordinarily rare. Most zugzwang positions occur in simplified endgames with only kings and pawns. The Immortal Zugzwang Game is special precisely because it demonstrates zugzwang in a complex middlegame with queens, rooks, bishops, and knights all present. Nimzowitsch achieved this by restricting White's piece mobility so thoroughly that no piece could move without creating a decisive weakness.
 
-### How can I learn to create zugzwang positions in my own games?
+### Q: How can I learn to create zugzwang positions in my own games?
 
 Study Nimzowitsch's core principles from *My System*: restraint (prevent your opponent's pawn advances), blockade (place pieces in front of enemy passed pawns), prophylaxis (anticipate and prevent your opponent's plans), and overprotection (defend key squares more than apparently necessary). The key practical skill is learning to fix your opponent's pawn structure so their pieces become permanently passive. Focus on restricting mobility rather than winning material — zugzwang emerges when your opponent runs out of constructive moves.
 

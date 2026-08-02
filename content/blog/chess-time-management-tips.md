@@ -65,25 +65,25 @@ You play a solid opening, find a strong plan in the middlegame, then suddenly yo
 
 ## Why You Run Out of Time
 
-### 1. Thinking in the Opening
+### Q: Thinking in the Opening
 
 The most common time sink. You spend 5 minutes on move 8 deciding between two moves you should already know from preparation. By move 15, you've used half your clock on positions that are well-documented theory.
 
 **The fix:** Know your opening repertoire to at least move 10-12. You don't need to memorize 30 moves of theory — just have a clear plan for the first 10-12 moves in your main lines. Use a tool like the [FireChess Opening Explorer](/analyze) to see which openings you actually play, then learn those lines properly.
 
-### 2. Calculating Everything
+### Q: Calculating Everything
 
 Club players often try to calculate every single position deeply, even quiet ones where a general plan is sufficient. You don't need to calculate 7 moves ahead when you're simply developing a piece to a natural square.
 
 **The fix:** Distinguish between **critical positions** (where calculation matters) and **routine positions** (where pattern recognition and principles are enough). Save your deep calculation for moments when there's a genuine tactical opportunity or when the position is about to change drastically.
 
-### 3. Perfectionism
+### Q: Perfectionism
 
 Spending 8 minutes to choose between two moves that are both roughly equal is a massive time waste. The difference between the "best" move and the "second best" move in a quiet position is often less than 0.2 pawns — far less impactful than the blunders you'll make in time trouble.
 
 **The fix:** Set a mental alarm. If you've been thinking about a move for more than 3 minutes in a rapid game, just play the first reasonable move you found. The marginal improvement from extra thinking rarely justifies the clock investment.
 
-### 4. No Time Checkpoints
+### Q: No Time Checkpoints
 
 Most players never glance at their clock until they're already in trouble. Without time awareness, you can't manage your clock any more than you can manage a budget without checking your bank account.
 

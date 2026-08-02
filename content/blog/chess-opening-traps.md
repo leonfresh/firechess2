@@ -49,11 +49,11 @@ If Black captures with **5...Bxd1??**, the fireworks begin:
 
 **7.Nd5#** — checkmate. The king on e7 is hemmed in by its own pieces. The knight on d5 covers c7 and f6, the bishop on f7 covers e8 and g8, and the pawn on e4 blocks the escape square e5. A beautiful coordination of three minor pieces delivering mate.
 
-### Why Club Players Fall For It
+### Q: Why Club Players Fall For It
 
 The "pin" on Nf3 feels real. Your brain registers: *"That knight can't move — it's pinned to the queen."* But the pin only matters if Black actually takes the queen. White calculated that the queen is worth less than a mating attack — and that's the lesson.
 
-### How to Avoid It
+### Q: How to Avoid It
 
 If you're Black and your opponent plays Nxe5, **don't take the queen**. Play 5...Nf6 instead, developing a piece and keeping the position playable. The key defensive principle: when your opponent sacrifices, ask *"What happens if I DON'T capture?"* before reaching for the piece.
 
@@ -75,11 +75,11 @@ The temptation is irresistible: **4.Nxe5??** wins a pawn, attacks the queen on d
 
 After **5.Nxf7??** (grabbing more material), the trap closes: **5...Qxg2 6.Rf1 Qxe4+ 7.Be2 Nf3#** — checkmate. The knight delivers the final blow, and the White king has nowhere to run.
 
-### Why Club Players Fall For It
+### Q: Why Club Players Fall For It
 
 Three things converge: the move 3...Nd4 *looks* like a mistake (it violates opening principles), the e5 pawn *looks* free, and taking it *feels* like good chess — you're "punishing" your opponent's bad play. But this is exactly the kind of position where you need to slow down and check your opponent's ideas.
 
-### How to Avoid It
+### Q: How to Avoid It
 
 After 3...Nd4, the simple **4.Nxe3** (or 4.0-0, or 4.d3) is fine for White. The critical point: if your opponent plays a move that looks like a mistake in the opening, spend an extra 30 seconds before punishing it. Ask: *"What does my opponent want me to do?"* If the answer is "take that piece," that's a red flag.
 
@@ -103,11 +103,11 @@ After **5.Bd2** (the best defense), **5...Qxb2** wins the b2 pawn, and Black has
 
 If White plays **5.Nbd2??** instead, **5...Qxf4** wins the bishop outright — Black is now up material for nothing.
 
-### Why Club Players Fall For It
+### Q: Why Club Players Fall For It
 
 The Englund Gambit looks unsound. After 1...e5, White's instinct is: *"I'm a pawn up, I should just consolidate."* That confidence leads to the careless 4.Bf4, not realizing the queen check is coming. The trap works because White's "I'm already winning" mindset lowers their alertness.
 
-### How to Avoid It
+### Q: How to Avoid It
 
 If you face the Englund Gambit with White, the best response is **4.Bf4?! is a mistake** — play **4.a3** first (preventing Qb4+) or **4.Nbd2** (which also avoids the fork). The Englund is considered slightly dubious at higher levels, but it punishes imprecise play ruthlessly. Against the Englund, play **4.exd6** (capturing the pawn cleanly) or develop naturally with **4.c3**.
 
@@ -129,11 +129,11 @@ If White takes the bait with **6.hxg4?? hxg4**, the knight on f3 is attacked by 
 
 The key insight: after **6.hxg4 hxg4**, the pawn on g4 also opens the g-file for Black's rook after ...Rxh1, creating a cascade of threats that White cannot contain.
 
-### Why Club Players Fall For It
+### Q: Why Club Players Fall For It
 
 The knight on g4 is *right there*. It looks free. "Winning a piece" is the strongest impulse in club chess, and the Fishing Pole exploits it perfectly. The move 5...h5 looks like desperation — *"You're sacrificing ANOTHER piece?"* — which makes the trap even more effective.
 
-### How to Avoid It
+### Q: How to Avoid It
 
 After 4...Ng4, the correct response is **5.d3** (solid, protecting e4 and developing) or **5.h3 h5 6.d3** (kicking the knight first, then developing). The key is: **don't capture on g4 unless you've calculated the consequences of hxg4+**. If the pawn check opens lines against your king, the "free piece" isn't free at all.
 
@@ -155,11 +155,11 @@ The Two Knights Defense is one of the most combative responses to 3.Bc4. After 4
 
 This position has been analyzed for centuries, and it's *still* controversial. At the club level, Black almost always collapses under the pressure. White plays Nc3, develops rapidly, and launches a central attack that's incredibly difficult to defend over the board.
 
-### Why Club Players Fall For It
+### Q: Why Club Players Fall For It
 
 After 5...Nxd5, Black thinks: *"I've equalized — I have a pawn in the center, my pieces are developing."* The Fried Liver sacrifice comes as a complete shock. Even if Black knows about it theoretically, defending an exposed king in a 15-minute game is a completely different challenge.
 
-### How to Avoid It
+### Q: How to Avoid It
 
 The antidote to the Fried Liver is **5...Na5!** instead of 5...Nxd5. This "Polerio Defense" captures the bishop on c4 and sidesteps the sacrifice entirely. If you play the Two Knights with Black, learning the 5...Na5 line is essential — it's objectively better AND avoids the Fried Liver entirely.
 

@@ -24,7 +24,7 @@ The only real drawback is theory — but only if you try to learn everything. Le
 
 ## The 3 Best Sicilian Lines for Beginners
 
-### 1. The Accelerated Dragon (1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6)
+### Q: The Accelerated Dragon (1.e4 c5 2.Nf3 Nc6 3.d4 cxd4 4.Nxd4 g6)
 
 The Accelerated Dragon is the single best Sicilian for beginners. Here's why:
 
@@ -41,7 +41,7 @@ The Accelerated Dragon is the single best Sicilian for beginners. Here's why:
 
 **Common beginner mistake:** Playing ...d6 instead of ...d5 in one move. That transposes to the full Dragon, and suddenly you face the Yugoslav Attack. Stick to the Accelerated line and play ...d5 as a single move.
 
-### 2. The Classical Sicilian (1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 Nc6)
+### Q: The Classical Sicilian (1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 Nc6)
 
 The Classical Sicilian is the most intuitive version of the opening for players who follow basic opening principles:
 
@@ -65,7 +65,7 @@ Again — the ...d5 break is your priority. Once Black achieves ...d5 in the Sic
 
 **Key pattern to know:** After 6.Bg5 (the Richter-Rauzer), Black's best response is 6...e6 7.Qd2 a6 8.0-0-0 Bd7 — get your king safe and prepare ...b5 counterplay.
 
-### 3. The Kan Variation (1.e4 c5 2.Nf3 e6 3.d4 cxd4 4.Nxd4 a6)
+### Q: The Kan Variation (1.e4 c5 2.Nf3 e6 3.d4 cxd4 4.Nxd4 a6)
 
 The Kan is the most flexible and positional of the three lines. It's perfect for beginners who prefer maneuvering over sharp tactics.
 
@@ -234,31 +234,31 @@ You can also use the [Chaos Chess mode](https://firechess.com/chaos) to get comf
 
 ## FAQ: Sicilian Defense for Beginners
 
-### 1. Is the Sicilian Defense too hard for beginners?
+### Q: Is the Sicilian Defense too hard for beginners?
 
 No — and that's one of the biggest myths in chess. The key is to be selective. Don't try to learn all twenty variations. Pick one line (the Accelerated Dragon is ideal), play it for 20-30 games, and learn its typical middlegame plans. The Sicilian is actually *easier* than 1...e5 at the club level because your opponents are less familiar with the positions. If you find yourself losing to common traps like the [Italian Game Fried Liver Attack](/blog/italian-game-mistakes), you'll appreciate how the Sicilian sidesteps those dangers entirely.
 
-### 2. Which Sicilian variation should I start with?
+### Q: Which Sicilian variation should I start with?
 
 The **Accelerated Dragon** is the best starting point for most beginners. It has clear plans (get castled, play ...d5), avoids the heavy theory of the full Dragon, and teaches you the essential Sicilian themes. After 20-30 games, you can branch out to the Classical or Kan.
 
-### 3. What's the difference between the Dragon and the Accelerated Dragon?
+### Q: What's the difference between the Dragon and the Accelerated Dragon?
 
 The full Dragon (...d6 and ...g6) allows White to play the Yugoslav Attack — a fearsome attacking system with Be3, Qd2, Bh6, h4-h5, and g4. The Accelerated Dragon delays ...d6, which stops White from playing the Yugoslav effectively. Instead, White's best try is the Maróczy Bind (c4), which is more positional. The trade-off is that Black's ...d5 break is less forcing in the Accelerated version.
 
-### 4. Do I need to memorize long theory lines?
+### Q: Do I need to memorize long theory lines?
 
 Not at the club level. 95% of your opponents won't know the refutation to your chosen line beyond move 6 or 7. Focus on understanding the key ideas: the ...d5 break, queenside counterplay, and when to trade pieces. If you understand *why* the moves are played, you'll find good moves even when you're out of book. For a deeper look at positional mistakes in other openings, check our [guide on common Italian Game errors](/blog/italian-game-mistakes).
 
-### 5. What do I do if White avoids the Open Sicilian?
+### Q: What do I do if White avoids the Open Sicilian?
 
 If White doesn't play 2.Nf3 and 3.d4, you're in a Closed Sicilian or Alapin variation. Against the **Closed Sicilian** (2.Nc3), simply play 2...Nc6 3.g3 g6 4.Bg2 Bg7 and aim for ...d6 and ...e5 or ...d5. Against the **Alapin** (2.c3), play 2...Nf6 and if 3.e5 Nd5, followed by ...d6 and ...Nc6. The key idea is that Black's light-squared bishop is often the problem piece — trade it with ...Bg4 or develop it to b7 after ...b6.
 
-### 6. How do I defend against White's kingside attack in the Sicilian?
+### Q: How do I defend against White's kingside attack in the Sicilian?
 
 Don't just defend — counterattack! The Sicilian is a fighting opening. If White castles kingside and throws pawns at your king, you must create counterplay on the queenside or in the center. The classic formula: ...Rc8, ...Qa5, ...b5-b4, and ...a5-a4 to open files against the white king. A timely ...d5 break can also defuse White's attack by opening the center when your pieces are better placed. The worst thing you can do is huddle all your pieces on the back rank — that's how you get mated. For more on recognizing dangerous attacking patterns, browse our [full opening library](/openings/).
 
-### 7. Should I play ...g6 or ...e6 in the Sicilian?
+### Q: Should I play ...g6 or ...e6 in the Sicilian?
 
 It depends on your style. **...g6** setups (Dragon, Accelerated Dragon) lead to sharper, more tactical games with opposite-side castling and direct attacks. **...e6** setups (Kan, Taimanov, Classical with ...e6) are more positional and focus on pawn structure and piece play. Try both in training games to see which feels more natural. Beginners often find ...e6 lines more forgiving because the king stays safer.
 
