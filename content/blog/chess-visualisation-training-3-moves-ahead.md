@@ -230,7 +230,7 @@ FireChess has several features that integrate naturally with visualisation train
 - **[Puzzles](/puzzles)** — Before looking at the board, try to calculate the full solution in your head. Use the "no touch" rule: solve the puzzle mentally before making any moves on the digital board.
 - **[Game analysis](/analysis)** — After each game, identify 1-2 critical positions. Spend 5 minutes calculating the best line without using the analysis board. Then turn on Stockfish 18 to verify.
 - **[Chaos Chess](/chaos)** — The unpredictable modifier system forces you to recalculate constantly, training your mental board's flexibility under uncertainty.
-- **[Guess the Elo](/blog/guess-the-elo-chess)** — Estimating a player's rating from a position requires you to visualise what they were thinking and evaluate their decision quality — a higher-order visualisation skill.
+- **[Guess the Elo](/blog/guess-the-elo-chess)** — Estimating a player's rating from a position requires you to visualise what they were thinking and evaluate their decision quality — a higher-order visualisation skill. For a data-driven approach using PGN files, see our [Guess Elo from PGN](/blog/guess-elo-from-pgn) guide.
 
 For a broader improvement strategy that combines visualisation with other training methods, see our guide on [how to improve at chess](/blog/how-to-improve-at-chess).
 

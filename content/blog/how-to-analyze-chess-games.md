@@ -342,7 +342,7 @@ Instead of analyzing each game individually, you scan 50-100 games and look for:
 
 This bird's-eye view reveals systemic weaknesses that game-by-game analysis can miss. You might discover that your accuracy drops sharply after move 35, suggesting endgame study is needed. Or that you consistently lose 40 centipawns in certain opening structures. Our guide on [finding opening weaknesses](/blog/how-to-find-opening-weaknesses) shows how to use this pattern data to target your opening study.
 
-FireChess's scanner at [/analyze](/analyze) is built for this — upload your PGN and it shows repeated mistakes, opening leaks, and accuracy trends across your last 50-200 games in one view. The "Opening Leaks" section groups every position you've played more than once and shows your average centipawn loss in each, so you can see exactly which opening lines are costing you rating points.
+If you want to estimate your opponent's rating from the PGN before running the engine, our [Guess Elo from PGN](/blog/guess-elo-from-pgn) guide shows you how to read the signals manually. FireChess's scanner at [/analyze](/analyze) is built for this — upload your PGN and it shows repeated mistakes, opening leaks, and accuracy trends across your last 50-200 games in one view. The "Opening Leaks" section groups every position you've played more than once and shows your average centipawn loss in each, so you can see exactly which opening lines are costing you rating points.
 
 ## The Best Tools for Analysis
 

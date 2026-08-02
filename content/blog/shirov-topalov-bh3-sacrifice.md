@@ -209,7 +209,7 @@ You can [play through the complete Shirov vs Topalov 1998 game on FireChess](htt
 - **[Analyze Your Own Games Free](https://firechess.com/)** — FireChess scans your Lichess or Chess.com games with Stockfish 18 to find tactical patterns you miss
 - **[Chess Endgame Patterns Club Players Miss](https://firechess.com/blog/endgame-patterns-club-players-miss)** — The zugzwang and king-activity patterns that win games
 - **[Average Centipawn Loss by Rating](https://firechess.com/blog/average-centipawn-loss-by-rating)** — Benchmark your accuracy against players at your level
-- **[Guess the Elo](https://firechess.com/roast)** — Test your positional judgment against real games, or read our [guide to estimating rating from positions](/blog/guess-the-elo-chess)
+- **[Guess the Elo](https://firechess.com/roast)** — Test your positional judgment against real games, learn [how to estimate rating from any PGN](/blog/guess-elo-from-pgn), or read our [guide to estimating rating from positions](/blog/guess-the-elo-chess)
 
 ### Other Famous Sacrifices on FireChess
 
