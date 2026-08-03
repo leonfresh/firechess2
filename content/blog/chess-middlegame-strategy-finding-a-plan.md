@@ -266,6 +266,9 @@ Finding a plan in the middlegame is a skill that improves with practice. You don
 
 Ready to see where your middlegame planning breaks down? [Upload your games to FireChess's analyzer](/analyze) and look at the "Middlegame" section — it shows exactly where your evaluation diverged from the engine's recommendation and which framework step you missed.
 
+
+Learn more about structuring your thinking in our [chess thinking process](/blog/chess-thinking-process) guide.
+
 ## Frequently Asked Questions
 
 ### Q: How do I know which side of the board to play on?

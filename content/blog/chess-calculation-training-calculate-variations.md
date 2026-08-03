@@ -288,6 +288,8 @@ Puzzle positions are pre-selected to have a tactical solution, so your brain kno
 
 ---
 
+Learn more about structuring your thinking in our [chess thinking process](/blog/chess-thinking-process) guide.
+
 ## Conclusion
 
 Calculation is the skill that separates the players who improve from those who plateau. The four methods here — candidate generation, forcing moves first, tree of variations, and blunder check — form a complete system you can apply in any game.

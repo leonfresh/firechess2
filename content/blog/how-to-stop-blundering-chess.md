@@ -381,6 +381,9 @@ Centipawn loss measures how far each move deviates from the engine's best choice
 
 At the 1200 level, players average 2-3 significant blunders (evaluation swings of 200+ centipawns) per game. By 1500, that drops to about 1-1.5 per game. At 1800+, it's roughly one blunder every 2-3 games. These numbers come from engine analysis of millions of online games and match what FireChess sees in its [blunder-by-rating data](/blog/chess-mistakes-by-rating). If your blunder count is above average for your rating, the pre-move checklist in this guide will help more than opening study.
 
+
+Learn more about structuring your thinking in our [chess thinking process](/blog/chess-thinking-process) guide.
+
 ## The Bottom Line
 
 Blunders follow patterns. Your patterns might be different from another player's, but they're consistent. The path to fewer blunders isn't "try harder" — it's building specific checking habits for your most common blunder types, and then making those habits automatic through repetition.

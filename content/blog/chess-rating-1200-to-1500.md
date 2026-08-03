@@ -313,6 +313,8 @@ Track these three metrics over time:
 2. **Average centipawn loss** — our [ACPL by rating article](/blog/average-centipawn-loss-by-rating) benchmarks where you should be. 1200: ~120 ACPL. 1500: ~70 ACPL.
 3. **Win rate in equal endgames** — if you're winning drawn endgames or drawing won ones, that's your bottleneck
 
+Learn more about structuring your thinking in our [chess thinking process](/blog/chess-thinking-process) guide.
+
 ## FAQ: The 1200 to 1500 Journey
 
 ### Q: How long does it take to go from 1200 to 1500?

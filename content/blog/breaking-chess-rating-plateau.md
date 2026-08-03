@@ -397,6 +397,9 @@ Upload your games to [FireChess's analysis tool](/analyze) and scan your recent 
 
 Yes — and it's a popular chess exercise called "Guess the Elo." The strongest signal is centipawn loss: players who consistently make moves within 10-15 centipawns of the engine's best move are typically 1800+, while players averaging 80+ ACPL are usually below 1200. Other signals include opening knowledge depth, endgame technique, and time usage patterns. Our [Guess the Elo guide](/blog/guess-the-elo-chess) explains the methodology, and FireChess's scanner gives you an estimated rating based on your accuracy patterns.
 
+
+Learn more about structuring your thinking in our [chess thinking process](/blog/chess-thinking-process) guide.
+
 ## The Bottom Line
 
 Rating plateaus break when you find the one skill that's limiting you and train it systematically. The answer is almost never "study more" — it's "study the right thing." Use game analysis tools to identify your specific bottleneck, build a focused training plan around it, and give it 3-4 weeks of dedicated practice. Track your [average centipawn loss](/blog/average-centipawn-loss-guide) over time to measure real improvement — not just rating fluctuations. That's how every plateau breaks.
