@@ -70,7 +70,7 @@ This is where most club players fail. They see one reasonable move and play it. 
 
 Candidate moves aren't every legal move — they're the **plausible** ones. In a typical middlegame position, there are 30-35 legal moves. Of those, 3-5 are worth serious consideration. The art is knowing which ones.
 
-### How to Find Candidates
+### Q: How to Find Candidates
 
 The fastest method: **checks, captures, and threats** (CCT). This tactical scan catches 90% of forcing moves. Then add **improvement moves** — moves that improve your worst-placed piece or prepare a pawn break.
 
