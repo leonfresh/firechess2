@@ -1,7 +1,7 @@
 ---
 title: "How to Build a Chess Study Plan From Your Own Games"
-description: "A simple way to turn recent games into a realistic chess study plan instead of guessing what to work on next."
-date: "2026-06-15"
+description: "Build a chess study plan from your own games using ACPL tracking, weakness patterns, and targeted drills. Stop guessing — start improving with data."
+date: "2026-08-05"
 author: "FireChess Team"
 tags: ["study-plan", "improvement", "analysis", "tactics", "beginner"]
 ---
@@ -59,7 +59,7 @@ The highest-ROI study targets are usually the things that:
 - cost a lot when they happen
 - are realistic for you to fix soon
 
-That means one repeated opening leak or one recurring tactical blind spot is usually worth more than a rare advanced endgame detail. You are looking for the pattern that shows up at least once every few games, because fixing it directly improves your score.
+That means one repeated opening leak or one recurring tactical blind spot is usually worth more than a rare advanced endgame detail. You are looking for the pattern that shows up at least once every few games, because fixing it directly improves your score. If your biggest pattern is tactical, our guide on [chess tactics every player should know](/blog/chess-tactics-every-player-should-know) covers the exact motifs that dominate club-level games.
 
 ## Step 3: Turn Weaknesses Into Categories
 
@@ -73,7 +73,7 @@ It is a split like:
 - time management
 - game review habits
 
-That keeps your training concrete. Instead of a vague resolution, you have a list of specific levers you can pull.
+That keeps your training concrete. Instead of a vague resolution, you have a list of specific levers you can pull. For a deep dive into the tactical category specifically, see [chess pattern recognition](/blog/chess-pattern-recognition) — it covers the mental shortcuts that separate 1200s from 1600s.
 
 <chess-position fen="2r3k1/5ppp/3p4/3P4/1p2P3/1P3P2/P5PP/2R3K1 w - - 0 1" orientation="white" moves="Rxc8+,Rxc8,Kf2" caption="Sometimes the right study target is not 'more tactics' but learning which endgames you should simplify into and how active your king needs to become." arrows="c1c8:rgba(16,185,129,0.5)" badge="best"></chess-position>
 
@@ -91,6 +91,8 @@ Once you know the categories, assign training that actually matches them.
 **Do not:**
 - memorize twenty sidelines you never reach
 
+If this is you, [how to study chess openings without memorizing](/blog/how-to-study-chess-openings-without-memorizing) shows a better approach based on understanding plans, not moves.
+
 ### If your biggest leak is missed tactics
 
 **Study:**
@@ -101,6 +103,8 @@ Once you know the categories, assign training that actually matches them.
 **Do not:**
 - replace all game review with random puzzle volume
 
+For structured tactical training, see [chess calculation training](/blog/chess-calculation-training-calculate-variations) — it covers how to calculate variations efficiently instead of just doing volume.
+
 ### If your biggest leak is endgames
 
 **Study:**
@@ -110,6 +114,8 @@ Once you know the categories, assign training that actually matches them.
 
 **Do not:**
 - jump straight to exotic technical positions that almost never appear
+
+Start with the fundamentals in our [king and pawn endgames guide](/blog/king-and-pawn-endgames-guide) — these positions appear in nearly every game and teach the most transferable skills.
 
 ## Step 5: Build the Week Around One Main Mission
 
@@ -127,7 +133,7 @@ Example:
 - support: missed forks in middlegames
 - maintenance: review every rapid loss for 10 minutes
 
-That is enough. You do not need a ten-part curriculum to move forward.
+That is enough. You do not need a ten-part curriculum to move forward. If time pressure is part of your problem, [chess time management tips](/blog/chess-time-management-tips) covers how to allocate your clock across the game so you stop flagging in winning positions.
 
 ---
 
@@ -205,7 +211,7 @@ Here is a simple version for a club player:
 - one longer review block
 - a scan of recent games to see whether the same problems are still showing up
 
-That is already enough structure to outperform most "I will just study whatever I feel like" plans.
+That is already enough structure to outperform most "I will just study whatever I feel like" plans. If you want to fill the tactical slots in this schedule, [chess tactics every player should know](/blog/chess-tactics-every-player-should-know) has the highest-impact patterns to prioritize.
 
 ## Tracking Your Study ROI Over Time
 
@@ -213,11 +219,14 @@ The study plan only works if you can tell whether it is moving the needle. This 
 
 ### What to track
 
-You do not need a spreadsheet with thirty columns. Three numbers per week are enough:
+You do not need a spreadsheet with thirty columns. Four numbers per week are enough:
 
 1. **Frequency of your target mistake** — Did the missed-fork count per 20 games go from 4 to 2?
 2. **Average game quality** — Subjective 1–5 rating of how often you reached a playable position out of the opening
-3. **Rating trend** — Not daily noise, but the 4-week moving average
+3. **Average centipawn loss (ACPL)** — The single best objective measure of how far your moves stray from the engine's best. Upload your games to [FireChess's analyzer](/analyze) and look at the ACPL number in the scan summary. For most club players, ACPL sits between 60 and 120. If yours drops by 10 points over a month of focused study, the plan is working — even if your rating has not caught up yet. Our [average centipawn loss guide](/blog/average-centipawn-loss-guide) breaks down what normal ACPL looks like at every rating level.
+4. **Rating trend** — Not daily noise, but the 4-week moving average
+
+ACPL deserves special attention because it is the one metric that tracks your *overall* move quality, not just one category of mistake. A player who stops blundering but starts making more inaccuracies might see their tactical-mistake count drop while ACPL stays flat — which tells you the weakness has shifted, not disappeared. The [ACPL by rating breakdown](/blog/average-centipawn-loss-by-rating) shows exactly what range to expect at your level.
 
 ### Q: How to track
 
@@ -268,7 +277,9 @@ Two weeks later — after daily deflection-tactic drills and game reviews that s
 
 The pieces are different, but the deflection theme is the same. White spotted **Bxf7+!** immediately, deflecting the rook from the defense of the queen, then captured the queen with **Qxd5**. The difference was not talent — it was training. The pattern had been drilled enough that the brain now flagged "undefended queen + bishop attacking f7" as a candidate.
 
-This is what study ROI looks like in practice. A pattern that was invisible for years gets pulled into your conscious awareness in a matter of weeks — if you are studying the right things.
+This is what study ROI looks like in practice. If you want to understand how these mistakes affect your rating numerically, [what is centipawn loss](/blog/what-is-centipawn-loss) explains the metric that ties blunders to actual rating impact.
+
+A pattern that was invisible for years gets pulled into your conscious awareness in a matter of weeks — if you are studying the right things.
 
 ## Where FireChess Fits
 
@@ -297,15 +308,23 @@ If you cannot answer that, the plan is probably too generic.
 
 If you can answer it, the plan is probably usable.
 
-That weekly check does double duty: it forces you to prioritize, and it keeps you aware that the answer can change. A weakness that worked for you in week 1 might be mostly resolved by week 4, and a new pattern might be surfacing in its place.
+That weekly check does double duty: it forces you to prioritize, and it keeps you aware that the answer can change. A weakness that worked for you in week 1 might be mostly resolved by week 4, and a new pattern might be surfacing in its place. When that happens, [how to analyze chess games](/blog/how-to-analyze-chess-games) gives you a structured method for re-entering the review phase with fresh eyes.
 
 ## Frequently Asked Questions
+
+### Q: What is average centipawn loss and how does it help my study plan?
+
+Average centipawn loss (ACPL) measures how many hundredths of a pawn your moves lose on average compared to the engine's best choice. It is the single most useful number for tracking study progress because it captures *all* mistake types — blunders, inaccuracies, and subtle positional errors — in one score. If your ACPL drops from 85 to 65 over six weeks of focused study, you are making objectively better moves, even if your rating has not moved yet. Upload your games to [FireChess's analyzer](/analyze) to see your current ACPL and track it over time. For a full breakdown, read [what is centipawn loss](/blog/what-is-centipawn-loss).
+
+### Q: How do I find my centipawn loss for each game?
+
+Upload your PGN to [FireChess's scan tool](/analyze). The summary panel shows your ACPL across all scanned games, plus a per-move breakdown with FireChess move badges — green for best moves, amber for inaccuracies, red for blunders. You can sort by worst moves to find the specific positions where you lost the most material. The [accuracy score explained](/blog/chess-accuracy-score-explained) guide walks through how to interpret these numbers.
 
 ### Q: How many games should I review before building a plan?
 
 At least 15–20 rapid or classical games. Fewer than that and a single bad loss can skew your perception of where the real weakness is. With 20 games, the statistical noise averages out and the genuine patterns — the ones worth studying — become visible.
 
-### What if I have multiple weaknesses at the same level?
+### Q: What if I have multiple weaknesses at the same level?
 
 Pick one. If you try to fix fork blindness, endgame technique, and opening leaks all in the same week, you will improve at none of them. The 80/20 rule applies: one weakness usually causes more damage than the others. Hit that one first, build it into a habit, then move to the next. Most improvers overestimate how much they can fix at once.
 
@@ -329,6 +348,6 @@ It is easy to spend six hours on chess and still avoid the one weakness that kee
 
 That is why a good plan feels narrower than people expect. It says "less, but pointed."
 
-And when the weakness changes, the plan changes with it.
+And when the weakness changes, the plan changes with it. If you keep losing to the same openings despite studying, [why you keep losing in the same openings](/blog/why-you-keep-losing-same-openings) diagnoses the most common reasons.
 
 That is how real improvement becomes sustainable instead of chaotic.
