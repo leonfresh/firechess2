@@ -115,7 +115,7 @@ Blitz chess (3-5 minutes) builds pattern recognition and opening familiarity, bu
 
 ### Step 1: Diagnose Your Weakness
 
-You need data, not intuition. Your gut feeling about what you're bad at is often wrong. Players tend to think they need more opening knowledge when they actually need better tactics, or they think they need more tactics when they actually need better endgame technique.
+You need data, not intuition. Your gut feeling about what you're bad at is often wrong. If you keep repeating the same mistakes across dozens of games, [identify your specific mistake patterns](/blog/stop-repeating-chess-mistakes) first. Players tend to think they need more opening knowledge when they actually need better tactics, or they think they need more tactics when they actually need better endgame technique.
 
 **How to diagnose:**
 - Scan your last 25-50 games with a tool like [FireChess](/analyze) that separates your performance by game phase (opening, middlegame, endgame)

@@ -9,7 +9,7 @@ canonical: https://firechess.com/blog/how-to-stop-blundering-chess
 
 Every chess player blunders. Magnus Carlsen blunders. But the difference between a 1200 and a 1900 isn't that the 1900 never blunders — it's that they blunder less frequently and in fewer types of situations.
 
-The good news: blunders aren't random. They cluster into predictable patterns, and once you know your patterns, you can build habits to prevent them. This guide breaks down the six most common blunder archetypes, gives you a simple pre-move checklist that takes less than five seconds, and shows you how to identify which blunders cost you the most rating points. Before diving in, make sure you know [how to analyze your chess games](/blog/how-to-analyze-chess-games) — it's the foundation for everything below.
+[Identify your specific blunder patterns](/blog/stop-repeating-chess-mistakes) before diving into fixes. The good news: blunders aren't random. They cluster into predictable patterns, and once you know your patterns, you can build habits to prevent them. This guide breaks down the six most common blunder archetypes, gives you a simple pre-move checklist that takes less than five seconds, and shows you how to identify which blunders cost you the most rating points. Before diving in, make sure you know [how to analyze your chess games](/blog/how-to-analyze-chess-games) — it's the foundation for everything below.
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
 <svg width="680" height="290" viewBox="0 0 680 290" fill="none" xmlns="http://www.w3.org/2000/svg">

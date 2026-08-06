@@ -72,7 +72,7 @@ Here's what ACPL looks like across rating levels:
 
 **Your target:** Drop your ACPL by 10-15 points from wherever you are now. A 1400 player going from 65 ACPL to 50 ACPL will see rating gains within 2-3 weeks.
 
-### How to Track ACPL
+### Q: How to Track ACPL
 
 Upload your games to [FireChess's scanner at /analyze](/analyze). After each rapid or classical game, check your ACPL. Don't track blitz — the time pressure inflates ACPL and gives you noisy data.
 
@@ -88,7 +88,7 @@ Your [accuracy score](/blog/chess-accuracy-score-explained) is a percentage that
 
 Accuracy is the number most platforms show you prominently. Chess.com gives you a "Game Review" accuracy. Lichess shows it after analysis. FireChess displays it alongside your ACPL and move badges.
 
-### Why Accuracy Alone Is Misleading
+### Q: Why Accuracy Alone Is Misleading
 
 Here's the trap: accuracy compresses information. A player with 72% accuracy and a player with 78% accuracy might look similar, but their games could be completely different. The 72% player might play 35 perfect moves and 5 blunders. The 78% player might play 40 slightly inaccurate moves with no blunders.
 
@@ -110,7 +110,7 @@ This is why you should track [ACPL](/blog/what-is-centipawn-loss) alongside accu
 
 The position above illustrates a typical 1400-1600 accuracy leak. Black played 9...b5, which looks natural (expanding on the queenside) but weakens the c6 square and allows White to build pressure with Rc1 and a4. This single move isn't catastrophic — it costs maybe 30-40 centipawns — but over a 40-move game, several such inaccuracies push ACPL from 35 to 55 and accuracy from 78% to 68%.
 
-### How to Use Accuracy for Improvement
+### Q: How to Use Accuracy for Improvement
 
 After every game, upload it to [FireChess at /analyze](/analyze) and note your accuracy score. But don't just look at the number — look at the *distribution* of move badges.
 
@@ -160,7 +160,7 @@ If you *can't* find it in a game but *can* find it in a puzzle, the issue is att
 
 **Fix:** Before every move in a game, ask: "Is there a check, capture, or threat I should consider?" This 5-second habit activates the same pattern-recognition pathways that puzzles train. See our guide on [building a thinking process](/blog/chess-thinking-process) for the full pre-move checklist.
 
-### How to Structure Puzzle Sessions
+### Q: How to Structure Puzzle Sessions
 
 - **Daily:** 15-20 minutes of rated puzzles on any platform
 - **Focus sessions:** 30 minutes on one motif (pins, forks, discovered attacks) — use themed puzzle sets
@@ -177,7 +177,7 @@ Most club players either memorize openings blindly or improvise from move 3. Bot
 
 FireChess tracks this automatically. When you scan a game, the opening moves are tagged as "Book" (matching known theory) or flagged with a badge if they deviate. If your first 10 moves produce 3 inaccuracies, that's not a middlegame problem — it's an [opening preparation](/blog/chess-opening-principles) problem.
 
-### How to Measure Opening Preparation
+### Q: How to Measure Opening Preparation
 
 Use the [FireChess scanner](/analyze) to find your opening leaks:
 

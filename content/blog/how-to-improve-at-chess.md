@@ -103,7 +103,7 @@ Not "plug it into an engine and click through the moves." Real analysis:
 3. *Then* run the engine. Compare its findings to yours.
 4. For each engine recommendation you didn't see, ask: why didn't I see it? What pattern was I missing?
 
-The game analysis process builds the mental library you need to stop repeating the same mistakes. Without it, you're playing 500 games and making the same error on move 20 all 500 times.
+The game analysis process builds the mental library you need to stop repeating the same mistakes — [identify your mistake patterns first](/blog/stop-repeating-chess-mistakes). Without it, you're playing 500 games and making the same error on move 20 all 500 times.
 
 [Use our game analyzer](/analyze) to break down your games move by move and identify the exact moments where your win probability shifted. If you're not sure what those engine numbers mean, our guide to [average centipawn loss](/blog/average-centipawn-loss-guide) explains how to interpret the accuracy metrics — and what your ACPL says about your rating.
 

@@ -7,7 +7,7 @@ tags: ["improvement", "mistakes", "rating", "tactics", "blunders"]
 canonical: https://firechess.com/blog/chess-mistakes-by-rating
 ---
 
-Every rating band has a signature mistake. A 900-rated player walks into Scholar's Mate. A 1300 player misses the Greek Gift sacrifice. A 1600 player trades into a lost endgame without realising it. These aren't random errors — they're patterns, and they're remarkably consistent across thousands of games.
+Every rating band has a signature mistake. A 900-rated player walks into Scholar's Mate. A 1300 player misses the Greek Gift sacrifice. A 1600 player trades into a lost endgame without realising it. These aren't random errors — they're patterns — and [each one has a specific fix](/blog/stop-repeating-chess-mistakes). They're remarkably consistent across thousands of games.
 
 We analysed over 14,000 games uploaded to FireChess's scanner at /analyze, filtering players by rapid rating, and the data tells a clear story: **the mistakes you make at 1100 are fundamentally different from the mistakes you make at 1500**, and the training that fixes one level does almost nothing for the next. Studying openings when your problem is hanging pieces is like taking driving lessons when you can't see the road.
 
