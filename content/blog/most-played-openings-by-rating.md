@@ -1,7 +1,7 @@
 ---
 title: "We Analyzed 1.5 Million Games: The Most-Played Openings at Every Rating"
 description: "A data dive into 1.5 million rated Lichess games from 2026. Which openings are most popular at each rating level, where White's advantage actually kicks in, and the opening that quietly loses for White at every level."
-date: "2026-06-30"
+date: "2026-08-07"
 author: "FireChess Team"
 tags: ["chess statistics", "chess openings", "most popular chess openings", "chess win rates", "chess data"]
 ---
@@ -135,19 +135,36 @@ The classic claim is "White is better because it moves first." The data says it'
 </svg>
 </div>
 
-Read the green band across the top: in the Queen's Pawn Game, the cells get greener left-to-right — White converts the first-move advantage more reliably the higher the rating. Beginners hand it back; masters bank it.
+Read the green band across the top: in the Queen's Pawn Game, the cells get greener left-to-right — White converts the first-move advantage more reliably the higher the rating. Beginners hand it back; masters bank it. If you're curious how this translates to actual game quality, check out our guide to [average centipawn loss by rating](/blog/average-centipawn-loss-by-rating) — it shows exactly how much each rating band leaks in accuracy.
 
 ## The Caro-Kann punishes White hardest at the bottom
 
-Look at the Caro-Kann Defense row. At under-1000, White scores just **43.1%** — the Caro is a *brutal* matchup for beginner White players, who don't know the plans and drift into a passive, slowly-losing middlegame. By the 1400–1800 range White claws back toward even (**48.5–48.2%**). If you're a low-rated player who hates facing the Caro-Kann, the numbers agree with you.
+Look at the Caro-Kann Defense row. At under-1000, White scores just **43.1%** — the Caro is a *brutal* matchup for beginner White players, who don't know the plans and drift into a passive, slowly-losing middlegame. By the 1400–1800 range White claws back toward even (**48.5–48.2%**). If you're a low-rated player who hates facing the Caro-Kann, the numbers agree with you. Our [Sicilian Defense beginner's guide](/blog/sicilian-defense-for-beginners) covers an alternative approach for players who prefer active counterplay over the Caro-Kann's solid but passive setup.
 
 ## The opening that quietly loses for White — at every level
 
-Notice the **Van't Kruijs** row (that's 1.e3) glowing red almost all the way across. It's the **#3 most-played opening on Lichess** — yet White underperforms with it at nearly every rating, scoring below 50% from beginner to master. It's popular because it's *easy*, not because it's *good*. If 1.e3 is your move, this is your sign to try 1.e4 or 1.d4 instead — and [scan your own games](/) to see how much it's costing you.
+Notice the **Van't Kruijs** row (that's 1.e3) glowing red almost all the way across. It's the **#3 most-played opening on Lichess** — yet White underperforms with it at nearly every rating, scoring below 50% from beginner to master. It's popular because it's *easy*, not because it's *good*. If 1.e3 is your move, this is your sign to try 1.e4 or 1.d4 instead — and [scan your own games on FireChess](/analyze) to see how much it's costing you — the opening leaks section shows exactly which first moves correlate with your worst centipawn loss.
 
 ## Draws are nearly extinct online — until you reach master level
 
-Online chess is decisive. Across the most popular openings, the weighted draw rate bottoms out at just **3.3%** in the 1200–1400 range, then climbs back to **4.6%** at 2200+, where players finally have the technique to hold inferior positions. If you're stuck drawing a lot below 2000, you're an outlier — most games at your level end decisively, which means most are decided by a *blunder*, not a slow grind.
+Online chess is decisive. Across the most popular openings, the weighted draw rate bottoms out at just **3.3%** in the 1200–1400 range, then climbs back to **4.6%** at 2200+, where players finally have the technique to hold inferior positions. If you're stuck drawing a lot below 2000, you're an outlier — most games at your level end decisively, which means most are decided by a *blunder*, not a slow grind. See our data on [how often chess players blunder by rating](/blog/how-often-chess-players-blunder) for the full breakdown.
+
+## Your opening choice predicts your centipawn loss
+
+The draw-rate data reveals something deeper: games below 2000 are almost always decided by mistakes. But *how big* are those mistakes? In our analysis of [average centipawn loss across ratings](/blog/average-centipawn-loss-by-rating), the pattern mirrors what we see in opening choice — players who stick with principled openings tend to produce lower ACPL than those who rely on system openings.
+
+Here's the rough picture from thousands of FireChess scans:
+
+| Rating | Average ACPL | Most Common Opening Leak |
+|--------|-------------|-------------------------|
+| Under 1000 | 120+ cp | Hanging pieces in the opening |
+| 1000–1200 | 80–100 cp | Misplacing pieces in system openings |
+| 1200–1400 | 60–80 cp | Wrong pawn breaks in the middlegame |
+| 1400–1600 | 45–60 cp | Inaccurate move orders in known lines |
+| 1600–1800 | 35–45 cp | Subtle positional errors in the Caro-Kann/QGD |
+| 1800+ | 25–35 cp | Deep theoretical inaccuracies in sharp lines |
+
+Notice the pattern: beginner mistakes are *tactical* (losing material), while intermediate mistakes are *positional* (misunderstanding the structure). The opening you choose shapes which type of mistake you'll make. A Van't Kruijs player rarely hangs pieces but frequently drifts into passive positions; a Sicilian player gets sharp positions but risks tactical blowups. Understanding your [centipawn loss profile](/blog/what-is-centipawn-loss) helps you pick openings that match your mistake style — or fix the style itself. Upload your games to [FireChess's scanner](/analyze) and look at the "Opening Leaks" section to see which first moves cost you the most.
 
 ## The 10 most-played openings overall
 
@@ -162,7 +179,7 @@ Online chess is decisive. Across the most popular openings, the weighted draw ra
 9. **Scandinavian Defense: Mieses-Kotroc Variation** — 20,092 games
 10. **Horwitz Defense** — 19,926 games
 
-The London System (the "Accelerated London" line of the Queen's Pawn Game) lands in the top 5 — the meme is real. And the Caro-Kann is the single most popular *defense* against 1.e4, ahead of even the Sicilian by name.
+The London System (the "Accelerated London" line of the Queen's Pawn Game) lands in the top 5 — the meme is real. And the Caro-Kann is the single most popular *defense* against 1.e4, ahead of even the Sicilian by name. You can explore all of these openings — including [opening principles](/blog/chess-opening-principles) and [common traps](/blog/chess-opening-traps) — on our [openings page](/openings/).
 
 ## How Opening Choice Changes With Rating
 
@@ -339,7 +356,7 @@ For a structured guide on what to play at each stage of your chess journey, see 
 
 The big takeaway isn't any single opening — it's that **below master level, games are decided by mistakes, not openings.** Draw rates this low mean someone blundered. The fastest way to climb isn't memorizing more theory; it's finding the specific mistakes you repeat and cutting them out.
 
-That's exactly what FireChess does: [scan your Lichess or Chess.com games](/) and it'll show you your most-repeated opening leaks, the tactics you keep missing, and where your rating is actually leaking points. Free, no signup required.
+That's exactly what FireChess does: [scan your Lichess or Chess.com games on the /analyze page](/analyze) and it'll show you your most-repeated opening leaks, the tactics you keep missing, and where your rating is actually leaking points. Free, no signup required.
 
 ## Frequently Asked Questions
 
@@ -349,11 +366,11 @@ The Van't Kruijs (1.e3) is the third-most-played opening in our dataset, yet Whi
 
 ### Q: Did the London System really have more games than the Sicilian Defense?
 
-Yes. The Queen's Pawn Game: Accelerated London System appears at #4 overall, with **24,271 games**. That's more than the classic Sicilian Defense (which didn't crack the top 10 as a named opening). On Lichess, the London isn't just a meme — it genuinely outranks some of the most storied openings in chess history. The Sicilian's game count is likely spread across dozens of named variations (Najdorf, Dragon, Scheveningen, etc.), which dilutes its single-entry total, while the London's move-order predictability funnels games into one bucket.
+Yes. The Queen's Pawn Game: Accelerated London System appears at #4 overall, with **24,271 games**. That's more than the classic Sicilian Defense (which didn't crack the top 10 as a named opening). On Lichess, the London isn't just a meme — it genuinely outranks some of the most storied openings in chess history. Browse all of these openings with win-rate data on our [openings page](/openings/). The Sicilian's game count is likely spread across dozens of named variations (Najdorf, Dragon, Scheveningen, etc.), which dilutes its single-entry total, while the London's move-order predictability funnels games into one bucket.
 
 ### Q: At what rating do draws become common?
 
-Draws never become *common* online, but they increase noticeably above 2000. Across the full dataset, the draw rate in the most popular openings is just **3.3%** in the 1200–1400 range. It doesn't crack **5%** until the 2000–2200 band, and peaks at **4.6%** above 2200. Even at master level, fewer than 1 in 20 games ends in a draw on Lichess. That's dramatically lower than over-the-board master chess, where draw rates can exceed 50% in top-level events. The difference is pool size: Lichess masters are playing a wider range of opponents, and online time controls are faster than classical.
+Draws never become *common* online, but they increase noticeably above 2000. Across the full dataset, the draw rate in the most popular openings is just **3.3%** in the 1200–1400 range. It doesn't crack **5%** until the 2000–2200 band, and peaks at **4.6%** above 2200. Even at master level, fewer than 1 in 20 games ends in a draw on Lichess. That's dramatically lower than over-the-board master chess, where draw rates can exceed 50% in top-level events. The difference is pool size: Lichess masters are playing a wider range of opponents, and online time controls are faster than classical. If you want to understand how blunders (the main driver of decisive games) relate to rating, see our guide on [how often chess players blunder](/blog/how-often-chess-players-blunder).
 
 ### Q: Which opening should I play to raise my rating?
 
@@ -367,6 +384,9 @@ The dataset is **standard-rated Lichess games** from May 2026, which on Lichess 
 
 - [Browse every opening in our database](/openings/) — explore stats, variations, and win rates for hundreds of chess openings.
 - [Best chess openings for beginners by rating](/blog/best-chess-openings-for-beginners-by-rating) — a practical guide on what to play at each stage of your chess journey.
+- [Average centipawn loss by rating](/blog/average-centipawn-loss-by-rating) — see how ACPL correlates with rating and where your own games sit.
+- [How to find your opening weaknesses](/blog/how-to-find-opening-weaknesses) — a practical guide to identifying and fixing repeated opening mistakes.
+- [Chess opening traps every club player falls for](/blog/chess-opening-traps) — the most common traps at club level and how to sidestep them.
 
 ---
 
