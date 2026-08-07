@@ -109,7 +109,9 @@ A smarter approach: rank your openings by how often you actually reach them. Use
 
 This alone will shift your study time from low-return memorization to high-return pattern recognition.
 
-## Why Memorization Fails So Fast
+## Why Memorization Fails
+
+Before diving in, map your actual repertoire with [My Opening Tree](/blog/my-opening-tree-chess-repertoire/) — it shows exactly which lines you play most and where your win rate collapses. So Fast
 
 Rote memorization breaks down because:
 

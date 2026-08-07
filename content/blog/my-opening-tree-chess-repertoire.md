@@ -1,7 +1,7 @@
 ---
 title: "My Opening Tree: Map Every Opening You've Ever Played"
 description: "FireChess scans your Lichess or Chess.com games and builds a live opening tree showing exactly where you win, lose, and go wrong in your repertoire."
-date: "2026-03-13"
+date: "2026-08-08"
 author: "FireChess Team"
 tags: ["openings", "improvement", "feature"]
 ---
@@ -98,7 +98,7 @@ Every chess player has a repertoire — a set of openings they play over and ove
 
 When you enter your Lichess or Chess.com username, FireChess fetches your last 100–500 games (your choice) and builds a branching tree of every opening you've played. Each node in the tree is a position — a specific move sequence — and each node shows you three numbers: wins, draws, losses.
 
-The tree is color-coded. Green nodes are lines where you're performing well. Red nodes are lines where you're bleeding points. The deeper you go into the tree, the more specific the feedback gets.
+The tree is color-coded. Green nodes are lines where you're performing well. Red nodes are lines where you're bleeding points — similar to the [move-by-move analysis](/analyze) you'd get from a full game scan. The deeper you go into the tree, the more specific the feedback gets.
 
 Instead of knowing vaguely that "I'm not great against the French," you can see that your win rate against the French Advance Variation specifically is 29% across 24 games, while the French Tarrasch is fine. That's actionable. You know exactly which line to study.
 
@@ -106,7 +106,7 @@ Instead of knowing vaguely that "I'm not great against the French," you can see 
 
 Most opening advice is generic. "Study the Sicilian." "Learn your pawn structures." "Know the Italian Game."
 
-None of that tells you *which* Sicilian variation is burning your rating, or whether the Italian is your strongest line or your worst. Generic advice leads to generic preparation — and generic preparation doesn't fix specific weaknesses.
+None of that tells you *which* Sicilian variation is burning your rating, or whether the Italian is your strongest line or your worst. For a deeper look at targeted opening study, see [how to study chess openings without memorizing](/blog/how-to-study-chess-openings-without-memorizing/). Generic advice leads to generic preparation — and generic preparation doesn't fix specific weaknesses.
 
 My Opening Tree is the opposite of generic. It's built entirely from *your* game history. The tree it generates won't look like anyone else's, because no two players have the same opening habits.
 
@@ -116,7 +116,7 @@ The tree starts at the initial position and branches at every move. When you pla
 
 **Node size** reflects how many of your games passed through that position. A thick, prominent node means that line comes up often. A thin node means it's rare — you probably don't need to worry about it.
 
-**Win rate percentage** is calculated from your perspective: wins divided by decisive games. A 50% node is neutral. Above 55% is a strength. Below 45% is a weakness worth addressing. Below 35% is a leak that's actively costing you rating points.
+**Win rate percentage** is calculated from your perspective: wins divided by decisive games. A 50% node is neutral. Above 55% is a strength. Below 45% is a weakness worth addressing. Below 35% is a leak that's actively costing you rating points. Combine the tree's win-rate data with your [average centipawn loss](/blog/what-is-centipawn-loss/) for a complete picture of where you're losing quality.
 
 **Depth control** lets you set how many moves deep the tree scans — from a shallow 8-ply pass that shows your opening tendencies, all the way to 30 plies that maps the transition into the early middlegame.
 
@@ -133,7 +133,7 @@ Here's the fastest way to use it:
 3. Expand the tree two or three levels deeper than you normally think about
 4. Sort by win rate, lowest first
 
-The red nodes at the bottom of that sort are your leaks. Pick the one with the most games — that's the line costing you the most rating over time.
+The red nodes at the bottom of that sort are your [opening weaknesses](/blog/how-to-find-opening-weaknesses/). Pick the one with the most games — that's the line costing you the most rating over time.
 
 Then click the node. You'll see the exact position you're repeatedly struggling with, and you can open that FEN in FireChess's full analysis suite: Stockfish evaluation, best move suggestions, and the opening explorer showing what the theory recommends.
 
@@ -143,13 +143,13 @@ A mistake many players make is treating their chess as one unified thing. In rea
 
 My Opening Tree lets you filter by color. You might find that you're a sharp, aggressive e4 player as White with a 65% win rate, but as Black against d4 you're passive and struggling. Or the opposite. The filter surfaces exactly this kind of asymmetry.
 
-Most improvement plans ignore this distinction. Studying your weaknesses as White and your weaknesses as Black requires different material.
+Most improvement plans ignore this distinction. Studying your weaknesses as White and your weaknesses as Black requires different material — browse the [openings database](/openings/) to find theory for both sides of your repertoire.
 
 ## Explore the Lines You Never Knew You Had
 
 One of the surprises players report is discovering lines they didn't realize they were playing. You thought you only played the Ruy Lopez as White, but the tree shows you've entered the Italian Game 40 times without noticing. You thought you always responded to 1.d4 with the King's Indian, but there are 15 games where you played the Nimzo — and those 15 games have a 73% win rate.
 
-The tree reveals habits you've never articulated. Some of those habits are good. Some need to go.
+The tree reveals habits you've never articulated. Some of those habits are good. Some need to go. Understanding [opening principles](/blog/chess-opening-principles/) helps you evaluate which discovered lines are worth keeping.
 
 ## Navigating Transpositions Between Openings
 
@@ -260,13 +260,9 @@ For a systematic approach to fixing the weak lines this chart reveals, read our 
 
 ## A Concrete Example: The Italian Game
 
-Let's walk through a real position. Suppose you've reached this Italian Game after 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.c3 Nf6 5.d3 d6 6.0-0 0-0 7.Re1:
+Let's walk through a real position. Suppose you've reached this [Italian Game](/openings/italian-game) after 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.c3 Nf6 5.d3 d6 6.0-0 0-0 7.Re1:
 
 <chess-position fen="r1bq1rk1/ppp2ppp/2np1n2/2b1p3/2B1P3/2PP1N2/PP3PPP/RNBQR1K1 w - - 0 8" orientation="white" caption="Italian Game — the position your repertoire aims for. After 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.c3 Nf6 5.d3 d6 6.O-O O-O 7.Re1, White has a solid setup with clear plans: the d3-d4 break, Bc1-g5 pin, or Qe2 and Rad1 buildup. This is what a well-prepared repertoire looks like — a position you've studied, you understand, and you consistently score well from." arrows="c4b3:green,c4f7:red" badge="inaccuracy"></chess-position>
-
-```
-r1bq1rk1/ppp2ppp/2np1n2/2b1p3/2B1P3/2PP1N2/PP3PPP/RNBQR1K1 w - - 0 8
-```
 
 This is move 8 from White's perspective. Both sides have castled, the center is semi-closed, and White needs a concrete plan. In My Opening Tree, this position would appear as a green, yellow, or red node depending on your win rate from here.
 
@@ -284,9 +280,7 @@ The tree doesn't just tell you the position — it tells you whether you handle 
 
 To see how the tree flags a weakness, consider this position from the French Advance variation (mentioned earlier as a 29% win rate "leak"):
 
-```
-r1bqkb1r/pp1pnppp/2n1p3/2pPP3/8/N2P1N2/PP4PP/R1BQKB1R w KQkq - 0 6
-```
+<chess-position fen="r1bqkb1r/pp1pnppp/2n1p3/2pPP3/8/N2P1N2/PP4PP/R1BQKB1R w KQkq - 0 6" orientation="white" caption="French Advance after 1.e4 e6 2.d4 d5 3.e5 c5 4.c3 Nc6 5.Nf3 Nge7 6.Na3 — a position where your opening tree might show a 29% win rate. White has space on the kingside, but the key battle revolves around the d4 pawn and f6 square. If your tree shows red here, you need to study the typical pawn breaks and knight maneuvers."></chess-position>
 
 Here, White has played the Advance French: 1.e4 e6 2.d4 d5 3.e5 c5 4.c3 Nc6 5.Nf3 Nge7 6.Na3. The position is closed, White has space on the kingside, and the key battle will revolve around the d4 pawn and the f6 square. A 29% win rate here screams that you're mishandling this structure — likely playing too passively when aggressive breaks like b4 or the Ng5-e2-f4 maneuver are needed.
 
@@ -294,23 +288,23 @@ Compare this to the Italian position above. Both are White's turn, both are move
 
 ## Frequently Asked Questions
 
-**Q: How many games do I need for the tree to be useful?**
+### Q: How many games do I need for the tree to be useful?
 
-A: At least 50 games, and ideally 100 or more. With fewer than 50, the individual node samples become too small to draw reliable conclusions — a 75% win rate over 4 games doesn't tell you much about your true strength in that line. With 100+ games, most major branches will have 5–15 games each, which is enough to spot real trends. You can load up to 500 games from either Lichess or Chess.com.
+A: At least 50 games, and ideally 100 or more. With fewer than 50, the individual node samples become too small to draw reliable conclusions — a 75% win rate over 4 games doesn't tell you much about your true strength in that line. With 100+ games, most major branches will have 5–15 games each, which is enough to spot real trends. You can load up to 500 games from either Lichess or Chess.com. For single-game deep dives, use the [analysis tool](/analyze) at any time.
 
-**Q: Does the tree include correspondence games or engine-assisted games?**
+### Q: Does the tree include correspondence games or engine-assisted games?
 
 A: By default, no. My Opening Tree automatically filters out correspondence games (they're too long to reflect real opening skill) and games where either player's accuracy exceeds 95% (likely engine-assisted). Both filters can be disabled in the settings if you want the full picture, but the default view is clean human play — OTB, rapid, and classical time controls only.
 
-**Q: What if I changed my repertoire recently? Won't old games bias the data?**
+### Q: What if I changed my repertoire recently? Won't old games bias the data?
 
 A: You can set a date range to limit the analysis to recent games only — the last 3 months, last year, or any custom window. This is invaluable after a conscious switch, like moving from the Sicilian to the Caro-Kann. Your old games aren't deleted, they're just filtered. Switch the date range back to include them whenever you want to compare your old repertoire against your new one.
 
-**Q: How are draws counted in the win-rate calculation?**
+### Q: How are draws counted in the win-rate calculation?
 
 A: Draws are excluded from the win-rate percentage. The number shown is *wins ÷ (wins + losses)* — decisive games only. This gives a clearer picture of your scoring potential in each line. A 50% win rate with no draws means you're splitting points exactly. A 50% win rate with 40% draws suggests you're reaching safe positions but failing to convert. Both are useful signals, but they tell different stories — the tree lets you see the raw numbers (wins, draws, losses) underneath the percentage.
 
-**Q: Can I share my opening tree with my coach or a training partner?**
+### Q: Can I share my opening tree with my coach or a training partner?
 
 A: Yes. Every tree view generates a shareable link. You can send the full tree or a specific branch, and the recipient doesn't need a FireChess account to see it. This makes it straightforward to review your repertoire with a coach during a lesson — they see exactly where you're struggling without combing through dozens of PGN files. It's also useful for group training: share your tree with a study group and compare repertoires to find complementary lines to learn together.
 

@@ -284,7 +284,7 @@ This technique is far more effective than passively reading engine lines because
 
 ### Compare Multiple Games from the Same Opening
 
-If you play the Italian Game as White in 30% of your games, scan all of them and compare the opening phase. You'll likely find that you repeat the same inaccuracy in every game — a move that feels natural but is slightly inaccurate.
+If you play the Italian Game as White in 30% of your games, scan all of them and compare the opening phase. [My Opening Tree](/blog/my-opening-tree-chess-repertoire/) automates this — it maps every line you've played and color-codes by win rate. You'll likely find that you repeat the same inaccuracy in every game — a move that feels natural but is slightly inaccurate.
 
 For example, in a typical Italian middlegame where Black has traded on e6:
 

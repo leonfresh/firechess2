@@ -444,7 +444,7 @@ A: Two signals: (1) In your next 5-10 games reaching that position, you play the
 
 ### Q: What is average centipawn loss and how does it relate to opening leaks?
 
-Average centipawn loss (ACPL) measures how much evaluation you give away per move compared to the engine's best choice. Opening leaks are one of the biggest contributors to high ACPL — a single repeated inaccuracy on move 8 can add 30-50 centipawns to your average across dozens of games. If your [ACPL is above your rating's expected range](/blog/average-centipawn-loss-by-rating), your opening repertoire is the first place to check. Upload your games to [FireChess's scanner](/analyze) and look at the "Opening Leaks" section to see exactly which positions are dragging down your accuracy score.
+Average centipawn loss (ACPL) measures how much evaluation you give away per move compared to the engine's best choice. Opening leaks are one of the biggest contributors to high ACPL — a single repeated inaccuracy on move 8 can add 30-50 centipawns to your average across dozens of games. If your [ACPL is above your rating's expected range](/blog/average-centipawn-loss-by-rating), your opening repertoire is the first place to check. You can also use [My Opening Tree](/blog/my-opening-tree-chess-repertoire/) to visualize your entire repertoire and spot the red nodes at a glance. Upload your games to [FireChess's scanner](/analyze) and look at the "Opening Leaks" section to see exactly which positions are dragging down your accuracy score.
 
 ### Q: Can I guess my Elo from my opening leak patterns?
 
