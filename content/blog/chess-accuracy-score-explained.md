@@ -398,7 +398,7 @@ When you analyze your games, look at accuracy *by phase*, not just the overall n
 
 3. **Compare similar time controls.** A 5-minute blitz game at 80% vs. a 15-minute rapid game at 87% is normal. If your rapid accuracy is close to your blitz accuracy, you're not using the extra time effectively. For more on how centipawn loss scales with time control, see [average centipawn loss by time control](/blog/what-is-centipawn-loss#acpl-by-time-control).
 
-4. **Run a game report.** FireChess scans your last N games from Lichess or Chess.com and groups your accuracy drops into patterns — repeated opening leaks, typical tactical blindspots, endgame technique failures — so you can see trends instead of individual fluctuations.
+4. **Run a game report.** FireChess scans your last N games from Lichess or Chess.com and groups your accuracy drops into patterns — repeated [opening leak](/blog/how-to-find-opening-weaknesses)s, typical tactical blindspots, endgame technique failures — so you can see trends instead of individual fluctuations.
 
 5. **Don't chase 99%.** A 99% accurate game is usually a short game with forced moves. Aim for consistency in the 85–92% range over many games, and use centipawn loss to measure the *magnitude* of your mistakes, not just their count.
 

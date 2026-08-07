@@ -242,7 +242,7 @@ For most players rated under 1600, eliminating blunders alone drops ACPL by 15-2
 
 ### Learn Your Openings Deeper (Not Wider)
 
-The opening leaks section in FireChess analysis is a goldmine. If you play 1.e4 and your ACPL in the first 10 moves is 60+, you're losing the game before it starts. But the fix isn't to memorize more theory — it's to understand *why* the engine prefers certain moves in the positions you actually reach.
+The [opening leak](/blog/how-to-find-opening-weaknesses)s section in FireChess analysis is a goldmine. If you play 1.e4 and your ACPL in the first 10 moves is 60+, you're losing the game before it starts. But the fix isn't to memorize more theory — it's to understand *why* the engine prefers certain moves in the positions you actually reach.
 
 Study the specific lines where you make inaccuracies. If you consistently play the wrong move on move 8 of the Najdorf, learn *that* position's ideas, not the entire Najdorf tree. Depth in your main lines, not breadth across many openings, is what drops opening ACPL.
 
