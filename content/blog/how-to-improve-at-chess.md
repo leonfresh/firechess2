@@ -312,7 +312,7 @@ The most effective analysis workflow is: play a game, review it yourself first w
 
 ## The Five Worst Time-Wasters in Chess Improvement
 
-1. **Blitz and bullet as "study."** Playing 5-second blitz doesn't build calculation. It builds gut reactions. Fine for fun, terrible for improvement.
+1. If you recognize yourself in these patterns, our guide to [chess improvement mistakes](/blog/chess-improvement-mistakes-club-players) covers the7 most common habits that keep club players under 1600. **Blitz and bullet as "study."** Playing 5-second blitz doesn't build calculation. It builds gut reactions. Fine for fun, terrible for improvement.
 
 2. **Opening memorization without understanding.** 20-move rote sequences collapse the moment your opponent deviates. Learn positions, not sequences.
 

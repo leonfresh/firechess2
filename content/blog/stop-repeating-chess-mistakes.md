@@ -19,7 +19,7 @@ This guide covers the five most common mistake patterns club players repeat, sho
 
 ## Why Your Brain Repeats Chess Mistakes
 
-Before diving into specific patterns, understand the mechanism. Chess mistakes aren't random. They fall into predictable categories driven by how your brain processes positions under time pressure.
+Before diving into specific patterns, understand the mechanism. For a broader view, see our breakdown of [chess improvement mistakes](/blog/chess-improvement-mistakes-club-players) that keep club players under 1600. Chess mistakes aren't random. They fall into predictable categories driven by how your brain processes positions under time pressure.
 
 When you play a game, your brain does two things simultaneously:
 

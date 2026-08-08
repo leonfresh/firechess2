@@ -93,6 +93,8 @@ Plateaus aren't a bug in your improvement — they're a signal that you need to 
 
 ### You're Practicing the Wrong Things
 
+Most rating plateaus come from fixable habits, not talent ceilings. Our guide to [chess improvement mistakes](/blog/chess-improvement-mistakes-club-players) covers the seven most common ones that keep club players under 1600.
+
 The most common reason for a plateau is studying things that don't address your actual weaknesses. A 1300-rated player spending hours on opening theory is like a beginning driver studying engine mechanics — it's real knowledge, but it's not what's holding them back at that stage.
 
 At 1300, you're losing games because of blunders and missed 2-move tactics, not because you played the Najdorf instead of the Dragon. The opening theory might make you feel productive, but it won't move your rating. In a scan of over 14,000 club-level games on FireChess, players rated 1200–1400 who focused on opening study showed no measurable rating improvement over 3 months, while those who focused on tactical puzzle solving gained an average of 87 points in the same period.
