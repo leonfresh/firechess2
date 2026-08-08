@@ -137,7 +137,7 @@ Once you know your weakness, dedicate 70% of your study time to it for 3-4 weeks
 - Play 20 games with your chosen openings and review the opening phase of each
 
 **Plateaued by endgames:**
-- Study the 5 fundamental endgame positions (Lucena, Philidor, King + Pawn, opposition, Tarrasch's rule)
+- Study the 5 fundamental endgame positions (Lucena, Philidor, King + Pawn, opposition, Tarrasch's rule) — our [rook endgames guide](/blog/rook-endgames-guide-club-players) covers the first three in depth
 - Play out your endgames instead of resigning or agreeing to draws
 - Review every endgame you play to see where you went wrong
 

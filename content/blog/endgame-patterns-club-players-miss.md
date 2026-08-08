@@ -292,7 +292,7 @@ Don't try to learn all endgame theory at once. Focus on these five patterns:
 
 1. **Lucena position** — practice the bridge technique 10 times
 2. **King activity** — play through 5 king and pawn endings focusing on king centralization
-3. **Rook placement** — analyze your own rook endings for misplaced rooks
+3. **Rook placement** — analyze your own rook endings for misplaced rooks. For a deep dive on rook-specific technique, see our [rook endgames guide](/blog/rook-endgames-guide-club-players)
 4. **Wrong bishop** — simply memorize the rule and check for it before trading
 5. **Passed pawns** — practice the pawn majority technique
 
@@ -308,7 +308,7 @@ Sounds obvious, but many players resign or agree to draws too early. Play out yo
 
 ## The Bottom Line
 
-Endgame knowledge has the highest improvement-per-hour-studied of any chess area. These five patterns appear in thousands of games. Learn them, look for them in your own games, and you'll convert significantly more wins from positions you used to draw or lose.
+Endgame knowledge has the highest improvement-per-hour-studied of any chess area. These five patterns appear in thousands of games, and rook endgames alone account for roughly half of all endgame positions. If rook endings are your biggest weakness, our [complete rook endgames guide](/blog/rook-endgames-guide-club-players) covers the Lucena, Philidor, and Tarrasch rule in depth. Learn them, look for them in your own games, and you'll convert significantly more wins from positions you used to draw or lose.
 
 ## Frequently Asked Questions
 

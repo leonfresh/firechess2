@@ -324,6 +324,6 @@ Start by learning the six concepts in this guide, then practice them against an 
 
 ## Conclusion
 
-King and pawn endgames aren't glamorous. Nobody posts "look at my brilliant opposition technique" on social media. But they're where rating points are won and lost. The six concepts in this guide — opposition, key squares, the rule of the square, outside passed pawns, breakthroughs, and zugzwang — cover the vast majority of king and pawn endgame positions you'll encounter.
+King and pawn endgames aren't glamorous. They're also not the whole story. Once you've mastered the patterns below, your next priority is rook endgames — they account for roughly half of all endgame positions. See our [rook endgames guide for club players](/blog/rook-endgames-guide-club-players) for the Lucena, Philidor, and Tarrasch rule. But first, king and pawn endgames. Nobody posts "look at my brilliant opposition technique" on social media. But they're where rating points are won and lost. The six concepts in this guide — opposition, key squares, the rule of the square, outside passed pawns, breakthroughs, and zugzwang — cover the vast majority of king and pawn endgame positions you'll encounter.
 
 Here's your action plan: [scan your last 20 games on FireChess](/analyze), filter for endgame positions, and check how many of these patterns appeared. Then study the ones you got wrong. That's the fastest way to turn draws into wins and losses into draws. Your [average centipawn loss](/blog/what-is-centipawn-loss) in the endgame will drop, and your rating will follow.
