@@ -319,7 +319,7 @@ Upload your PGN to [FireChess's free analysis tool at /analyze](/analyze). After
 
 ## Conclusion: Fix the Right Mistakes for Your Rating
 
-The biggest trap in chess improvement is working on the wrong thing. A 1100 player studying advanced endgame technique is wasting time. A 1500 player doing basic tactics puzzles is going through the motions. The data from 14,000+ FireChess scans shows clearly that each rating band has a signature weakness — and attacking that specific weakness is the fastest path to the next level.
+The biggest trap in chess improvement is working on the wrong thing. A 1100 player studying advanced endgame technique is wasting time. A 1500 player doing basic tactics puzzles is going through the motions. The data from 14,000+ FireChess scans shows clearly that each rating band has a signature weakness — and attacking that specific weakness is the fastest path to the next level. Our [skill levels guide](/blog/chess-skill-levels-explained) shows exactly what separates players at each rating band.
 
 Find your rating band above. Look at the positions. Check your own badge breakdown on FireChess. If the pattern matches, you know exactly what to work on. Fix that one thing — not everything, just that one thing — and your rating will move.
 

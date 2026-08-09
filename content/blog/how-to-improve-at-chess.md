@@ -338,7 +338,7 @@ That's 3–4 hours per week. Done consistently, you'll see meaningful improvemen
 
 ## The Rating Plateau Is Solvable
 
-Most plateaus have the same cause: **you're doing the same thing and expecting different results.**
+Most plateaus have the same cause: **you're doing the same thing and expecting different results. Our [skill levels guide](/blog/chess-skill-levels-explained) shows exactly what separates players at each rating band.**
 
 Breaking through requires diagnosis first. What's actually costing you points? Is it tactics you're missing? Openings you don't understand? Endgames you can't convert? Time management?
 

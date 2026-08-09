@@ -379,7 +379,7 @@ No. While you're unlikely to become a titled player, reaching 1400-1800 is absol
 
 ### Q: Why do I keep plateauing at the same rating?
 
-Plateaus usually happen because you've exhausted one type of learning and haven't switched to the next. A player stuck at 1200 needs more tactical patterns. A player stuck at 1400 needs positional understanding. A player stuck at 1600 needs endgame technique. [Analyze your games on FireChess](/analyze) and look at where you lose the most centipawn loss — that tells you exactly what to study next. Also check [our guide on breaking rating plateaus](/blog/breaking-chess-rating-plateau).
+Plateaus usually happen because you've exhausted one type of learning and haven't switched to the next. A player stuck at 1200 needs more tactical patterns. A player stuck at 1400 needs positional understanding. A player stuck at 1600 needs endgame technique. [Analyze your games on FireChess](/analyze) and look at where you lose the most centipawn loss — that tells you exactly what to study next. Also check [our guide on breaking rating plateaus](/blog/breaking-chess-rating-plateau). Our [skill levels guide](/blog/chess-skill-levels-explained) shows exactly what separates players at each rating band.
 
 ### Q: How many puzzles should I do per day to improve?
 

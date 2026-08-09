@@ -389,7 +389,7 @@ Quality matters more than quantity. For most players, 2-3 serious rapid games (1
 
 ### Q: What is average centipawn loss and how does it relate to rating plateaus?
 
-Average centipawn loss (ACPL) measures how many pawns worth of value you lose per move compared to the engine's best move. A 1200-rated player typically averages 80-120 ACPL, while a 1600 player averages 40-60 ACPL. When your ACPL stops decreasing, you've hit a plateau — your decision-making quality has flatlined. The fix isn't "play more games" but identifying which game phase (opening, middlegame, or endgame) contributes the most centipawn loss and targeting that phase specifically. Our [complete ACPL guide](/blog/what-is-centipawn-loss) breaks down the numbers by rating level.
+Average centipawn loss (ACPL) measures how many pawns worth of value you lose per move compared to the engine's best move. A 1200-rated player typically averages 80-120 ACPL, while a 1600 player averages 40-60 ACPL. When your ACPL stops decreasing, you've hit a plateau — your decision-making quality has flatlined. The fix isn't "play more games" but identifying which game phase (opening, middlegame, or endgame) contributes the most centipawn loss and targeting that phase specifically. Our [complete ACPL guide](/blog/what-is-centipawn-loss) breaks down the numbers by rating level. Our [skill levels guide](/blog/chess-skill-levels-explained) shows exactly what separates players at each rating band.
 
 ### Q: How do I find my average centipawn loss per game?
 

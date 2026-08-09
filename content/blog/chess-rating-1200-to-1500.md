@@ -173,7 +173,7 @@ The goal is not to improve your calculation — it's to build a mental habit tha
 
 **Symptom:** You outplay your opponent, reach a clearly winning position, and then... you draw or even lose. You've been stuck between 1450 and 1480 for months.
 
-**The root cause:** Poor conversion technique. You relax when you're winning, play too fast, and give your opponent counterplay. This is the most frustrating plateau because you *know* you're better than your rating — but you can't prove it on the scoreboard.
+**The root cause:** Poor conversion technique. You relax when you're winning, play too fast, and give your opponent counterplay. This is the most frustrating plateau because you *know* you're better than your rating — but you can't prove it on the scoreboard. Our [skill levels guide](/blog/chess-skill-levels-explained) shows exactly what separates players at each rating band.
 
 **How to break through:**
 
