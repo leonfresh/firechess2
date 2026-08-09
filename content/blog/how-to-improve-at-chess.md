@@ -308,7 +308,7 @@ Your average centipawn loss is directly correlated with your rating. Players rat
 
 ### Q: How do I use game analysis to improve my chess rating?
 
-The most effective analysis workflow is: play a game, review it yourself first without an engine, then compare your assessment to the engine's evaluation. Focus on the moves where your evaluation differed most from the engine's — those are your blind spots. [FireChess's analysis tool](/analyze) automates this by flagging your biggest centipawn-loss moves and grouping them by opening, middlegame, and endgame phase, so you know exactly which phase to study next.
+The most effective analysis workflow is: play a game, [review it yourself first without an engine](/blog/how-to-analyze-chess-games-guide), then compare your assessment to the engine's evaluation. Focus on the moves where your evaluation differed most from the engine's — those are your blind spots. [FireChess's analysis tool](/analyze) automates this by flagging your biggest centipawn-loss moves and grouping them by opening, middlegame, and endgame phase, so you know exactly which phase to study next.
 
 ## The Five Worst Time-Wasters in Chess Improvement
 

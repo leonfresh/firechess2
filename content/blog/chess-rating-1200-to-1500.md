@@ -153,7 +153,7 @@ The goal is not to improve your calculation — it's to build a mental habit tha
 
 1. After every opponent move, ask: **"If I had a tactical opportunity right now, where would it be?"** This single question primes your brain to see patterns.
 2. Practice "mixed mode" puzzles — sets where you don't know if it's mate, a fork, or a quiet positional move. This mimics real-game conditions.
-3. Analyze your losses with a focus on *missed* tactics, not blunders. Our [game analysis tool](/roast) marks every missed fork and pin automatically.
+3. Analyze your losses with a focus on *missed* tactics, not blunders. Our [[game analysis](/blog/how-to-analyze-chess-games-guide) tool](/roast) marks every missed fork and pin automatically.
 4. Start studying basic endgames — this is where the 1300–1400 ceiling most commonly appears (see the opposition trap above).
 
 ### The 1400–1450 Plateau: "I Don't Know What to Do"

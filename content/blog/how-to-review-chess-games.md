@@ -33,7 +33,7 @@ The fix is a structured routine. Here's the one I've seen work for thousands of 
 
 ## The 10-Minute Post-Game Review Routine
 
-Every game review follows the same five steps. Do them in order — don't skip ahead.
+Every [game review](/blog/how-to-analyze-chess-games-guide) follows the same five steps. Do them in order — don't skip ahead.
 
 ### Step 1: Replay Without the Engine (2 minutes)
 

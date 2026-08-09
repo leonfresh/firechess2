@@ -1,6 +1,6 @@
 ---
 title: "Chess Improvement Mistakes: 7 Things Keeping You Under 1600"
-description: "The7 most common chess improvement mistakes club players make. Learn what's actually holding your rating back and how to fix it with real game analysis."
+description: "The7 most common chess improvement mistakes club players make. Learn what's actually holding your rating back and how to fix it with real [game analysis](/blog/how-to-analyze-chess-games-guide)."
 date: "2026-08-09"
 author: "FireChess Team"
 tags: ["chess improvement", "club players", "rating", "tactics", "study habits"]

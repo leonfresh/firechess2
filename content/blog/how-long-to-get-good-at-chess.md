@@ -152,7 +152,7 @@ Blitz is fun but terrible for improvement. You develop habits (moving quickly, n
 
 **The fix:** Limit blitz to 30% of your chess time. Spend the rest on rapid games (15+10 or longer), puzzles, and game analysis.
 
-### Trap 2: Never Analyzing Your Games
+### Trap 2: Never [Analyzing Your Games](/blog/how-to-analyze-chess-games-guide)
 
 Playing a game and not analyzing it is like taking a test and never checking your answers. You repeat the same mistakes because you don't know what they are. FireChess scans consistently show that players who analyze even 50% of their games improve 2-3x faster than those who don't.
 
