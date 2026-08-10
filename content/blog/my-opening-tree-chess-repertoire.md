@@ -298,7 +298,7 @@ A: By default, no. My Opening Tree automatically filters out correspondence game
 
 ### Q: What if I changed my repertoire recently? Won't old games bias the data?
 
-A: You can set a date range to limit the analysis to recent games only — the last 3 months, last year, or any custom window. This is invaluable after a conscious switch, like moving from the Sicilian to the Caro-Kann. Your old games aren't deleted, they're just filtered. Switch the date range back to include them whenever you want to compare your old repertoire against your new one.
+A: You can set a date range to limit the analysis to recent games only — the last 3 months, last year, or any custom window. This is invaluable after a conscious switch, like moving from the Sicilian to the [Caro-Kann Defense guide](/blog/caro-kann-defense-guide). Your old games aren't deleted, they're just filtered. Switch the date range back to include them whenever you want to compare your old repertoire against your new one.
 
 ### Q: How are draws counted in the win-rate calculation?
 

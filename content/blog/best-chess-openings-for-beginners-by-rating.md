@@ -43,7 +43,7 @@ The Italian Game is the perfect beginner opening for three reasons:
   analysis="true"
  arrows="f8c5:green,c6d4:orange" badge="best"></chess-position>
 
-### As Black: The Caro-Kann Defence (1.e4 c6 2.d4 d5)
+### As Black: The [Caro-Kann Defense guide](/blog/caro-kann-defense-guide) Defence (1.e4 c6 2.d4 d5)
 
 Many beginners play 1...e5 against 1.e4, which is fine — but it leads to Italian and Ruy Lopez positions that require more opening knowledge. The Caro-Kann is a better choice because:
 

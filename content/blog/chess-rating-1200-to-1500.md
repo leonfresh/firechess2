@@ -62,7 +62,7 @@ The takeaway: whenever you see an enemy knight that can reach an undefended squa
 
 ## Pillar 2: Build a Targeted Opening Repertoire
 
-The 1200–1500 range is not where you need 20 moves of Caro-Kann theory memorized. You need a **survivable opening repertoire** that gets you to a playable middlegame without losing in 15 moves.
+The 1200–1500 range is not where you need 20 moves of [Caro-Kann Defense guide](/blog/caro-kann-defense-guide) theory memorized. You need a **survivable opening repertoire** that gets you to a playable middlegame without losing in 15 moves.
 
 The key principles:
 

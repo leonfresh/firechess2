@@ -22,7 +22,7 @@ Consider this position from the Exchange French:
 
 This FEN shows the position after 1.e4 e6 2.d4 d5 3.exd5 exd5. White has a symmetrical pawn structure but the extra tempo. If you've played this as Black and consistently develop your knight to e7 instead of f6, you're blocking your dark-squared bishop and conceding the center without a fight. An analysis of your last 15 French Defense games might show this exact pattern — 12 of them followed the same flawed plan.
 
-Or take a position from the Caro-Kann Advance:
+Or take a position from the [Caro-Kann Defense guide](/blog/caro-kann-defense-guide) Advance:
 
 <chess-position fen="rnbqkbnr/pp1ppppp/2p5/4P3/3P4/8/PPP2PPP/RNBQKBNR b KQkq - 0 3" caption="Caro-Kann Advance after 1.e4 c6 2.d4 d5 3.e5 — Black to move. The book move is 3...Bf5. Playing 3...c5 instead is a common leak that gives White a comfortable edge." orientation="black"></chess-position>
 

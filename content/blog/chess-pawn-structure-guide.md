@@ -34,7 +34,7 @@ In our analysis of over 14,000 games on [FireChess's /analyze page](/analyze), p
 
 The Isolated Queen's Pawn is the most double-edged pawn structure in chess. One side has a pawn on d4 (or d5) with no friendly pawns on the c- or e-files to support it. That pawn is "isolated" — it can never be defended by another pawn.
 
-<chess-position fen="rnbqk2r/pp2bppp/5n2/3p4/3P4/2N2N2/PP3PPP/R1BQKB1R w KQkq - 0 8" caption="The classic IQP position after the Panov-Botvinnik variation of the Caro-Kann. White has a pawn on d4 with no c- or e-pawn to support it. The d4 pawn is both a strength (space, central control) and a weakness (can be blockaded)." orientation="white"></chess-position>
+<chess-position fen="rnbqk2r/pp2bppp/5n2/3p4/3P4/2N2N2/PP3PPP/R1BQKB1R w KQkq - 0 8" caption="The classic IQP position after the Panov-Botvinnik variation of the [Caro-Kann Defense guide](/blog/caro-kann-defense-guide). White has a pawn on d4 with no c- or e-pawn to support it. The d4 pawn is both a strength (space, central control) and a weakness (can be blockaded)." orientation="white"></chess-position>
 
 ### What makes the IQP special
 

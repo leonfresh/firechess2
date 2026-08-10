@@ -117,7 +117,7 @@ The most common cause. You know the opening moves — maybe even 8-10 moves of t
 
 Knowing which plan fits which pawn structure is more valuable than memorizing 15 moves of theory.
 
-The key insight is that most middlegame positions arising from a given opening share common themes. In the Sicilian Dragon, you're looking for ...Rc8, ...Ne5, and a queenside pawn storm. In the Caro-Kann, you're aiming for a solid structure with ...c5 or ...e5 breaks. These plans don't change based on your opponent's exact move order — they're baked into the pawn structure itself. If you understand the structure, the plans follow naturally.
+The key insight is that most middlegame positions arising from a given opening share common themes. In the Sicilian Dragon, you're looking for ...Rc8, ...Ne5, and a queenside pawn storm. In the [Caro-Kann Defense guide](/blog/caro-kann-defense-guide), you're aiming for a solid structure with ...c5 or ...e5 breaks. These plans don't change based on your opponent's exact move order — they're baked into the pawn structure itself. If you understand the structure, the plans follow naturally.
 
 ### Q: You Have a Specific Blind Spot
 

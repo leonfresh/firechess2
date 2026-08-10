@@ -101,7 +101,7 @@ The three layers work together. Layer 1 gets you to a recognizable position. Lay
 
 Twenty percent of the lines produce eighty percent of the results.
 
-Most of your opening battles take place in a handful of structures. If you play the Caro-Kann, you will see the Advance Variation, the Exchange Variation, and the Classical far more often than you will see the Fantasy Variation or the Two Knights.
+Most of your opening battles take place in a handful of structures. If you play the [Caro-Kann Defense guide](/blog/caro-kann-defense-guide), you will see the Advance Variation, the Exchange Variation, and the Classical far more often than you will see the Fantasy Variation or the Two Knights.
 
 Yet many players spend the same amount of time on every line.
 

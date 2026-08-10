@@ -46,7 +46,7 @@ The classic claim is "White is better because it moves first." The data says it'
   <text x="553" y="88" text-anchor="middle" fill="#f8fafc" font-size="11" font-weight="600" font-family="system-ui,sans-serif">51</text>
   <rect x="583.5" y="65.5" width="55" height="37" rx="4" fill="#0a8d67"/>
   <text x="611" y="88" text-anchor="middle" fill="#f8fafc" font-size="11" font-weight="600" font-family="system-ui,sans-serif">51.8</text>
-  <text x="20" y="128" fill="#cbd5e1" font-size="12" font-family="system-ui,sans-serif">Caro-Kann</text>
+  <text x="20" y="128" fill="#cbd5e1" font-size="12" font-family="system-ui,sans-serif">[Caro-Kann Defense guide](/blog/caro-kann-defense-guide)</text>
   <rect x="177.5" y="105.5" width="55" height="37" rx="4" fill="#bc1e48"/>
   <text x="205" y="128" text-anchor="middle" fill="#f8fafc" font-size="11" font-weight="600" font-family="system-ui,sans-serif">43.1</text>
   <rect x="235.5" y="105.5" width="55" height="37" rx="4" fill="#693350"/>
