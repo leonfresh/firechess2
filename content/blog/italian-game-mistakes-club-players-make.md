@@ -71,7 +71,7 @@ Your bishop on c4 is only impressive if the rest of your pieces can support it.
 
 That is why quiet [setup moves](/blog/chess-opening-principles) like `c3`, `d3`, `Re1`, or timely `d4` matter so much. These moves do not look flashy, but they are the reason White keeps an edge in the Italian at higher levels.
 
-When Black challenges the center with ...d5 — a common equalising attempt — White needs to know how to react. If you capture on d5, Black recaptures with the knight or queen and develops with tempo. If you ignore it, Black may complete development comfortably. The right answer is usually to maintain tension and outplay Black in the resulting structure rather than forcing a resolution immediately.
+When Black challenges the center with ...d5 — a common equalising attempt — White needs to know how to react. If you capture on d5, Black recaptures with the knight or queen and develops with tempo. If you ignore it, Black may complete development comfortably. The right answer is usually to maintain tension and outplay Black in the resulting structure rather than forcing a resolution immediately. Our [pawn tension guide](/blog/pawn-tension-chess-guide) covers this decision framework in depth.
 
 ---
 

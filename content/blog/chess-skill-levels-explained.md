@@ -84,7 +84,7 @@ Here's a position that illustrates a typical 1200 mistake. White has just played
 
 This is a standard Queen's Gambit Declined position where the c4/d5 pawn tension is the central strategic question. At 1200, most players capture immediately with cxd5, simplifying the position and releasing pressure. It "feels" safe — you remove the tension and know where you stand. But that instinct is exactly what's holding you back.
 
-When White maintains the tension with Rc1 or Bd3, Black has to make an uncomfortable decision. Do they capture ...dxc4, giving White a central majority? Do they push ...dxc4 and accept an isolated pawn? Or do they maintain the tension and risk White building up pressure? By capturing immediately, you let Black off the hook.
+When White maintains the tension with Rc1 or Bd3, Black has to make an uncomfortable decision. Do they capture ...dxc4, giving White a central majority? Do they push ...dxc4 and accept an isolated pawn? Or do they maintain the tension and risk White building up pressure? By capturing immediately, you let Black off the hook. This pattern repeats across dozens of openings — see our [complete pawn tension guide](/blog/pawn-tension-chess-guide) for when to hold and when to release.
 
 **The 1200 to 1500 jump** is mostly about cleaning up tactical oversights. Study basic tactical patterns (forks, pins, skewers, discovered attacks), practice [calculating 2-3 moves ahead](/blog/chess-calculation-training-calculate-variations), and — most importantly — develop the habit of asking "what does my opponent's move threaten?" before every turn. [Scanning your games on FireChess](/analyze) will show you exactly how many free pieces you're giving away per game. Most 1200s are shocked when they see the number.
 

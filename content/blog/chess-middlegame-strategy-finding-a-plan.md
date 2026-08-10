@@ -102,7 +102,7 @@ Pawns are the skeleton of the chess position. They determine where your pieces s
 
 ### Key questions to ask:
 
-**Where is the pawn tension?** If there are pawns facing each other (like White e4 vs. Black e5, or White d4 vs. Black d5), that tension will likely resolve at some point. The side that captures dictates the structure. Think about whether you want to capture (opening a file) or maintain the tension. Maintaining tension is often the right choice — it keeps your opponent guessing and limits their options. Premature captures often hand the opponent an open file or a better structure.
+**Where is the pawn tension?** If there are pawns facing each other (like White e4 vs. Black e5, or White d4 vs. Black d5), that tension will likely resolve at some point. The side that captures dictates the structure. Think about whether you want to capture (opening a file) or maintain the tension. Maintaining tension is often the right choice — it keeps your opponent guessing and limits their options. Premature captures often hand the opponent an open file or a better structure. For a complete guide on when to capture and when to hold, see our [pawn tension guide](/blog/pawn-tension-chess-guide).
 
 **Do I have a pawn majority on one side?** If you have 3 pawns vs. 2 on the queenside, that's a potential passed pawn. Your plan might be to advance those pawns in the endgame — or immediately. The side with the minority (2 vs. 3) often wants to trade pawns to create a passed pawn for the opponent that becomes weak rather than strong. This is the logic behind the famous "minority attack" in the Carlsbad structure — we'll look at that in detail below.
 
