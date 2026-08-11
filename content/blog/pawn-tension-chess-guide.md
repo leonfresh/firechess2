@@ -93,7 +93,7 @@ Why has neither side captured on c4 or d5? Because both players understand that 
 
 This mutual restraint is the heart of positional chess: both sides understand that the pawn tension gives them more than the capture would.
 
-### When Does QGD Tension Finally Resolve?
+### Q: When Does QGD Tension Finally Resolve?
 
 In the Orthodox QGD, the tension typically breaks in one of three ways:
 

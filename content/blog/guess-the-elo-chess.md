@@ -113,7 +113,7 @@ The [Guess the Elo dungeon](https://firechess.com/dungeon) mode on FireChess is 
 
 ### Q: Look for Blunder Density First
 
-Before analysing deep positional factors, ask: **how many clearly bad moves happened?** Count the outright blunders. A game with 3+ obvious mistakes is almost certainly below 1500. A game with 0 obvious mistakes is likely 1800+. Blunder frequency is the single strongest rating signal.
+Before analysing deep positional factors, ask: **how many clearly bad moves happened?** Count the outright blunders. A game with 3+ obvious mistakes is almost certainly below 1500. A game with 0 obvious mistakes is likely 1800+. Blunder frequency is the single strongest rating signal — see our [blunder patterns by rating](/blog/chess-blunder-patterns-by-rating) guide for the exact CP-loss curve at each level.
 
 ### Q: Check for Plan Coherence
 

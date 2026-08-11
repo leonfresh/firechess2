@@ -243,7 +243,7 @@ Once you see the pattern — maybe you walk into knight forks twice as often as 
 
 ## Blunder Types by Rating Level
 
-The distribution of blunder types changes as you improve. Beginners hang pieces constantly; advanced players make more subtle errors like missing pins or walking into positional traps. The chart below shows how the mix shifts across rating ranges, based on analysis of millions of online games. For a deeper breakdown by rating, see our guide to [chess mistakes by rating level](/blog/chess-mistakes-by-rating).
+The distribution of blunder types changes as you improve. Beginners hang pieces constantly; advanced players make more subtle errors like missing pins or walking into positional traps. The chart below shows how the mix shifts across rating ranges, based on analysis of millions of online games. For a deeper breakdown by rating, see our guide to [chess mistakes by rating level](/blog/chess-mistakes-by-rating). Our [blunder patterns by rating](/blog/chess-blunder-patterns-by-rating) guide shows the specific CP-loss curve and diagnostic framework for each level.
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
 <svg width="680" height="420" viewBox="0 0 680 420" fill="none" xmlns="http://www.w3.org/2000/svg">
