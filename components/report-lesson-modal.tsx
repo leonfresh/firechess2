@@ -8,7 +8,6 @@ import { playSound } from "@/lib/sounds";
 import { earnCoins } from "@/lib/coins";
 import { stockfishClient } from "@/lib/stockfish-client";
 import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
-import { useBoardSize } from "@/lib/use-board-size";
 import type {
   TextSlide,
   InteractSlide,
@@ -41,7 +40,6 @@ function ReportLessonPlayer({
     }
   }, [idx, total]);
 
-  // Keyboard: ArrowRight/Space/Enter → next
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (done) return;
@@ -50,21 +48,22 @@ function ReportLessonPlayer({
         e.preventDefault();
         next();
       }
+      if (e.key === "Escape" && !done) onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [next, done]);
+  }, [next, done, onClose]);
 
   if (done) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-6 p-8 text-center">
-        <span className="text-4xl">✓</span>
-        <h2 className="text-xl font-bold text-white">Pattern learned</h2>
-        <p className="text-sm text-slate-400">{lesson.title}</p>
+      <div className="flex h-full flex-col items-center justify-center gap-5 p-8 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[#14532d] bg-[#0c1a12] text-3xl">✓</div>
+        <h2 className="text-xl font-semibold tracking-tight text-[#e4e4e7]">Pattern learned</h2>
+        <p className="text-sm text-[#8b8b93]">{lesson.title}</p>
         <button
           type="button"
           onClick={onClose}
-          className="rounded-xl border border-white/[0.1] bg-white/[0.05] px-6 py-2.5 text-sm font-semibold text-slate-200 hover:bg-white/[0.1] transition-colors"
+          className="rounded-xl bg-[#111113] px-6 py-2.5 text-sm font-medium text-[#a1a1aa] hover:bg-[#161618] transition-colors"
         >
           Back to report
         </button>
@@ -73,32 +72,41 @@ function ReportLessonPlayer({
   }
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Progress bar */}
-      <div className="flex items-center gap-3 border-b border-white/[0.06] px-4 py-3">
+    <div className="flex h-full flex-col bg-[#0a0a0a]">
+      {/* Top bar — matching learn page */}
+      <div className="flex items-center gap-4 border-b border-[#161618] px-4 py-3">
         <button
           type="button"
           onClick={onClose}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.05] transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-[#5c5c64] hover:text-[#e4e4e7] hover:bg-[#111113] transition-colors shrink-0"
+          title="Exit lesson"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
+
         <div className="flex flex-1 gap-1">
           {Array.from({ length: total }).map((_, i) => (
             <div
               key={i}
-              className={`h-1 flex-1 rounded-full transition-colors ${i <= idx ? "bg-white" : "bg-white/[0.08]"}`}
+              className={`h-1 flex-1 rounded-full transition-colors duration-200 ${i <= idx ? "bg-[#e4e4e7]" : "bg-[#1f1f22]"}`}
             />
           ))}
         </div>
-        <span className="text-[11px] tabular-nums text-slate-500">{idx + 1}/{total}</span>
+
+        <span className="text-[11px] tabular-nums text-[#5c5c64] shrink-0 font-medium">
+          {idx + 1}/{total}
+        </span>
       </div>
 
-      {/* Slide content */}
-      <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div key={idx} className="mx-auto w-full" style={{ maxWidth: "min(100%, 900px)" }}>
+      {/* Slide body */}
+      <div className="flex-1 overflow-y-auto px-4 py-6 lg:flex lg:items-center lg:justify-center lg:overflow-hidden lg:py-2">
+        <div
+          key={idx}
+          className="lesson-slide my-auto w-full lg:flex lg:items-center"
+          style={{ maxWidth: "min(100%, 1400px)" }}
+        >
           {slide.kind === "text" && <TextSlideView slide={slide} onNext={next} />}
           {slide.kind === "interact" && <InteractSlideView slide={slide} onNext={next} />}
           {slide.kind === "choice" && <ChoiceSlideView slide={slide} onNext={next} />}
@@ -112,45 +120,43 @@ function ReportLessonPlayer({
 /* ── Text slide ────────────────────────────────────────────────────── */
 
 function TextSlideView({ slide, onNext }: { slide: TextSlide; onNext: () => void }) {
-  const { ref, size } = useBoardSize(480);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
 
   return (
-    <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+    <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
       {slide.fen && (
-        <div ref={ref} className="shrink-0 mx-auto lg:mx-0">
+        <div className="w-full min-w-0 flex justify-center lg:w-[54%] lg:shrink-0">
           <Chessboard
             id={`lesson-text-${slide.heading}`}
             position={slide.fen}
-            boardWidth={size}
             boardOrientation={slide.orientation ?? "white"}
             arePiecesDraggable={false}
             customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
             customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
             customPieces={customPieces}
             customBoardStyle={{ borderRadius: "12px", overflow: "hidden" }}
-            customArrows={slide.arrows?.map(([from, to]) => [from, to, "rgba(245,158,11,0.8)"]) as any}
-            customSquareStyles={Object.fromEntries(
-              (slide.highlights ?? []).map((sq) => [sq, { backgroundColor: "rgba(245,158,11,0.15)" }]),
-            )}
           />
         </div>
       )}
 
-      <div className="flex-1 space-y-4">
-        <h2 className="text-xl font-bold text-white">{slide.heading}</h2>
-        <p className="text-sm leading-relaxed text-slate-300 whitespace-pre-line">{slide.body}</p>
+      <div className="flex w-full min-w-0 flex-col items-center gap-4 text-center lg:w-[46%] lg:max-h-full lg:overflow-y-auto lg:items-start lg:text-left lg:pr-1">
+        <h2 className="text-xl font-semibold tracking-tight leading-tight text-[#e4e4e7] lg:text-2xl">
+          {slide.heading}
+        </h2>
+        <p className="text-sm leading-6 text-[#a1a1aa] lg:text-[15px] lg:leading-7 whitespace-pre-line">
+          {slide.body}
+        </p>
         {slide.insight && (
-          <div className="rounded-xl border border-amber-500/15 bg-amber-500/[0.06] px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-amber-400/70">Key insight</p>
-            <p className="mt-1 text-sm text-amber-200/90">{slide.insight}</p>
+          <div className="w-full rounded-xl border border-[#1f1f22] bg-[#111113] px-5 py-4">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-[#5c5c64]">Key insight</p>
+            <p className="mt-1.5 text-sm leading-relaxed text-[#a1a1aa]">{slide.insight}</p>
           </div>
         )}
         <button
           type="button"
           onClick={onNext}
-          className="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-black hover:bg-white/90 transition-colors"
+          className="mt-2 rounded-xl bg-[#111113] px-6 py-2.5 text-sm font-medium text-[#a1a1aa] hover:bg-[#161618] transition-colors"
         >
           Continue →
         </button>
@@ -162,7 +168,6 @@ function TextSlideView({ slide, onNext }: { slide: TextSlide; onNext: () => void
 /* ── Interact slide ────────────────────────────────────────────────── */
 
 function InteractSlideView({ slide, onNext }: { slide: InteractSlide; onNext: () => void }) {
-  const { ref, size } = useBoardSize(560);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const [played, setPlayed] = useState<string | null>(null);
@@ -171,10 +176,8 @@ function InteractSlideView({ slide, onNext }: { slide: InteractSlide; onNext: ()
 
   const fen = slide.fen;
   const correct = slide.correctMoves ?? [];
-  const wrong = slide.wrongMoves ?? [];
   const orientation = slide.orientation ?? (fen.includes(" b ") ? "black" : "white");
 
-  // Evaluate the position on mount
   useEffect(() => {
     stockfishClient.evaluateFen(fen, 12).then((e) => {
       if (e?.cp != null) setEvalCp(orientation === "black" ? -e.cp : e.cp);
@@ -182,31 +185,27 @@ function InteractSlideView({ slide, onNext }: { slide: InteractSlide; onNext: ()
   }, [fen, orientation]);
 
   const onDrop = useCallback(
-    (from: string, to: string, _piece: string) => {
-      if (result) return;
+    (from: string, to: string) => {
+      if (result) return false;
       const uci = `${from}${to}`;
       setPlayed(uci);
-      setResult(correct.includes(uci) ? "correct" : "wrong");
-      if (correct.includes(uci)) playSound("correct");
+      const isCorrect = correct.some((m) => m === uci || m === uci + "q" || (m.startsWith(from) && m.slice(2, 4) === to));
+      setResult(isCorrect ? "correct" : "wrong");
+      if (isCorrect) playSound("correct");
       else playSound("wrong");
+      return true;
     },
     [result, correct],
   );
 
   return (
-    <div className="flex flex-col items-center gap-5">
-      <div className="text-center max-w-lg">
-        <h2 className="text-xl font-bold text-white">{slide.heading}</h2>
-        <p className="mt-2 text-sm text-slate-400">{slide.instruction}</p>
-      </div>
-
-      <div className="flex items-start gap-3">
-        {evalCp != null && <EvalBar evalCp={evalCp} height={size} />}
-        <div ref={ref}>
+    <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
+      <div className="w-full min-w-0 flex justify-center lg:w-[54%] lg:shrink-0">
+        <div className="flex items-start gap-2">
+          {evalCp != null && <EvalBar evalCp={evalCp} height={380} />}
           <Chessboard
             id={`lesson-interact-${slide.heading}`}
             position={fen}
-            boardWidth={size - (evalCp != null ? 28 : 0)}
             boardOrientation={orientation}
             arePiecesDraggable={!result}
             onPieceDrop={onDrop as any}
@@ -218,23 +217,35 @@ function InteractSlideView({ slide, onNext }: { slide: InteractSlide; onNext: ()
         </div>
       </div>
 
-      {result && (
-        <div className={`w-full max-w-md rounded-xl border p-4 text-center ${result === "correct" ? "border-emerald-500/20 bg-emerald-500/[0.06]" : "border-red-500/20 bg-red-500/[0.06]"}`}>
-          <p className={`text-sm font-semibold ${result === "correct" ? "text-emerald-400" : "text-red-400"}`}>
-            {result === "correct" ? "Correct!" : "Not quite"}
-          </p>
-          <p className="mt-1 text-sm text-slate-300">
-            {result === "correct" ? slide.correctExplanation : slide.wrongExplanation}
-          </p>
-          <button
-            type="button"
-            onClick={onNext}
-            className="mt-3 rounded-xl bg-white px-5 py-2 text-sm font-semibold text-black hover:bg-white/90 transition-colors"
-          >
-            Continue →
-          </button>
-        </div>
-      )}
+      <div className="flex w-full min-w-0 flex-col items-center gap-4 text-center lg:w-[46%] lg:max-h-full lg:overflow-y-auto lg:items-start lg:text-left lg:pr-1">
+        <h2 className="text-xl font-semibold tracking-tight leading-tight text-[#e4e4e7] lg:text-2xl">
+          {slide.heading}
+        </h2>
+        <p className="text-sm leading-6 text-[#a1a1aa] lg:text-[15px] lg:leading-7">
+          {slide.instruction}
+        </p>
+        <p className="text-[11px] font-medium uppercase tracking-wider text-[#5c5c64]">
+          {orientation === "white" ? "White" : "Black"} to move
+        </p>
+
+        {result && (
+          <div className={`w-full rounded-xl border p-4 text-left ${result === "correct" ? "border-[#14532d] bg-[#0c1a12]" : "border-[#7f1d1d] bg-[#1c0c0c]"}`}>
+            <p className={`text-[11px] font-medium uppercase tracking-wider mb-1 ${result === "correct" ? "text-[#4ade80]" : "text-[#f87171]"}`}>
+              {result === "correct" ? "Correct" : "Not quite"}
+            </p>
+            <p className="text-sm leading-relaxed text-[#a1a1aa]">
+              {result === "correct" ? slide.correctExplanation : slide.wrongExplanation}
+            </p>
+            <button
+              type="button"
+              onClick={onNext}
+              className="mt-3 rounded-xl bg-[#111113] px-5 py-2 text-sm font-medium text-[#a1a1aa] hover:bg-[#161618] transition-colors"
+            >
+              Continue →
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -255,8 +266,8 @@ function ChoiceSlideView({ slide, onNext }: { slide: ChoiceSlide; onNext: () => 
   return (
     <div className="flex flex-col items-center gap-6">
       <div className="text-center max-w-lg">
-        <h2 className="text-xl font-bold text-white">{slide.heading}</h2>
-        <p className="mt-2 text-sm text-slate-400">{slide.question}</p>
+        <h2 className="text-xl font-semibold tracking-tight text-[#e4e4e7]">{slide.heading}</h2>
+        <p className="mt-2 text-sm leading-6 text-[#a1a1aa]">{slide.question}</p>
       </div>
 
       <div className="w-full max-w-md space-y-2">
@@ -273,12 +284,10 @@ function ChoiceSlideView({ slide, onNext }: { slide: ChoiceSlide; onNext: () => 
               disabled={selected != null}
               className={`w-full rounded-xl border px-4 py-3 text-left text-sm transition-colors ${
                 showCorrect
-                  ? "border-emerald-500/30 bg-emerald-500/[0.1] text-emerald-200"
+                  ? "border-[#14532d] bg-[#0c1a12] text-[#4ade80]"
                   : showWrong
-                    ? "border-red-500/30 bg-red-500/[0.1] text-red-200"
-                    : isSelected
-                      ? "border-white/20 bg-white/[0.08] text-white"
-                      : "border-white/[0.08] bg-white/[0.03] text-slate-300 hover:border-white/[0.15] hover:bg-white/[0.06]"
+                    ? "border-[#7f1d1d] bg-[#1c0c0c] text-[#f87171]"
+                    : "border-[#1f1f22] bg-[#111113] text-[#a1a1aa] hover:border-[#2a2a2e] hover:bg-[#161618]"
               }`}
             >
               {choice}
@@ -288,12 +297,12 @@ function ChoiceSlideView({ slide, onNext }: { slide: ChoiceSlide; onNext: () => 
       </div>
 
       {selected != null && (
-        <div className="w-full max-w-md rounded-xl border border-white/[0.08] bg-white/[0.02] p-4 text-center">
-          <p className="text-sm text-slate-300">{slide.explanation}</p>
+        <div className="w-full max-w-md rounded-xl border border-[#1f1f22] bg-[#111113] p-4 text-center">
+          <p className="text-sm leading-relaxed text-[#a1a1aa]">{slide.explanation}</p>
           <button
             type="button"
             onClick={onNext}
-            className="mt-3 rounded-xl bg-white px-5 py-2 text-sm font-semibold text-black hover:bg-white/90 transition-colors"
+            className="mt-3 rounded-xl bg-[#161618] px-5 py-2 text-sm font-medium text-[#a1a1aa] hover:bg-[#1f1f22] transition-colors"
           >
             Continue →
           </button>
@@ -306,7 +315,6 @@ function ChoiceSlideView({ slide, onNext }: { slide: ChoiceSlide; onNext: () => 
 /* ── Replay slide ──────────────────────────────────────────────────── */
 
 function ReplaySlideView({ slide, onNext }: { slide: ReplaySlide; onNext: () => void }) {
-  const { ref, size } = useBoardSize(560);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const [moveIdx, setMoveIdx] = useState(0);
@@ -321,72 +329,49 @@ function ReplaySlideView({ slide, onNext }: { slide: ReplaySlide; onNext: () => 
     return c.fen();
   }, [slide.startFen, slide.moves, moveIdx]);
 
-  // Auto-play
   useEffect(() => {
     if (!playing) return;
-    if (moveIdx >= slide.moves.length) {
-      setPlaying(false);
-      return;
-    }
+    if (moveIdx >= slide.moves.length) { setPlaying(false); return; }
     const t = setTimeout(() => setMoveIdx((i) => i + 1), slide.intervalMs ?? 900);
     return () => clearTimeout(t);
   }, [playing, moveIdx, slide.moves.length, slide.intervalMs]);
 
   return (
-    <div className="flex flex-col items-center gap-5">
+    <div className="flex flex-col items-center gap-6">
       <div className="text-center max-w-lg">
-        <h2 className="text-xl font-bold text-white">{slide.heading}</h2>
-        <p className="mt-2 text-sm text-slate-400">{slide.body}</p>
+        <h2 className="text-xl font-semibold tracking-tight text-[#e4e4e7]">{slide.heading}</h2>
+        <p className="mt-2 text-sm leading-6 text-[#a1a1aa]">{slide.body}</p>
       </div>
 
-      <div ref={ref}>
-        <Chessboard
-          id={`lesson-replay-${slide.heading}`}
-          position={fen()}
-          boardWidth={size}
-          boardOrientation={slide.orientation ?? "white"}
-          arePiecesDraggable={false}
-          customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-          customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
-          customPieces={customPieces}
-          customBoardStyle={{ borderRadius: "12px", overflow: "hidden" }}
-        />
-      </div>
+      <Chessboard
+        id={`lesson-replay-${slide.heading}`}
+        position={fen()}
+        boardOrientation={slide.orientation ?? "white"}
+        arePiecesDraggable={false}
+        customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+        customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+        customPieces={customPieces}
+        customBoardStyle={{ borderRadius: "12px", overflow: "hidden" }}
+      />
 
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => setMoveIdx(Math.max(0, moveIdx - 1))}
-          disabled={moveIdx === 0}
-          className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs text-slate-400 hover:bg-white/[0.06] disabled:opacity-30"
-        >
-          ◀
+        <button type="button" onClick={() => setMoveIdx(Math.max(0, moveIdx - 1))} disabled={moveIdx === 0}
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-[#5c5c64] hover:text-[#e4e4e7] hover:bg-[#111113] disabled:opacity-30 transition-colors">
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
         </button>
-        <button
-          type="button"
-          onClick={() => setPlaying(!playing)}
-          className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-1.5 text-xs text-slate-300 hover:bg-white/[0.06]"
-        >
-          {playing ? "⏸ Pause" : "▶ Play"}
+        <button type="button" onClick={() => setPlaying(!playing)}
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-[#5c5c64] hover:text-[#e4e4e7] hover:bg-[#111113] transition-colors">
+          {playing ? "⏸" : "▶"}
         </button>
-        <button
-          type="button"
-          onClick={() => setMoveIdx(Math.min(slide.moves.length, moveIdx + 1))}
-          disabled={moveIdx >= slide.moves.length}
-          className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs text-slate-400 hover:bg-white/[0.06] disabled:opacity-30"
-        >
-          ▶
+        <button type="button" onClick={() => setMoveIdx(Math.min(slide.moves.length, moveIdx + 1))} disabled={moveIdx >= slide.moves.length}
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-[#5c5c64] hover:text-[#e4e4e7] hover:bg-[#111113] disabled:opacity-30 transition-colors">
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
-        <span className="text-[11px] text-slate-500 tabular-nums">
-          {moveIdx}/{slide.moves.length}
-        </span>
+        <span className="text-[11px] tabular-nums text-[#5c5c64]">{moveIdx}/{slide.moves.length}</span>
       </div>
 
-      <button
-        type="button"
-        onClick={onNext}
-        className="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-black hover:bg-white/90 transition-colors"
-      >
+      <button type="button" onClick={onNext}
+        className="rounded-xl bg-[#111113] px-5 py-2 text-sm font-medium text-[#a1a1aa] hover:bg-[#161618] transition-colors">
         Continue →
       </button>
     </div>
@@ -407,7 +392,7 @@ export function ReportLessonModal({
   if (!open || !lesson) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0a0a0a]">
+    <div className="fixed inset-0 z-50">
       <ReportLessonPlayer lesson={lesson} onClose={onClose} />
     </div>
   );
