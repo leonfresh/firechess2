@@ -22,6 +22,8 @@ export type InteractSlide = {
   correctExplanation: string;
   wrongExplanation: string;
   badge?: "brilliant" | "best" | "great" | "good" | "inaccuracy" | "mistake" | "blunder";
+  /** Opponent's last move before this position (from/to squares for highlighting) */
+  opponentLastMove?: { from: string; to: string };
 };
 
 export type ChoiceSlide = {
