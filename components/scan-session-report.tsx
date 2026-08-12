@@ -42,7 +42,6 @@ import type { TimePositionalReport } from "@/lib/time-positional-crossref";
 import { crossReferenceTimeAndPositional } from "@/lib/time-positional-crossref";
 import { ReportLessonModal } from "@/components/report-lesson-modal";
 import type { ReportLesson } from "@/lib/generate-lesson";
-import type { DerivedMotif } from "@/lib/build-motifs";
 import { ScanStructuralStats } from "@/components/scan-structural-stats";
 import {
   RadarLegend,
