@@ -3444,7 +3444,12 @@ export function ScanSessionReport({
 
         {positionalMotifs.length > 0 ? (
           <section id="section-lesson" className="space-y-4">
-            <LessonBuilderSection topMotif={positionalMotifs[0]} />
+            <LessonBuilderSection
+              topMotif={positionalMotifs[0]}
+              allMotifs={positionalMotifs}
+              coachNote={analysis?.sectionNotes?.positional ?? analysis?.coachNote}
+              topWeakness={analysis?.weaknesses?.[0]}
+            />
           </section>
         ) : null}
 
@@ -3514,45 +3519,97 @@ export function ScanSessionReport({
   );
 }
 
-function LessonBuilderSection({ topMotif }: { topMotif: DerivedMotif }) {
+function LessonBuilderSection({
+  topMotif,
+  allMotifs,
+  coachNote,
+  topWeakness,
+}: {
+  topMotif: DerivedMotif;
+  allMotifs: DerivedMotif[];
+  coachNote?: string;
+  topWeakness?: string;
+}) {
   const [lesson, setLesson] = useState<ReportLesson | null>(null);
 
   const buildLesson = () => {
+    const cpCost = (topMotif.avgCpLoss / 100).toFixed(1);
+    const ex = topMotif.examples;
+    const hasCoach = Boolean(coachNote?.trim());
+    const coachTail = coachNote ? `\n\nCoach's note: ${coachNote}` : "";
+
+    const slides: ReportLesson["slides"] = [
+      // Slide 1: Intro with coaching context
+      {
+        kind: "text",
+        heading: `Your "${topMotif.name}" habit`,
+        body: `The scan found ${topMotif.count} instances where "${topMotif.name}" cost you ~${cpCost} pawns each.${topWeakness ? ` This connects directly to your biggest weakness: "${topWeakness}".` : ""}${coachTail}`,
+        insight: hasCoach
+          ? "Your coach flagged this area. Targeted practice here is the fastest path to improvement."
+          : topMotif.count >= 3
+            ? "This pattern repeats often enough to be a real habit. Targeted practice will pay back faster than general study."
+            : "Even a few instances of this pattern are worth fixing. One saved blunder swings a game.",
+        fen: ex[0]?.fenBefore,
+        orientation: ex[0]?.fenBefore?.includes(" b ") ? "black" : "white",
+      },
+    ];
+
+    // Slide 2+: Interactive challenges for each example (up to 4)
+    for (let i = 0; i < Math.min(ex.length, 4); i++) {
+      const example = ex[i];
+      if (!example.fenBefore) continue;
+      slides.push({
+        kind: "interact",
+        heading: i === 0 ? "Find the right move" : `Practice position ${i + 1}`,
+        instruction: i === 0
+          ? `In this position from one of your games, you made a "${topMotif.name}" mistake. What should you have played instead?`
+          : `Another "${topMotif.name}" position from your games. Find the correct move.`,
+        fen: example.fenBefore,
+        orientation: example.fenBefore.includes(" b ") ? "black" : "white",
+        correctMoves: example.bestMove ? [example.bestMove] : [],
+        correctExplanation: `Correct! Lost ~${(example.cpLoss / 100).toFixed(1)} pawns here originally — spotting this pattern saves that in future games.`,
+        wrongExplanation: `Look again — this is a "${topMotif.name}" position. Check piece activity, king safety, and pawn structure.`,
+        badge: "mistake",
+      });
+    }
+
+    // Coaching insight slide (if available)
+    if (hasCoach) {
+      slides.push({
+        kind: "text",
+        heading: "What your coach says",
+        body: coachNote!,
+        insight: "Coaching insight is most valuable when paired with concrete positions. These examples ARE the pattern your coach is talking about.",
+      });
+    }
+
+    // Other motifs to watch (if 2+ motifs)
+    if (allMotifs.length >= 2) {
+      const otherNames = allMotifs.slice(1, 3).map((m) => m.name).join(", ");
+      slides.push({
+        kind: "text",
+        heading: "Watch for these too",
+        body: `Beyond "${topMotif.name}", the scan also found patterns in: ${otherNames}. Fix the top habit first — it often cleans up related patterns automatically.`,
+        insight: "Positional habits tend to cluster. Fix the biggest one first, then reassess.",
+      });
+    }
+
+    // Takeaway
+    slides.push({
+      kind: "text",
+      heading: "The takeaway",
+      body: `${topMotif.icon} "${topMotif.name}" cost you ~${cpCost} pawns per occurrence across ${topMotif.count} positions. Before each move, pause and ask: is this improving my position or just moving a piece?`,
+      insight: "Positional mistakes compound quietly. Fixing one habit often cleans up several recurring positions at once.",
+    });
+
     const l: ReportLesson = {
       id: `motif-lesson-${topMotif.name}`,
       title: `Fix: ${topMotif.name}`,
-      subtitle: `${topMotif.count}x detected · avg ${(topMotif.avgCpLoss / 100).toFixed(1)} pawn loss`,
+      subtitle: `${topMotif.count}x detected · avg ${cpCost} pawn loss${topWeakness ? ` · relates to: ${topWeakness}` : ""}`,
       icon: topMotif.icon,
-      estimatedMinutes: 2,
+      estimatedMinutes: Math.min(5, 1 + ex.length),
       tags: ["positional", topMotif.name.toLowerCase()],
-      slides: [
-        {
-          kind: "text",
-          heading: `Your ${topMotif.name} habit`,
-          body: `The scan found ${topMotif.count} instances where "${topMotif.name}" cost you an average of ~${(topMotif.avgCpLoss / 100).toFixed(1)} pawns each. This section breaks down one concrete example so you can practice spotting the right move.`,
-          insight: topMotif.count >= 3
-            ? "This pattern repeats often enough to be a real habit. Targeted practice here will pay back faster than general improvement."
-            : "Even a few instances of this pattern are worth fixing. One saved blunder can swing a game.",
-        },
-        ...(topMotif.examples.length > 0
-          ? [{
-              kind: "interact" as const,
-              heading: "Find the right move",
-              instruction: `In this position from one of your games, you made a "${topMotif.name}" mistake. What should you have played instead?`,
-              fen: topMotif.examples[0].fenBefore,
-              orientation: topMotif.examples[0].fenBefore.includes(" b ") ? "black" as const : "white" as const,
-              correctMoves: topMotif.examples[0].bestMove ? [topMotif.examples[0].bestMove] : [],
-              correctExplanation: "That's the idea. A quick positional check before committing would have caught this.",
-              wrongExplanation: "Look again — check piece activity, king safety, and pawn structure before deciding.",
-            }]
-          : []),
-        {
-          kind: "text",
-          heading: "The takeaway",
-          body: `${topMotif.icon} ${topMotif.name} cost you ~${(topMotif.avgCpLoss / 100).toFixed(1)} pawns per occurrence across ${topMotif.count} positions. Before each move, pause and ask: is this improving my position or just moving a piece?`,
-          insight: "Positional mistakes compound quietly. Fixing one habit often cleans up several recurring positions at once.",
-        },
-      ],
+      slides,
     };
     setLesson(l);
   };
@@ -3573,7 +3630,10 @@ function LessonBuilderSection({ topMotif }: { topMotif: DerivedMotif }) {
                 Learn to fix &ldquo;{topMotif.name}&rdquo;
               </h3>
               <p className="mt-1 text-sm text-slate-400">
-                A 2-minute interactive lesson built from your own games. Practice finding the right move in the exact positions where this pattern appears.
+                {topMotif.examples.length >= 3
+                  ? `${topMotif.examples.length} practice positions from your games. Interactive challenges + coaching context in ~${Math.min(5, 1 + topMotif.examples.length)} minutes.`
+                  : `A ~${Math.min(5, 1 + topMotif.examples.length)}-minute interactive lesson built from your own games.`}
+                {topWeakness ? ` Tied to your "${topWeakness}" weakness.` : ""}
               </p>
             </div>
           </div>

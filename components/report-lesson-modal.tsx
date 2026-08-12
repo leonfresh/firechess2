@@ -112,7 +112,7 @@ function ReportLessonPlayer({
 /* ── Text slide ────────────────────────────────────────────────────── */
 
 function TextSlideView({ slide, onNext }: { slide: TextSlide; onNext: () => void }) {
-  const { ref, size } = useBoardSize(320);
+  const { ref, size } = useBoardSize(480);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
 
@@ -162,7 +162,7 @@ function TextSlideView({ slide, onNext }: { slide: TextSlide; onNext: () => void
 /* ── Interact slide ────────────────────────────────────────────────── */
 
 function InteractSlideView({ slide, onNext }: { slide: InteractSlide; onNext: () => void }) {
-  const { ref, size } = useBoardSize(380);
+  const { ref, size } = useBoardSize(560);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const [played, setPlayed] = useState<string | null>(null);
@@ -306,7 +306,7 @@ function ChoiceSlideView({ slide, onNext }: { slide: ChoiceSlide; onNext: () => 
 /* ── Replay slide ──────────────────────────────────────────────────── */
 
 function ReplaySlideView({ slide, onNext }: { slide: ReplaySlide; onNext: () => void }) {
-  const { ref, size } = useBoardSize(380);
+  const { ref, size } = useBoardSize(560);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const [moveIdx, setMoveIdx] = useState(0);
