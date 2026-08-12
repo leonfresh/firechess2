@@ -1,16 +1,17 @@
-import createMiddleware from "next-intl/middleware";
-import { auth } from "@/lib/auth";
-import { routing } from "./i18n/routing";
-import type { NextRequest } from "next/server";
+/**
+ * Next.js middleware — Auth.js session check.
+ *
+ * Public routes: /, /pricing, /auth/*, /api/auth/*, /api/webhooks/*
+ * Everything else requires authentication.
+ *
+ * next-intl route-based middleware was reverted here: it requires every
+ * page to live under app/[locale]/..., which this app was never migrated
+ * to, and was 404ing the entire site. Messages/hreflang scaffolding in
+ * app/layout.tsx stays in place (it safely defaults to "en") for a future
+ * proper [locale] migration.
+ */
 
-const intlMiddleware = createMiddleware(routing);
-
-export default function middleware(req: NextRequest) {
-  return intlMiddleware(req);
-}
-
-// Auth middleware runs on API routes and protected pages
-export { auth as middleware_auth };
+export { auth as middleware } from "@/lib/auth";
 
 export const config = {
   matcher: [
