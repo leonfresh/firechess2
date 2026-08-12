@@ -275,7 +275,7 @@ export function GuidedWalk(props: GuidedWalkProps) {
 
   // Cross-reference time x positional
   const timePositionalReport = useMemo<TimePositionalReport>(
-    () => crossReferenceTimeAndPositional(props.timeMoments ?? [], props.positionalFindings ?? []),
+    () => crossReferenceTimeAndPositional(props.timeMoments ?? [], (props.positionalFindings ?? []) as any),
     [props.timeMoments, props.positionalFindings],
   );
   const topCrossRefInsight = timePositionalReport.insights.length > 0 ? timePositionalReport.insights[0] : null;
