@@ -561,9 +561,7 @@ function PuzzleBoard({
   showHint,
 }: PuzzleBoardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { ref: boardRef, size: boardSize } = useBoardSize(720, {
-    evalBar: false,
-  });
+  const { ref: boardRef, size: boardSize } = useBoardSize(860);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const [game, setGame] = useState(() => new Chess(fen));
@@ -605,7 +603,6 @@ function PuzzleBoard({
           to: parsed.to,
           promotion: parsed.promotion,
         });
-        playSound("move");
         setGame(new Chess(newGame.fen()));
         setOpponentLastMove({ from: parsed.from, to: parsed.to });
       } catch {
@@ -655,15 +652,16 @@ function PuzzleBoard({
         } catch {
           return false;
         }
-        playSound("correct");
         setGame(new Chess(newGame.fen()));
         setMoveIndicator({ square: to, type: "correct" });
 
         const nextIndex = moveIndex + 1;
 
         if (nextIndex >= solutionMoves.length) {
+          playSound("correct");
           setStatus("correct");
           onSolved();
+          earnCoins("study_task");
           return true;
         }
 
@@ -678,7 +676,6 @@ function PuzzleBoard({
               to: opParsed.to,
               promotion: opParsed.promotion,
             });
-            playSound(g.isCheck() ? "check" : "move");
             setGame(new Chess(g.fen()));
             setMoveIndex(nextIndex + 1);
             setOpponentLastMove({ from: opParsed.from, to: opParsed.to });
@@ -804,7 +801,7 @@ function PuzzleBoard({
       </div>
       <div
         ref={boardRef}
-        className={`relative w-full max-w-[720px] overflow-hidden rounded-xl shadow-2xl transition-transform ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
+        className={`relative w-full max-w-[860px] overflow-hidden rounded-xl shadow-2xl transition-transform ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
       >
         <Chessboard
           id="train-board"
@@ -853,7 +850,13 @@ function PuzzleBoard({
         </p>
       )}
       {status === "correct" && (
-        <p className="text-sm font-medium text-emerald-400">✓ Correct!</p>
+        <div className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-5 py-3">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400 text-sm font-bold">✓</span>
+          <div>
+            <p className="text-sm font-semibold text-emerald-300">Puzzle solved!</p>
+            <p className="text-[11px] text-emerald-400/60">+10 coins earned</p>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -870,9 +873,7 @@ type SimpleBoardProps = {
 };
 
 function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
-  const { ref: boardRef, size: boardSize } = useBoardSize(720, {
-    evalBar: false,
-  });
+  const { ref: boardRef, size: boardSize } = useBoardSize(860);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const [game, setGame] = useState(() => new Chess(position.fen));
@@ -1013,7 +1014,7 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
       </div>
       <div
         ref={boardRef}
-        className={`relative w-full max-w-[720px] overflow-hidden rounded-xl shadow-2xl transition-transform ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
+        className={`relative w-full max-w-[860px] overflow-hidden rounded-xl shadow-2xl transition-transform ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
       >
         <Chessboard
           id="simple-train-board"
@@ -1062,7 +1063,13 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
         </p>
       )}
       {status === "correct" && (
-        <p className="text-sm font-medium text-emerald-400">✓ Correct!</p>
+        <div className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-5 py-3">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400 text-sm font-bold">✓</span>
+          <div>
+            <p className="text-sm font-semibold text-emerald-300">Puzzle solved!</p>
+            <p className="text-[11px] text-emerald-400/60">+10 coins earned</p>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -1083,9 +1090,7 @@ function TimePressureBoard({
   onResult,
   showHint,
 }: TimePressureBoardProps) {
-  const { ref: boardRef, size: boardSize } = useBoardSize(720, {
-    evalBar: false,
-  });
+  const { ref: boardRef, size: boardSize } = useBoardSize(860);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const [game, setGame] = useState(() => new Chess(position.fen));
@@ -1286,7 +1291,7 @@ function TimePressureBoard({
 
       <div
         ref={boardRef}
-        className={`relative w-full max-w-[720px] overflow-hidden rounded-xl shadow-2xl transition-transform ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
+        className={`relative w-full max-w-[860px] overflow-hidden rounded-xl shadow-2xl transition-transform ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
       >
         <Chessboard
           id="time-pressure-board"
