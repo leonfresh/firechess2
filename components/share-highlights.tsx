@@ -91,22 +91,26 @@ export function ShareHighlights({ reportId, result, reportMeta }: {
         </div>
       </div>
 
-      {/* Preview modal */}
+      {/* Preview modal — matches thumbnail aspect ratio */}
       {preview && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 p-4" onClick={() => setPreview(null)}>
-          <div className="relative max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setPreview(null)} className="absolute -top-3 -right-3 flex h-8 w-8 items-center justify-center rounded-full bg-[#1a1a1c] border border-white/[0.1] text-white hover:bg-[#222] transition-colors z-10">✕</button>
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm" onClick={() => setPreview(null)}>
+          <div className="relative w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setPreview(null)} className="absolute -top-3 -right-3 flex h-9 w-9 items-center justify-center rounded-full bg-[#1a1a1c] border border-white/[0.15] text-white hover:bg-[#2a2a2c] transition-colors z-10 shadow-lg">✕</button>
             {(() => {
               const c = cards.find((x) => x.kind === preview);
               if (!c) return null;
               const acc = ACCENT[c.accent] ?? ACCENT.orange;
               return (
                 <div className={`rounded-2xl border ${acc.border} overflow-hidden shadow-2xl ${acc.glow}`}>
-                  <div className={`aspect-square w-full bg-gradient-to-br ${acc.gradient}`}>
+                  <div className="aspect-[3/2] w-full bg-gradient-to-br from-slate-950 to-slate-900">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={buildUrl(reportId, c.kind)} alt={`${c.label} share card`} className="h-full w-full object-cover" />
+                    <img src={buildUrl(reportId, c.kind)} alt={`${c.label} share card`} className="h-full w-full object-contain" />
                   </div>
-                  <div className={`flex items-center gap-2 border-t ${acc.border} p-3 ${acc.bg}`}>
+                  <div className={`flex items-center gap-3 border-t ${acc.border} p-4 ${acc.bg}`}>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-xs font-bold uppercase tracking-wider ${acc.text}`}>{c.emoji} {c.label}</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">{c.subtext}</p>
+                    </div>
                     <button type="button"
                       onClick={async () => {
                         const res = await fetch(buildUrl(reportId, c!.kind));
@@ -116,9 +120,9 @@ export function ShareHighlights({ reportId, result, reportMeta }: {
                         const a = document.createElement("a"); a.href = url; a.download = `firechess-${c!.kind}.png`;
                         document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
                       }}
-                      className="flex-1 rounded-lg border border-white/[0.1] bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] transition-colors">Download PNG</button>
+                      className="shrink-0 rounded-lg border border-white/[0.1] bg-white/[0.04] px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] transition-colors">Download PNG</button>
                     <a href={tweetUrl} target="_blank" rel="noopener noreferrer"
-                      className="flex-1 rounded-lg border border-orange-500/25 bg-orange-500/[0.08] px-3 py-2 text-center text-xs font-semibold text-orange-200 hover:bg-orange-500/[0.14] transition-colors">Post</a>
+                      className="shrink-0 rounded-lg border border-orange-500/25 bg-orange-500/[0.08] px-4 py-2 text-xs font-semibold text-orange-200 hover:bg-orange-500/[0.14] transition-colors">Post</a>
                   </div>
                 </div>
               );
@@ -127,27 +131,28 @@ export function ShareHighlights({ reportId, result, reportMeta }: {
         </div>
       )}
 
-      {/* Cards grid — larger, polished */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Cards grid — 3 columns, larger */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((c) => {
           const acc = ACCENT[c.accent] ?? ACCENT.orange;
           return (
             <div key={c.kind}
-              className={`group relative flex flex-col overflow-hidden rounded-2xl border ${acc.border} bg-gradient-to-br ${acc.gradient} transition-all duration-200 hover:-translate-y-1 ${acc.glow}`}>
+              className={`group relative flex flex-col overflow-hidden rounded-2xl border ${acc.border} bg-gradient-to-br ${acc.gradient} transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl ${acc.glow}`}>
               <button type="button" onClick={() => setPreview(c.kind)}
-                className="relative block aspect-[4/3] w-full overflow-hidden" aria-label={`Preview ${c.label}`}>
+                className="relative block aspect-[3/2] w-full overflow-hidden" aria-label={`Preview ${c.label}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={buildUrl(reportId, c.kind)} alt={c.label} loading="lazy"
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/95 via-slate-950/50 to-transparent p-4">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{c.subtext}</p>
-                  <p className={`text-xs font-bold uppercase tracking-wider mt-0.5 ${acc.text}`}>{c.emoji} {c.label}</p>
-                  <p className="truncate text-sm font-semibold text-white mt-0.5">{c.desc}</p>
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+                <div className="absolute inset-x-0 bottom-0 p-5">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-1">{c.subtext}</p>
+                  <p className={`text-sm font-black uppercase tracking-wider ${acc.text}`}>{c.emoji} {c.label}</p>
+                  <p className="truncate text-base font-bold text-white mt-1">{c.desc}</p>
                 </div>
               </button>
               <div className="flex items-center gap-2 border-t border-white/[0.06] p-3">
                 <button type="button" onClick={() => setPreview(c.kind)}
-                  className="flex-1 rounded-lg border border-white/[0.1] bg-white/[0.04] px-3 py-2 text-[11px] font-semibold text-slate-300 hover:bg-white/[0.08] transition-colors">View</button>
+                  className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-xs font-semibold text-slate-300 hover:bg-white/[0.08] hover:text-white transition-all">View</button>
                 <button type="button" onClick={() => {
                   fetch(buildUrl(reportId, c.kind)).then(async (r) => {
                     if (!r.ok) return;
@@ -157,7 +162,7 @@ export function ShareHighlights({ reportId, result, reportMeta }: {
                     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
                   });
                 }}
-                  className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2 text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors">Download</button>
+                  className="flex-1 rounded-lg border border-white/[0.06] bg-white/[0.01] px-3 py-2.5 text-xs font-semibold text-slate-500 hover:text-white hover:bg-white/[0.05] transition-all">Download</button>
               </div>
             </div>
           );
