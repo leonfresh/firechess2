@@ -255,11 +255,6 @@ export function ScanSessionPage({
     [scan.config.cpThreshold, scan.reportMeta, scan.result],
   );
 
-  const openComposer = (seed?: CommunityPostComposerSeed) => {
-    setComposerSeed(seed ?? defaultComposerSeed);
-    setComposerOpen(true);
-  };
-
   useEffect(() => {
     if (!isOwner || scan.savedReportId || !scan.expiresAt) return;
 
@@ -1307,7 +1302,6 @@ export function ScanSessionPage({
               scanProgress={progress}
               perPhaseProgress={perPhaseProgress}
               guidedLaunchSignal={guidedLaunchSignal}
-              onCreateCommunityPost={openComposer}
               onSave={handleSave}
               saveStatus={saveState}
               authenticated={authenticated}

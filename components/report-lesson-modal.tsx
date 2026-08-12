@@ -56,13 +56,27 @@ function ReportLessonPlayer({
 
   if (done) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-5 p-8 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[#14532d] bg-[#0c1a12] text-3xl">✓</div>
-        <h2 className="text-xl font-semibold tracking-tight text-[#e4e4e7]">Pattern learned</h2>
-        <p className="text-sm text-[#8b8b93]">{lesson.title}</p>
-        <button type="button" onClick={onClose} className="rounded-xl bg-[#111113] px-6 py-2.5 text-sm font-medium text-[#a1a1aa] hover:bg-[#161618] transition-colors">
-          Back to report
-        </button>
+      <div className="flex h-full flex-col items-center justify-center gap-6 p-8 text-center">
+        <div className="relative">
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-[#14532d] bg-[#0c1a12] text-4xl shadow-lg shadow-emerald-500/10 animate-[pulse_2s_ease-in-out]">✓</div>
+          <div className="absolute inset-0 rounded-2xl ring-1 ring-emerald-400/20 animate-ping [animation-duration:3s]" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight text-[#e4e4e7]">Lesson complete</h2>
+          <p className="mt-1 text-sm text-[#8b8b93]">{lesson.title}</p>
+        </div>
+        <div className="w-full max-w-xs rounded-xl border border-[#14532d] bg-[#0c1a12] px-5 py-4">
+          <p className="text-sm font-medium text-[#4ade80]">+10 coins earned</p>
+          <p className="mt-0.5 text-[11px] text-[#4ade80]/60">Keep practicing daily</p>
+        </div>
+        <div className="flex w-full max-w-xs flex-col gap-2.5">
+          <button type="button" onClick={onClose} className="w-full rounded-xl bg-[#111113] px-6 py-3 text-sm font-medium text-[#a1a1aa] hover:bg-[#161618] transition-colors">
+            Back to report
+          </button>
+          <a href="/train" className="block w-full rounded-xl border border-[#1f1f22] bg-[#0a0a0a] px-6 py-3 text-center text-sm font-medium text-[#a1a1aa] hover:bg-[#161618] transition-colors">
+            Training hub
+          </a>
+        </div>
       </div>
     );
   }
