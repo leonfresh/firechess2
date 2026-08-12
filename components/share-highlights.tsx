@@ -163,6 +163,23 @@ export function ShareHighlights({ reportId, result, reportMeta }: {
           );
         })}
       </div>
+
+      {/* Embed code */}
+      <div className="mt-6 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Embed on your site</p>
+        <div className="flex items-center gap-2">
+          <code className="flex-1 rounded-lg border border-white/[0.08] bg-black/30 px-3 py-2 text-[11px] font-mono text-slate-400 break-all select-all">
+            {`<iframe src="https://firechess.com/embed/report/${reportId}" width="400" height="380" frameborder="0" loading="lazy"></iframe>`}
+          </code>
+          <button type="button" onClick={async () => {
+            const code = `<iframe src="https://firechess.com/embed/report/${reportId}" width="400" height="380" frameborder="0" loading="lazy"></iframe>`;
+            try { await navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {}
+          }}
+            className="shrink-0 rounded-lg border border-white/[0.1] bg-white/[0.04] px-3 py-2 text-[11px] font-semibold text-slate-300 hover:bg-white/[0.08] transition-colors">
+            {copied ? "Copied!" : "Copy"}
+          </button>
+        </div>
+      </div>
     </section>
   );
 }
