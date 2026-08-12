@@ -254,7 +254,12 @@ function InteractSlideView({ slide, onNext }: { slide: InteractSlide; onNext: ()
           <div className="w-full rounded-xl border border-[#7f1d1d] bg-[#1c0c0c] p-4">
             <p className="text-[11px] font-medium uppercase tracking-wider text-[#f87171] mb-1">Not quite</p>
             <p className="text-sm leading-relaxed text-[#a1a1aa]">{slide.wrongExplanation}</p>
-            <button type="button" onClick={onNext} className="mt-3 rounded-xl bg-[#111113] px-5 py-2 text-sm font-medium text-[#a1a1aa] hover:bg-[#161618] transition-colors">Continue →</button>
+            <div className="mt-3 flex gap-2">
+              <button type="button" onClick={() => { setResult(null); setPlayed(null); }}
+                className="rounded-xl bg-[#111113] px-4 py-2 text-sm font-medium text-[#a1a1aa] hover:bg-[#161618] transition-colors">Try again</button>
+              <button type="button" onClick={onNext}
+                className="rounded-xl bg-[#111113] px-4 py-2 text-sm font-medium text-[#a1a1aa] hover:bg-[#161618] transition-colors">Skip →</button>
+            </div>
           </div>
         )}
       </div>

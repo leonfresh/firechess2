@@ -6,7 +6,6 @@ import type { PieceSymbol } from "chess.js";
 import type { AnalyzeResponse } from "@/lib/types";
 import type { ComputedScanReport } from "@/lib/scan-session";
 
-/** UCI → SAN for the little preview subtitle under each card. */
 function uciToSan(fen: string, uci: string): string {
   try {
     const chess = new Chess(fen);
@@ -16,193 +15,149 @@ function uciToSan(fen: string, uci: string): string {
       promotion: (uci.slice(4, 5) || undefined) as PieceSymbol | undefined,
     });
     return mv?.san ?? uci;
-  } catch {
-    return uci;
-  }
+  } catch { return uci; }
 }
 
 type ShareKind = "brilliant" | "tactic" | "mental" | "vibe";
 
-interface ShareHighlightsProps {
-  reportId: string;
-  result: AnalyzeResponse | null;
-  reportMeta: ComputedScanReport | null;
-}
-
-interface CardDef {
-  kind: ShareKind;
-  emoji: string;
-  label: string;
-  desc: string;
-  accent: string; // tailwind-ish ring / text color class hints
-}
+interface CardDef { kind: ShareKind; emoji: string; label: string; desc: string; accent: string; subtext: string; }
 
 function buildUrl(reportId: string, kind: ShareKind) {
   return `/api/report/share-card?id=${encodeURIComponent(reportId)}&type=${kind}`;
 }
 
-export function ShareHighlights({ reportId, result, reportMeta }: ShareHighlightsProps) {
-  const [copied, setCopied] = useState<string | null>(null);
-  const [downloading, setDownloading] = useState<string | null>(null);
+const ACCENT: Record<string, { border: string; bg: string; text: string; glow: string; gradient: string }> = {
+  cyan: { border: "border-cyan-500/20", bg: "bg-cyan-500/[0.06]", text: "text-cyan-300", glow: "shadow-cyan-500/15", gradient: "from-cyan-500/[0.08] to-cyan-500/[0.02]" },
+  red: { border: "border-red-500/20", bg: "bg-red-500/[0.06]", text: "text-red-300", glow: "shadow-red-500/15", gradient: "from-red-500/[0.08] to-red-500/[0.02]" },
+  purple: { border: "border-purple-500/20", bg: "bg-purple-500/[0.06]", text: "text-purple-300", glow: "shadow-purple-500/15", gradient: "from-purple-500/[0.08] to-purple-500/[0.02]" },
+  orange: { border: "border-orange-500/20", bg: "bg-orange-500/[0.06]", text: "text-orange-300", glow: "shadow-orange-500/15", gradient: "from-orange-500/[0.08] to-orange-500/[0.02]" },
+};
+
+export function ShareHighlights({ reportId, result, reportMeta }: {
+  reportId: string; result: AnalyzeResponse | null; reportMeta: ComputedScanReport | null;
+}) {
+  const [copied, setCopied] = useState(false);
   const [preview, setPreview] = useState<ShareKind | null>(null);
 
   const cards = useMemo<CardDef[]>(() => {
     const list: CardDef[] = [];
-    if (result?.brilliantMoves && result.brilliantMoves.length > 0) {
-      list.push({
-        kind: "brilliant",
-        emoji: "\u{1F48E}",
-        label: "Brilliant Move",
-        desc: uciToSan(result.brilliantMoves[0].fenBefore, result.brilliantMoves[0].userMove),
-        accent: "cyan",
-      });
+    if (result?.brilliantMoves?.length) {
+      list.push({ kind: "brilliant", emoji: "💎", label: "Brilliant Move", desc: uciToSan(result.brilliantMoves[0].fenBefore, result.brilliantMoves[0].userMove), accent: "cyan", subtext: `${result.brilliantMoves.length} found in scan` });
     }
-    if (result?.missedTactics && result.missedTactics.length > 0) {
+    if (result?.missedTactics?.length) {
       const biggest = result.missedTactics.reduce((a, b) => (b.cpLoss > a.cpLoss ? b : a));
-      list.push({
-        kind: "tactic",
-        emoji: "\u{1F3AF}",
-        label: "Missed Tactic",
-        desc: uciToSan(biggest.fenBefore, biggest.bestMove),
-        accent: "red",
-      });
+      list.push({ kind: "tactic", emoji: "🎯", label: "Biggest Tactic Missed", desc: uciToSan(biggest.fenBefore, biggest.bestMove), accent: "red", subtext: `${(biggest.cpLoss / 100).toFixed(1)} pawn oversight` });
     }
     if (result?.mentalStats) {
-      list.push({
-        kind: "mental",
-        emoji: "\u{1F9E0}",
-        label: "Mental Archetype",
-        desc: result.mentalStats.archetype ?? "Your mindset",
-        accent: "purple",
-      });
+      list.push({ kind: "mental", emoji: "🧠", label: "Mental Archetype", desc: result.mentalStats.archetype ?? "Your mindset", accent: "purple", subtext: `${result.mentalStats.stability}/100 stability` });
     }
     if (reportMeta?.vibeTitle) {
-      list.push({
-        kind: "vibe",
-        emoji: "\u{1F525}",
-        label: "Playing Style",
-        desc: reportMeta.vibeTitle,
-        accent: "orange",
-      });
+      list.push({ kind: "vibe", emoji: "🔥", label: "Playing Style", desc: reportMeta.vibeTitle, accent: "orange", subtext: `~${reportMeta.estimatedRating} estimated rating` });
     }
     return list;
   }, [result, reportMeta]);
 
   if (cards.length === 0) return null;
 
-  const accentClasses: Record<string, { ring: string; text: string; glow: string }> = {
-    cyan: {
-      ring: "hover:border-cyan-400/40",
-      text: "text-cyan-300",
-      glow: "bg-cyan-500/[0.07]",
-    },
-    red: {
-      ring: "hover:border-red-400/40",
-      text: "text-red-300",
-      glow: "bg-red-500/[0.07]",
-    },
-    purple: {
-      ring: "hover:border-purple-400/40",
-      text: "text-purple-300",
-      glow: "bg-purple-500/[0.07]",
-    },
-    orange: {
-      ring: "hover:border-orange-400/40",
-      text: "text-orange-300",
-      glow: "bg-orange-500/[0.07]",
-    },
+  const shareUrl = `https://firechess.com/report/${reportId}`;
+  const shareText = reportMeta?.vibeTitle
+    ? `My FireChess report: "${reportMeta.vibeTitle}" — ${(reportMeta.estimatedAccuracy ?? 0).toFixed(0)}% accuracy across ${result?.gamesAnalyzed ?? 0} games`
+    : `My FireChess chess analysis report`;
+
+  const copyLink = async () => {
+    try { await navigator.clipboard.writeText(shareUrl); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {}
   };
 
-  async function handleDownload(kind: ShareKind) {
-    setDownloading(kind);
-    try {
-      const res = await fetch(buildUrl(reportId, kind));
-      if (!res.ok) return;
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `firechess-${kind}.png`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } finally {
-      setDownloading(null);
-    }
-  }
-
-  async function handleCopy(kind: ShareKind) {
-    try {
-      const shareUrl = `https://firechess.com/report/${reportId}`;
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(kind);
-      setTimeout(() => setCopied(null), 1600);
-    } catch {
-      // ignore
-    }
-  }
+  const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
 
   return (
-    <section className="mt-10">
-      <div className="mb-4 flex items-center justify-between">
+    <section className="rounded-[1.75rem] border border-white/[0.08] bg-[radial-gradient(circle_at_top_right,_rgba(249,115,22,0.08),_rgba(15,23,42,0.5)_50%,_rgba(2,6,23,0.9)_100%)] p-6 sm:p-8">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-lg font-bold text-white">Share your highlights</h2>
-          <p className="text-sm text-slate-500">
-            Download a card, or share the report — it generates its own preview.
-          </p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-orange-400/70">Share</p>
+          <h2 className="mt-2 text-2xl font-black tracking-tight text-white">Your highlights</h2>
+          <p className="mt-1 text-sm text-slate-400">Download share cards or post your report — each one generates its own preview image.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <a href={tweetUrl} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.1] bg-white/[0.04] px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] transition-colors">
+            <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            Post
+          </a>
+          <button type="button" onClick={copyLink}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-orange-500/25 bg-orange-500/[0.10] px-4 py-2 text-xs font-semibold text-orange-200 hover:bg-orange-500/[0.16] transition-colors">
+            {copied ? "Copied!" : "Copy link"}
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Preview modal */}
+      {preview && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 p-4" onClick={() => setPreview(null)}>
+          <div className="relative max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setPreview(null)} className="absolute -top-3 -right-3 flex h-8 w-8 items-center justify-center rounded-full bg-[#1a1a1c] border border-white/[0.1] text-white hover:bg-[#222] transition-colors z-10">✕</button>
+            {(() => {
+              const c = cards.find((x) => x.kind === preview);
+              if (!c) return null;
+              const acc = ACCENT[c.accent] ?? ACCENT.orange;
+              return (
+                <div className={`rounded-2xl border ${acc.border} overflow-hidden shadow-2xl ${acc.glow}`}>
+                  <div className={`aspect-square w-full bg-gradient-to-br ${acc.gradient}`}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={buildUrl(reportId, c.kind)} alt={`${c.label} share card`} className="h-full w-full object-cover" />
+                  </div>
+                  <div className={`flex items-center gap-2 border-t ${acc.border} p-3 ${acc.bg}`}>
+                    <button type="button"
+                      onClick={async () => {
+                        const res = await fetch(buildUrl(reportId, c!.kind));
+                        if (!res.ok) return;
+                        const blob = await res.blob();
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a"); a.href = url; a.download = `firechess-${c!.kind}.png`;
+                        document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+                      }}
+                      className="flex-1 rounded-lg border border-white/[0.1] bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] transition-colors">Download PNG</button>
+                    <a href={tweetUrl} target="_blank" rel="noopener noreferrer"
+                      className="flex-1 rounded-lg border border-orange-500/25 bg-orange-500/[0.08] px-3 py-2 text-center text-xs font-semibold text-orange-200 hover:bg-orange-500/[0.14] transition-colors">Post</a>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Cards grid — larger, polished */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((c) => {
-          const acc = accentClasses[c.accent] ?? accentClasses.orange;
-          const isPreview = preview === c.kind;
+          const acc = ACCENT[c.accent] ?? ACCENT.orange;
           return (
-            <div
-              key={c.kind}
-              className={`group relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.02] transition-all duration-200 ${acc.ring}`}
-            >
-              {/* thumbnail preview */}
-              <button
-                type="button"
-                onClick={() => setPreview(isPreview ? null : c.kind)}
-                className="relative block aspect-square w-full overflow-hidden"
-                aria-label={`Preview ${c.label} card`}
-              >
-                <div className={`absolute inset-0 ${acc.glow}`} />
+            <div key={c.kind}
+              className={`group relative flex flex-col overflow-hidden rounded-2xl border ${acc.border} bg-gradient-to-br ${acc.gradient} transition-all duration-200 hover:-translate-y-1 ${acc.glow}`}>
+              <button type="button" onClick={() => setPreview(c.kind)}
+                className="relative block aspect-[4/3] w-full overflow-hidden" aria-label={`Preview ${c.label}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={buildUrl(reportId, c.kind)}
-                  alt={`${c.label} share card`}
-                  loading="lazy"
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 to-transparent p-3">
-                  <p className={`text-xs font-bold uppercase tracking-wider ${acc.text}`}>
-                    {c.emoji} {c.label}
-                  </p>
-                  <p className="truncate text-sm font-semibold text-white">{c.desc}</p>
+                <img src={buildUrl(reportId, c.kind)} alt={c.label} loading="lazy"
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/95 via-slate-950/50 to-transparent p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{c.subtext}</p>
+                  <p className={`text-xs font-bold uppercase tracking-wider mt-0.5 ${acc.text}`}>{c.emoji} {c.label}</p>
+                  <p className="truncate text-sm font-semibold text-white mt-0.5">{c.desc}</p>
                 </div>
               </button>
-
-              {/* actions */}
-              <div className="flex items-center gap-2 border-t border-white/[0.06] p-2.5">
-                <button
-                  type="button"
-                  onClick={() => handleDownload(c.kind)}
-                  disabled={downloading === c.kind}
-                  className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.03] px-2 py-1.5 text-[11px] font-semibold text-slate-300 transition hover:border-white/[0.16] hover:text-white disabled:opacity-50"
-                >
-                  {downloading === c.kind ? "..." : "Download"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleCopy(c.kind)}
-                  className="flex-1 rounded-lg border border-orange-500/25 bg-orange-500/[0.08] px-2 py-1.5 text-[11px] font-semibold text-orange-200 transition hover:border-orange-400/40 hover:text-white"
-                >
-                  {copied === c.kind ? "Copied!" : "Copy link"}
-                </button>
+              <div className="flex items-center gap-2 border-t border-white/[0.06] p-3">
+                <button type="button" onClick={() => setPreview(c.kind)}
+                  className="flex-1 rounded-lg border border-white/[0.1] bg-white/[0.04] px-3 py-2 text-[11px] font-semibold text-slate-300 hover:bg-white/[0.08] transition-colors">View</button>
+                <button type="button" onClick={() => {
+                  fetch(buildUrl(reportId, c.kind)).then(async (r) => {
+                    if (!r.ok) return;
+                    const blob = await r.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a"); a.href = url; a.download = `firechess-${c.kind}.png`;
+                    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+                  });
+                }}
+                  className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2 text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors">Download</button>
               </div>
             </div>
           );

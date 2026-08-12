@@ -7,7 +7,6 @@ import { BrilliantMoveCard } from "@/components/brilliant-move-card";
 import { ShareHighlights } from "@/components/share-highlights";
 import { CardCarousel } from "@/components/card-carousel";
 import type { CardViewMode } from "@/components/card-carousel";
-import type { CommunityPostComposerSeed } from "@/components/community-post-composer-modal";
 import { EndgameCard } from "@/components/endgame-card";
 import { MistakeCard } from "@/components/mistake-card";
 import { tiltInsight } from "@/components/guided-walk/guided-walk";
@@ -1681,75 +1680,6 @@ function orientationFromFen(fen: string): "white" | "black" {
   return fen.includes(" w ") ? "white" : "black";
 }
 
-function buildOpeningLeakCommunitySeed(
-  leak: RepeatedOpeningLeak,
-): CommunityPostComposerSeed {
-  const openingName = leak.openingName?.trim() ?? "";
-
-  return {
-    initialKind: "position",
-    initialSourceType: "analysis",
-    initialFen: leak.fenBefore,
-    initialTitle: openingName
-      ? `What is the right move in this ${openingName}?`
-      : "What would you play in this report position?",
-    initialPrompt: openingName
-      ? `My report flagged this ${openingName} position. What would you play here, and why?`
-      : "My report flagged this position. What would you play here, and why?",
-    initialOpeningName: openingName,
-    initialOrientation: orientationFromFen(leak.fenBefore),
-    initialPuzzleMoves: leak.bestMove ? [leak.bestMove] : [],
-  };
-}
-
-function buildTacticCommunitySeed(
-  tactic: MissedTactic,
-): CommunityPostComposerSeed {
-  const missedMate = isMissedMateTactic(tactic);
-
-  return {
-    initialKind: "position",
-    initialSourceType: "analysis",
-    initialFen: tactic.fenBefore,
-    initialTitle: missedMate
-      ? `Find the missed mate from game #${tactic.gameIndex}`
-      : `Find the missed tactic from game #${tactic.gameIndex}`,
-    initialPrompt: missedMate
-      ? "My report says there was a forced mate here. Can you find it?"
-      : "My report flagged this as a missed tactic. What is the winning line here?",
-    initialOrientation: orientationFromFen(tactic.fenBefore),
-    initialPuzzleMoves: tactic.bestMove ? [tactic.bestMove] : [],
-  };
-}
-
-function buildEndgameCommunitySeed(
-  mistake: EndgameMistake,
-): CommunityPostComposerSeed {
-  return {
-    initialKind: "position",
-    initialSourceType: "endgame-scan",
-    initialFen: mistake.fenBefore,
-    initialTitle: `${mistake.endgameType} endgame from game #${mistake.gameIndex}`,
-    initialPrompt: `My report flagged this ${mistake.endgameType.toLowerCase()} endgame. What is the best move here?`,
-    initialOrientation: orientationFromFen(mistake.fenBefore),
-    initialPuzzleMoves: mistake.bestMove ? [mistake.bestMove] : [],
-  };
-}
-
-function buildTimeMomentCommunitySeed(
-  moment: TimeMoment,
-): CommunityPostComposerSeed {
-  return {
-    initialKind: "position",
-    initialSourceType: "analysis",
-    initialFen: moment.fen,
-    initialTitle: `Clock decision from game #${moment.gameIndex}, move ${moment.moveNumber}`,
-    initialPrompt: `My report tagged this as a ${moment.verdict} time-management moment. What is the best move here?`,
-    initialOrientation: orientationFromFen(moment.fen),
-    initialPuzzleMoves: moment.bestMove ? [moment.bestMove] : [],
-  };
-}
-
 function buildOpeningAnalysisTarget(
   leak: RepeatedOpeningLeak,
 ): ReportAnalysisTarget {
@@ -1811,7 +1741,6 @@ export function ScanSessionReport({
   scanProgress = null,
   perPhaseProgress,
   guidedLaunchSignal = 0,
-  onCreateCommunityPost,
   onSave,
   saveStatus,
   authenticated,
@@ -1826,7 +1755,6 @@ export function ScanSessionReport({
   /** Bumped by the parent to request a switch into guided mode (e.g. from the
    *  scan-complete modal). */
   guidedLaunchSignal?: number;
-  onCreateCommunityPost?: (seed: CommunityPostComposerSeed) => void;
   /** Save-to-profile handler — threaded down to the GuidedWalk's final-step
    *  prompt. When omitted, no prompt is shown. The parent (scan-session-page)
    *  owns the real save logic. */
@@ -2978,14 +2906,6 @@ export function ScanSessionReport({
                       onOpenAnalysis={() =>
                         setAnalysisTarget(buildOpeningAnalysisTarget(leak))
                       }
-                      onCreateCommunityPost={
-                        onCreateCommunityPost
-                          ? () =>
-                              onCreateCommunityPost(
-                                buildOpeningLeakCommunitySeed(leak),
-                              )
-                          : undefined
-                      }
                     />
                   ))}
                 </CardCarousel>
@@ -3047,14 +2967,6 @@ export function ScanSessionReport({
                       engineDepth={scan.config.engineDepth}
                       onOpenAnalysis={() =>
                         setAnalysisTarget(buildOpeningAnalysisTarget(mistake))
-                      }
-                      onCreateCommunityPost={
-                        onCreateCommunityPost
-                          ? () =>
-                              onCreateCommunityPost(
-                                buildOpeningLeakCommunitySeed(mistake),
-                              )
-                          : undefined
                       }
                     />
                   ))}
@@ -3128,14 +3040,6 @@ export function ScanSessionReport({
                     engineDepth={scan.config.engineDepth}
                     onOpenAnalysis={() =>
                       setAnalysisTarget(buildTacticAnalysisTarget(tactic))
-                    }
-                    onCreateCommunityPost={
-                      onCreateCommunityPost
-                        ? () =>
-                            onCreateCommunityPost(
-                              buildTacticCommunitySeed(tactic),
-                            )
-                        : undefined
                     }
                   />
                 ))}
@@ -3258,14 +3162,6 @@ export function ScanSessionReport({
                     onOpenAnalysis={() =>
                       setAnalysisTarget(buildEndgameAnalysisTarget(mistake))
                     }
-                    onCreateCommunityPost={
-                      onCreateCommunityPost
-                        ? () =>
-                            onCreateCommunityPost(
-                              buildEndgameCommunitySeed(mistake),
-                            )
-                        : undefined
-                    }
                   />
                 ))}
               </CardCarousel>
@@ -3384,14 +3280,6 @@ export function ScanSessionReport({
                     moment={moment}
                     onOpenAnalysis={() =>
                       setAnalysisTarget(buildTimeAnalysisTarget(moment))
-                    }
-                    onCreateCommunityPost={
-                      onCreateCommunityPost
-                        ? () =>
-                            onCreateCommunityPost(
-                              buildTimeMomentCommunitySeed(moment),
-                            )
-                        : undefined
                     }
                   />
                 ))}
