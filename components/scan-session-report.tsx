@@ -37,6 +37,9 @@ import { AiReportAnalysis } from "@/components/ai-report-analysis";
 import { CoachStickyNote } from "@/components/coach-sticky-note";
 import { useReportAnalysis } from "@/lib/use-report-analysis";
 import { ScanPositionalMotifs } from "@/components/scan-positional-motifs";
+import { TimePositionalCrossRef } from "@/components/time-positional-crossref";
+import type { TimePositionalReport } from "@/lib/time-positional-crossref";
+import { crossReferenceTimeAndPositional } from "@/lib/time-positional-crossref";
 import { ScanStructuralStats } from "@/components/scan-structural-stats";
 import {
   RadarLegend,
@@ -1871,6 +1874,11 @@ export function ScanSessionReport({
     [motifs],
   );
 
+  const timePositionalReport = useMemo<TimePositionalReport>(
+    () => crossReferenceTimeAndPositional(timeMoments, positionalFindings),
+    [timeMoments, positionalFindings],
+  );
+
   // ── Chart data for Performance Overview ──
   const categoryData = useMemo(() => {
     const openingCp = leaks.reduce((s, l) => s + l.cpLoss, 0) +
@@ -2288,6 +2296,13 @@ export function ScanSessionReport({
       count: timeMoments.length || undefined,
       countColor: "bg-fuchsia-500/20 text-fuchsia-300",
     },
+    timePositionalReport.insights.length > 0 && {
+      id: "section-time-positional",
+      label: "Cross-Ref",
+      icon: "🔗",
+      count: timePositionalReport.insights.length || undefined,
+      countColor: "bg-violet-500/20 text-violet-300",
+    },
     positionalMotifs.length > 0 && {
       id: "section-positional",
       label: "Positional",
@@ -2456,6 +2471,22 @@ export function ScanSessionReport({
                     {timeMoments.length}
                   </span>
                 ) : null}
+              </button>
+            ) : null}
+            {timePositionalReport.insights.length > 0 ? (
+              <button
+                type="button"
+                onClick={() =>
+                  document
+                    .getElementById("section-time-positional")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-violet-500/20 bg-violet-500/[0.06] px-3 py-1 text-xs font-semibold text-violet-300 transition hover:border-violet-400/30 hover:bg-violet-500/[0.10] hover:text-violet-200"
+              >
+                🔗 Cross-Ref
+                <span className="rounded-full bg-violet-500/20 px-1.5 text-[10px] font-bold text-violet-300">
+                  {timePositionalReport.insights.length}
+                </span>
               </button>
             ) : null}
           </nav>
@@ -3384,6 +3415,18 @@ export function ScanSessionReport({
                 total={timeMoments.length}
               />
             ) : null}
+          </section>
+        ) : null}
+
+        {timePositionalReport.insights.length > 0 ? (
+          <section id="section-time-positional" className="space-y-4">
+            <SectionHeader
+              eyebrow="Time x Positional"
+              title="Where your clock meets your habits"
+              description="These patterns connect how you spend time to which positional mistakes keep appearing. Fix the connection, not just the symptom."
+              badge={`${timePositionalReport.insights.length} pattern${timePositionalReport.insights.length === 1 ? "" : "s"}`}
+            />
+            <TimePositionalCrossRef report={timePositionalReport} />
           </section>
         ) : null}
 

@@ -408,8 +408,42 @@ export function ScanPositionalMotifs({
 
   if (motifs.length === 0) return null;
 
+  const hangingPiecesMotif = motifs.find((m) => m.name === "Hanging Pieces");
+
   return (
     <div className="space-y-4">
+      {/* Hanging Pieces spotlight — always call it out prominently */}
+      {hangingPiecesMotif ? (
+        <div className="overflow-hidden rounded-2xl border border-red-500/20 bg-gradient-to-r from-red-500/[0.06] to-red-500/[0.02]">
+          <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-4">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-red-500/15 text-2xl shadow-lg shadow-red-500/10">
+                💀
+              </span>
+              <div>
+                <p className="text-sm font-black text-red-300">
+                  Loose pieces are your most expensive habit
+                </p>
+                <p className="mt-1 text-sm leading-relaxed text-slate-300">
+                  You left a piece hanging{" "}
+                  <span className="font-bold text-red-400">
+                    {hangingPiecesMotif.count}x
+                  </span>{" "}
+                  across your games, costing an average of{" "}
+                  <span className="font-bold text-red-400">
+                    ~{(hangingPiecesMotif.avgCpLoss / 100).toFixed(1)} pawns
+                  </span>{" "}
+                  each time. Before every move, run a 1-second scan: is anything undefended?
+                </p>
+              </div>
+            </div>
+            <span className="shrink-0 rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-xs font-bold text-red-400">
+              Top priority
+            </span>
+          </div>
+        </div>
+      ) : null}
+
       <div className="rounded-2xl border border-transparent bg-gradient-to-r from-amber-500/[0.04] to-transparent px-5 py-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
