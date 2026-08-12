@@ -11,6 +11,48 @@ import { feedback, ticketReplies } from "@/lib/schema";
 import { isAdmin } from "@/lib/admin";
 import { eq, desc } from "drizzle-orm";
 
+/* ── Anti-bot: rate limiter ──────────────────────────────────────────
+ * In-memory per-IP store. Resets on cold start (acceptable for this scale).
+ * 3 POST per IP per 60s window. */
+const rateMap = new Map<string, { count: number; resetAt: number }>();
+function checkRate(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateMap.set(ip, { count: 1, resetAt: now + 60_000 });
+    return true;
+  }
+  if (entry.count >= 3) return false;
+  entry.count++;
+  return true;
+}
+
+/* ── Anti-bot: spam patterns ───────────────────────────────────────── */
+const SPAM_PATTERNS = [
+  /https?:\/\//i,         // URLs in name/email fields only
+  /\b(SEO|backlink|guest post|sponsored|buy now|click here)\b/i,
+  /\b(viagra|casino|lottery|won \d|prize|free money)\b/i,
+  /\b([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(ru|cn|xyz|tk|ml|ga|cf))\b/, // disposable/targeted TLDs
+];
+const MAX_MESSAGE_LENGTH = 8000;
+
+function isSpam(body: { email?: string; message?: string; name?: string; _honey?: string }): string | null {
+  // Honeypot: bots fill hidden fields
+  if (body._honey && body._honey.length > 0) return "honeypot";
+
+  // Message too long (bots dump garbage)
+  if (body.message && body.message.length > MAX_MESSAGE_LENGTH) return "message too long";
+
+  // Check email for spam patterns
+  if (body.email) {
+    for (const p of SPAM_PATTERNS) {
+      if (p.test(body.email)) return "spam pattern in email";
+    }
+  }
+
+  return null;
+}
+
 /* ------------------------------------------------------------------ */
 /*  POST — submit a new ticket                                         */
 /* ------------------------------------------------------------------ */
@@ -19,12 +61,37 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     const body = await req.json();
 
-    const { category, subject, message, email } = body as {
+    const { category, subject, message, email, _honey, _ts } = body as {
       category?: string;
       subject?: string;
       message?: string;
       email?: string;
+      _honey?: string;
+      _ts?: number;
     };
+
+    // ── Anti-bot ──
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      ?? req.headers.get("x-real-ip")
+      ?? "127.0.0.1";
+
+    if (!checkRate(ip)) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 },
+      );
+    }
+
+    // Timing check: reject if submitted < 2.5s after page load
+    if (_ts && Date.now() - _ts < 2500) {
+      return NextResponse.json({ ok: true }); // silently succeed
+    }
+
+    const spamReason = isSpam({ email, message, _honey });
+    if (spamReason) {
+      console.log(`[feedback] spam blocked: ${spamReason} from ${ip}`);
+      return NextResponse.json({ ok: true }); // silently succeed to not tip off bots
+    }
 
     if (!message || message.trim().length < 5) {
       return NextResponse.json(

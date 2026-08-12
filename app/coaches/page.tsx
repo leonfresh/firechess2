@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 
 const FEATURES = [
@@ -62,6 +62,8 @@ function PartnershipForm({ type }: { type: "coach" | "creator" }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const startRef = useRef(Date.now());
+  const [honey, setHoney] = useState("");
 
   const isCoach = type === "coach";
 
@@ -73,6 +75,11 @@ function PartnershipForm({ type }: { type: "coach" | "creator" }) {
     }
     if (!email.trim()) {
       setError("Please enter your email so we can reply.");
+      return;
+    }
+    const elapsed = (Date.now() - startRef.current) / 1000;
+    if (elapsed < 2.5) {
+      setError("Please take a moment to fill out the form properly.");
       return;
     }
     setSubmitting(true);
@@ -88,7 +95,7 @@ function PartnershipForm({ type }: { type: "coach" | "creator" }) {
       const res = await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: "other", subject, message: fullMessage, email: email.trim() || undefined }),
+        body: JSON.stringify({ category: "other", subject, message: fullMessage, email: email.trim() || undefined, _honey: honey, _ts: startRef.current }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -168,6 +175,16 @@ function PartnershipForm({ type }: { type: "coach" | "creator" }) {
       {error && (
         <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-400">{error}</p>
       )}
+      <div className="absolute opacity-0 pointer-events-none" aria-hidden="true">
+        <input
+          type="text"
+          name="_honey"
+          tabIndex={-1}
+          autoComplete="off"
+          value={honey}
+          onChange={(e) => setHoney(e.target.value)}
+        />
+      </div>
       <button
         type="submit"
         disabled={submitting}
