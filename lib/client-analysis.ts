@@ -4518,6 +4518,7 @@ export async function analyzeOpeningLeaksInBrowser(
     let totalMoves = 0;
     let scrambleCount = 0;
     let gamesWithClocks = 0;
+    const MAX_MOMENTS = 120; // cap to keep analysis fast
 
     // Pre-build a set of missed-tactic FENs for cross-referencing
     const tacticFenSet = new Set(missedTactics.map((t) => t.fenBefore));
@@ -4557,7 +4558,7 @@ export async function analyzeOpeningLeaksInBrowser(
       });
     }
 
-    for (let gameIndex = 0; gameIndex < games.length; gameIndex++) {
+    outerLoop: for (let gameIndex = 0; gameIndex < games.length; gameIndex++) {
       const game = games[gameIndex];
 
       if (
@@ -4812,12 +4813,10 @@ export async function analyzeOpeningLeaksInBrowser(
                   cpLoss,
                   isTactical,
                   evalBefore,
-                  // Fall back to user's own move when no analysis bestMove exists.
-                  // For "wasted" moments the user played correctly (just took too long),
-                  // so their move IS the right answer for the training puzzle.
                   bestMove: bestMove ?? userMoveUci,
                   gameUrl: game.gameUrl,
                 });
+                if (moments.length >= MAX_MOMENTS) break outerLoop;
             }
             gameRunningSpentSec += spent;
             gameRunningMoveCount++;
@@ -4844,36 +4843,7 @@ export async function analyzeOpeningLeaksInBrowser(
 
     if (moments.length === 0 && gamesWithClocks < 2) return null;
 
-    // ── Evaluate positions that lack engine bestMove data ──
-    // For moments where bestMove fell back to userMove (no analysis overlap),
-    // run a lightweight Stockfish eval to get the engine's actual best move.
-    const TIME_EVAL_DEPTH = 10;
-    const needsEval = moments.filter((m) => m.bestMove === m.userMove);
-    if (needsEval.length > 0) {
-      await parallelForEach(needsEval, stockfishPool.size, async (m) => {
-        try {
-          const evalResult = await stockfishPool.evaluateFen(
-            m.fen,
-            TIME_EVAL_DEPTH,
-          );
-          if (evalResult?.bestMove) {
-            m.bestMove = evalResult.bestMove;
-            // Also update cpLoss/evalBefore if we didn't have them
-            if (m.evalBefore == null && evalResult.cp != null) {
-              const sideToMove = m.fen.includes(" w ") ? "white" : "black";
-              m.evalBefore =
-                m.userColor === sideToMove ? evalResult.cp : -evalResult.cp;
-            }
-          }
-        } catch {
-          /* keep existing fallback */
-        }
-      });
-    }
-
-    // Reclassify fast moves after fallback eval fills in missing best-move data.
-    // If the move was still engine-approved or effectively equal, that is good
-    // pattern recognition rather than a harmful rush.
+    // Reclassify fast moves — if the move matches engine best, it's not a harmful rush
     for (const moment of moments) {
       if (moment.verdict !== "rushed") continue;
 
