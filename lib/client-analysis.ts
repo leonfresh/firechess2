@@ -3119,98 +3119,31 @@ export async function analyzeOpeningLeaksInBrowser(
               });
             }
 
-            let chosenMove = "";
-            let chosenCount = -1;
-
-            for (const [move, count] of data.moveCounts.entries()) {
-              if (count > chosenCount) {
-                chosenMove = move;
-                chosenCount = count;
-              }
-            }
-
-            if (!chosenMove) return;
-
-            const fenAfter = computeFenAfterMove(fenBefore, chosenMove);
-            if (!fenAfter) {
-              positionTraces.push({
-                fenBefore,
-                userMove: chosenMove,
-                bestMove: null,
-                reachCount: data.totalReachCount,
-                moveCount: chosenCount,
-                evalBefore: null,
-                evalAfter: null,
-                cpLoss: null,
-                flagged: false,
-                skippedReason: "invalid_move",
-              });
-              return;
-            }
-
+            // ── Evaluate ALL moves from this recurring position, not just the most common one ──
             const sideToMove: PlayerColor = fenBefore.includes(" w ")
               ? "white"
               : "black";
+
             const beforeEval = await stockfishPool.evaluateFen(
               fenBefore,
               engineDepth,
             );
 
             if (!beforeEval) {
-              positionTraces.push({
-                fenBefore,
-                userMove: chosenMove,
-                bestMove: null,
-                reachCount: data.totalReachCount,
-                moveCount: chosenCount,
-                evalBefore: null,
-                evalAfter: null,
-                cpLoss: null,
-                flagged: false,
-                skippedReason: "missing_eval",
-              });
-              return;
-            }
-
-            // Early-exit: if user played the engine's best move, skip the 2nd eval call
-            const bestMoveSan = sanForMove(fenBefore, beforeEval.bestMove);
-            if (bestMoveSan && bestMoveSan === chosenMove) {
-              positionTraces.push({
-                fenBefore,
-                userMove: chosenMove,
-                bestMove: beforeEval.bestMove,
-                reachCount: data.totalReachCount,
-                moveCount: chosenCount,
-                evalBefore: scoreToCpFromUserPerspective(
-                  beforeEval.cp,
-                  sideToMove,
-                  sideToMove,
-                ),
-                evalAfter: null,
-                cpLoss: 0,
-                flagged: false,
-              });
-              return;
-            }
-
-            const afterEval = await stockfishPool.evaluateFen(
-              fenAfter,
-              engineDepth,
-            );
-
-            if (!afterEval) {
-              positionTraces.push({
-                fenBefore,
-                userMove: chosenMove,
-                bestMove: beforeEval?.bestMove ?? null,
-                reachCount: data.totalReachCount,
-                moveCount: chosenCount,
-                evalBefore: null,
-                evalAfter: null,
-                cpLoss: null,
-                flagged: false,
-                skippedReason: "missing_eval",
-              });
+              for (const [move, count] of data.moveCounts.entries()) {
+                positionTraces.push({
+                  fenBefore,
+                  userMove: move,
+                  bestMove: null,
+                  reachCount: data.totalReachCount,
+                  moveCount: count,
+                  evalBefore: null,
+                  evalAfter: null,
+                  cpLoss: null,
+                  flagged: false,
+                  skippedReason: "missing_eval",
+                });
+              }
               return;
             }
 
@@ -3221,128 +3154,178 @@ export async function analyzeOpeningLeaksInBrowser(
             );
             const opponentToMove: PlayerColor =
               sideToMove === "white" ? "black" : "white";
-            const evalAfter = scoreToCpFromUserPerspective(
-              afterEval.cp,
-              opponentToMove,
-              sideToMove,
-            );
-            const cpLoss = evalBefore - evalAfter;
-            const flagged = cpLoss > cpLossThreshold;
-            const tags = deriveLeakTags({
-              fenBefore,
-              userMove: chosenMove,
-              bestMove: beforeEval.bestMove,
-              cpLoss,
-              reachCount: data.totalReachCount,
-              moveCount: chosenCount,
-            });
+            const bestMoveSan = sanForMove(fenBefore, beforeEval.bestMove);
 
-            positionTraces.push({
-              fenBefore,
-              userMove: chosenMove,
-              bestMove: beforeEval.bestMove,
-              reachCount: data.totalReachCount,
-              moveCount: chosenCount,
-              evalBefore,
-              evalAfter,
-              cpLoss,
-              flagged,
-            });
-
-            if (!flagged) {
-              // Even if not flagged as a main leak, capture positional patterns at lower cpLoss
-              // Skip if engine's best move is the same as the user's move (noise at low depth)
-              const userUci = moveToUci(new Chess(fenBefore), chosenMove);
-              if (
-                cpLoss >= 50 &&
-                tags.some((t) => POSITIONAL_TAGS.has(t)) &&
-                userUci !== beforeEval.bestMove
-              ) {
-                positionalFindings.push({
+            // Evaluate each unique move the user played from this position
+            for (const [move, moveCount] of data.moveCounts.entries()) {
+              const fenAfter = computeFenAfterMove(fenBefore, move);
+              if (!fenAfter) {
+                positionTraces.push({
                   fenBefore,
-                  userMove: chosenMove,
+                  userMove: move,
                   bestMove: beforeEval.bestMove,
-                  cpLoss,
-                  tags,
-                  gameUrl: fenToGameUrl.get(fenBefore),
+                  reachCount: data.totalReachCount,
+                  moveCount,
+                  evalBefore: null,
+                  evalAfter: null,
+                  cpLoss: null,
+                  flagged: false,
+                  skippedReason: "invalid_move",
                 });
+                continue;
               }
-              return;
-            }
 
-            // ── Database validation: check if the Lichess DB approves this move ──
-            // Formula-based: more games + higher win rate → higher CPL tolerance.
-            // e.g. Dutch (500K games, 50% WR) → dbScore ≈ 228, so CPL 51 is a sideline.
-            // Popular gambits (Budapest, Vienna, etc.) with 5K+ games get a popularity
-            // bonus so they're classified as sidelines rather than inaccuracies.
-            let dbApproved = false;
-            let dbWinRate: number | undefined;
-            let dbGames: number | undefined;
-            try {
-              const explorer = await fetchExplorerMoves(fenBefore, sideToMove);
-              // If the API failed (429/network/timeout), skip DB validation but keep the leak.
-              // A cpLoss > threshold is already a significant mistake; better to show it than lose it.
-              if (!explorer.failed) {
-                const dbMove = explorer.moves.find(
-                  (m) => m.san === chosenMove || m.uci === chosenMove,
-                );
+              // Early-exit: user played the engine's best move → skip eval, zero cpLoss
+              if (bestMoveSan && bestMoveSan === move) {
+                positionTraces.push({
+                  fenBefore,
+                  userMove: move,
+                  bestMove: beforeEval.bestMove,
+                  reachCount: data.totalReachCount,
+                  moveCount,
+                  evalBefore,
+                  evalAfter: null,
+                  cpLoss: 0,
+                  flagged: false,
+                });
+                continue;
+              }
+
+              const afterEval = await stockfishPool.evaluateFen(
+                fenAfter,
+                engineDepth,
+              );
+
+              if (!afterEval) {
+                positionTraces.push({
+                  fenBefore,
+                  userMove: move,
+                  bestMove: beforeEval.bestMove,
+                  reachCount: data.totalReachCount,
+                  moveCount,
+                  evalBefore: null,
+                  evalAfter: null,
+                  cpLoss: null,
+                  flagged: false,
+                  skippedReason: "missing_eval",
+                });
+                continue;
+              }
+
+              const evalAfter = scoreToCpFromUserPerspective(
+                afterEval.cp,
+                opponentToMove,
+                sideToMove,
+              );
+              const cpLoss = evalBefore - evalAfter;
+              const flagged = cpLoss > cpLossThreshold;
+              const tags = deriveLeakTags({
+                fenBefore,
+                userMove: move,
+                bestMove: beforeEval.bestMove,
+                cpLoss,
+                reachCount: data.totalReachCount,
+                moveCount,
+              });
+
+              positionTraces.push({
+                fenBefore,
+                userMove: move,
+                bestMove: beforeEval.bestMove,
+                reachCount: data.totalReachCount,
+                moveCount,
+                evalBefore,
+                evalAfter,
+                cpLoss,
+                flagged,
+              });
+
+              if (!flagged) {
+                // Capture positional patterns at lower cpLoss
+                const userUci = moveToUci(new Chess(fenBefore), move);
                 if (
-                  dbMove &&
-                  dbMove.totalGames >= 50 &&
-                  dbMove.winRate >= 0.35
+                  cpLoss >= 50 &&
+                  tags.some((t) => POSITIONAL_TAGS.has(t)) &&
+                  userUci !== beforeEval.bestMove
                 ) {
-                  // Very popular lines (50K+) with decent WR are always known openings
-                  if (dbMove.totalGames >= 50000 && dbMove.winRate >= 0.35) {
-                    dbApproved = true;
-                    dbWinRate = dbMove.winRate;
-                    dbGames = dbMove.totalGames;
-                  } else {
-                    const dbScore = Math.min(
-                      300,
-                      Math.log10(dbMove.totalGames) *
-                        40 *
-                        (dbMove.winRate / 0.5),
-                    );
-                    // Popularity bonus: well-known gambits/sidelines get extra CPL tolerance
-                    const popularityBonus =
-                      dbMove.totalGames >= 5000
-                        ? 50
-                        : dbMove.totalGames >= 1000
-                          ? 25
-                          : 0;
-                    if (cpLoss <= dbScore + popularityBonus) {
+                  positionalFindings.push({
+                    fenBefore,
+                    userMove: move,
+                    bestMove: beforeEval.bestMove,
+                    cpLoss,
+                    tags,
+                    gameUrl: fenToGameUrl.get(fenBefore),
+                  });
+                }
+                continue;
+              }
+
+              // ── Database validation: check if the Lichess DB approves this move ──
+              let dbApproved = false;
+              let dbWinRate: number | undefined;
+              let dbGames: number | undefined;
+              try {
+                const explorer = await fetchExplorerMoves(fenBefore, sideToMove);
+                if (!explorer.failed) {
+                  const dbMove = explorer.moves.find(
+                    (m) => m.san === move || m.uci === move,
+                  );
+                  if (
+                    dbMove &&
+                    dbMove.totalGames >= 50 &&
+                    dbMove.winRate >= 0.35
+                  ) {
+                    if (dbMove.totalGames >= 50000 && dbMove.winRate >= 0.35) {
                       dbApproved = true;
                       dbWinRate = dbMove.winRate;
                       dbGames = dbMove.totalGames;
+                    } else {
+                      const dbScore = Math.min(
+                        300,
+                        Math.log10(dbMove.totalGames) *
+                          40 *
+                          (dbMove.winRate / 0.5),
+                      );
+                      const popularityBonus =
+                        dbMove.totalGames >= 5000
+                          ? 50
+                          : dbMove.totalGames >= 1000
+                            ? 25
+                            : 0;
+                      if (cpLoss <= dbScore + popularityBonus) {
+                        dbApproved = true;
+                        dbWinRate = dbMove.winRate;
+                        dbGames = dbMove.totalGames;
+                      }
                     }
                   }
                 }
+              } catch {
+                /* explorer unavailable */
               }
-            } catch {
-              /* explorer unavailable — proceed without DB data */
-            }
 
-            leaks.push({
-              fenBefore,
-              fenAfter,
-              userMove: chosenMove,
-              bestMove: beforeEval.bestMove,
-              tags,
-              reachCount: data.totalReachCount,
-              moveCount: chosenCount,
-              cpLoss,
-              evalBefore,
-              evalAfter,
-              sideToMove,
-              userColor: sideToMove,
-              dbApproved,
-              dbWinRate,
-              dbGames,
-              userWins: data.moveOutcomes.get(chosenMove)?.w ?? 0,
-              userDraws: data.moveOutcomes.get(chosenMove)?.d ?? 0,
-              userLosses: data.moveOutcomes.get(chosenMove)?.l ?? 0,
-              openingName: fenOpeningName.get(fenBefore),
-            });
+              leaks.push({
+                fenBefore,
+                fenAfter,
+                userMove: move,
+                bestMove: beforeEval.bestMove,
+                tags,
+                reachCount: data.totalReachCount,
+                moveCount,
+                cpLoss,
+                evalBefore,
+                evalAfter,
+                sideToMove,
+                userColor: sideToMove,
+                dbApproved,
+                dbWinRate,
+                dbGames,
+                userWins: data.moveOutcomes.get(move)?.w ?? 0,
+                userDraws: data.moveOutcomes.get(move)?.d ?? 0,
+                userLosses: data.moveOutcomes.get(move)?.l ?? 0,
+                openingName: fenOpeningName.get(fenBefore),
+              });
+            } // end for each move
           },
         );
 

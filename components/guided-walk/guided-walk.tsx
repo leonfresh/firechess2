@@ -36,6 +36,7 @@ import type {
   MissedTactic,
   PositionEvalTrace,
   RepeatedOpeningLeak,
+  TimeMoment,
 } from "@/lib/types";
 import {
   buildMotifs,
@@ -43,6 +44,9 @@ import {
   type DerivedMotif,
   type PositionalFinding,
 } from "@/lib/build-motifs";
+import { crossReferenceTimeAndPositional, type TimePositionalReport, type TimePositionalInsight } from "@/lib/time-positional-crossref";
+import { generateLessonFromInsight, type ReportLesson } from "@/lib/generate-lesson";
+import { ReportLessonModal } from "@/components/report-lesson-modal";
 
 /* ── Move display helpers ────────────────────────────────────────────────
  * userMove/bestMove fields are stored as UCI (e.g. "h7h8", "e7e8q"). The full
@@ -149,6 +153,8 @@ export type GuidedWalkProps = {
   positionalFindings?: PositionalFinding[];
   /** Mental/tilt stats — for a one-line insight in the plan step. */
   mentalStats?: MentalStats | null;
+  /** Time moments for cross-reference step. */
+  timeMoments?: TimeMoment[];
   /** Username, for copy. */
   username: string;
   /** Radar props — when present, the strengths-radar step is shown. */
@@ -267,19 +273,31 @@ export function GuidedWalk(props: GuidedWalkProps) {
 
   const topMotif = motifs.length > 0 ? motifs[0] : null;
 
+  // Cross-reference time x positional
+  const timePositionalReport = useMemo<TimePositionalReport>(
+    () => crossReferenceTimeAndPositional(props.timeMoments ?? [], props.positionalFindings ?? []),
+    [props.timeMoments, props.positionalFindings],
+  );
+  const topCrossRefInsight = timePositionalReport.insights.length > 0 ? timePositionalReport.insights[0] : null;
+
+  const [showLesson, setShowLesson] = useState(false);
+  const [crossRefLesson, setCrossRefLesson] = useState<ReportLesson | null>(null);
+
   // ── Build the step list dynamically (omit steps with no data). ──
   const steps = useMemo(() => {
     const list: string[] = ["headline"];
     if (props.radarProps && radarData) list.push("radar");
     list.push("leak");
     if (topMotif) list.push("motif");
+    if (topCrossRefInsight) list.push("crossref");
     list.push("tactic");
     if (topBrilliant) list.push("brilliant");
     if (topEndgame) list.push("endgame");
     if (narrative) list.push("profile");
+    if (topCrossRefInsight) list.push("lesson");
     list.push("plan");
     return list;
-  }, [props.radarProps, radarData, topMotif, topBrilliant, topEndgame, narrative]);
+  }, [props.radarProps, radarData, topMotif, topCrossRefInsight, topBrilliant, topEndgame, narrative]);
 
   const totalSteps = steps.length;
   const isLast = step === totalSteps - 1;
@@ -394,6 +412,9 @@ export function GuidedWalk(props: GuidedWalkProps) {
           {currentStep === "motif" && topMotif && (
             <MotifStep motif={topMotif} />
           )}
+          {currentStep === "crossref" && topCrossRefInsight && (
+            <CrossRefStep insight={topCrossRefInsight} />
+          )}
           {currentStep === "brilliant" && topBrilliant && (
             <BrilliantStep brilliant={topBrilliant} />
           )}
@@ -402,6 +423,15 @@ export function GuidedWalk(props: GuidedWalkProps) {
           )}
           {currentStep === "profile" && narrative && radarData && (
             <ProfileStep narrative={narrative} data={radarData} />
+          )}
+          {currentStep === "lesson" && topCrossRefInsight && (
+            <LessonStep
+              insight={topCrossRefInsight}
+              onStart={() => {
+                setCrossRefLesson(generateLessonFromInsight(topCrossRefInsight));
+                setShowLesson(true);
+              }}
+            />
           )}
           {currentStep === "plan" && (
             <PlanStep
@@ -452,12 +482,13 @@ export function GuidedWalk(props: GuidedWalkProps) {
           )}
         </button>
       </div>
+      <ReportLessonModal open={showLesson} lesson={crossRefLesson} onClose={() => setShowLesson(false)} />
     </div>,
     document.body,
   );
 }
 
-/* ── Step 1: Headline ─────────────────────────────────────────────────── */
+/* ── Step components ──────────────────────────────────────────────────── */
 
 function HeadlineStep({
   report,
@@ -1444,6 +1475,80 @@ function EmptyStep({
       <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-400">
         {text}
       </p>
+    </div>
+  );
+}
+
+/* ── Cross-reference step ──────────────────────────────────────────────── */
+
+function CrossRefStep({ insight }: { insight: TimePositionalInsight }) {
+  const cpCost = (insight.avgCpLossOnMotif / 100).toFixed(1);
+  const pct = ((insight.overlapCount / insight.totalVerdictCount) * 100).toFixed(0);
+  const verdictLabel = insight.timeVerdict === "rushed" ? "rushed" : "overthought";
+
+  return (
+    <div className="flex flex-col items-center text-center">
+      <span className="inline-flex items-center gap-2 rounded-full bg-violet-400/[0.08] px-3 py-1 font-mono text-[11px] uppercase tracking-[0.28em] text-violet-200/70">
+        <Crosshair className="h-3 w-3" />
+        Time x Positional
+      </span>
+      <h2 className="mt-5 text-3xl font-black leading-tight text-white sm:text-4xl">
+        Your clock and your habits<br />
+        <span className="bg-gradient-to-r from-violet-300 via-fuchsia-400 to-pink-500 bg-clip-text text-transparent">
+          are connected
+        </span>
+      </h2>
+      <p className="mt-4 max-w-lg text-sm leading-relaxed text-slate-400">
+        {pct}% of your {verdictLabel} moves involved <strong className="text-white">{insight.motifName.toLowerCase()}</strong>.
+        Each one cost ~{cpCost} pawns. This isn't a coincidence — it's a habit you can break.
+      </p>
+      <div className="mt-6 rounded-2xl border border-violet-500/15 bg-violet-500/[0.04] px-6 py-4">
+        <p className="text-sm leading-relaxed text-slate-300">{insight.insight}</p>
+      </div>
+      <div className="mt-4 flex items-center gap-4 text-[11px] text-slate-500">
+        <span>{insight.motifIcon} {insight.motifName}</span>
+        <span>·</span>
+        <span>{insight.overlapCount}x detected</span>
+        <span>·</span>
+        <span>~{insight.avgSecondsOnMotif.toFixed(1)}s avg</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── Lesson generation step ───────────────────────────────────────────── */
+
+function LessonStep({
+  insight,
+  onStart,
+}: {
+  insight: TimePositionalInsight;
+  onStart: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center text-center">
+      <span className="inline-flex items-center gap-2 rounded-full bg-amber-400/[0.08] px-3 py-1 font-mono text-[11px] uppercase tracking-[0.28em] text-amber-200/70">
+        <Sparkles className="h-3 w-3" />
+        Interactive Lesson
+      </span>
+      <h2 className="mt-5 text-3xl font-black leading-tight text-white sm:text-4xl">
+        Turn this pattern<br />
+        <span className="bg-gradient-to-r from-amber-200 via-orange-400 to-red-500 bg-clip-text text-transparent">
+          into a 2-minute lesson
+        </span>
+      </h2>
+      <p className="mt-4 max-w-lg text-sm leading-relaxed text-slate-400">
+        We generated a personalized interactive lesson from your own games. See the exact positions where {insight.motifName.toLowerCase()} and {insight.timeVerdict} moves overlapped — then practice finding the right move.
+      </p>
+      <button
+        type="button"
+        onClick={onStart}
+        className="btn-cta-fire mt-6 inline-flex items-center gap-2 rounded-xl px-8 py-3.5 text-base font-bold text-white shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all"
+      >
+        <Sparkles className="h-4 w-4" />
+        Start the lesson
+      </button>
+      <p className="mt-3 text-[11px] text-slate-500">~2 min · based on your actual games</p>
     </div>
   );
 }

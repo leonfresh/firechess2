@@ -2359,6 +2359,7 @@ export function ScanSessionReport({
             positionalFindings={positionalFindings}
             endgameMistakes={accessibleEndgames}
             mentalStats={mentalStats}
+            timeMoments={timeMoments}
             username={scan.chessUsername}
             radarProps={radarProps}
             brilliantMoves={accessibleBrilliants}
