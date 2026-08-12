@@ -119,7 +119,7 @@ When an engine shows you that 14.Nf5 was better than your 14.Be3, it doesn't tel
 
 The *reason* for the mistake is what you need to fix. The engine only shows you the *result*.
 
-This is why most players plateau despite analyzing every game. They treat analysis like checking answers on a test — looking at the right answer without understanding why they got it wrong. That's not analysis. That's scrolling.
+This is why most players plateau despite analyzing every game. They treat analysis like checking answers on a test — looking at the right answer without understanding why they got it wrong. That's not analysis. That's scrolling. For a framework on what your accuracy score actually tells you at your rating level, see our [accuracy benchmarks by rating guide](/blog/chess-accuracy-by-rating-guide).
 
 ## A Better Analysis Process
 

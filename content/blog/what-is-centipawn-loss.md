@@ -353,7 +353,7 @@ This is why chess engines report **evaluation before and after** your move, not 
 
 ## How to Use Centipawn Loss in Your Game Analysis
 
-This is where theory becomes practice. Here's a step-by-step workflow for using centipawn loss to actually improve — using the FireChess badges as your visual guide.
+This is where theory becomes practice. Here's a step-by-step workflow for using centipawn loss to actually improve — using the FireChess badges as your visual guide. For a full breakdown of what accuracy and ACPL look like at each rating level, see our [accuracy benchmarks by rating guide](/blog/chess-accuracy-by-rating-guide).
 
 ### Step 1: Upload Your Game to FireChess
 

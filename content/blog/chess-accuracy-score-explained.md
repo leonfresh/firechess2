@@ -136,7 +136,7 @@ It's essentially impossible to sustain across an entire game. Even world-class e
 - Most of the "moves" were forced captures or recaptures with no real decision
 - One player was winning so easily that every "alternative" was catastrophic, making every move count as optimal
 
-For real improvement, track **average accuracy across 20+ games**, not a single-game spike.
+For real improvement, track **average accuracy across 20+ games**, not a single-game spike. See our [accuracy benchmarks by rating guide](/blog/chess-accuracy-by-rating-guide) to understand what your average accuracy means at your level.
 
 ## Accuracy vs. Centipawn Loss — the Deeper Difference
 

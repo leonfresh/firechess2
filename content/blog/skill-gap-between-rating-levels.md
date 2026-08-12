@@ -17,7 +17,7 @@ In this guide, we'll break down the measurable skill gaps between four rating ba
 
 ## What the Data Actually Shows: ACPL and Accuracy by Rating
 
-Before we look at specific positions, let's establish what separates the rating levels numerically. We analyzed the [average centipawn loss by rating](/blog/average-centipawn-loss-by-rating) across thousands of games scanned on FireChess, and the pattern is striking:
+Before we look at specific positions, let's establish what separates the rating levels numerically. We analyzed the [average centipawn loss by rating](/blog/average-centipawn-loss-by-rating) across thousands of games scanned on FireChess, and the pattern is striking. Our [accuracy benchmarks by rating guide](/blog/chess-accuracy-by-rating-guide) covers this in more depth with specific positions from each level.
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
 <svg width="680" height="380" viewBox="0 0 680 380" fill="none" xmlns="http://www.w3.org/2000/svg">
