@@ -40,6 +40,9 @@ import { ScanPositionalMotifs } from "@/components/scan-positional-motifs";
 import { TimePositionalCrossRef } from "@/components/time-positional-crossref";
 import type { TimePositionalReport } from "@/lib/time-positional-crossref";
 import { crossReferenceTimeAndPositional } from "@/lib/time-positional-crossref";
+import { ReportLessonModal } from "@/components/report-lesson-modal";
+import type { ReportLesson } from "@/lib/generate-lesson";
+import type { DerivedMotif } from "@/lib/build-motifs";
 import { ScanStructuralStats } from "@/components/scan-structural-stats";
 import {
   RadarLegend,
@@ -1988,6 +1991,8 @@ export function ScanSessionReport({
   const [analysisTarget, setAnalysisTarget] =
     useState<ReportAnalysisTarget | null>(null);
 
+  const [motifLesson, setMotifLesson] = useState<ReportLesson | null>(null);
+
   const [sectionViewModes, setSectionViewModes] = useState<
     Record<string, CardViewMode>
   >({});
@@ -3419,6 +3424,31 @@ export function ScanSessionReport({
           </section>
         ) : null}
 
+        {positionalMotifs.length > 0 ? (
+          <section id="section-positional" className="space-y-4">
+            <SectionHeader
+              eyebrow="Positional"
+              title="Habits beneath the blunders"
+              description="These quieter patterns show up before the tactical punishment. They are strong follow-up training targets."
+              badge={`${positionalMotifs.length} motif${positionalMotifs.length === 1 ? "" : "s"}`}
+              live={isProcessing}
+            />
+
+            <ScanPositionalMotifs
+              motifs={positionalMotifs}
+              isProcessing={isProcessing}
+              showTrainer={scan.status === "ready"}
+              hasProAccess={hasProAccess}
+            />
+          </section>
+        ) : null}
+
+        {positionalMotifs.length > 0 ? (
+          <section id="section-lesson" className="space-y-4">
+            <LessonBuilderSection topMotif={positionalMotifs[0]} />
+          </section>
+        ) : null}
+
         {timePositionalReport.insights.length > 0 ? (
           <section id="section-time-positional" className="space-y-4">
             <SectionHeader
@@ -3438,25 +3468,6 @@ export function ScanSessionReport({
           />
         ) : isProcessing ? (
           <MentalGameLoading />
-        ) : null}
-
-        {positionalMotifs.length > 0 ? (
-          <section id="section-positional" className="space-y-4">
-            <SectionHeader
-              eyebrow="Positional"
-              title="Habits beneath the blunders"
-              description="These quieter patterns show up before the tactical punishment. They are strong follow-up training targets."
-              badge={`${positionalMotifs.length} motif${positionalMotifs.length === 1 ? "" : "s"}`}
-              live={isProcessing}
-            />
-
-            <ScanPositionalMotifs
-              motifs={positionalMotifs}
-              isProcessing={isProcessing}
-              showTrainer={scan.status === "ready"}
-              hasProAccess={hasProAccess}
-            />
-          </section>
         ) : null}
 
         {result ? (
@@ -3494,6 +3505,92 @@ export function ScanSessionReport({
         orientation={analysisTarget?.orientation ?? "white"}
         title={analysisTarget?.title}
         subtitle={analysisTarget?.subtitle}
+      />
+      <ReportLessonModal
+        open={motifLesson !== null}
+        lesson={motifLesson}
+        onClose={() => setMotifLesson(null)}
+      />
+    </>
+  );
+}
+
+function LessonBuilderSection({ topMotif }: { topMotif: DerivedMotif }) {
+  const [lesson, setLesson] = useState<ReportLesson | null>(null);
+
+  const buildLesson = () => {
+    const l: ReportLesson = {
+      id: `motif-lesson-${topMotif.name}`,
+      title: `Fix: ${topMotif.name}`,
+      subtitle: `${topMotif.count}x detected · avg ${(topMotif.avgCpLoss / 100).toFixed(1)} pawn loss`,
+      icon: topMotif.icon,
+      estimatedMinutes: 2,
+      tags: ["positional", topMotif.name.toLowerCase()],
+      slides: [
+        {
+          kind: "text",
+          heading: `Your ${topMotif.name} habit`,
+          body: `The scan found ${topMotif.count} instances where "${topMotif.name}" cost you an average of ~${(topMotif.avgCpLoss / 100).toFixed(1)} pawns each. This section breaks down one concrete example so you can practice spotting the right move.`,
+          insight: topMotif.count >= 3
+            ? "This pattern repeats often enough to be a real habit. Targeted practice here will pay back faster than general improvement."
+            : "Even a few instances of this pattern are worth fixing. One saved blunder can swing a game.",
+        },
+        ...(topMotif.examples.length > 0
+          ? [{
+              kind: "interact" as const,
+              heading: "Find the right move",
+              instruction: `In this position from one of your games, you made a "${topMotif.name}" mistake. What should you have played instead?`,
+              fen: topMotif.examples[0].fenBefore,
+              orientation: topMotif.examples[0].fenBefore.includes(" b ") ? "black" as const : "white" as const,
+              correctMoves: topMotif.examples[0].bestMove ? [topMotif.examples[0].bestMove] : [],
+              correctExplanation: "That's the idea. A quick positional check before committing would have caught this.",
+              wrongExplanation: "Look again — check piece activity, king safety, and pawn structure before deciding.",
+            }]
+          : []),
+        {
+          kind: "text",
+          heading: "The takeaway",
+          body: `${topMotif.icon} ${topMotif.name} cost you ~${(topMotif.avgCpLoss / 100).toFixed(1)} pawns per occurrence across ${topMotif.count} positions. Before each move, pause and ask: is this improving my position or just moving a piece?`,
+          insight: "Positional mistakes compound quietly. Fixing one habit often cleans up several recurring positions at once.",
+        },
+      ],
+    };
+    setLesson(l);
+  };
+
+  return (
+    <>
+      <div className="rounded-[1.5rem] border border-violet-500/20 bg-gradient-to-r from-violet-500/[0.06] to-fuchsia-500/[0.03] p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-500/15 text-2xl">
+              📖
+            </span>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-400/70">
+                Interactive Lesson
+              </p>
+              <h3 className="mt-1 text-lg font-bold text-white">
+                Learn to fix &ldquo;{topMotif.name}&rdquo;
+              </h3>
+              <p className="mt-1 text-sm text-slate-400">
+                A 2-minute interactive lesson built from your own games. Practice finding the right move in the exact positions where this pattern appears.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={buildLesson}
+            className="shrink-0 inline-flex items-center gap-2 rounded-xl border border-violet-500/25 bg-violet-500/[0.12] px-5 py-2.5 text-sm font-bold text-violet-200 hover:border-violet-400/40 hover:bg-violet-500/[0.2] transition-all"
+          >
+            📖 Generate lesson
+          </button>
+        </div>
+      </div>
+      <ReportLessonModal
+        open={lesson !== null}
+        lesson={lesson}
+        onClose={() => setLesson(null)}
       />
     </>
   );
