@@ -20,19 +20,27 @@ type Props = {
 
 function patternLabel(axis: string, pattern: string): string {
   if (axis === "fianchetto" || axis === "doubleFianchetto") {
-    if (pattern === "single") return "Single";
-    if (pattern === "double") return "Double";
+    if (pattern === "single") return "Your Single";
+    if (pattern === "double") return "Your Double";
     if (pattern === "none") return "None";
     if (pattern === "not-double") return "Not Double";
     if (pattern.startsWith("opponent-")) return `Opponent ${pattern.replace("opponent-", "")}`;
   }
-  if (axis === "centerType") return pattern.charAt(0).toUpperCase() + pattern.slice(1);
+  if (axis === "centerType" || axis === "castling") return pattern.charAt(0).toUpperCase() + pattern.slice(1);
   if (axis === "iqp") {
-    if (pattern === "white-iqp") return "White IQP";
-    if (pattern === "black-iqp") return "Black IQP";
+    if (pattern === "user-iqp") return "Your IQP";
+    if (pattern === "opponent-iqp") return "Opponent IQP";
     return "No IQP";
   }
-  if (pattern.startsWith("chain-")) return `${pattern.replace("chain-", "Chain-")}`;
+  if (axis === "pawnStructure") {
+    if (pattern === "shattered") return "Your Shattered";
+    if (pattern === "isolated") return "Your Isolated";
+    if (pattern === "doubled") return "Your Doubled";
+    if (pattern === "healthy") return "Your Healthy";
+    if (pattern === "no-pawns") return "No Pawns";
+    return `Your ${pattern.charAt(0).toUpperCase() + pattern.slice(1)}`;
+  }
+  if (pattern.startsWith("chain-")) return `Chain-${pattern.replace("chain-", "")}`;
   return pattern.charAt(0).toUpperCase() + pattern.slice(1);
 }
 

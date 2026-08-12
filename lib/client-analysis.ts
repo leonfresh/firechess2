@@ -5194,7 +5194,7 @@ export async function analyzeOpeningLeaksInBrowser(
     percent: 100,
   });
 
-  const structuralReport = computeStructuralReport(games);
+  const structuralReport = computeStructuralReport(games, username);
 
   return {
     username,
@@ -5276,7 +5276,7 @@ function classifyCenterType(chess: Chess): string {
   return "semi-open";
 }
 
-function classifyCastling(chess: Chess): string {
+function classifyCastling(chess: Chess, _uc?: "w" | "b"): string {
   const wk = (() => { const k = findKingPos(chess, "w"); return k && k.rank === 1 && (k.file === 2 || k.file === 6); })();
   const bk = (() => { const k = findKingPos(chess, "b"); return k && k.rank === 8 && (k.file === 2 || k.file === 6); })();
   if (!wk && !bk) return "none";
@@ -5326,12 +5326,19 @@ function classifyPawnStructure(chess: Chess, color: "w" | "b"): string {
   return "healthy";
 }
 
-/** Replay a game's moves through chess.js up to ply 15 and classify structural features. */
-function classifyGameStructure(moves: string, winner: string | null | undefined): Record<string, string> {
+/** Replay a game's moves through chess.js up to ply 15 and classify structural features.
+ *  userColor MUST be the user's actual color — not hardcoded to white. */
+function classifyGameStructure(
+  moves: string,
+  winner: string | null | undefined,
+  userColor: "white" | "black",
+): Record<string, string> {
   const clean = moves.replace(/\s*(1-0|0-1|1\/2-1\/2)\s*$/, "").trim();
   const tokens = clean.split(/\s+/);
   const chess = new Chess();
   let ply = 0;
+  const uc: "w" | "b" = userColor === "white" ? "w" : "b";
+  const oc: "w" | "b" = uc === "w" ? "b" : "w";
 
   for (const token of tokens) {
     if (!token || /^\d+\./.test(token)) continue;
@@ -5339,20 +5346,19 @@ function classifyGameStructure(moves: string, winner: string | null | undefined)
       const r = chess.move(token);
       if (r) ply++;
     } catch { /* skip non-move tokens */ }
-    // Classify at ply 15 (structures settled)
     if (ply === 15) {
-      const uc: "w" | "b" = "w"; // user is always white from this perspective
       const uFianc = hasFianc(chess, uc, "kingside") && hasFianc(chess, uc, "queenside") ? "double"
         : hasFianc(chess, uc, "kingside") || hasFianc(chess, uc, "queenside") ? "single" : "none";
-      const oFianc = hasFianc(chess, "b", "kingside") || hasFianc(chess, "b", "queenside") ? true : false;
+      const oFianc = hasFianc(chess, oc, "kingside") || hasFianc(chess, oc, "queenside");
       return {
         fianchetto: uFianc,
         opponentFianchetto: oFianc ? "yes" : "no",
         doubleFianchetto: uFianc === "double" ? "double" : "not-double",
         centerType: classifyCenterType(chess),
-        castling: classifyCastling(chess),
-        iqp: hasIQP(chess, "w") ? "white-iqp" : hasIQP(chess, "b") ? "black-iqp" : "none",
+        castling: classifyCastling(chess, uc),
+        iqp: hasIQP(chess, uc) ? "user-iqp" : hasIQP(chess, oc) ? "opponent-iqp" : "none",
         pawnStructure: classifyPawnStructure(chess, uc),
+        opponentPawnStructure: classifyPawnStructure(chess, oc),
       };
     }
   }
@@ -5360,34 +5366,41 @@ function classifyGameStructure(moves: string, winner: string | null | undefined)
 }
 
 export function computeStructuralReport(
-  games: { moves: string; winner?: string | null }[],
+  games: { moves: string; winner?: string | null; whiteName?: string; blackName?: string }[],
+  username: string,
 ): StructuralReport | null {
   const data: Record<string, Record<string, { games: number; wins: number; draws: number; losses: number }>> = {};
   const MIN_GAMES = 3;
   let classified = 0;
+  const target = username.toLowerCase().trim();
 
-  const record = (axis: string, pattern: string, winner: string | null | undefined) => {
+  const record = (axis: string, pattern: string, isUserWin: boolean | null) => {
     if (!data[axis]) data[axis] = {};
     if (!data[axis][pattern]) data[axis][pattern] = { games: 0, wins: 0, draws: 0, losses: 0 };
     const s = data[axis][pattern];
     s.games++;
-    if (winner === "draw") s.draws++;
-    else if (winner === "white") s.wins++;
+    if (isUserWin === null) s.draws++;
+    else if (isUserWin) s.wins++;
     else s.losses++;
   };
 
   for (const game of games) {
     if (!game.moves) continue;
-    const result = classifyGameStructure(game.moves, game.winner);
+    const userColor: "white" | "black" =
+      game.whiteName && game.whiteName.toLowerCase().trim() === target ? "white" : "black";
+    const isDraw = !game.winner || game.winner === "draw";
+    const isUserWin = isDraw ? null : game.winner === userColor;
+
+    const result = classifyGameStructure(game.moves, game.winner, userColor);
     if (!result.fianchetto) continue;
     classified++;
 
-    record("fianchetto", result.fianchetto, game.winner);
-    record("centerType", result.centerType, game.winner);
-    record("castling", result.castling, game.winner);
-    record("iqp", result.iqp, game.winner);
-    record("doubleFianchetto", result.doubleFianchetto, game.winner);
-    record("pawnStructure", result.pawnStructure, game.winner);
+    record("fianchetto", result.fianchetto, isUserWin);
+    record("centerType", result.centerType, isUserWin);
+    record("castling", result.castling, isUserWin);
+    record("iqp", result.iqp, isUserWin);
+    record("doubleFianchetto", result.doubleFianchetto, isUserWin);
+    record("pawnStructure", result.pawnStructure, isUserWin);
   }
 
   if (classified < MIN_GAMES) return null;
