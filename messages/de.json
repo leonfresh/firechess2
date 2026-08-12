@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "title": "FireChess — Kostenlose Schachanalyse & Eröffnungsscanner",
+    "description": "Scanne deine Schachpartien kostenlos. Finde Eröffnungsfehler, verpasste Taktiken, Endspielfehler und Zeitmanagement-Probleme. Funktioniert mit Lichess und Chess.com."
+  },
+  "nav": {
+    "scan": "Scannen",
+    "pricing": "Preise",
+    "learn": "Lernen",
+    "train": "Trainieren",
+    "dashboard": "Dashboard",
+    "login": "Anmelden",
+    "start": "Loslegen"
+  },
+  "home": {
+    "hero": "Finde heraus, warum du verlierst",
+    "subhero": "Scanne deine Partien gegen Stockfish 18. Eröffnungsfehler, verpasste Taktiken, Endspielpatzer — alles in einem Bericht.",
+    "cta": "Scanne deine Partien kostenlos",
+    "usernamePlaceholder": "Dein Lichess- oder Chess.com-Benutzername"
+  }
+}

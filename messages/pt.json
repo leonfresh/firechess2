@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "title": "FireChess — Análise de Xadrez Grátis e Scanner de Aberturas",
+    "description": "Escaneie suas partidas de xadrez gratuitamente. Encontre falhas de abertura, táticas perdidas, erros de final e problemas de gestão de tempo. Funciona com Lichess e Chess.com."
+  },
+  "nav": {
+    "scan": "Escanear",
+    "pricing": "Preços",
+    "learn": "Aprender",
+    "train": "Treinar",
+    "dashboard": "Painel",
+    "login": "Entrar",
+    "start": "Começar"
+  },
+  "home": {
+    "hero": "Descubra por que você está perdendo",
+    "subhero": "Escaneie suas partidas contra o Stockfish 18. Falhas de abertura, táticas perdidas, erros de final — tudo em um relatório.",
+    "cta": "Escaneie suas partidas grátis",
+    "usernamePlaceholder": "Seu nome de usuário no Lichess ou Chess.com"
+  }
+}

@@ -15,6 +15,9 @@ import { Analytics } from "@vercel/analytics/next";
 import { GoogleTranslate } from "@/components/google-translate";
 import { RefTracker } from "@/components/ref-tracker";
 import { Suspense } from "react";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
+import { routing } from "@/i18n/routing";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -91,6 +94,14 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "https://firechess.com",
+    languages: {
+      en: "https://firechess.com",
+      es: "https://firechess.com/es",
+      de: "https://firechess.com/de",
+      fr: "https://firechess.com/fr",
+      pt: "https://firechess.com/pt",
+      ru: "https://firechess.com/ru",
+    },
   },
   manifest: "/manifest.webmanifest",
   // Uncomment and fill in after registering with Google Search Console:
@@ -99,16 +110,19 @@ export const metadata: Metadata = {
   // },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const messages = await getMessages();
+
   return (
     <html lang="en">
       <body
         className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} font-sans`}
       >
+        <NextIntlClientProvider messages={messages}>
         <OrganizationJsonLd />
         <WebApplicationJsonLd />
         <WebSiteJsonLd />
@@ -438,6 +452,7 @@ export default function RootLayout({
             }}
           />
         )}
+        </NextIntlClientProvider>
       </body>
     </html>
   );

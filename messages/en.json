@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "title": "FireChess — Free Chess Analysis & Opening Scanner",
+    "description": "Scan your chess games for free. Find opening leaks, missed tactics, endgame mistakes, and clock management issues. Works with Lichess and Chess.com."
+  },
+  "nav": {
+    "scan": "Scan",
+    "pricing": "Pricing",
+    "learn": "Learn",
+    "train": "Train",
+    "dashboard": "Dashboard",
+    "login": "Sign in",
+    "start": "Get started"
+  },
+  "home": {
+    "hero": "Find out why you're losing",
+    "subhero": "Scan your games against Stockfish 18. Opening leaks, missed tactics, endgame blunders — all in one report.",
+    "cta": "Scan your games free",
+    "usernamePlaceholder": "Your Lichess or Chess.com username"
+  }
+}

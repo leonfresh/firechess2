@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "title": "FireChess — Analyse d'échecs gratuite et scanner d'ouvertures",
+    "description": "Scannez vos parties d'échecs gratuitement. Trouvez les fuites d'ouverture, les tactiques manquées, les erreurs de finale et les problèmes de gestion du temps. Compatible avec Lichess et Chess.com."
+  },
+  "nav": {
+    "scan": "Scanner",
+    "pricing": "Tarifs",
+    "learn": "Apprendre",
+    "train": "S'entraîner",
+    "dashboard": "Tableau de bord",
+    "login": "Connexion",
+    "start": "Commencer"
+  },
+  "home": {
+    "hero": "Découvrez pourquoi vous perdez",
+    "subhero": "Scannez vos parties contre Stockfish 18. Fuites d'ouverture, tactiques manquées, erreurs de finale — tout dans un seul rapport.",
+    "cta": "Scannez vos parties gratuitement",
+    "usernamePlaceholder": "Votre pseudo Lichess ou Chess.com"
+  }
+}
