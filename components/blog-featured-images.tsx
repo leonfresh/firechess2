@@ -98,6 +98,44 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <ReviewGamesArt />;
     case "my-opening-tree-chess-repertoire":
       return <OpeningTreeArt />;
+    case "caro-kann-defense-guide":
+      return <CaroKannArt />;
+    case "chess-accuracy-by-rating-guide":
+      return <AccuracyRatingArt />;
+    case "chess-blunder-patterns-by-rating":
+      return <BlunderPatternsArt />;
+    case "chess-gambits-for-club-players":
+      return <GambitsArt />;
+    case "chess-improvement-metrics-to-track":
+      return <MetricsArt />;
+    case "chess-improvement-mistakes-club-players":
+      return <ImprovementMistakesArt />;
+    case "chess-pattern-recognition":
+      return <PatternRecognitionArt />;
+    case "chess-pawn-structure-guide":
+      return <PawnStructureArt />;
+    case "chess-skill-levels-explained":
+      return <SkillLevelsArt />;
+    case "chess-thinking-process":
+      return <ThinkingProcessArt />;
+    case "how-long-to-get-good-at-chess":
+      return <HowLongArt />;
+    case "how-to-analyze-chess-games-guide":
+      return <AnalyzeGuideArt />;
+    case "how-to-prepare-for-chess-tournament":
+      return <TournamentPrepArt />;
+    case "how-to-read-chess-engine-analysis":
+      return <EngineReadArt />;
+    case "king-and-pawn-endgames-guide":
+      return <KingPawnEndgameArt />;
+    case "pawn-tension-chess-guide":
+      return <PawnTensionArt />;
+    case "rook-endgames-guide-club-players":
+      return <RookEndgameArt />;
+    case "skill-gap-between-rating-levels":
+      return <SkillGapArt />;
+    case "stop-repeating-chess-mistakes":
+      return <StopRepeatingArt />;
     default:
       return <DefaultArt />;
   }
@@ -2863,6 +2901,765 @@ function OpeningTreeArt() {
       {[[60,50],[340,40],[200,30],[120,200],[280,190]].map(([x,y],i) => (
         <circle key={`sp${i}`} cx={x} cy={y} r={1.2} fill="#4ade80" fillOpacity={0.2+i*0.05}>
           <animate attributeName="opacity" values={`0.25;0.05;0.25`} dur={`${2+i*0.5}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Batch: previously-default posts                                    */
+/* ================================================================== */
+
+/* Caro-Kann: solid pawn wall c6/d5 with a knight peeking over */
+function CaroKannArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ck-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#101a14" /><stop offset="1" stopColor="#0a1410" />
+        </linearGradient>
+        <radialGradient id="ck-glow" cx="200" cy="110" r="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#10b981" stopOpacity="0.2" /><stop offset="1" stopColor="#10b981" stopOpacity="0" />
+        </radialGradient>
+        <filter id="ck-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#ck-bg)" />
+      <rect width="400" height="200" fill="url(#ck-glow)" />
+      {/* pawn chain: c6-d5 wedge */}
+      <g filter="url(#ck-f)">
+        {/* c6 pawn */}
+        <g transform="translate(160,80)">
+          <circle cx="0" cy="-14" r="8" fill="#34d399" />
+          <path d="M-9,10 C-9,-2 -5,-6 0,-6 C5,-6 9,-2 9,10 Z" fill="#34d399" />
+          <rect x="-12" y="10" width="24" height="5" rx="2" fill="#34d399" />
+        </g>
+        {/* d5 pawn */}
+        <g transform="translate(230,65)">
+          <circle cx="0" cy="-14" r="8" fill="#6ee7b7" />
+          <path d="M-9,10 C-9,-2 -5,-6 0,-6 C5,-6 9,-2 9,10 Z" fill="#6ee7b7" />
+          <rect x="-12" y="10" width="24" height="5" rx="2" fill="#6ee7b7" />
+        </g>
+      </g>
+      {/* knight silhouette behind */}
+      <path d="M120,150 C118,128 128,118 138,112 C134,104 136,96 144,92 C142,86 146,80 152,80 C158,80 160,86 158,90 C168,94 172,104 170,114 C178,120 182,132 180,150 Z"
+        fill="#065f46" stroke="#34d399" strokeWidth="1.5" strokeOpacity="0.6" />
+      {/* diagonal structure lines */}
+      <line x1="160" y1="95" x2="230" y2="80" stroke="#34d399" strokeWidth="1" strokeOpacity="0.4" strokeDasharray="4 3" />
+      {/* white pawn approaching */}
+      <g transform="translate(290,140)" opacity="0.85">
+        <circle cx="0" cy="-14" r="8" fill="#e2e8f0" />
+        <path d="M-9,10 C-9,-2 -5,-6 0,-6 C5,-6 9,-2 9,10 Z" fill="#e2e8f0" />
+        <rect x="-12" y="10" width="24" height="5" rx="2" fill="#e2e8f0" />
+      </g>
+      <text x="200" y="180" textAnchor="middle" fill="#34d399" fontSize="11" fontWeight="700" letterSpacing="3" fillOpacity="0.7">1. e4 c6</text>
+      {[[70,50],[330,45],[300,170],[95,175]].map(([x,y],i) => (
+        <circle key={`ck${i}`} cx={x} cy={y} r={1.2} fill="#34d399" fillOpacity={0.25+i*0.05}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2.2+i*0.4}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* Accuracy by rating: rising gauge + rating steps */
+function AccuracyRatingArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ar-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0e1424" /><stop offset="1" stopColor="#0a1020" />
+        </linearGradient>
+        <radialGradient id="ar-glow" cx="200" cy="100" r="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#38bdf8" stopOpacity="0.2" /><stop offset="1" stopColor="#38bdf8" stopOpacity="0" />
+        </radialGradient>
+        <filter id="ar-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#ar-bg)" />
+      <rect width="400" height="200" fill="url(#ar-glow)" />
+      {/* ascending bars with accuracy % */}
+      {[68,74,81,87,92].map((v,i) => (
+        <g key={i}>
+          <rect x={90+i*46} y={150-v} width="30" height={v} rx="3" fill="#38bdf8" fillOpacity={0.25+i*0.12} />
+          <text x={105+i*46} y={146-v} textAnchor="middle" fill="#7dd3fc" fontSize="9" fontWeight="700">{v}%</text>
+          <text x={105+i*46} y="162" textAnchor="middle" fill="#475569" fontSize="8">{800+i*400}</text>
+        </g>
+      ))}
+      {/* rising trend line */}
+      <path d="M95,120 C160,110 240,85 305,55" fill="none" stroke="#7dd3fc" strokeWidth="2" filter="url(#ar-f)" />
+      <circle cx="305" cy="55" r="4" fill="#7dd3fc" filter="url(#ar-f)" />
+      {[[60,45],[340,40],[200,35],[120,185]].map(([x,y],i) => (
+        <circle key={`ar${i}`} cx={x} cy={y} r={1.2} fill="#38bdf8" fillOpacity={0.25+i*0.05}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2+i*0.5}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* Blunder patterns: warning triangles cascading by rating */
+function BlunderPatternsArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bp-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#1c1010" /><stop offset="1" stopColor="#140b0b" />
+        </linearGradient>
+        <radialGradient id="bp-glow" cx="200" cy="100" r="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#ef4444" stopOpacity="0.2" /><stop offset="1" stopColor="#ef4444" stopOpacity="0" />
+        </radialGradient>
+        <filter id="bp-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#bp-bg)" />
+      <rect width="400" height="200" fill="url(#bp-glow)" />
+      {/* falling blunder marks by rating band */}
+      {[0,1,2,3].map(i => (
+        <g key={i}>
+          <path d={`M${105+i*60},${120-i*14} l14,24 h-28 Z`} fill="none" stroke="#f87171" strokeWidth="2" strokeOpacity={0.9-i*0.18} filter="url(#bp-f)" />
+          <text x={105+i*60} y={140-i*14} textAnchor="middle" fill="#fca5a5" fontSize="11" fontWeight="800">!</text>
+          <text x={105+i*60} y="172" textAnchor="middle" fill="#475569" fontSize="8">{["800","1400","2000","2400"][i]}</text>
+        </g>
+      ))}
+      {/* downward count */}
+      <text x="200" y="60" textAnchor="middle" fill="#f87171" fontSize="12" fontWeight="700" letterSpacing="2" fillOpacity="0.8">BLUNDERS PER 100 MOVES</text>
+      <path d="M110,72 L290,72" stroke="#7f1d1d" strokeWidth="1" strokeOpacity="0.5" />
+      {[[65,55],[335,50],[300,180],[90,185]].map(([x,y],i) => (
+        <circle key={`bp${i}`} cx={x} cy={y} r={1.2} fill="#ef4444" fillOpacity={0.25+i*0.05}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2.4+i*0.4}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* Gambits: pawn offered on a plate, flame trail */
+function GambitsArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="gb-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#161021" /><stop offset="1" stopColor="#0f0a18" />
+        </linearGradient>
+        <radialGradient id="gb-glow" cx="200" cy="105" r="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#a855f7" stopOpacity="0.22" /><stop offset="1" stopColor="#a855f7" stopOpacity="0" />
+        </radialGradient>
+        <filter id="gb-f"><feGaussianBlur stdDeviation="4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#gb-bg)" />
+      <rect width="400" height="200" fill="url(#gb-glow)" />
+      {/* sacrificed pawn with flame trail */}
+      <g transform="translate(200,105)" filter="url(#gb-f)">
+        <circle cx="0" cy="-18" r="10" fill="#c084fc" />
+        <path d="M-11,12 C-11,-3 -6,-8 0,-8 C6,-8 11,-3 11,12 Z" fill="#c084fc" />
+        <rect x="-14" y="12" width="28" height="6" rx="2.5" fill="#c084fc" />
+      </g>
+      {/* flames */}
+      <path d="M170,130 C165,112 172,100 178,94 C176,104 184,108 182,118 C190,112 194,120 190,130 Z" fill="#f59e0b" fillOpacity="0.8" />
+      <path d="M222,132 C220,116 228,106 234,102 C232,110 239,114 237,122 C244,118 247,125 243,132 Z" fill="#f97316" fillOpacity="0.7" />
+      {/* decline/accept arrows */}
+      <path d="M145,80 C160,70 175,68 188,74" fill="none" stroke="#4ade80" strokeWidth="1.5" strokeOpacity="0.6" markerEnd="url(#gb-arr)" />
+      <path d="M255,78 C242,70 228,68 214,73" fill="none" stroke="#f87171" strokeWidth="1.5" strokeOpacity="0.6" />
+      <text x="138" y="76" fill="#4ade80" fontSize="8" fontWeight="700" fillOpacity="0.7">ACCEPT?</text>
+      <text x="252" y="72" fill="#f87171" fontSize="8" fontWeight="700" fillOpacity="0.7">DECLINE?</text>
+      {[[70,50],[330,45],[200,35],[110,180],[290,175]].map(([x,y],i) => (
+        <circle key={`gb${i}`} cx={x} cy={y} r={1.2} fill="#a855f7" fillOpacity={0.2+i*0.05}>
+          <animate attributeName="opacity" values="0.28;0.07;0.28" dur={`${2.1+i*0.5}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* Metrics to track: dashboard tiles with sparkline */
+function MetricsArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="mt-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0d1420" /><stop offset="1" stopColor="#0a1018" />
+        </linearGradient>
+        <radialGradient id="mt-glow" cx="200" cy="100" r="120" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#f97316" stopOpacity="0.16" /><stop offset="1" stopColor="#f97316" stopOpacity="0" />
+        </radialGradient>
+        <filter id="mt-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#mt-bg)" />
+      <rect width="400" height="200" fill="url(#mt-glow)" />
+      {/* metric cards */}
+      {[
+        { x: 95, label: "ACPL", val: "42", color: "#fb923c" },
+        { x: 175, label: "ACCURACY", val: "81%", color: "#38bdf8" },
+        { x: 255, label: "BLUNDERS", val: "3", color: "#f87171" },
+      ].map((c,i) => (
+        <g key={i}>
+          <rect x={c.x} y="70" width="66" height="52" rx="6" fill="#0f172a" stroke="#1e293b" strokeWidth="1" />
+          <text x={c.x+33} y="88" textAnchor="middle" fill="#475569" fontSize="7" fontWeight="700" letterSpacing="1">{c.label}</text>
+          <text x={c.x+33} y="110" textAnchor="middle" fill={c.color} fontSize="15" fontWeight="800" filter="url(#mt-f)">{c.val}</text>
+        </g>
+      ))}
+      {/* sparkline under */}
+      <path d="M95,150 C130,142 160,152 195,140 C230,128 260,146 305,132" fill="none" stroke="#fb923c" strokeWidth="1.5" strokeOpacity="0.7" />
+      {[95,145,195,245,305].map((x,i) => (
+        <circle key={`mtp${i}`} cx={x} cy={[150,146,140,138,132][i]} r="2" fill="#fb923c" fillOpacity="0.8" />
+      ))}
+      {[[60,45],[340,40],[200,32]].map(([x,y],i) => (
+        <circle key={`mt${i}`} cx={x} cy={y} r={1.2} fill="#f97316" fillOpacity={0.25+i*0.05}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2.3+i*0.4}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* Improvement mistakes: loop with a break */
+function ImprovementMistakesArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="im-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#12141c" /><stop offset="1" stopColor="#0c0e14" />
+        </linearGradient>
+        <radialGradient id="im-glow" cx="200" cy="100" r="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#f43f5e" stopOpacity="0.16" /><stop offset="1" stopColor="#f43f5e" stopOpacity="0" />
+        </radialGradient>
+        <filter id="im-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#im-bg)" />
+      <rect width="400" height="200" fill="url(#im-glow)" />
+      {/* circular loop arrow */}
+      <path d="M200,55 A45,45 0 1 1 155,100" fill="none" stroke="#64748b" strokeWidth="2.5" strokeOpacity="0.5" />
+      <path d="M152,92 L155,102 L164,96" fill="none" stroke="#64748b" strokeWidth="2.5" strokeOpacity="0.5" />
+      {/* break point with X */}
+      <g filter="url(#im-f)">
+        <circle cx="200" cy="55" r="11" fill="#f43f5e" fillOpacity="0.25" />
+        <path d="M195,50 L205,60 M205,50 L195,60" stroke="#fb7185" strokeWidth="2.5" strokeLinecap="round" />
+      </g>
+      {/* escape arrow upward */}
+      <path d="M200,44 C200,30 210,26 224,24" fill="none" stroke="#4ade80" strokeWidth="2" strokeOpacity="0.8" />
+      <path d="M218,20 L226,23 L221,29" fill="none" stroke="#4ade80" strokeWidth="2" strokeOpacity="0.8" />
+      <text x="236" y="28" fill="#4ade80" fontSize="9" fontWeight="700" fillOpacity="0.8">FIX IT</text>
+      <text x="200" y="165" textAnchor="middle" fill="#64748b" fontSize="9" fillOpacity="0.7">the same mistake, every month</text>
+      {[[70,50],[330,45],[120,180],[290,178]].map(([x,y],i) => (
+        <circle key={`im${i}`} cx={x} cy={y} r={1.2} fill="#f43f5e" fillOpacity={0.22+i*0.05}>
+          <animate attributeName="opacity" values="0.28;0.07;0.28" dur={`${2+i*0.5}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* Pattern recognition: motif tiles, one highlighted */
+function PatternRecognitionArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="pr-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0e121e" /><stop offset="1" stopColor="#0a0e16" />
+        </linearGradient>
+        <radialGradient id="pr-glow" cx="200" cy="100" r="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#818cf8" stopOpacity="0.2" /><stop offset="1" stopColor="#818cf8" stopOpacity="0" />
+        </radialGradient>
+        <filter id="pr-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#pr-bg)" />
+      <rect width="400" height="200" fill="url(#pr-glow)" />
+      {/* motif symbols row: fork pin skewer discovered */}
+      {[
+        { icon: "⑂", label: "FORK" },
+        { icon: "⇤", label: "PIN" },
+        { icon: "⊳", label: "SKEWER" },
+        { icon: "◎", label: "DISC." },
+      ].map((m,i) => (
+        <g key={i}>
+          <rect x={92+i*58} y="72" width="46" height="52" rx="6"
+            fill={i===1 ? "#818cf8" : "#0f172a"} fillOpacity={i===1 ? 0.15 : 1}
+            stroke={i===1 ? "#818cf8" : "#1e293b"} strokeWidth={i===1 ? 1.5 : 1}
+            filter={i===1 ? "url(#pr-f)" : undefined} />
+          <text x={115+i*58} y="104" textAnchor="middle" fill={i===1 ? "#a5b4fc" : "#475569"} fontSize="20">{m.icon}</text>
+          <text x={115+i*58} y="136" textAnchor="middle" fill={i===1 ? "#a5b4fc" : "#475569"} fontSize="7" fontWeight="700" letterSpacing="1">{m.label}</text>
+        </g>
+      ))}
+      {/* neural connect lines */}
+      <path d="M115,72 C140,50 180,48 200,44 M173,72 C190,56 210,52 230,50" fill="none" stroke="#818cf8" strokeWidth="0.8" strokeOpacity="0.35" strokeDasharray="3 3" />
+      {[[60,50],[340,45],[200,170],[120,175]].map(([x,y],i) => (
+        <circle key={`pr${i}`} cx={x} cy={y} r={1.2} fill="#818cf8" fillOpacity={0.25+i*0.05}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2.2+i*0.4}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* Pawn structure: chains, islands marked */
+function PawnStructureArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ps-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#141610" /><stop offset="1" stopColor="#0e100c" />
+        </linearGradient>
+        <radialGradient id="ps-glow" cx="200" cy="100" r="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#a3e635" stopOpacity="0.14" /><stop offset="1" stopColor="#a3e635" stopOpacity="0" />
+        </radialGradient>
+        <filter id="ps-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#ps-bg)" />
+      <rect width="400" height="200" fill="url(#ps-glow)" />
+      {/* pawn chain ascending */}
+      {[[140,130],[175,110],[210,90],[245,70]].map(([x,y],i) => (
+        <g key={i} transform={`translate(${x},${y})`} opacity={0.65+i*0.12}>
+          <circle cx="0" cy="-9" r="5.5" fill="#bef264" />
+          <path d="M-6.5,7 C-6.5,-1 -3.5,-4 0,-4 C3.5,-4 6.5,-1 6.5,7 Z" fill="#bef264" />
+          <rect x="-8" y="7" width="16" height="3.5" rx="1.5" fill="#bef264" />
+        </g>
+      ))}
+      {/* chain connection */}
+      <path d="M140,124 L175,104 L210,84 L245,64" stroke="#a3e635" strokeWidth="1" strokeOpacity="0.4" strokeDasharray="4 3" fill="none" />
+      {/* isolated pawn marked weak */}
+      <g transform="translate(295,135)">
+        <circle cx="0" cy="-9" r="5.5" fill="#e2e8f0" />
+        <path d="M-6.5,7 C-6.5,-1 -3.5,-4 0,-4 C3.5,-4 6.5,-1 6.5,7 Z" fill="#e2e8f0" />
+        <rect x="-8" y="7" width="16" height="3.5" rx="1.5" fill="#e2e8f0" />
+        <circle cx="0" cy="0" r="16" fill="none" stroke="#f87171" strokeWidth="1.5" strokeOpacity="0.7" strokeDasharray="3 3" filter="url(#ps-f)" />
+      </g>
+      <text x="295" y="170" textAnchor="middle" fill="#f87171" fontSize="8" fontWeight="700" fillOpacity="0.7">ISOLATED</text>
+      <text x="185" y="160" textAnchor="middle" fill="#a3e635" fontSize="8" fontWeight="700" fillOpacity="0.6">CHAIN</text>
+      {[[65,48],[335,42],[110,180]].map(([x,y],i) => (
+        <circle key={`ps${i}`} cx={x} cy={y} r={1.2} fill="#a3e635" fillOpacity={0.22+i*0.05}>
+          <animate attributeName="opacity" values="0.26;0.07;0.26" dur={`${2.4+i*0.4}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* Skill levels: ascending stair with pieces */
+function SkillLevelsArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="sl-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#10121c" /><stop offset="1" stopColor="#0b0d15" />
+        </linearGradient>
+        <radialGradient id="sl-glow" cx="200" cy="100" r="120" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#fbbf24" stopOpacity="0.16" /><stop offset="1" stopColor="#fbbf24" stopOpacity="0" />
+        </radialGradient>
+        <filter id="sl-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#sl-bg)" />
+      <rect width="400" height="200" fill="url(#sl-glow)" />
+      {/* stairs */}
+      {[0,1,2,3].map(i => (
+        <g key={i}>
+          <rect x={95+i*55} y={150-i*28} width="55" height={20+i*28} fill="#1e293b" fillOpacity={0.4+i*0.15} stroke="#334155" strokeWidth="0.5" />
+          <text x={122+i*55} y="168" textAnchor="middle" fill="#64748b" fontSize="8" fontWeight="700">{["800","1400","2000","2600"][i]}</text>
+        </g>
+      ))}
+      {/* piece glyphs on steps: pawn knight bishop queen */}
+      {["♙","♞","♝","♛"].map((p,i) => (
+        <text key={i} x={122+i*55} y={138-i*28} textAnchor="middle" fontSize="22"
+          fill={["#94a3b8","#7dd3fc","#c4b5fd","#fbbf24"][i]}
+          filter={i===3 ? "url(#sl-f)" : undefined}>{p}</text>
+      ))}
+      {[[60,45],[340,40],[200,30]].map(([x,y],i) => (
+        <circle key={`sl${i}`} cx={x} cy={y} r={1.2} fill="#fbbf24" fillOpacity={0.22+i*0.05}>
+          <animate attributeName="opacity" values="0.28;0.07;0.28" dur={`${2.1+i*0.5}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* Thinking process: branching candidate moves with checkmark path */
+function ThinkingProcessArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="tp-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0f141c" /><stop offset="1" stopColor="#0b0f14" />
+        </linearGradient>
+        <radialGradient id="tp-glow" cx="200" cy="100" r="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#2dd4bf" stopOpacity="0.18" /><stop offset="1" stopColor="#2dd4bf" stopOpacity="0" />
+        </radialGradient>
+        <filter id="tp-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#tp-bg)" />
+      <rect width="400" height="200" fill="url(#tp-glow)" />
+      {/* decision tree */}
+      <circle cx="110" cy="100" r="6" fill="#2dd4bf" filter="url(#tp-f)" />
+      {[[170,65],[170,100],[170,135]].map(([x,y],i) => (
+        <g key={i}>
+          <line x1="116" y1="100" x2={x-6} y2={y} stroke={i===1 ? "#2dd4bf" : "#334155"} strokeWidth={i===1 ? 2 : 1.2} strokeOpacity={i===1 ? 0.8 : 0.5} />
+          <circle cx={x} cy={y} r="5" fill={i===1 ? "#2dd4bf" : "#1e293b"} stroke={i===1 ? "#5eead4" : "#334155"} strokeWidth="1" />
+        </g>
+      ))}
+      {/* second level on chosen branch */}
+      {[[240,85],[240,115]].map(([x,y],i) => (
+        <g key={`b${i}`}>
+          <line x1="175" y1="100" x2={x-5} y2={y} stroke="#2dd4bf" strokeWidth="1.5" strokeOpacity="0.6" />
+          <circle cx={x} cy={y} r="4.5" fill="#134e4a" stroke="#2dd4bf" strokeWidth="1" />
+        </g>
+      ))}
+      <path d="M248,85 L300,85" stroke="#2dd4bf" strokeWidth="1.5" strokeOpacity="0.5" strokeDasharray="4 3" />
+      {/* checkmark */}
+      <path d="M305,82 l5,6 l10,-11" fill="none" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round" filter="url(#tp-f)" />
+      <text x="110" y="126" textAnchor="middle" fill="#475569" fontSize="8">POSITION</text>
+      <text x="170" y="156" textAnchor="middle" fill="#475569" fontSize="8">CANDIDATES</text>
+      <text x="288" y="70" fill="#5eead4" fontSize="8" fontWeight="700" fillOpacity="0.7">EVALUATE</text>
+      {[[65,50],[340,45],[200,175]].map(([x,y],i) => (
+        <circle key={`tp${i}`} cx={x} cy={y} r={1.2} fill="#2dd4bf" fillOpacity={0.25+i*0.05}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2.3+i*0.4}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* How long to get good: hourglass + rising curve */
+function HowLongArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="hl-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#131019" /><stop offset="1" stopColor="#0d0a12" />
+        </linearGradient>
+        <radialGradient id="hl-glow" cx="200" cy="100" r="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#e879f9" stopOpacity="0.16" /><stop offset="1" stopColor="#e879f9" stopOpacity="0" />
+        </radialGradient>
+        <filter id="hl-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#hl-bg)" />
+      <rect width="400" height="200" fill="url(#hl-glow)" />
+      {/* hourglass */}
+      <g stroke="#e879f9" strokeWidth="2" strokeOpacity="0.7" fill="none" filter="url(#hl-f)">
+        <path d="M130,60 L170,60 L150,100 Z" />
+        <path d="M130,140 L170,140 L150,100 Z" />
+      </g>
+      {/* sand */}
+      <path d="M138,68 L162,68 L150,92 Z" fill="#e879f9" fillOpacity="0.5" />
+      <path d="M140,132 L160,132 L150,108 Z" fill="#e879f9" fillOpacity="0.7" />
+      <line x1="150" y1="95" x2="150" y2="105" stroke="#f0abfc" strokeWidth="1.5">
+        <animate attributeName="opacity" values="1;0.3;1" dur="1.2s" repeatCount="indefinite" />
+      </line>
+      {/* rising skill curve */}
+      <path d="M210,140 C250,138 270,110 300,80 C312,67 322,60 330,58" fill="none" stroke="#4ade80" strokeWidth="2" strokeOpacity="0.8" />
+      <path d="M324,56 L332,57 L328,64" fill="none" stroke="#4ade80" strokeWidth="2" strokeOpacity="0.8" />
+      <text x="255" y="158" fill="#475569" fontSize="8">HOURS IN →</text>
+      <text x="236" y="72" fill="#4ade80" fontSize="8" fontWeight="700" fillOpacity="0.7" transform="rotate(-24 236 72)">RATING</text>
+      {[[65,50],[335,45],[200,35],[115,175]].map(([x,y],i) => (
+        <circle key={`hl${i}`} cx={x} cy={y} r={1.2} fill="#e879f9" fillOpacity={0.22+i*0.05}>
+          <animate attributeName="opacity" values="0.26;0.07;0.26" dur={`${2.2+i*0.5}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* Analyze games guide: checklist over board corner */
+function AnalyzeGuideArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ag-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0d1218" /><stop offset="1" stopColor="#090d12" />
+        </linearGradient>
+        <radialGradient id="ag-glow" cx="200" cy="100" r="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#22d3ee" stopOpacity="0.16" /><stop offset="1" stopColor="#22d3ee" stopOpacity="0" />
+        </radialGradient>
+        <filter id="ag-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#ag-bg)" />
+      <rect width="400" height="200" fill="url(#ag-glow)" />
+      {/* checklist card */}
+      <rect x="130" y="52" width="140" height="100" rx="8" fill="#0f172a" stroke="#1e293b" strokeWidth="1" />
+      {["Find the turning point","Compare your move vs best","Name the pattern"].map((t,i) => (
+        <g key={i}>
+          <rect x="142" y={66+i*26} width="12" height="12" rx="3" fill="none" stroke="#22d3ee" strokeWidth="1.5" strokeOpacity="0.7" />
+          <path d={`M144,${72+i*26} l3,3 l5,-6`} fill="none" stroke="#4ade80" strokeWidth="1.8" strokeLinecap="round" />
+          <text x="162" y={76+i*26} fill="#94a3b8" fontSize="8.5">{t}</text>
+        </g>
+      ))}
+      {/* magnifier corner */}
+      <circle cx="282" cy="140" r="16" fill="none" stroke="#67e8f9" strokeWidth="2.5" strokeOpacity="0.7" filter="url(#ag-f)" />
+      <line x1="293" y1="151" x2="306" y2="164" stroke="#67e8f9" strokeWidth="4" strokeOpacity="0.7" strokeLinecap="round" />
+      {[[65,48],[340,42],[200,32],[105,178]].map(([x,y],i) => (
+        <circle key={`ag${i}`} cx={x} cy={y} r={1.2} fill="#22d3ee" fillOpacity={0.25+i*0.05}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2+i*0.5}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* Tournament prep: trophy + calendar grid */
+function TournamentPrepArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="tn-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#171310" /><stop offset="1" stopColor="#100d0a" />
+        </linearGradient>
+        <radialGradient id="tn-glow" cx="200" cy="100" r="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#f59e0b" stopOpacity="0.2" /><stop offset="1" stopColor="#f59e0b" stopOpacity="0" />
+        </radialGradient>
+        <filter id="tn-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#tn-bg)" />
+      <rect width="400" height="200" fill="url(#tn-glow)" />
+      {/* trophy */}
+      <g transform="translate(140,95)" filter="url(#tn-f)">
+        <path d="M-18,-25 h36 v10 c0,14 -8,22 -18,22 c-10,0 -18,-8 -18,-22 Z" fill="#fbbf24" />
+        <path d="M-18,-22 h-10 c0,10 6,16 12,17 M18,-22 h10 c0,10 -6,16 -12,17" fill="none" stroke="#fbbf24" strokeWidth="4" />
+        <rect x="-4" y="7" width="8" height="12" fill="#f59e0b" />
+        <rect x="-14" y="19" width="28" height="6" rx="2" fill="#f59e0b" />
+      </g>
+      {/* calendar */}
+      <rect x="205" y="55" width="110" height="90" rx="8" fill="#0f172a" stroke="#292524" strokeWidth="1" />
+      <rect x="205" y="55" width="110" height="18" rx="8" fill="#1c1917" />
+      <text x="260" y="68" textAnchor="middle" fill="#fbbf24" fontSize="9" fontWeight="700">ROUND 1</text>
+      {[0,1,2,3,4,5,6,7,8,9,10,11].map(i => (
+        <rect key={i} x={213+(i%4)*25} y={80+Math.floor(i/4)*20} width="20" height="15" rx="3"
+          fill={i===5 ? "#f59e0b" : "#1c1917"} fillOpacity={i===5 ? 0.6 : 1} />
+      ))}
+      <text x="228" y="91" textAnchor="middle" fill="#0c0a09" fontSize="8" fontWeight="800">✓</text>
+      {[[65,48],[340,42],[200,32],[105,180]].map(([x,y],i) => (
+        <circle key={`tn${i}`} cx={x} cy={y} r={1.2} fill="#f59e0b" fillOpacity={0.25+i*0.05}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2.4+i*0.4}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* Read engine analysis: eval bar + depth lines */
+function EngineReadArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="er-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0c1216" /><stop offset="1" stopColor="#080d10" />
+        </linearGradient>
+        <radialGradient id="er-glow" cx="200" cy="100" r="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#4ade80" stopOpacity="0.14" /><stop offset="1" stopColor="#4ade80" stopOpacity="0" />
+        </radialGradient>
+        <filter id="er-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#er-bg)" />
+      <rect width="400" height="200" fill="url(#er-glow)" />
+      {/* vertical eval bar */}
+      <rect x="105" y="50" width="18" height="100" rx="4" fill="#0f172a" stroke="#1e293b" strokeWidth="1" />
+      <rect x="105" y="50" width="18" height="62" rx="4" fill="#e2e8f0" fillOpacity="0.85" />
+      <text x="114" y="165" textAnchor="middle" fill="#4ade80" fontSize="9" fontWeight="700" filter="url(#er-f)">+1.4</text>
+      {/* engine lines */}
+      {[
+        { d: "22", line: "Nf3 Nc6 Bb5 a6", ev: "+1.4", w: 128 },
+        { d: "22", line: "Bc4 Nf6 d3 Bc5", ev: "+1.1", w: 108 },
+        { d: "21", line: "d4 exd4 Nxd4 d5", ev: "+0.9", w: 92 },
+      ].map((l,i) => (
+        <g key={i}>
+          <rect x="140" y={58+i*32} width={l.w} height="24" rx="4" fill="#0f172a" stroke="#1e293b" strokeWidth="1" />
+          <text x="148" y={74+i*32} fill="#94a3b8" fontSize="8.5" fontFamily="monospace">{l.line}</text>
+          <text x={140+l.w-6} y={74+i*32} textAnchor="end" fill={i===0 ? "#4ade80" : "#64748b"} fontSize="8.5" fontWeight="700">{l.ev}</text>
+        </g>
+      ))}
+      <text x="140" y="52" fill="#475569" fontSize="7.5" fontWeight="700" letterSpacing="1">DEPTH 22 · STOCKFISH 18</text>
+      {[[65,48],[340,42],[200,32]].map(([x,y],i) => (
+        <circle key={`er${i}`} cx={x} cy={y} r={1.2} fill="#4ade80" fillOpacity={0.22+i*0.05}>
+          <animate attributeName="opacity" values="0.26;0.07;0.26" dur={`${2.2+i*0.5}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* King & pawn endgame: lone king + passed pawn to promotion */
+function KingPawnEndgameArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="kp-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#101318" /><stop offset="1" stopColor="#0b0e12" />
+        </linearGradient>
+        <radialGradient id="kp-glow" cx="200" cy="100" r="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#facc15" stopOpacity="0.18" /><stop offset="1" stopColor="#facc15" stopOpacity="0" />
+        </radialGradient>
+        <filter id="kp-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#kp-bg)" />
+      <rect width="400" height="200" fill="url(#kp-glow)" />
+      {/* king glyph */}
+      <text x="150" y="118" textAnchor="middle" fontSize="40" fill="#e2e8f0" filter="url(#kp-f)">♔</text>
+      {/* passed pawn */}
+      <g transform="translate(225,120)">
+        <circle cx="0" cy="-10" r="6.5" fill="#facc15" />
+        <path d="M-7.5,8 C-7.5,-1.5 -4,-4.5 0,-4.5 C4,-4.5 7.5,-1.5 7.5,8 Z" fill="#facc15" />
+        <rect x="-9.5" y="8" width="19" height="4" rx="2" fill="#facc15" />
+      </g>
+      {/* promotion path */}
+      <path d="M225,100 C225,80 225,66 225,54" stroke="#facc15" strokeWidth="1.5" strokeOpacity="0.6" strokeDasharray="4 3" fill="none" />
+      <text x="225" y="46" textAnchor="middle" fontSize="20" fill="#fde047" filter="url(#kp-f)">♕</text>
+      {/* the square rule box */}
+      <rect x="196" y="56" width="58" height="58" fill="none" stroke="#64748b" strokeWidth="1" strokeOpacity="0.4" strokeDasharray="3 3" />
+      <text x="270" y="70" fill="#64748b" fontSize="8" fillOpacity="0.7">the square</text>
+      {/* black king far away */}
+      <text x="305" y="150" textAnchor="middle" fontSize="30" fill="#475569">♚</text>
+      {[[65,48],[340,42],[115,180]].map(([x,y],i) => (
+        <circle key={`kp${i}`} cx={x} cy={y} r={1.2} fill="#facc15" fillOpacity={0.25+i*0.05}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2.1+i*0.5}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* Pawn tension: two pawns head-to-head, springs */
+function PawnTensionArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="pt-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#141114" /><stop offset="1" stopColor="#0e0b0e" />
+        </linearGradient>
+        <radialGradient id="pt-glow" cx="200" cy="100" r="100" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#fb7185" stopOpacity="0.2" /><stop offset="1" stopColor="#fb7185" stopOpacity="0" />
+        </radialGradient>
+        <filter id="pt-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#pt-bg)" />
+      <rect width="400" height="200" fill="url(#pt-glow)" />
+      {/* white pawn pushing up */}
+      <g transform="translate(200,128)">
+        <circle cx="0" cy="-10" r="7" fill="#e2e8f0" />
+        <path d="M-8,9 C-8,-1.5 -4.5,-5 0,-5 C4.5,-5 8,-1.5 8,9 Z" fill="#e2e8f0" />
+        <rect x="-10" y="9" width="20" height="4.5" rx="2" fill="#e2e8f0" />
+      </g>
+      {/* black pawn pushing down */}
+      <g transform="translate(200,74) scale(1,-1)">
+        <circle cx="0" cy="-10" r="7" fill="#64748b" />
+        <path d="M-8,9 C-8,-1.5 -4.5,-5 0,-5 C4.5,-5 8,-1.5 8,9 Z" fill="#64748b" />
+        <rect x="-10" y="9" width="20" height="4.5" rx="2" fill="#64748b" />
+      </g>
+      {/* tension springs between */}
+      <path d="M188,92 l6,4 l-6,4 l6,4 l-6,4 M212,92 l-6,4 l6,4 l-6,4 l6,4" fill="none" stroke="#fb7185" strokeWidth="1.8" strokeOpacity="0.8" filter="url(#pt-f)" />
+      {/* side options */}
+      <text x="150" y="105" fill="#4ade80" fontSize="9" fontWeight="700" fillOpacity="0.7">PUSH?</text>
+      <text x="238" y="105" fill="#f87171" fontSize="9" fontWeight="700" fillOpacity="0.7">TAKE?</text>
+      {[[65,48],[340,42],[200,175],[110,172]].map(([x,y],i) => (
+        <circle key={`pt${i}`} cx={x} cy={y} r={1.2} fill="#fb7185" fillOpacity={0.25+i*0.05}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2.3+i*0.4}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* Rook endgames: rook cutting off the king (bridge) */
+function RookEndgameArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="rk-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0f1319" /><stop offset="1" stopColor="#0a0e13" />
+        </linearGradient>
+        <radialGradient id="rk-glow" cx="200" cy="100" r="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#60a5fa" stopOpacity="0.18" /><stop offset="1" stopColor="#60a5fa" stopOpacity="0" />
+        </radialGradient>
+        <filter id="rk-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#rk-bg)" />
+      <rect width="400" height="200" fill="url(#rk-glow)" />
+      {/* mini board */}
+      {[0,1,2,3].map(r => [0,1,2,3].map(c => (
+        <rect key={`${r}${c}`} x={150+c*26} y={48+r*26} width="26" height="26"
+          fill={(r+c)%2 ? "#1e293b" : "#334155"} fillOpacity="0.6" />
+      )))}
+      {/* rook on the 4th rank */}
+      <text x="163" y="70" textAnchor="middle" fontSize="19" fill="#93c5fd" filter="url(#rk-f)">♖</text>
+      {/* cut-off line across the rank */}
+      <line x1="150" y1="87" x2="254" y2="87" stroke="#60a5fa" strokeWidth="2" strokeOpacity="0.7" filter="url(#rk-f)" />
+      {/* black king above the cut */}
+      <text x="241" y="68" textAnchor="middle" fontSize="17" fill="#64748b">♚</text>
+      {/* passed pawn below */}
+      <text x="189" y="148" textAnchor="middle" fontSize="15" fill="#e2e8f0">♙</text>
+      <text x="200" y="180" textAnchor="middle" fill="#60a5fa" fontSize="9" fontWeight="700" letterSpacing="2" fillOpacity="0.7">CUT OFF THE KING</text>
+      {[[65,48],[340,42],[110,180],[300,178]].map(([x,y],i) => (
+        <circle key={`rk${i}`} cx={x} cy={y} r={1.2} fill="#60a5fa" fillOpacity={0.25+i*0.05}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2+i*0.5}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* Skill gap: two players, widening gap chart */
+function SkillGapArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="sg-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#12101a" /><stop offset="1" stopColor="#0d0b13" />
+        </linearGradient>
+        <radialGradient id="sg-glow" cx="200" cy="100" r="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#c084fc" stopOpacity="0.18" /><stop offset="1" stopColor="#c084fc" stopOpacity="0" />
+        </radialGradient>
+        <filter id="sg-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#sg-bg)" />
+      <rect width="400" height="200" fill="url(#sg-glow)" />
+      {/* two diverging lines */}
+      <path d="M90,140 C150,132 230,110 310,60" fill="none" stroke="#c084fc" strokeWidth="2.5" filter="url(#sg-f)" />
+      <path d="M90,140 C150,138 230,132 310,124" fill="none" stroke="#475569" strokeWidth="2" strokeOpacity="0.7" />
+      {/* gap wedge */}
+      <path d="M310,60 L310,124" stroke="#f43f5e" strokeWidth="1.5" strokeDasharray="3 3" strokeOpacity="0.7" />
+      <text x="318" y="95" fill="#fb7185" fontSize="9" fontWeight="700" fillOpacity="0.8">THE GAP</text>
+      {/* markers */}
+      <circle cx="90" cy="140" r="4" fill="#94a3b8" />
+      <circle cx="310" cy="60" r="4.5" fill="#c084fc" filter="url(#sg-f)" />
+      <circle cx="310" cy="124" r="4" fill="#475569" />
+      <text x="90" y="162" textAnchor="middle" fill="#64748b" fontSize="8">SAME GAMES PLAYED</text>
+      {[[60,48],[200,32],[110,180]].map(([x,y],i) => (
+        <circle key={`sg${i}`} cx={x} cy={y} r={1.2} fill="#c084fc" fillOpacity={0.25+i*0.05}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2.2+i*0.5}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* Stop repeating mistakes: circular arrows with a wall */
+function StopRepeatingArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="sr-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#151016" /><stop offset="1" stopColor="#0f0b10" />
+        </linearGradient>
+        <radialGradient id="sr-glow" cx="200" cy="100" r="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#fb923c" stopOpacity="0.18" /><stop offset="1" stopColor="#fb923c" stopOpacity="0" />
+        </radialGradient>
+        <filter id="sr-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#sr-bg)" />
+      <rect width="400" height="200" fill="url(#sr-glow)" />
+      {/* repeat cycle */}
+      <path d="M165,75 A42,42 0 1 1 158,118" fill="none" stroke="#64748b" strokeWidth="2.5" strokeOpacity="0.55" />
+      <path d="M152,112 L159,120 L166,112" fill="none" stroke="#64748b" strokeWidth="2.5" strokeOpacity="0.55" />
+      <text x="200" y="105" textAnchor="middle" fill="#94a3b8" fontSize="9" fillOpacity="0.7">same blunder</text>
+      {/* wall / shield blocking the cycle */}
+      <g filter="url(#sr-f)">
+        <rect x="238" y="58" width="10" height="86" rx="3" fill="#fb923c" fillOpacity="0.85" />
+      </g>
+      {/* scan beam hitting the wall */}
+      <path d="M205,100 L236,100" stroke="#fbbf24" strokeWidth="2" strokeDasharray="5 3" strokeOpacity="0.8">
+        <animate attributeName="stroke-opacity" values="0.8;0.3;0.8" dur="1.6s" repeatCount="indefinite" />
+      </path>
+      {/* escape path after wall */}
+      <path d="M252,100 C275,100 290,86 300,70" fill="none" stroke="#4ade80" strokeWidth="2" strokeOpacity="0.8" />
+      <path d="M294,70 L302,66 L300,75" fill="none" stroke="#4ade80" strokeWidth="2" strokeOpacity="0.8" />
+      <text x="292" y="58" fill="#4ade80" fontSize="9" fontWeight="700" fillOpacity="0.8">SCANNED</text>
+      {[[65,48],[340,160],[110,180]].map(([x,y],i) => (
+        <circle key={`sr${i}`} cx={x} cy={y} r={1.2} fill="#fb923c" fillOpacity={0.25+i*0.05}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2.4+i*0.4}s`} repeatCount="indefinite" />
         </circle>
       ))}
     </svg>
