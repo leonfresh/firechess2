@@ -149,7 +149,7 @@ export default async function RootLayout({
 
           <EmbedGuard>
             <div className="nl3-hide-chrome">
-              <footer className="border-t border-white/[0.04] py-12">
+              <footer className="border-t border-[#1e1a24] py-12">
               <div className="mx-auto max-w-7xl px-6 md:px-10">
                 <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:grid-cols-5">
                   {/* Brand */}
@@ -158,16 +158,13 @@ export default async function RootLayout({
                       href="/"
                       className="inline-flex items-center gap-2 text-sm font-bold text-white"
                     >
-                      <Image
-                        src="/firechess-logo.png"
-                        alt="FireChess"
-                        width={20}
-                        height={20}
-                        className="h-5 w-5 rounded"
-                      />
-                      FireChess
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+                                              <path d="M12 2C12 2 6 8 6 13a6 6 0 0012 0c0-2-1-3.5-1-3.5S16 11 14.5 11c.5-2.5-.5-5.5-2.5-7C12 4 12 2 12 2z" fill="#ff5a1f"/>
+                                              <path d="M12 22a5 5 0 01-5-5c0-1.5.5-2.6.5-2.6S8 16 9.5 16c-.3-2 .5-4 2.5-5.5 0 0 2 2.5 2 5a5 5 0 01-2 4.5z" fill="#ffb37a" opacity="0.85"/>
+                                            </svg>
+                                            FireChess
                     </Link>
-                    <p className="mt-2 text-xs leading-relaxed text-slate-500 max-w-[200px]">
+                    <p className="mt-2 text-xs leading-relaxed text-[#565061] max-w-[200px]">
                       Free chess analysis powered by Stockfish&nbsp;18. Scan
                       your games, find your leaks, get better.
                     </p>
@@ -176,7 +173,7 @@ export default async function RootLayout({
                         href="https://reddit.com/r/firechess"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-slate-600 hover:text-orange-400 transition-colors"
+                        className="text-[#565061] hover:text-[#ff8c42] transition-colors"
                         aria-label="Reddit"
                       >
                         <svg
@@ -191,7 +188,7 @@ export default async function RootLayout({
                         href="https://twitter.com/firechessapp"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-slate-600 hover:text-sky-400 transition-colors"
+                        className="text-[#565061] hover:text-sky-400 transition-colors"
                         aria-label="Twitter / X"
                       >
                         <svg
@@ -206,7 +203,7 @@ export default async function RootLayout({
                         href="https://github.com/leonfresh"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-slate-600 hover:text-white transition-colors"
+                        className="text-[#565061] hover:text-white transition-colors"
                         aria-label="GitHub"
                       >
                         <svg
@@ -221,7 +218,7 @@ export default async function RootLayout({
                         href="https://discord.gg/YS8fc4FtEk"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-slate-600 hover:text-indigo-400 transition-colors"
+                        className="text-[#565061] hover:text-indigo-400 transition-colors"
                         aria-label="Discord"
                       >
                         <svg
@@ -237,10 +234,10 @@ export default async function RootLayout({
 
                   {/* Product */}
                   <div>
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-[#8d8696]">
                       Product
                     </h3>
-                    <ul className="mt-3 space-y-2 text-xs text-slate-500">
+                    <ul className="mt-3 space-y-2 text-xs text-[#565061]">
                       <li>
                         <Link
                           href="/analyze"
@@ -318,10 +315,10 @@ export default async function RootLayout({
 
                   {/* Community */}
                   <div>
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-[#8d8696]">
                       Community
                     </h3>
-                    <ul className="mt-3 space-y-2 text-xs text-slate-500">
+                    <ul className="mt-3 space-y-2 text-xs text-[#565061]">
                       <li>
                         <Link
                           href="/leaderboard"
@@ -367,10 +364,10 @@ export default async function RootLayout({
 
                   {/* Company */}
                   <div>
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-[#8d8696]">
                       Company
                     </h3>
-                    <ul className="mt-3 space-y-2 text-xs text-slate-500">
+                    <ul className="mt-3 space-y-2 text-xs text-[#565061]">
                       <li>
                         <Link
                           href="/pricing"
@@ -424,14 +421,14 @@ export default async function RootLayout({
                 </div>
 
                 {/* Bottom bar */}
-                <div className="mt-10 flex flex-col items-center justify-between gap-2 border-t border-white/[0.04] pt-6 sm:flex-row">
-                  <p className="text-[11px] text-slate-500">
+                <div className="mt-10 flex flex-col items-center justify-between gap-2 border-t border-[#1e1a24] pt-6 sm:flex-row">
+                  <p className="text-[11px] text-[#565061]">
                     &copy; {new Date().getFullYear()} FireChess. All rights
                     reserved.
                   </p>
                   <div className="flex items-center gap-4">
                     <GoogleTranslate />
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-[11px] text-[#565061]">
                       Powered by Stockfish 18 &middot; Built with Next.js
                     </p>
                   </div>

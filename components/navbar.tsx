@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { FlameMark } from "@/components/new-landing-3/nav";
+// Image import kept for any remaining usages
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
@@ -173,7 +175,7 @@ export function Navbar() {
   const notificationCountLabel =
     unreadMessages > 99 ? "99+" : `${unreadMessages}`;
   const caretCn = (menu: string) =>
-    `h-3 w-3 text-slate-500 transition-transform ${openMenu === menu ? "rotate-180" : ""}`;
+    `h-3 w-3 text-[#565061] transition-transform ${openMenu === menu ? "rotate-180" : ""}`;
   const dropdownCn = (menu: string) =>
     `absolute left-0 top-full pt-1 transition-all duration-150 ${openMenu === menu ? "visible opacity-100" : "invisible opacity-0 pointer-events-none"}`;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -301,20 +303,14 @@ export function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-[linear-gradient(180deg,rgba(4,8,20,0.88),rgba(4,8,20,0.56)_62%,rgba(4,8,20,0))] px-3 pt-3 backdrop-blur-xl sm:px-4">
-        <nav className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 border-b border-white/[0.08] px-0 pb-3 md:px-1 xl:px-0">
+      <header className="sticky top-0 z-50 bg-[#070608]/90 px-3 pt-3 backdrop-blur-xl sm:px-4">
+        <nav className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 border-b border-[#1e1a24] px-0 pb-3 md:px-1 xl:px-0">
           {/* ── Logo ── */}
           <Link
             href="/?landing=1"
             className="group inline-flex items-center gap-2.5 text-base font-bold text-white transition-colors hover:text-slate-200"
           >
-            <Image
-              src="/firechess-logo.png"
-              alt="FireChess"
-              width={32}
-              height={32}
-              className="h-8 w-8 rounded-lg"
-            />
+            <FlameMark />
             <span className="tracking-tight">FireChess</span>
           </Link>
 
@@ -327,8 +323,8 @@ export function Navbar() {
                 aria-haspopup="true"
                 className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   isAnalyzeActive
-                    ? "bg-white/[0.06] text-white"
-                    : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
+                    ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]"
+                    : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"
                 }`}
               >
                 Analyze
@@ -343,34 +339,34 @@ export function Navbar() {
                 </svg>
               </button>
               <div className={dropdownCn("analyze")} {...dropdownProps("analyze")}>
-                <div className="min-w-[200px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
+                <div className="min-w-[200px] rounded-xl border border-[#1e1a24] bg-[#0d0b0e]/97 p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${pathname === "/" ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${pathname === "/" ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
                   >
                     🔍 Analyze Games
                   </Link>
                   <Link
                     href="/analyze"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/analyze") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/analyze") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
                   >
                     ♟️ PGN Analyzer
                   </Link>
                   <Link
                     href="/analysis"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/analysis") ? "bg-cyan-500/[0.08] text-cyan-300" : "text-slate-400 hover:bg-cyan-500/[0.06] hover:text-cyan-300"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/analysis") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
                   >
                     🧭 Analysis Board
                   </Link>
                   <Link
                     href="/review"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/review") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/review") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
                   >
                     📺 Game Review
                   </Link>
                   <Link
                     href="/my-openings"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/my-openings") ? "bg-orange-500/[0.08] text-orange-300" : "text-slate-400 hover:bg-orange-500/[0.06] hover:text-orange-300"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/my-openings") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
                   >
                     🌲 My Opening Tree
                   </Link>
@@ -385,8 +381,8 @@ export function Navbar() {
                 aria-haspopup="true"
                 className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   isTrainActive
-                    ? "bg-white/[0.06] text-white"
-                    : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
+                    ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]"
+                    : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"
                 }`}
               >
                 Play
@@ -401,54 +397,54 @@ export function Navbar() {
                 </svg>
               </button>
               <div className={dropdownCn("play")} {...dropdownProps("play")}>
-                <div className="min-w-[220px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
+                <div className="min-w-[220px] rounded-xl border border-[#1e1a24] bg-[#0d0b0e]/97 p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/daily"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/daily") ? "bg-amber-500/[0.12] text-amber-400" : "text-slate-400 hover:bg-amber-500/[0.06] hover:text-amber-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/daily") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
                   >
                     📅 Daily Routine
                   </Link>
                   <Link
                     href="/train"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/train") ? "bg-violet-500/[0.08] text-violet-400" : "text-slate-400 hover:bg-violet-500/[0.06] hover:text-violet-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/train") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
                   >
                     🕹️ Training
                   </Link>
                   <Link
                     href="/puzzles"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/puzzles") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/puzzles") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
                   >
                     🎯 Puzzles & Drills
                   </Link>
                   <Link
                     href="/sparring"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/sparring") ? "bg-sky-500/[0.08] text-sky-400" : "text-slate-400 hover:bg-sky-500/[0.06] hover:text-sky-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/sparring") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
                   >
                     ⚔️ Opening Sparring
                   </Link>
                   <Link
                     href="/guess"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/guess") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/guess") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
                   >
                     🧩 Guess the Move
                   </Link>
-                  <div className="my-1 h-px bg-white/[0.06]" />
+                  <div className="my-1 h-px bg-[#ff5a1f]/[0.08]" />
                   <Link
                     href="/chaos"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/chaos") ? "bg-purple-500/[0.08] text-purple-400" : "text-slate-400 hover:bg-purple-500/[0.06] hover:text-purple-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/chaos") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
                   >
                     ⚡ Chaos Chess
                   </Link>
                   <Link
                     href="/dungeon"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/dungeon") ? "bg-red-500/[0.08] text-red-400" : "text-slate-400 hover:bg-red-500/[0.06] hover:text-red-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/dungeon") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
                   >
                     🗡️ Dungeon Tactics
                   </Link>
                   <Link
                     href="/roast"
                     onClick={handleRoastClick}
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/roast") ? "bg-orange-500/[0.08] text-orange-400" : "text-slate-400 hover:bg-orange-500/[0.06] hover:text-orange-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/roast") ? "bg-orange-500/[0.08] text-orange-400" : "text-[#8d8696] hover:bg-orange-500/[0.06] hover:text-orange-400"}`}
                   >
                     🔥 Roast the Elo
                   </Link>
@@ -463,8 +459,8 @@ export function Navbar() {
                 aria-haspopup="true"
                 className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   isLearnActive
-                    ? "bg-white/[0.06] text-white"
-                    : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
+                    ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]"
+                    : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"
                 }`}
               >
                 Learn
@@ -479,65 +475,65 @@ export function Navbar() {
                 </svg>
               </button>
               <div className={dropdownCn("learn")} {...dropdownProps("learn")}>
-                <div className="min-w-[200px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
+                <div className="min-w-[200px] rounded-xl border border-[#1e1a24] bg-[#0d0b0e]/97 p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/openings"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/openings") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/openings") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
                   >
                     📖 Openings
                   </Link>
                   <Link
                     href="/tactics"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/tactics") ? "bg-sky-500/[0.08] text-sky-400" : "text-slate-400 hover:bg-sky-500/[0.06] hover:text-sky-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/tactics") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
                   >
                     ⚡ Tactics
                   </Link>
                   <Link
                     href="/endgames"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/endgames") ? "bg-emerald-500/[0.08] text-emerald-400" : "text-slate-400 hover:bg-emerald-500/[0.06] hover:text-emerald-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/endgames") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
                   >
                     ♟ Endgames
                   </Link>
                   <Link
                     href="/games"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/games") ? "bg-amber-500/[0.08] text-amber-400" : "text-slate-400 hover:bg-amber-500/[0.06] hover:text-amber-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/games") ? "bg-amber-500/[0.08] text-amber-400" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
                   >
                     ♛ Famous Games
                   </Link>
                   <Link
                     href="/players"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/players") ? "bg-yellow-500/[0.08] text-yellow-400" : "text-slate-400 hover:bg-yellow-500/[0.06] hover:text-yellow-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/players") ? "bg-yellow-500/[0.08] text-yellow-400" : "text-[#8d8696] hover:bg-yellow-500/[0.06] hover:text-yellow-400"}`}
                   >
                     👑 Grandmasters
                   </Link>
                   <Link
                     href="/glossary"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/glossary") ? "bg-cyan-500/[0.08] text-cyan-400" : "text-slate-400 hover:bg-cyan-500/[0.06] hover:text-cyan-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/glossary") ? "bg-cyan-500/[0.08] text-cyan-400" : "text-[#8d8696] hover:bg-cyan-500/[0.06] hover:text-cyan-400"}`}
                   >
                     📚 Glossary
                   </Link>
-                  <div className="my-1 h-px bg-white/[0.06]" />
+                  <div className="my-1 h-px bg-[#ff5a1f]/[0.08]" />
                   <Link
                     href="/positions"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/positions") ? "bg-cyan-500/[0.08] text-cyan-400" : "text-slate-400 hover:bg-cyan-500/[0.06] hover:text-cyan-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/positions") ? "bg-cyan-500/[0.08] text-cyan-400" : "text-[#8d8696] hover:bg-cyan-500/[0.06] hover:text-cyan-400"}`}
                   >
                     🧠 Positions
                   </Link>
                   <Link
                     href="/time-controls"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/time-controls") ? "bg-amber-500/[0.08] text-amber-400" : "text-slate-400 hover:bg-amber-500/[0.06] hover:text-amber-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/time-controls") ? "bg-amber-500/[0.08] text-amber-400" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
                   >
                     ⏱ Time Controls
                   </Link>
                   <Link
                     href="/mistakes"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/mistakes") ? "bg-red-500/[0.08] text-red-400" : "text-slate-400 hover:bg-red-500/[0.06] hover:text-red-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/mistakes") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
                   >
                     ❌ Common Mistakes
                   </Link>
                   <Link
                     href="/improve"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/improve") ? "bg-emerald-500/[0.08] text-emerald-400" : "text-slate-400 hover:bg-emerald-500/[0.06] hover:text-emerald-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/improve") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
                   >
                     📈 Improve by Rating
                   </Link>
@@ -552,8 +548,8 @@ export function Navbar() {
                 aria-haspopup="true"
                 className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   isExploreActive
-                    ? "bg-white/[0.06] text-white"
-                    : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
+                    ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]"
+                    : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"
                 }`}
               >
                 Explore
@@ -568,22 +564,22 @@ export function Navbar() {
                 </svg>
               </button>
               <div className={dropdownCn("explore")} {...dropdownProps("explore")}>
-                <div className="min-w-[180px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
+                <div className="min-w-[180px] rounded-xl border border-[#1e1a24] bg-[#0d0b0e]/97 p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/blog"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/blog") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/blog") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
                   >
                     📝 Blog
                   </Link>
                   <Link
                     href="/leaderboard"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/leaderboard") ? "bg-amber-500/[0.08] text-amber-400" : "text-slate-400 hover:bg-amber-500/[0.06] hover:text-amber-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/leaderboard") ? "bg-amber-500/[0.08] text-amber-400" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
                   >
                     🏆 Leaderboard
                   </Link>
                   <Link
                     href="/coaches"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/coaches") ? "bg-orange-500/[0.08] text-orange-400" : "text-slate-400 hover:bg-orange-500/[0.06] hover:text-orange-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/coaches") ? "bg-orange-500/[0.08] text-orange-400" : "text-[#8d8696] hover:bg-orange-500/[0.06] hover:text-orange-400"}`}
                   >
                     🎓 For Coaches
                   </Link>
@@ -595,20 +591,20 @@ export function Navbar() {
                   </Link>
                   <Link
                     href="/about"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/about") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/about") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
                   >
                     About
                   </Link>
-                  <div className="my-1 h-px bg-white/[0.06]" />
+                  <div className="my-1 h-px bg-[#ff5a1f]/[0.08]" />
                   <Link
                     href="/shop"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/shop") ? "bg-amber-500/[0.08] text-amber-400" : "text-slate-400 hover:bg-amber-500/[0.06] hover:text-amber-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/shop") ? "bg-amber-500/[0.08] text-amber-400" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
                   >
                     🪙 Coin Shop
                   </Link>
                   <Link
                     href="/changelog"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/changelog") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/changelog") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
                   >
                     Changelog
                     {authenticated && hasUnseenChanges && (
@@ -638,12 +634,12 @@ export function Navbar() {
             </Link>
 
             {loading ? (
-              <div className="h-9 w-20 animate-pulse rounded-lg bg-white/[0.06]" />
+              <div className="h-9 w-20 animate-pulse rounded-lg bg-[#ff5a1f]/[0.08]" />
             ) : !authenticated ? (
               <button
                 type="button"
                 onClick={() => signIn(undefined, { callbackUrl: "/" })}
-                className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-slate-400 transition-colors hover:bg-white/[0.04] hover:text-white"
+                className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-[#8d8696] transition-colors hover:bg-white/[0.04] hover:text-white"
               >
                 Sign in
               </button>
@@ -662,13 +658,13 @@ export function Navbar() {
                 )}
                 <Link
                   href="/dashboard"
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${isActive("/dashboard") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${isActive("/dashboard") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
                 >
                   Dashboard
                 </Link>
                 <Link
                   href={notificationHref}
-                  className={`relative flex h-9 w-9 items-center justify-center rounded-lg border transition-colors ${notificationActive ? "border-white/[0.14] bg-white/[0.08] text-white" : "border-white/[0.08] bg-white/[0.04] text-slate-400 hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white"}`}
+                  className={`relative flex h-9 w-9 items-center justify-center rounded-lg border transition-colors ${notificationActive ? "border-white/[0.14] bg-white/[0.08] text-white" : "border-white/[0.08] bg-white/[0.04] text-[#8d8696] hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white"}`}
                   title={
                     isAdmin ? "Feedback notifications" : "Support notifications"
                   }
@@ -745,7 +741,7 @@ export function Navbar() {
                       </span>
                     )}
                     <svg
-                      className={`h-3.5 w-3.5 text-slate-500 transition-transform ${profileOpen ? "rotate-180" : ""}`}
+                      className={`h-3.5 w-3.5 text-[#565061] transition-transform ${profileOpen ? "rotate-180" : ""}`}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -765,18 +761,18 @@ export function Navbar() {
                         <p className="truncate text-sm font-medium text-white">
                           {user?.name ?? "User"}
                         </p>
-                        <p className="truncate text-xs text-slate-500">
+                        <p className="truncate text-xs text-[#565061]">
                           {user?.email}
                         </p>
                       </div>
                       <div className="p-1.5">
-                        <div className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-slate-400">
+                        <div className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-[#8d8696]">
                           <span>Plan</span>
                           <span
                             className={
                               plan === "pro" || plan === "lifetime"
                                 ? "font-semibold text-amber-400"
-                                : "text-slate-500"
+                                : "text-[#565061]"
                             }
                           >
                             {plan === "lifetime"
@@ -789,7 +785,7 @@ export function Navbar() {
                         <Link
                           href="/profile"
                           onClick={() => setProfileOpen(false)}
-                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-[#8d8696] transition-colors hover:bg-[#ff5a1f]/[0.08] hover:text-white"
                         >
                           <svg
                             className="h-4 w-4"
@@ -810,7 +806,7 @@ export function Navbar() {
                           <Link
                             href={`/community/profile/${user.id}`}
                             onClick={() => setProfileOpen(false)}
-                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-[#8d8696] transition-colors hover:bg-[#ff5a1f]/[0.08] hover:text-white"
                           >
                             <svg
                               className="h-4 w-4"
@@ -831,7 +827,7 @@ export function Navbar() {
                         <Link
                           href="/account"
                           onClick={() => setProfileOpen(false)}
-                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-[#8d8696] transition-colors hover:bg-[#ff5a1f]/[0.08] hover:text-white"
                         >
                           <svg
                             className="h-4 w-4"
@@ -856,7 +852,7 @@ export function Navbar() {
                         <Link
                           href="/changelog"
                           onClick={() => setProfileOpen(false)}
-                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-[#8d8696] transition-colors hover:bg-[#ff5a1f]/[0.08] hover:text-white"
                         >
                           <span className="relative">
                             <svg
@@ -884,7 +880,7 @@ export function Navbar() {
                         <Link
                           href="/support"
                           onClick={() => setProfileOpen(false)}
-                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-[#8d8696] transition-colors hover:bg-[#ff5a1f]/[0.08] hover:text-white"
                         >
                           <span className="relative">
                             <svg
@@ -915,7 +911,7 @@ export function Navbar() {
                         <Link
                           href="/feedback"
                           onClick={() => setProfileOpen(false)}
-                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-[#8d8696] transition-colors hover:bg-[#ff5a1f]/[0.08] hover:text-white"
                         >
                           <svg
                             className="h-4 w-4"
@@ -934,7 +930,7 @@ export function Navbar() {
                         </Link>
                         {isAdmin && (
                           <>
-                            <div className="my-1 h-px bg-white/[0.06]" />
+                            <div className="my-1 h-px bg-[#ff5a1f]/[0.08]" />
                             <Link
                               href="/admin/feedback"
                               onClick={() => setProfileOpen(false)}
@@ -1026,14 +1022,14 @@ export function Navbar() {
                             </Link>
                           </>
                         )}
-                        <div className="my-1 h-px bg-white/[0.06]" />
+                        <div className="my-1 h-px bg-[#ff5a1f]/[0.08]" />
                         <button
                           type="button"
                           onClick={() => {
                             setProfileOpen(false);
                             signOut({ callbackUrl: "/" });
                           }}
-                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-[#8d8696] transition-colors hover:bg-[#ff5a1f]/[0.08] hover:text-white"
                         >
                           <svg
                             className="h-4 w-4"
@@ -1149,7 +1145,7 @@ export function Navbar() {
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white/[0.06] hover:text-white"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-[#8d8696] hover:bg-[#ff5a1f]/[0.08] hover:text-white"
                 aria-label="Close menu"
               >
                 <svg
@@ -1177,7 +1173,7 @@ export function Navbar() {
                   className={`rounded-xl border px-3 py-3 text-left transition-colors ${link.active ? "border-white/[0.12] bg-white/[0.08] text-white" : "border-white/[0.06] bg-white/[0.03] text-slate-300 hover:border-white/[0.1] hover:bg-white/[0.05] hover:text-white"}`}
                 >
                   <p className="text-sm font-semibold">{link.label}</p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-[#565061]">
                     {link.description}
                   </p>
                 </Link>
@@ -1195,11 +1191,11 @@ export function Navbar() {
                   <button
                     type="button"
                     onClick={() => toggleSection(section.key)}
-                    className={`flex w-full items-center justify-between px-3.5 py-2.5 text-left text-sm font-semibold transition-colors ${section.isActive ? "text-white" : "text-slate-400 hover:text-white"}`}
+                    className={`flex w-full items-center justify-between px-3.5 py-2.5 text-left text-sm font-semibold transition-colors ${section.isActive ? "text-white" : "text-[#8d8696] hover:text-white"}`}
                   >
                     {section.label}
                     <svg
-                      className={`h-3.5 w-3.5 text-slate-500 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                      className={`h-3.5 w-3.5 text-[#565061] transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -1223,7 +1219,7 @@ export function Navbar() {
                               closeMobileMenu();
                               link.onClick?.();
                             }}
-                            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${active ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
+                            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${active ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
                           >
                             {link.label}
                             {link.hasBadge && (
@@ -1244,11 +1240,11 @@ export function Navbar() {
                 <button
                   type="button"
                   onClick={() => toggleSection("account")}
-                  className={`flex w-full items-center justify-between px-3.5 py-2.5 text-left text-sm font-semibold transition-colors ${isAccountActive ? "text-white" : "text-slate-400 hover:text-white"}`}
+                  className={`flex w-full items-center justify-between px-3.5 py-2.5 text-left text-sm font-semibold transition-colors ${isAccountActive ? "text-white" : "text-[#8d8696] hover:text-white"}`}
                 >
                   Account
                   <svg
-                    className={`h-3.5 w-3.5 text-slate-500 transition-transform duration-200 ${openSections["account"] ? "rotate-180" : ""}`}
+                    className={`h-3.5 w-3.5 text-[#565061] transition-transform duration-200 ${openSections["account"] ? "rotate-180" : ""}`}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -1262,7 +1258,7 @@ export function Navbar() {
                     <Link
                       href="/dashboard"
                       onClick={closeMobileMenu}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/dashboard") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/dashboard") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
                     >
                       Dashboard
                     </Link>
@@ -1270,7 +1266,7 @@ export function Navbar() {
                       <Link
                         href={`/community/profile/${user.id}`}
                         onClick={closeMobileMenu}
-                        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/community/profile") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
+                        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/community/profile") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
                       >
                         Public Community Profile
                       </Link>
@@ -1278,14 +1274,14 @@ export function Navbar() {
                     <Link
                       href="/account"
                       onClick={closeMobileMenu}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/account") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/account") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
                     >
                       Account & Billing
                     </Link>
                     <Link
                       href="/support"
                       onClick={closeMobileMenu}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/support") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/support") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
                     >
                       My Tickets
                       {!isAdmin && unreadMessages > 0
@@ -1298,13 +1294,13 @@ export function Navbar() {
                     <Link
                       href="/feedback"
                       onClick={closeMobileMenu}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/feedback") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/feedback") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
                     >
                       Feedback
                     </Link>
                     {isAdmin && (
                       <>
-                        <div className="my-1 h-px bg-white/[0.06]" />
+                        <div className="my-1 h-px bg-[#ff5a1f]/[0.08]" />
                         {(
                           [
                             { href: "/admin/feedback", label: "Admin Panel" },
@@ -1357,7 +1353,7 @@ export function Navbar() {
                       setMobileOpen(false);
                       signOut({ callbackUrl: "/" });
                     }}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/[0.08] px-4 py-2 text-sm font-medium text-slate-400 transition-colors hover:border-white/[0.15] hover:text-white"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/[0.08] px-4 py-2 text-sm font-medium text-[#8d8696] transition-colors hover:border-white/[0.15] hover:text-white"
                   >
                     Sign out
                   </button>
@@ -1390,7 +1386,7 @@ export function Navbar() {
             <button
               type="button"
               onClick={() => setCoinShopOpen(false)}
-              className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+              className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-lg text-[#8d8696] transition-colors hover:bg-[#ff5a1f]/[0.08] hover:text-white"
               aria-label="Close coin shop"
             >
               <svg
