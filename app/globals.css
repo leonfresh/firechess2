@@ -1342,3 +1342,21 @@ body.nl3-active .nl3-hide-chrome { display: none; }
   from { opacity: 0; transform: scale(0.5); }
   to { opacity: 1; transform: scale(1); }
 }
+
+
+/* Ember pulse on primary CTAs — slow breathing glow */
+@keyframes nl3-ember-pulse {
+  0%, 100% { box-shadow: 0 0 24px rgba(255,90,31,0.25), inset 0 1px 0 rgba(255,255,255,0.15); }
+  50% { box-shadow: 0 0 38px rgba(255,90,31,0.42), inset 0 1px 0 rgba(255,255,255,0.15); }
+}
+.nl3-cta-glow { animation: nl3-ember-pulse 2.6s ease-in-out infinite; }
+
+/* Report card top sheen on hover */
+.nl3-sheen { position: relative; }
+.nl3-sheen::after {
+  content: "";
+  position: absolute; inset: 0 0 auto 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,140,66,0.5), transparent);
+  opacity: 0; transition: opacity 0.3s;
+}
+.nl3-sheen:hover::after { opacity: 1; }

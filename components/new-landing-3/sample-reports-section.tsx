@@ -52,7 +52,7 @@ export function Nl3SampleReports() {
               <Link
                 key={r.reportId}
                 href={`/report/${r.reportId}`}
-                className="group relative rounded-[18px] border border-[#1e1a24] bg-[#121015] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#ff5a1f]/25"
+                className="nl3-sheen group relative rounded-[18px] border border-[#1e1a24] bg-[#121015] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#ff5a1f]/25"
               >
                 {r.username === "MagnusCarlsen" && (
                   <span className="absolute -top-2.5 right-4 rounded-full bg-[#ff5a1f] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-[0_4px_14px_rgba(255,90,31,0.4)]">

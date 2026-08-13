@@ -69,7 +69,7 @@ export function Nl3Hero({
           <div className="mb-11 flex flex-col gap-3.5 sm:flex-row">
             <button
               onClick={onScanClick}
-              className="nl3-cta inline-flex h-14 items-center justify-center gap-2.5 rounded-[13px] bg-[#ff5a1f] px-8 text-[15.5px] font-semibold text-white shadow-[0_0_40px_rgba(255,90,31,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_0_55px_rgba(255,90,31,0.45),inset_0_1px_0_rgba(255,255,255,0.15)]"
+              className="nl3-cta nl3-cta-glow inline-flex h-14 items-center justify-center gap-2.5 rounded-[13px] bg-[#ff5a1f] px-8 text-[15.5px] font-semibold text-white transition-all duration-200 hover:-translate-y-0.5"
             >
               Scan my games — free
               <ArrowRight className="h-4 w-4" />

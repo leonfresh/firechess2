@@ -52,12 +52,10 @@ const SEV_CLS: Record<string, string> = {
 };
 
 // ── Radar geometry ────────────────────────────────────────────────────
-const CX = 80, CY = 80, R = 58;
+// Wide viewBox (0 0 200 170) so outer labels never clip.
+const CX = 100, CY = 85, R = 56;
 const RADAR_VALS = [0.42, 0.66, 0.34, 0.55, 0.38]; // Openings, Tactics, Endgames, Time, Patterns
 const RADAR_LABELS = ["Openings", "Tactics", "Endgames", "Time", "Patterns"];
-const LABEL_OFFSETS: [number, number][] = [
-  [0, -14], [14, -4], [12, 10], [-12, 10], [-14, -4],
-];
 function radarPt(i: number, val: number): string {
   const a = -Math.PI / 2 + ((2 * Math.PI) / 5) * i;
   return `${(CX + R * val * Math.cos(a)).toFixed(1)},${(CY + R * val * Math.sin(a)).toFixed(1)}`;
@@ -68,11 +66,16 @@ const GRID = [0.25, 0.5, 0.75, 1].map((f) =>
 const DATA_POLY = RADAR_VALS.map((v, i) => radarPt(i, v)).join(" ");
 const AXES = RADAR_VALS.map((_, i) => {
   const a = -Math.PI / 2 + ((2 * Math.PI) / 5) * i;
+  const cos = Math.cos(a), sin = Math.sin(a);
+  const anchor: "start" | "middle" | "end" =
+    Math.abs(cos) < 0.3 ? "middle" : cos > 0 ? "start" : "end";
   return {
-    x2: CX + R * Math.cos(a),
-    y2: CY + R * Math.sin(a),
-    lx: CX + (R + 14) * Math.cos(a) + LABEL_OFFSETS[i][0],
-    ly: CY + (R + 14) * Math.sin(a) + LABEL_OFFSETS[i][1],
+    x2: CX + R * cos,
+    y2: CY + R * sin,
+    // push labels out along the axis, anchor by horizontal direction
+    lx: CX + (R + 16) * cos,
+    ly: CY + (R + 16) * sin + 3,
+    anchor,
   };
 });
 
@@ -165,14 +168,14 @@ export function HeroBoard() {
       {/* ── Radar phase ── */}
       {phase === "radar" && (
         <div className="animate-fade-in-up relative z-[1] flex w-full items-center justify-center gap-6">
-          <svg viewBox="0 0 160 160" className="h-[260px] w-[260px]">
+          <svg viewBox="0 0 200 170" className="h-[260px] w-[300px]">
             {GRID.map((pts) => (
               <polygon key={pts} points={pts} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
             ))}
             {AXES.map((a, i) => (
               <g key={i}>
                 <line x1={CX} y1={CY} x2={a.x2} y2={a.y2} stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
-                <text x={a.lx} y={a.ly} textAnchor="middle" fill="#8d8696" fontSize="8.5" fontWeight="600">
+                <text x={a.lx} y={a.ly} textAnchor={a.anchor} fill="#8d8696" fontSize="9.5" fontWeight="600">
                   {RADAR_LABELS[i]}
                 </text>
               </g>
