@@ -1,7 +1,7 @@
 ---
 title: "Average Centipawn Loss (ACPL): What It Is and How to Lower Yours"
 description: "Learn what average centipawn loss means in chess, how ACPL is calculated, what good ACPL looks like at every rating level, and proven ways to reduce it."
-date: "2026-07-21"
+date: "2026-08-14"
 author: "FireChess Team"
 tags: ["centipawn loss", "chess improvement", "game analysis", "ACPL", "move quality"]
 canonical: https://firechess.com/blog/average-centipawn-loss-guide
@@ -19,7 +19,7 @@ A centipawn is one-hundredth of a pawn — the standard unit engines use to eval
 
 Average centipawn loss (ACPL) simply takes that per-move loss and averages it across all your moves in a game. If you played 40 moves with a total centipawn loss of 2,800, your ACPL is 70. Some tools count only non-forced moves (skipping recaptures and obvious replies); others count everything. FireChess counts all moves but separates them into quality bands so you can see the distribution.
 
-Here's the key insight most players miss: **ACPL is not about playing the best move every time.** It's about avoiding the big mistakes. A game where you play 35 moves of "Good" quality and make one 300cp blunder will have higher ACPL than a game with 40 "Inaccuracy"-level moves but no blunders. The blunder-dominated game *feels* worse because it is — one big mistake costs more than many small ones.
+Here's the key insight most players miss: **ACPL is not about playing the best move every time.** It's about avoiding the big mistakes. A game where you play 35 moves of "Good" quality and make one 300cp blunder will have higher ACPL than a game with 40 "Inaccuracy"-level moves but no blunders. The blunder-dominated game *feels* worse because it is — one big mistake costs more than many small ones. See our [guide to chess improvement metrics](/blog/chess-improvement-metrics-to-track) to understand how ACPL fits into your overall improvement tracking.
 
 ### The Position That Illustrates It
 
@@ -43,7 +43,7 @@ Some important nuances:
 
 - **Evaluations are from the moving side's perspective.** If White plays a move that drops the eval from +2.00 to +0.50, White's centipawn loss is 150cp. If Black plays a move that drops the eval from +0.50 to +2.00 (from Black's perspective, that's −0.50 to −2.00), Black also loses 150cp.
 - **Forced moves are still counted** in most tools. If you have only one legal move that doesn't lose material, you'll still "lose" centipawns if it's not the engine's preferred line. This inflates ACPL slightly in sharp positions.
-- **Depth matters.** An engine at depth 12 will give different evaluations than depth 20. Consistency within one tool matters more than absolute numbers. FireChess uses Stockfish at depth 16 for analysis — deep enough for reliable evaluations without taking forever.
+- **Depth matters.** An engine at depth 12 will give different evaluations than depth 20. Consistency within one tool matters more than absolute numbers. FireChess uses Stockfish at depth 16 for analysis — deep enough for reliable evaluations without taking forever. For a deeper dive into how centipawn loss works across your games, see our [complete centipawn loss explainer](/blog/what-is-centipawn-loss).
 
 ### What the FireChess Badge System Tells You
 
@@ -186,7 +186,7 @@ This is the question everyone asks, and the honest answer is: **it depends on th
 
 A few things jump out from the data:
 
-**The 1400-1800 band is where most club players live**, and an ACPL of50-80 is completely normal. You're not "bad" at 65 ACPL — you're average for your rating. The problem is if your ACPL *stays* at 65 as you try to climb. To break 1800, you need to consistently get under 50.
+**The 1400-1800 band is where most club players live**, and an ACPL of50-80 is completely normal. You're not "bad" at 65 ACPL — you're average for your rating. The problem is if your ACPL *stays* at 65 as you try to climb. To break 1800, you need to consistently get under 50. See our [ACPL by rating breakdown](/blog/average-centipawn-loss-by-rating) for a detailed look at how centipawn loss shifts across every rating band.
 
 **Blitz inflates everything.** A 1600-rated player might have45 ACPL in a15+10 game but 80 ACPL in 3+0 blitz. The speed of play matters enormously. Always compare ACPL within the same time control.
 
@@ -204,7 +204,7 @@ The most common ACPL spike happens in the first 15 moves. Players who don't know
 
 The Queen's Gambit Declined is one of the most theoretically dense openings in chess. If you're a 1500-rated player and you reach this position, you might play **8.Bd3** (the main line, solid) or you might play **8.Ne5?!** (looks active, attacking f7, but actually gives Black easy equality). The engine's evaluation difference is only about 20-30 centipawns, but the resulting positions are dramatically different in practice — after 8.Ne5 Black gets a comfortable game with ...dxc4, ...Nd5, and ...f6, while after 8.Bd3 White maintains a small but persistent edge.
 
-This is what "Opening Leaks" in FireChess shows you: positions where you consistently choose the second-best move in your openings. If you play the QGD as White and you see a cluster of **?!** badges on moves 6-10, that's not random — it's a systematic knowledge gap you can fix by studying those specific positions.
+This is what "Opening Leaks" in [FireChess's analysis tool](/analyze) shows you: positions where you consistently choose the second-best move in your openings. If you play the QGD as White and you see a cluster of **?!** badges on moves 6-10, that's not random — it's a systematic knowledge gap you can fix by studying those specific positions.
 
 ### Pattern 2: The Middlegame Calculation Miss
 
@@ -238,7 +238,7 @@ This sounds obvious but most players do it wrong. They try to "think harder" or 
 
 The fix: solve tactical puzzles that focus on the patterns you actually miss. Don't do random puzzle sets. After scanning20+ games on FireChess, look at your blunder positions — they'll cluster around specific motifs. If your blunders are mostly back-rank mates, study back-rank mates. If they're mostly knight forks, study knight forks. Targeted practice beats volume.
 
-For most players rated under 1600, eliminating blunders alone drops ACPL by 15-25 points. That's the single biggest improvement available.
+For most players rated under 1600, eliminating blunders alone drops ACPL by 15-25 points. That's the single biggest improvement available. Our guide on [how to stop blundering](/blog/how-to-stop-blundering-chess) covers the most effective tactics training patterns.
 
 ### Learn Your Openings Deeper (Not Wider)
 
@@ -283,11 +283,11 @@ Players often confuse ACPL with accuracy, and some tools use the terms interchan
 
 Accuracy is a percentage — it tells you how often you played the "right" move. ACPL tells you how *wrong* your wrong moves were. A game with 85% accuracy and 60 ACPL has a few big mistakes. A game with 85% accuracy and 35 ACPL has many small ones. Same accuracy, very different problems.
 
-FireChess shows both metrics. The accuracy percentage is useful for a quick health check. The ACPL and badge distribution are what you need for targeted improvement. When someone asks "what's a good accuracy in chess?" the answer depends on the position complexity — but ACPL is more consistent across different game types.
+FireChess shows both metrics. The accuracy percentage is useful for a quick health check. The ACPL and badge distribution are what you need for targeted improvement. When someone asks "what's a good accuracy in chess?" the answer depends on the position complexity — but ACPL is more consistent across different game types. For a full comparison, see our [chess accuracy score guide](/blog/chess-accuracy-score-explained).
 
 ## Common ACPL Myths Debunked
 
-**"Lower ACPL always means better play."** Not necessarily. In a completely drawn position, both players might have15 ACPL — they're playing accurately, but nothing is happening. In a sharp tactical game, both players might have60 ACPL despite playing well, because the positions are so complex that even good moves lose some centipawns. Context matters.
+**"Lower ACPL always means better play."** Not necessarily. In a completely drawn position, both players might have15 ACPL — they're playing accurately, but nothing is happening. In a sharp tactical game, both players might have60 ACPL despite playing well, because the positions are so complex that even good moves lose some centipawns. Context matters. Learn more about [how blunders and ACPL interact by rating](/blog/chess-blunder-patterns-by-rating).
 
 **"I need to play like an engine to get low ACPL."** No. You need to avoid blunders and know your openings. A 1600 player with good opening knowledge and solid tactics can achieve40-50 ACPL without playing a single "brilliant" move. Consistency beats brilliance.
 

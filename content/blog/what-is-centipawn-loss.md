@@ -1,7 +1,7 @@
 ---
 title: "Average Centipawn Loss Explained: What ACPL Means & How to Improve"
 description: "Average centipawn loss (ACPL) measures move quality in chess. Learn what it means, see board examples, and use FireChess to lower yours."
-date: "2026-07-26"
+date: "2026-08-14"
 author: "FireChess Team"
 tags: ["analysis", "fundamentals", "improvement", "centipawn-loss"]
 canonical: https://firechess.com/blog/what-is-centipawn-loss
@@ -71,7 +71,7 @@ The engine typically normalises this so it's always displayed as a positive numb
 
 ## Concrete Examples: Centipawn Loss on the Board
 
-Let's make this real with actual positions. Each one demonstrates a different centipawn loss scenario you'll encounter in your own games.
+Let's make this real with actual positions. For a full breakdown of ACPL ranges by rating, see our [average centipawn loss guide](/blog/average-centipawn-loss-guide). Each one demonstrates a different centipawn loss scenario you'll encounter in your own games.
 
 ### Example 1: A Minor Inaccuracy (15-25 cp Loss)
 
@@ -475,7 +475,7 @@ No. A Brilliant move (!!) is a specific type of Best move — it's a piece sacri
 
 ## Quick Reference Table: Centipawn Loss by Impact
 
-| Centipawn Loss | Classification | FireChess Badge | Typical Cause | Impact on Game |
+Upload your games to [FireChess's scanner at /analyze](/analyze) to see exactly where each move falls in the table below. | Centipawn Loss | Classification | FireChess Badge | Typical Cause | Impact on Game |
 |----------------|---------------|-----------------|---------------|----------------|
 | 0-15 | Excellent | !! or ! | Best or near-best move | Negligible |
 | 15-25 | Good | ✓ | Slightly suboptimal but solid | Tiny edge lost |
