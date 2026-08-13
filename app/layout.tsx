@@ -60,8 +60,11 @@ export const metadata: Metadata = {
   creator: "FireChess",
   publisher: "FireChess",
   icons: {
-    icon: "/firechess-logo.png",
-    apple: "/firechess-logo.png",
+    icon: [
+      { url: "/firechess-flame.svg", type: "image/svg+xml" },
+      { url: "/firechess-flame.png", sizes: "256x256", type: "image/png" },
+    ],
+    apple: "/firechess-flame.png",
   },
   openGraph: {
     title: "FireChess - Free Chess Analysis & Opening Leak Scanner",
@@ -137,13 +140,16 @@ export default async function RootLayout({
             <RefTracker />
           </Suspense>
           <EmbedGuard>
-            <Navbar />
+            <div className="nl3-hide-chrome">
+              <Navbar />
+            </div>
           </EmbedGuard>
 
           <main id="main-content">{children}</main>
 
           <EmbedGuard>
-            <footer className="border-t border-white/[0.04] py-12">
+            <div className="nl3-hide-chrome">
+              <footer className="border-t border-white/[0.04] py-12">
               <div className="mx-auto max-w-7xl px-6 md:px-10">
                 <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:grid-cols-5">
                   {/* Brand */}
@@ -432,6 +438,7 @@ export default async function RootLayout({
                 </div>
               </div>
             </footer>
+            </div>
           </EmbedGuard>
         </SessionProvider>
         <Analytics />

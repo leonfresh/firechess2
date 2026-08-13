@@ -15,17 +15,14 @@ import { Nl3FinalCta } from "@/components/new-landing-3/final-cta";
 import type { SiteStats } from "@/components/new-landing-3/types";
 
 /**
- * FireChess homepage — "Ember & Ink" design.
+ * /newlanding3 — "Ember & Ink" experimental landing concept.
  *
  * 2026 design language: oversized editorial serif/sans headline mix, live
- * stats ticker, chrome-bar product card with a real react-chessboard
- * (looping scan → radar → takeaway), bento grid with cursor spotlight,
- * skeuomorphic app launcher, hi-res CSS grain.
+ * stats ticker, chrome-bar product card with a real react-chessboard, bento
+ * grid with cursor spotlight, skeuomorphic app launcher, hi-res CSS grain.
  * Single molten-orange accent (#ff5a1f) — no gradient text.
- *
- * Previous homepage preserved at /backuplanding.
  */
-export default function HomePage() {
+export default function NewLanding3Page() {
   const [siteStats, setSiteStats] = useState<SiteStats>(null);
 
   useEffect(() => {
