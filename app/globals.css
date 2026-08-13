@@ -1333,8 +1333,6 @@ body {
 .nl3-bento:hover::before { opacity: 1; }
 
 
-/* Hide global navbar/footer chrome while on /newlanding3 */
-body.nl3-active .nl3-hide-chrome { display: none; }
 
 
 /* Radar polygon pop-in for /newlanding3 hero */

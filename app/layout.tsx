@@ -140,16 +140,13 @@ export default async function RootLayout({
             <RefTracker />
           </Suspense>
           <EmbedGuard>
-            <div className="nl3-hide-chrome">
-              <Navbar />
-            </div>
+            <Navbar />
           </EmbedGuard>
 
           <main id="main-content">{children}</main>
 
           <EmbedGuard>
-            <div className="nl3-hide-chrome">
-              <footer className="border-t border-[#1e1a24] py-12">
+            <footer className="border-t border-[#1e1a24] py-12">
               <div className="mx-auto max-w-7xl px-6 md:px-10">
                 <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:grid-cols-5">
                   {/* Brand */}
@@ -435,7 +432,6 @@ export default async function RootLayout({
                 </div>
               </div>
             </footer>
-            </div>
           </EmbedGuard>
         </SessionProvider>
         <Analytics />

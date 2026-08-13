@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Nl3Nav, FlameMark } from "@/components/new-landing-3/nav";
 import { Nl3Hero } from "@/components/new-landing-3/hero-section";
 import { ScanSection } from "@/components/new-landing/scan-section";
 import { Nl3HowItWorks } from "@/components/new-landing-3/how-it-works-section";
@@ -35,22 +34,7 @@ export default function HomePage() {
       .catch(() => {});
   }, []);
 
-  // Flag body so the global navbar/footer chrome hides on this route only.
-  // The layout is a server component that re-asserts body.className after
-  // hydration, which would wipe a class set in an effect — so we watch and
-  // re-apply on any class mutation while this page is mounted.
-  useEffect(() => {
-    const apply = () => document.body.classList.add("nl3-active");
-    apply();
-    const obs = new MutationObserver(() => {
-      if (!document.body.classList.contains("nl3-active")) apply();
-    });
-    obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
-    return () => {
-      obs.disconnect();
-      document.body.classList.remove("nl3-active");
-    };
-  }, []);
+
 
   const goTo = useCallback((id: string) => {
     const el = document.getElementById(id);
@@ -68,7 +52,6 @@ export default function HomePage() {
       <div className="nl3-grain pointer-events-none fixed inset-0 z-[60] opacity-40" />
       <div className="nl3-vignette pointer-events-none fixed inset-0 z-[59]" />
 
-      <Nl3Nav onScanClick={goToScan} />
       <Nl3Hero
         siteStats={siteStats}
         onScanClick={goToScan}
@@ -95,7 +78,8 @@ export default function HomePage() {
       {/* Ember & Ink footer — replaces global chrome on this route */}
       <footer className="flex flex-col items-center justify-between gap-3 border-t border-[#1e1a24] px-6 py-8 text-[13px] text-[#565061] sm:flex-row sm:px-10">
         <span className="flex items-center gap-2 font-semibold text-[#8d8696]">
-          <FlameMark size={18} /> © 2026 FireChess
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M12 2C12 2 6 8 6 13a6 6 0 0012 0c0-2-1-3.5-1-3.5S16 11 14.5 11c.5-2.5-.5-5.5-2.5-7C12 4 12 2 12 2z" fill="#ff5a1f"/><path d="M12 22a5 5 0 01-5-5c0-1.5.5-2.6.5-2.6S8 16 9.5 16c-.3-2 .5-4 2.5-5.5 0 0 2 2.5 2 5a5 5 0 01-2 4.5z" fill="#ffb37a" opacity="0.85"/></svg>
+          © 2026 FireChess
         </span>
         <span>Stockfish 18 · Lichess & Chess.com · Made for club players</span>
       </footer>
