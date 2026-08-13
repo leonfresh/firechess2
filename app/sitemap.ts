@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getAllPosts } from "@/lib/blog";
+import { getAllPosts, getAvailableLocales, getSupportedLocales, type Locale } from "@/lib/blog";
 import { OPENING_GUIDES } from "@/lib/opening-guides";
 import { TACTIC_MOTIFS } from "@/lib/tactics-motifs";
 import { ENDGAME_GUIDES } from "@/lib/endgame-guides";
@@ -282,6 +282,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     ...blogPosts,
+
+    // Translated blog posts
+    ...getAllPosts()
+      .flatMap((post) => {
+        const available = getAvailableLocales(post.slug);
+        return available
+          .filter((loc) => loc !== "en")
+          .map((loc) => ({
+            url: `${base}/${loc}/blog/${post.slug}`,
+            lastModified: new Date(post.date),
+            changeFrequency: "monthly" as const,
+            priority: 0.5,
+          }));
+      }),
+
     {
       url: `${base}/about`,
       lastModified: new Date(),
