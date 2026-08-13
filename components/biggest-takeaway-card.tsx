@@ -114,7 +114,7 @@ export function BiggestTakeawayCard({
         </div>
 
         <div
-          className={`mt-5 flex items-start gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] px-4 py-4`}
+          className={`mt-5 flex items-start gap-3 rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-4 py-4`}
         >
           <span className={`mt-0.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full ${s.dot}`} />
           <p className="text-sm leading-relaxed text-[#D8D3C6]">

@@ -754,7 +754,7 @@ export function ScanSessionPage({
           <span className="text-[#C9C4B6]">Report</span>
         </nav>
 
-        <section className="relative overflow-hidden rounded-[2rem] border border-white/[0.07] bg-[radial-gradient(ellipse_80%_60%_at_70%_-10%,_rgba(255,107,53,0.13),_transparent_60%),linear-gradient(180deg,_#121214_0%,_#0A0A0B_100%)] p-6 sm:p-8">
+        <section className="relative overflow-hidden rounded-[2rem] border border-[#1e1a24] bg-[radial-gradient(ellipse_80%_60%_at_70%_-10%,_rgba(255,107,53,0.13),_transparent_60%),linear-gradient(180deg,_#121214_0%,_#0A0A0B_100%)] p-6 sm:p-8">
           <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#FF6B35]/[0.10] blur-[120px]" />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FF6B35]/40 to-transparent" />
           <div className="relative">
@@ -775,7 +775,7 @@ export function ScanSessionPage({
                 <div className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
                   {/* Key stats */}
                   {scan.result?.gamesAnalyzed ? (
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3.5">
+                    <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-4 py-3.5">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8A8578]">
                         Games
                       </p>
@@ -838,7 +838,7 @@ export function ScanSessionPage({
                   ) : null}
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2 text-xs">
-                  <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-slate-300">
+                  <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1 text-[#f0edf2]">
                     Depth {scan.config.engineDepth}
                   </span>
                   <span
@@ -878,7 +878,7 @@ export function ScanSessionPage({
                 <button
                   type="button"
                   onClick={handleCopyLink}
-                  className="rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-white/[0.16] hover:text-white"
+                  className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-4 py-2 text-sm font-semibold text-white transition hover:border-[#ff5a1f]/25 hover:text-white"
                 >
                   {copyLabel}
                 </button>
@@ -889,7 +889,7 @@ export function ScanSessionPage({
                     type="button"
                     onClick={handleRegenerate}
                     disabled={regenerateState === "resetting"}
-                    className="rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-white/[0.16] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-4 py-2 text-sm font-semibold text-white transition hover:border-[#ff5a1f]/25 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {regenerateState === "resetting"
                       ? "Regenerating..."
@@ -988,7 +988,7 @@ export function ScanSessionPage({
               Admin — brilliant section
             </p>
             <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="max-w-3xl text-sm leading-relaxed text-slate-200">
+              <p className="max-w-3xl text-sm leading-relaxed text-white">
                 Re-scan all games for brilliant moves and update this report
                 publicly. Useful after tuning the detection algorithm or to
                 refresh an old report that predates this section.
@@ -1008,7 +1008,7 @@ export function ScanSessionPage({
               Admin — report meta
             </p>
             <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="max-w-3xl text-sm leading-relaxed text-slate-200">
+              <p className="max-w-3xl text-sm leading-relaxed text-white">
                 Recompute the title, full-report summary, and radar scores from
                 the stored result. Use this after tuning the scoring logic to
                 refresh all 9 sample reports without a full rescan.
@@ -1028,14 +1028,14 @@ export function ScanSessionPage({
 
         {showExpiryPopup ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-            <div className="w-full max-w-md rounded-[1.75rem] border border-amber-500/20 bg-slate-950 p-6 shadow-2xl shadow-black/50">
+            <div className="w-full max-w-md rounded-[1.75rem] border border-amber-500/20 bg-slate-950 p-6 shadow-lg shadow-black/40">
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-300">
                 Temporary scan link
               </p>
               <h2 className="mt-3 text-2xl font-black text-white">
                 This share page expires in 24 hours unless you save it.
               </h2>
-              <p className="mt-3 text-sm leading-relaxed text-slate-300">
+              <p className="mt-3 text-sm leading-relaxed text-[#f0edf2]">
                 Guests get a short-lived share page by default. Save it with an
                 account if you want to keep the link and the report around
                 permanently.
@@ -1051,7 +1051,7 @@ export function ScanSessionPage({
                 <button
                   type="button"
                   onClick={dismissExpiryPopup}
-                  className="rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-300 transition hover:text-white"
+                  className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-4 py-2 text-sm font-semibold text-[#f0edf2] transition hover:text-white"
                 >
                   Later
                 </button>
@@ -1062,7 +1062,7 @@ export function ScanSessionPage({
 
         {showScanComplete && scan.result ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-            <div className="w-full max-w-md rounded-[1.75rem] border border-emerald-500/20 bg-slate-950 p-6 text-center shadow-2xl shadow-black/50">
+            <div className="w-full max-w-md rounded-[1.75rem] border border-emerald-500/20 bg-slate-950 p-6 text-center shadow-lg shadow-black/40">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 text-3xl">
                 ✓
               </div>
@@ -1072,36 +1072,36 @@ export function ScanSessionPage({
               <h2 className="mt-2 text-2xl font-black text-white">
                 Your scan is ready
               </h2>
-              <p className="mt-2 text-sm text-slate-400">
+              <p className="mt-2 text-sm text-[#8d8696]">
                 {scan.result.gamesAnalyzed} games analyzed
               </p>
               <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-2 py-3">
+                <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-2 py-3">
                   <div className="text-lg font-black text-white">
                     {scan.result.leaks.length}
                   </div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500">
+                  <div className="text-[10px] uppercase tracking-wider text-[#565061]">
                     Leaks
                   </div>
                 </div>
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-2 py-3">
+                <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-2 py-3">
                   <div className="text-lg font-black text-white">
                     {scan.result.missedTactics.length}
                   </div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500">
+                  <div className="text-[10px] uppercase tracking-wider text-[#565061]">
                     Tactics
                   </div>
                 </div>
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-2 py-3">
+                <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-2 py-3">
                   <div className="text-lg font-black text-white">
                     {scan.result.repeatedPositions}
                   </div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500">
+                  <div className="text-[10px] uppercase tracking-wider text-[#565061]">
                     Positions
                   </div>
                 </div>
               </div>
-              <p className="mt-4 text-sm leading-relaxed text-slate-300">
+              <p className="mt-4 text-sm leading-relaxed text-[#f0edf2]">
                 Walk through your biggest findings step by step, or jump
                 straight to the full breakdown.
               </p>
@@ -1119,7 +1119,7 @@ export function ScanSessionPage({
                 <button
                   type="button"
                   onClick={() => setShowScanComplete(false)}
-                  className="w-full rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-300 transition hover:text-white"
+                  className="w-full rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-4 py-2 text-sm font-semibold text-[#f0edf2] transition hover:text-white"
                 >
                   View full report
                 </button>
@@ -1138,14 +1138,14 @@ export function ScanSessionPage({
         />
 
         {scan.status === "processing" ? (
-          <section className="mt-6 rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] p-6 sm:p-7">
+          <section className="mt-6 rounded-[1.75rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-6 sm:p-7">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-white">
                   {progress.message}
                 </p>
-                <p className="mt-0.5 text-sm text-slate-400">
+                <p className="mt-0.5 text-sm text-[#8d8696]">
                   {sectionsReady.size > 0
                     ? `${sectionsReady.size} section${sectionsReady.size === 1 ? "" : "s"} complete — results unlocking below`
                     : (progress.detail ??
@@ -1232,12 +1232,12 @@ export function ScanSessionPage({
                     ? "bg-emerald-500"
                     : activePhase
                       ? "bg-cyan-500"
-                      : "bg-white/20";
+                      : "bg-[#1e1a24]";
 
                   return (
                     <div
                       key={s.key}
-                      className="rounded-xl border border-white/[0.07] bg-black/20 px-4 py-3"
+                      className="rounded-xl border border-[#1e1a24] bg-black/20 px-4 py-3"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-sm font-semibold text-white">
@@ -1249,13 +1249,13 @@ export function ScanSessionPage({
                               ? "text-emerald-400"
                               : activePhase
                                 ? "text-cyan-300"
-                                : "text-slate-500"
+                                : "text-[#565061]"
                           }`}
                         >
                           {statusText}
                         </span>
                       </div>
-                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#1e1a24]">
                         <div
                           className={`h-full rounded-full transition-[width] duration-500 ${barColor}`}
                           style={{
