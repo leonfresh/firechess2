@@ -27,7 +27,7 @@ function RatingPip({ rating }: { rating: number }) {
       {[1, 2, 3, 4, 5].map((i) => (
         <span
           key={i}
-          className={`h-1 w-3.5 rounded-full ${i <= filled ? "bg-orange-400/80" : "bg-white/[0.10]"}`}
+          className={`h-1 w-3.5 rounded-full ${i <= filled ? "bg-orange-400/80" : "bg-[#1e1a24]"}`}
         />
       ))}
     </span>
@@ -54,7 +54,7 @@ function StatPill({ value, label }: { value: number; label: string }) {
       <span className="text-base font-bold tabular-nums text-white">
         {value}
       </span>
-      <span className="text-[10px] leading-none text-slate-500">{label}</span>
+      <span className="text-[10px] leading-none text-[#565061]">{label}</span>
     </div>
   );
 }
@@ -75,9 +75,9 @@ function SampleReportCard({
 
   const cardInner = (
     <div
-      className={`group relative flex h-full flex-col overflow-hidden rounded-[1.4rem] border border-white/[0.06] bg-white/[0.02] p-5 transition-all duration-300 ${
+      className={`group relative flex h-full flex-col overflow-hidden rounded-[1.4rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-5 transition-all duration-300 ${
         hasReport
-          ? "cursor-pointer hover:border-orange-400/20 hover:bg-white/[0.04] hover:shadow-[0_16px_48px_-20px_rgba(249,115,22,0.16)]"
+          ? "cursor-pointer hover:border-orange-400/20 hover:bg-[#ff5a1f]/[0.05] hover:shadow-[0_16px_48px_-20px_rgba(249,115,22,0.16)]"
           : "opacity-60"
       }`}
     >
@@ -122,7 +122,7 @@ function SampleReportCard({
           <p className="truncate text-sm font-bold text-white">
             {report.displayName ?? report.username}
           </p>
-          <p className="mt-0.5 truncate text-[11px] text-slate-400">
+          <p className="mt-0.5 truncate text-[11px] text-[#8d8696]">
             {report.label}
           </p>
         </div>
@@ -137,7 +137,7 @@ function SampleReportCard({
       </div>
 
       {/* Divider */}
-      <div className="my-4 h-px bg-white/[0.06]" />
+      <div className="my-4 h-px bg-[#1e1a24]" />
 
       {/* Stats or coming-soon */}
       <div className="flex-1">
@@ -162,17 +162,17 @@ function SampleReportCard({
               />
             )}
             {report.highlights.gamesScanned !== undefined && (
-              <div className="col-span-3 mt-1 text-center text-[10px] text-slate-500">
+              <div className="col-span-3 mt-1 text-center text-[10px] text-[#565061]">
                 {report.highlights.gamesScanned.toLocaleString()} games scanned
               </div>
             )}
           </div>
         ) : hasReport ? (
-          <p className="text-center text-xs text-slate-500 italic">
+          <p className="text-center text-xs text-[#565061] italic">
             Full report available →
           </p>
         ) : (
-          <p className="text-center text-xs text-slate-600 italic">
+          <p className="text-center text-xs text-[#565061] italic">
             Report coming soon
           </p>
         )}
@@ -224,7 +224,7 @@ export function SampleReportsSection() {
   if (SAMPLE_REPORTS.length === 0) return null;
 
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-white/[0.05] bg-white/[0.015] px-5 py-8 sm:px-8 sm:py-10">
+    <section className="relative overflow-hidden rounded-[2rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.02] px-5 py-8 sm:px-8 sm:py-10">
       {/* Background glow */}
       <div className="pointer-events-none absolute right-[-10%] top-[-15%] h-64 w-64 rounded-full bg-orange-400/[0.05] blur-3xl" />
       <div className="pointer-events-none absolute bottom-[-10%] left-[-5%] h-48 w-48 rounded-full bg-amber-500/[0.04] blur-3xl" />
@@ -238,7 +238,7 @@ export function SampleReportsSection() {
           <h2 className="mt-2 text-xl font-bold text-white sm:text-2xl">
             See what FireChess finds at every level
           </h2>
-          <p className="mt-1 max-w-lg text-sm leading-relaxed text-slate-400">
+          <p className="mt-1 max-w-lg text-sm leading-relaxed text-[#8d8696]">
             Real scans from recognizable players — from world champions to
             beginners. Every level has patterns worth fixing.
           </p>
@@ -251,7 +251,7 @@ export function SampleReportsSection() {
             className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
               activeTier === "all"
                 ? "bg-orange-400/15 text-orange-200 ring-1 ring-orange-400/30"
-                : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+                : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"
             }`}
           >
             All
@@ -263,7 +263,7 @@ export function SampleReportsSection() {
               className={`rounded-full px-3.5 py-1.5 text-xs font-semibold capitalize transition-all duration-200 ${
                 activeTier === tier
                   ? `bg-orange-400/15 text-orange-200 ring-1 ring-orange-400/30`
-                  : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+                  : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"
               }`}
             >
               {TIER_META[tier].label}
@@ -292,7 +292,7 @@ export function SampleReportsSection() {
                     >
                       {meta.label}
                     </span>
-                    <span className="text-[11px] text-slate-500">
+                    <span className="text-[11px] text-[#565061]">
                       — {meta.description}
                     </span>
                   </div>
@@ -319,8 +319,8 @@ export function SampleReportsSection() {
       )}
 
       {/* Footer CTA */}
-      <div className="relative mt-8 border-t border-white/[0.06] pt-6 text-center">
-        <p className="text-sm text-slate-400">Want to see your own patterns?</p>
+      <div className="relative mt-8 border-t border-[#1e1a24] pt-6 text-center">
+        <p className="text-sm text-[#8d8696]">Want to see your own patterns?</p>
         <button
           type="button"
           onClick={() =>

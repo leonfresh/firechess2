@@ -67,7 +67,7 @@ export function CoachStickyNote({ section, note, label }: CoachStickyNoteProps) 
           <p className={`mb-1 text-[10px] font-bold uppercase tracking-wider ${colors.text}`}>
             {label ?? SECTION_LABELS[section] ?? section} — Coach&apos;s Note
           </p>
-          <p className="text-[13px] leading-relaxed text-slate-300">{note}</p>
+          <p className="text-[13px] leading-relaxed text-[#f0edf2]">{note}</p>
         </div>
       </div>
     </div>

@@ -695,7 +695,7 @@ export function EndgameCard({
               <h3 className="text-lg font-bold text-sky-300">
                 {ENDGAME_TYPE_ICON[mistake.endgameType] ?? "♔"}{" "}
                 {mistake.endgameType} Endgame
-                <span className="ml-2 text-sm font-normal text-slate-400">
+                <span className="ml-2 text-sm font-normal text-[#8d8696]">
                   Game #{mistake.gameIndex}, Move {mistake.moveNumber}
                 </span>
               </h3>
@@ -730,7 +730,7 @@ export function EndgameCard({
                 </span>
               </div>
             </div>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-[#8d8696]">
               You played{" "}
               <span className="font-mono text-sky-400">
                 {userMoveDetails?.san ?? mistake.userMove}
@@ -750,15 +750,15 @@ export function EndgameCard({
           {/* Stats grid */}
           <div className="grid grid-cols-2 gap-2">
             <div className="stat-card py-3">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">
                 Eval Before
               </p>
-              <p className="mt-0.5 text-lg font-bold text-slate-200">
+              <p className="mt-0.5 text-lg font-bold text-white">
                 {formatEval(mistake.cpBefore, { showPlus: true })}
               </p>
             </div>
             <div className="stat-card py-3">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">
                 Eval After Your Move
               </p>
               <p className="mt-0.5 text-lg font-bold text-sky-400">
@@ -766,7 +766,7 @@ export function EndgameCard({
               </p>
             </div>
             <div className="stat-card py-3">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">
                 Eval Lost
               </p>
               <p className="mt-0.5 text-lg font-bold text-red-400">
@@ -774,7 +774,7 @@ export function EndgameCard({
               </p>
             </div>
             <div className="stat-card py-3">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">
                 Best Move
               </p>
               <p className="mt-0.5 text-lg font-bold font-mono text-emerald-400">
@@ -806,7 +806,7 @@ export function EndgameCard({
           {/* Endgame tip */}
           {ENDGAME_TIPS[mistake.endgameType] && (
             <div className="rounded-xl border border-sky-500/[0.08] bg-sky-500/[0.02] p-3">
-              <p className="flex items-start gap-2 text-xs leading-relaxed text-slate-400">
+              <p className="flex items-start gap-2 text-xs leading-relaxed text-[#8d8696]">
                 <span className="mt-0.5 shrink-0 text-sky-400">💡</span>
                 <span>
                   <span className="font-semibold text-sky-300">
@@ -818,10 +818,10 @@ export function EndgameCard({
             </div>
           )}
 
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[#565061]">
             <span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-400" />
             Green = best move
-            <span className="mx-2 text-slate-600">|</span>
+            <span className="mx-2 text-[#565061]">|</span>
             <span className="mr-1 inline-block h-2 w-2 rounded-full bg-sky-400" />
             Blue = your move
           </p>
@@ -829,7 +829,7 @@ export function EndgameCard({
           {/* FEN block */}
           <div className="rounded-xl border border-sky-500/[0.08] bg-sky-500/[0.02] p-3">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                 Position FEN
               </span>
               <button
@@ -840,7 +840,7 @@ export function EndgameCard({
                 {fenCopied ? "✓ Copied" : "Copy"}
               </button>
             </div>
-            <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-lg border border-white/[0.04] bg-white/[0.01] p-2.5 font-mono text-[11px] text-slate-500">
+            <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.02] p-2.5 font-mono text-[11px] text-[#565061]">
               {mistake.fenBefore}
             </pre>
           </div>
@@ -932,7 +932,7 @@ export function EndgameCard({
                 )}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-10 items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 text-sm font-semibold text-slate-400 transition-all hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-slate-200"
+                className="flex h-10 items-center gap-2 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 text-sm font-semibold text-[#8d8696] transition-all hover:border-[#ff5a1f]/30 hover:bg-[#1e1a24] hover:text-white"
               >
                 <svg
                   width="14"
@@ -972,10 +972,10 @@ export function EndgameCard({
             ) : null}
 
             {animating && (
-              <div className="ml-1 flex items-center gap-1 rounded-xl border border-white/[0.08] bg-white/[0.03] p-1">
+              <div className="ml-1 flex items-center gap-1 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-1">
                 <button
                   type="button"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-[#8d8696] transition-colors hover:bg-[#1e1a24] hover:text-white"
                   onClick={stopAnimation}
                   title="Stop"
                 >
@@ -1035,7 +1035,7 @@ export function EndgameCard({
                     >
                       {endgameCards.impact}
                     </p>
-                    <p className="mt-2 flex items-center gap-1 text-[11px] text-slate-500">
+                    <p className="mt-2 flex items-center gap-1 text-[11px] text-[#565061]">
                       <svg
                         width="12"
                         height="12"
@@ -1051,7 +1051,7 @@ export function EndgameCard({
                   </button>
                 </>
               ) : (
-                <div className="rounded-xl border border-sky-500/[0.08] bg-sky-500/[0.02] p-4 text-sm text-slate-300">
+                <div className="rounded-xl border border-sky-500/[0.08] bg-sky-500/[0.02] p-4 text-sm text-[#f0edf2]">
                   {explanation}
                 </div>
               )}

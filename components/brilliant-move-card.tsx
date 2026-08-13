@@ -85,7 +85,7 @@ export function BrilliantMoveCard({
   return (
     <article className="overflow-hidden rounded-[1.75rem] border border-cyan-500/15 bg-[radial-gradient(circle_at_top_right,_rgba(34,211,238,0.12),_rgba(15,23,42,0.82)_42%,_rgba(2,6,23,0.96)_100%)] shadow-[0_20px_60px_-38px_rgba(34,211,238,0.55)]">
       <div className="grid gap-0 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
-        <div className="border-b border-white/[0.08] p-4 lg:border-b-0 lg:border-r">
+        <div className="border-b border-[#1e1a24] p-4 lg:border-b-0 lg:border-r">
           <div ref={boardRef} className="mx-auto w-full max-w-[430px]">
             <div className="flex items-start gap-2">
               <EvalBar evalCp={whiteEvalBefore} height={boardSize} />
@@ -139,7 +139,7 @@ export function BrilliantMoveCard({
                 Game {move.gameIndex} · Move {move.moveNumber}
               </span>
             </div>
-            <div className="text-right text-xs text-slate-400">
+            <div className="text-right text-xs text-[#8d8696]">
               <p>{move.userColor === "white" ? "White" : "Black"} to move</p>
               <p>
                 {formatEval(move.cpBefore)} → {formatEval(move.cpAfter)}
@@ -151,30 +151,30 @@ export function BrilliantMoveCard({
             <h3 className="text-xl font-black tracking-tight text-white">
               {san}
             </h3>
-            <p className="mt-2 text-sm leading-relaxed text-slate-300">
+            <p className="mt-2 text-sm leading-relaxed text-[#f0edf2]">
               {move.reason}
             </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            <div className="rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#565061]">
                 Played move
               </p>
               <p className="mt-2 text-sm font-semibold text-white">{san}</p>
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-[#8d8696]">
                 Eval gain {((move.cpAfter - move.cpBefore) / 100).toFixed(1)}{" "}
                 pawns
               </p>
             </div>
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            <div className="rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#565061]">
                 Engine line
               </p>
               <p className="mt-2 text-sm font-semibold text-white">
                 {bestSan ?? san}
               </p>
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-[#8d8696]">
                 {move.line && move.line.length > 0
                   ? move.line.join(" ")
                   : "Principal variation ready in the clean board."}
@@ -197,7 +197,7 @@ export function BrilliantMoveCard({
               href={`${move.gameUrl}${move.gameUrl.includes("lichess.org") ? `#${(move.moveNumber - 1) * 2 + (move.userColor === "white" ? 1 : 2)}` : ""}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-xs font-semibold text-slate-400 transition hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-slate-200"
+              className="inline-flex items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-2 text-xs font-semibold text-[#8d8696] transition hover:border-[#ff5a1f]/30 hover:bg-[#1e1a24] hover:text-white"
             >
               <svg
                 width="11"

@@ -16,8 +16,8 @@ export function AiReportAnalysis({ analysis, loading }: { analysis: AnalysisResu
         <div className="flex items-center gap-3">
           <Brain className="h-6 w-6 animate-pulse text-sky-400" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-48 animate-pulse rounded bg-white/10" />
-            <div className="h-3 w-72 animate-pulse rounded bg-white/5" />
+            <div className="h-4 w-48 animate-pulse rounded bg-[#ff5a1f]/10" />
+            <div className="h-3 w-72 animate-pulse rounded bg-[#ff5a1f]/5" />
           </div>
         </div>
       </div>
@@ -40,7 +40,7 @@ export function AiReportAnalysis({ analysis, loading }: { analysis: AnalysisResu
                 <Sparkles className="mr-0.5 inline h-2.5 w-2.5" />AI
               </span>
             </div>
-            <p className="text-xs text-slate-400">Generated from your scan data</p>
+            <p className="text-xs text-[#8d8696]">Generated from your scan data</p>
           </div>
         </div>
       </div>
@@ -54,7 +54,7 @@ export function AiReportAnalysis({ analysis, loading }: { analysis: AnalysisResu
               title={badge.explanation}
             >
               {badge.label}
-              <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-[9px] text-slate-300 opacity-0 shadow transition-opacity group-hover:opacity-100">
+              <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-[9px] text-[#f0edf2] opacity-0 shadow transition-opacity group-hover:opacity-100">
                 {badge.explanation}
               </span>
             </span>
@@ -67,12 +67,12 @@ export function AiReportAnalysis({ analysis, loading }: { analysis: AnalysisResu
       </p>
 
       {analysis.coachNote && (
-        <div className="mb-6 rounded-xl border border-white/[0.06] bg-black/30 p-4">
+        <div className="mb-6 rounded-xl border border-[#1e1a24] bg-black/30 p-4">
           <div className="mb-2 flex items-center gap-1.5">
             <Lightbulb className="h-4 w-4 text-amber-400" />
             <p className="text-xs font-semibold text-white">Coach&apos;s Note</p>
           </div>
-          <p className="text-sm leading-relaxed text-slate-300">{analysis.coachNote}</p>
+          <p className="text-sm leading-relaxed text-[#f0edf2]">{analysis.coachNote}</p>
         </div>
       )}
 
@@ -86,7 +86,7 @@ export function AiReportAnalysis({ analysis, loading }: { analysis: AnalysisResu
               </div>
               <ul className="space-y-1.5">
                 {analysis.strengths.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-slate-300">
+                  <li key={i} className="flex items-start gap-2 text-xs text-[#f0edf2]">
                     <span className="mt-0.5 text-emerald-400">+</span> {s}
                   </li>
                 ))}
@@ -101,7 +101,7 @@ export function AiReportAnalysis({ analysis, loading }: { analysis: AnalysisResu
               </div>
               <ul className="space-y-1.5">
                 {analysis.weaknesses.map((w, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-slate-300">
+                  <li key={i} className="flex items-start gap-2 text-xs text-[#f0edf2]">
                     <span className="mt-0.5 text-red-400">−</span> {w}
                   </li>
                 ))}
@@ -119,7 +119,7 @@ export function AiReportAnalysis({ analysis, loading }: { analysis: AnalysisResu
           </div>
           <ol className="space-y-1.5">
             {analysis.nextSteps.map((step, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-slate-300">
+              <li key={i} className="flex items-start gap-2 text-xs text-[#f0edf2]">
                 <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-[9px] font-bold text-amber-400">
                   {i + 1}
                 </span>
