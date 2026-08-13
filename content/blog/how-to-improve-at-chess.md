@@ -137,7 +137,7 @@ These come up constantly. Players who know them win the games they should. Playe
 
 ### Q: Positional Understanding (Advanced)
 
-Once you're consistently above 1600–1700, positional concepts start mattering more. These include:
+Once you're consistently above 1600–1700, [positional concepts](/blog/positional-mistakes-chess) start mattering more. These include:
 - Outpost squares for knights
 - Open file control with rooks
 - Weak color complexes

@@ -244,7 +244,7 @@ In thousands of [FireChess scans](/analyze), these are the most common ways the 
 
 Playing aggressively in a quiet position (or passively in a sharp one). This produces the highest ACPL moves because the *type* of move is wrong, not just the specific square.
 
-**Example:** You're in a closed position with locked pawn chains. The "right" move is a knight maneuver or pawn break on the flank. But you "feel" like you should attack and push a pawn that weakens your own king. The engine shows a 200+ cp swing — not because the pawn push is tactically losing, but because it transforms the position into one where your opponent's pieces become active.
+**Example:** You're in a closed position with locked pawn chains. The "right" move is a knight maneuver or pawn break on the flank. But you "feel" like you should attack and push a pawn that [weakens your own king](/blog/positional-mistakes-chess). The engine shows a 200+ cp swing — not because the pawn push is tactically losing, but because it transforms the position into one where your opponent's pieces become active.
 
 **Fix:** Before looking for moves, ask: "Is this position tactical or strategic?" If strategic, look for piece improvements and pawn breaks. If tactical, calculate forcing lines.
 

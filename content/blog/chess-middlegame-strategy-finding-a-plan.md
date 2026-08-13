@@ -239,7 +239,7 @@ These four fallback strategies won't win you a brilliancy prize, but they'll kee
 
 ### Q: Why Prophylaxis Is Your Secret Weapon
 
-That third card — "What does my opponent want?" — is the most underrated planning tool in chess. Before you make your move, ask yourself what your opponent would do if it were their turn. Would they push a pawn break? Reroute a knight? Attack your king? If the answer is clear, consider preventing it. This is called prophylaxis, and it's what separates strong positional players from the rest.
+That third card — "What does my opponent want?" — is the most underrated planning tool in chess. Before you make your move, ask yourself what your opponent would do if it were their turn. Would they push a pawn break? Reroute a knight? Attack your king? If the answer is clear, consider preventing it. This is called prophylaxis, and it's what separates strong positional players from the rest. For a deeper dive into the most common positional errors, see our guide on [positional mistakes in chess](/blog/positional-mistakes-chess).
 
 Prophylactic thinking doesn't just prevent threats — it often reveals your own plan. If your opponent wants to play ...f5, and you prevent it with a move like g4, you've not only stopped their plan but also created a kingside space advantage for yourself. The best moves in chess often do two things at once: improve your position while limiting your opponent's options.
 

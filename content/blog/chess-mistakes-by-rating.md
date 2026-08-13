@@ -257,7 +257,7 @@ The crossover point — where positional mistakes overtake tactical blunders —
 
 ## How to Find YOUR Specific Mistakes
 
-The rating bands above are generalisations. Your specific leak might be different. A 1400 player might still be hanging pieces while their positional play is fine. A 1200 player might have great endgame technique but fall for opening traps.
+The rating bands above are generalisations. Your specific leak might be different. A 1400 player might still be hanging pieces while their [positional play](/blog/positional-mistakes-chess) is fine. A 1200 player might have great endgame technique but fall for opening traps.
 
 The only way to know is to **look at your own data**. Here's how:
 
