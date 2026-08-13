@@ -176,7 +176,7 @@ For someone trying to improve, this suggests a clear priority: **focus on middle
 
 ## Blunder types: what exactly are players getting wrong?
 
-Not all blunders are created equal. We categorized every 2+ pawn mistake into five types to understand *what* players are missing. For a complete rating-by-rating breakdown with positions and ACPL benchmarks, see our [blunder patterns by rating](/blog/chess-blunder-patterns-by-rating) guide.
+Not all blunders are created equal. We categorized every 2+ pawn mistake into five types to understand *what* players are missing. For a complete rating-by-rating breakdown with positions and [ACPL](/blog/what-is-centipawn-loss) benchmarks, see our [blunder patterns by rating](/blog/chess-blunder-patterns-by-rating) guide.
 
 | Blunder type | Under 1000 | 1600-1799 | 2200+ | Description |
 | --- | --- | --- | --- | --- |

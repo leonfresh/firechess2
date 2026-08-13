@@ -13,7 +13,7 @@ Most club players resolve pawn tension immediately. They see a pawn exchange ava
 
 Pawn tension is the situation where two pawns face each other on adjacent files, each one able to capture the other. In the [Queen's Gambit Declined](/blog/queens-gambit-guide), after 1.d4 d5 2.c4 e6, White's c-pawn and Black's d-pawn create tension on c4/d5. In the [French Defense](/blog/chess-opening-principles), after 1.e4 e6 2.d4 d5, the e4 and d5 pawns stare each other down. These standoffs are not problems to solve — they're opportunities to exploit.
 
-The catch: there are three possible responses when pawns face off (capture, advance, or maintain), and picking the wrong one can hand your opponent a positional advantage that lasts the entire game. Upload your recent games to [FireChess's scanner at /analyze](/analyze) and look at the "Opening Leaks" section — you might be surprised how many centipawn-loss spikes trace back to a single premature pawn exchange on move 8.
+The catch: there are three possible responses when pawns face off (capture, advance, or maintain), and picking the wrong one can hand your opponent a positional advantage that lasts the entire game. Upload your recent games to [FireChess's scanner at /analyze](/analyze) and look at the "Opening Leaks" section — you might be surprised how many [centipawn](/blog/what-is-centipawn-loss)-loss spikes trace back to a single premature pawn exchange on move 8.
 
 This guide covers the decision framework for pawn tension: when to capture, when to hold, and when to push past. We'll use real positions from the French Defense, Queen's Gambit Declined, Caro-Kann, and King's Indian to show the difference between a well-timed exchange and an autopilot blunder.
 

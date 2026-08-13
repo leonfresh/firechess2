@@ -257,7 +257,7 @@ Here's a practical routine that builds all four methods into a daily habit:
   - Note what you missed
 
 **Monthly:**
-- Analyze 10 of your recent games for centipawn loss. Identify the move with the highest centipawn loss and ask: which method would have prevented it?
+- Analyze 10 of your recent games for [centipawn loss](/blog/what-is-centipawn-loss). Identify the move with the highest centipawn loss and ask: which method would have prevented it?
 - Retest: your ACPL should drop by 5-10 points per month of consistent practice. Use FireChess's [accuracy scoring](/blog/chess-accuracy-score-explained) to track progress.
 
 After 30 days, these methods will feel automatic. You'll naturally generate candidates before calculating, naturally check forcing moves first, and naturally scan for blunders before every move.
