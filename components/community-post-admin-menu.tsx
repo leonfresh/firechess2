@@ -120,7 +120,7 @@ export function CommunityPostAdminMenu({
           setError(null);
           setOpen((current) => !current);
         }}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-black/25 text-slate-300 transition hover:border-white/[0.16] hover:text-white"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#1e1a24] bg-black/25 text-[#f0edf2] transition hover:border-[#ff5a1f]/25 hover:text-white"
         aria-label="Open community post admin actions"
         aria-haspopup="menu"
         aria-expanded={open}
@@ -141,13 +141,13 @@ export function CommunityPostAdminMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-11 w-[11rem] max-w-[calc(100vw-2rem)] rounded-2xl border border-white/[0.08] bg-slate-950/95 p-2 shadow-[0_20px_50px_-28px_rgba(2,6,23,0.95)] backdrop-blur"
+          className="absolute right-0 top-11 w-[11rem] max-w-[calc(100vw-2rem)] rounded-2xl border border-[#1e1a24] bg-slate-950/95 p-2 shadow-[0_20px_50px_-28px_rgba(2,6,23,0.95)] backdrop-blur"
         >
           <button
             type="button"
             role="menuitem"
             onClick={handleEdit}
-            className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-100 transition hover:bg-white/[0.06] hover:text-white"
+            className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-100 transition hover:bg-[#1e1a24] hover:text-white"
           >
             <span>Edit post</span>
             <svg

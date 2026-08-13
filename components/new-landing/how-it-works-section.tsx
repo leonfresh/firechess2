@@ -72,7 +72,7 @@ export function HowItWorksSection() {
       <div className="relative mx-auto max-w-7xl">
         {/* Section header */}
         <div className="mb-16 text-center">
-          <span className="mb-4 inline-block rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-slate-400">
+          <span className="mb-4 inline-block rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-[#8d8696]">
             How it works
           </span>
           <h2 className="mb-4 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
@@ -81,7 +81,7 @@ export function HowItWorksSection() {
               three steps
             </span>
           </h2>
-          <p className="mx-auto max-w-2xl text-lg text-slate-400">
+          <p className="mx-auto max-w-2xl text-lg text-[#8d8696]">
             No setup, no credit card, no waiting. Connect your account and get
             your first report in under a minute.
           </p>
@@ -99,7 +99,7 @@ export function HowItWorksSection() {
                 className={`group relative rounded-2xl border p-8 transition-all duration-500 ${
                   isActive
                     ? "border-orange-500/30 bg-gradient-to-b from-orange-500/[0.08] to-transparent"
-                    : "border-white/[0.06] bg-[#0c0f15] hover:border-white/[0.12]"
+                    : "border-[#1e1a24] bg-[#0c0f15] hover:border-[#ff5a1f]/25"
                 }`}
               >
                 {/* Step number */}
@@ -115,7 +115,7 @@ export function HowItWorksSection() {
                     className={`flex h-14 w-14 items-center justify-center rounded-2xl transition-all duration-500 ${
                       isActive
                         ? "bg-orange-500/20 text-orange-400"
-                        : "bg-white/[0.04] text-slate-400 group-hover:bg-white/[0.08]"
+                        : "bg-[#ff5a1f]/[0.05] text-[#8d8696] group-hover:bg-[#1e1a24]"
                     }`}
                   >
                     <Icon className="h-7 w-7" />
@@ -125,7 +125,7 @@ export function HowItWorksSection() {
                 <h3 className="mb-3 text-xl font-semibold text-white">
                   {step.title}
                 </h3>
-                <p className="leading-relaxed text-slate-400">
+                <p className="leading-relaxed text-[#8d8696]">
                   {step.description}
                 </p>
 
@@ -152,7 +152,7 @@ export function HowItWorksSection() {
             return (
               <div
                 key={stat.label}
-                className="group rounded-xl border border-white/[0.06] bg-[#0c0f15] p-6 text-center transition-all duration-300 hover:border-orange-500/20 hover:bg-orange-500/[0.03]"
+                className="group rounded-xl border border-[#1e1a24] bg-[#0c0f15] p-6 text-center transition-all duration-300 hover:border-orange-500/20 hover:bg-orange-500/[0.03]"
               >
                 <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10 text-orange-400 transition-transform group-hover:scale-110">
                   <Icon className="h-5 w-5" />
@@ -160,7 +160,7 @@ export function HowItWorksSection() {
                 <div className="text-2xl font-bold text-white sm:text-3xl">
                   {stat.value}
                 </div>
-                <div className="text-sm text-slate-500">{stat.label}</div>
+                <div className="text-sm text-[#565061]">{stat.label}</div>
               </div>
             );
           })}

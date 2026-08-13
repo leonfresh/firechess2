@@ -17,8 +17,8 @@ const PGN_MAX_GAMES = 250;
 function HelpTip({ text }: { text: string }) {
   return (
     <span className="group relative ml-1 inline-flex">
-      <HelpCircle className="h-3 w-3 cursor-help text-slate-600 transition-colors group-hover:text-slate-400" />
-      <span className="pointer-events-none absolute bottom-full left-1/2 z-[9999] mb-2 w-48 -translate-x-1/2 rounded-lg bg-slate-900/95 px-3 py-2 text-[11px] font-normal leading-snug text-slate-300 opacity-0 shadow-xl backdrop-blur-sm transition-opacity group-hover:opacity-100">
+      <HelpCircle className="h-3 w-3 cursor-help text-[#565061] transition-colors group-hover:text-[#8d8696]" />
+      <span className="pointer-events-none absolute bottom-full left-1/2 z-[9999] mb-2 w-48 -translate-x-1/2 rounded-lg bg-slate-900/95 px-3 py-2 text-[11px] font-normal leading-snug text-[#f0edf2] opacity-0 shadow-xl backdrop-blur-sm transition-opacity group-hover:opacity-100">
         {text}
         <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-slate-900/95" />
       </span>
@@ -142,7 +142,7 @@ export function ScanSection() {
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
             Scan your games in seconds
           </h2>
-          <p className="mt-3 text-lg text-slate-400">
+          <p className="mt-3 text-lg text-[#8d8696]">
             Pick a platform, enter your username, and get a full report with every mistake.
           </p>
         </div>
@@ -165,7 +165,7 @@ export function ScanSection() {
                   className={`rounded-xl px-3 py-2 text-sm font-semibold transition-all duration-200 ${
                     source === s
                       ? "bg-gradient-to-r from-amber-200 to-orange-300 text-slate-950"
-                      : "text-slate-400 hover:bg-orange-500/[0.08] hover:text-slate-200"
+                      : "text-[#8d8696] hover:bg-orange-500/[0.08] hover:text-white"
                   }`}
                 >
                   {s === "lichess" ? "Lichess" : s === "chesscom" ? "Chess.com" : "PGN"}
@@ -178,7 +178,7 @@ export function ScanSection() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder={source === "chesscom" ? "Your Chess.com username" : source === "lichess" ? "Your Lichess username" : source === "pgn" ? "Your name (as in the PGN)" : "Pick a platform, then enter username"}
-              className="flex-1 bg-transparent py-4 pl-4 pr-4 text-base text-white outline-none placeholder:text-slate-400"
+              className="flex-1 bg-transparent py-4 pl-4 pr-4 text-base text-white outline-none placeholder:text-[#8d8696]"
             />
           </div>
 
@@ -190,10 +190,10 @@ export function ScanSection() {
                 onChange={(e) => setPgnText(e.target.value)}
                 placeholder="Paste PGN games here..."
                 spellCheck={false}
-                className="h-32 w-full resize-y rounded-xl bg-black/40 p-3 font-mono text-xs leading-relaxed text-white outline-none placeholder:text-slate-400"
+                className="h-32 w-full resize-y rounded-xl bg-black/40 p-3 font-mono text-xs leading-relaxed text-white outline-none placeholder:text-[#8d8696]"
               />
               <div className="mt-2 flex items-center justify-between">
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-orange-500/[0.08] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-orange-500/[0.12]">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-orange-500/[0.08] px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-500/[0.12]">
                   <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
                   </svg>
@@ -206,7 +206,7 @@ export function ScanSection() {
                     reader.readAsText(file);
                   }} />
                 </label>
-                <span className="text-[11px] text-slate-400">Up to 250 games · 2 MB</span>
+                <span className="text-[11px] text-[#8d8696]">Up to 250 games · 2 MB</span>
               </div>
             </div>
           )}
@@ -219,12 +219,12 @@ export function ScanSection() {
               { label: "Depth", value: engineDepth, set: setEngineDepth, max: FREE_MAX_DEPTH },
             ].map(({ label, value, set, max }) => (
               <div key={label} className="flex-1 min-w-[100px] rounded-xl border border-orange-500/5 bg-black/20 px-3 py-2">
-                <p className="text-[9px] font-medium uppercase tracking-wider text-slate-500">{label}</p>
+                <p className="text-[9px] font-medium uppercase tracking-wider text-[#565061]">{label}</p>
                 <input
                   type="number"
                   value={value}
                   onChange={(e) => set(Math.min(max, Math.max(1, Number(e.target.value) || 1)))}
-                  className="w-full bg-transparent text-base font-bold text-slate-200 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-full bg-transparent text-base font-bold text-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
             ))}
@@ -240,7 +240,7 @@ export function ScanSection() {
                 ))}
               </div>
             </div>
-            <p className="mt-1 text-sm text-slate-300/80">One report covering openings, tactics, endgames, and time management.</p>
+            <p className="mt-1 text-sm text-[#f0edf2]/80">One report covering openings, tactics, endgames, and time management.</p>
           </div>
 
           {/* Submit + advanced */}
@@ -290,9 +290,9 @@ export function ScanSection() {
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-orange-200/72">Advanced Scan Settings</p>
                   <h2 className="mt-2 text-2xl font-bold text-white">Tune the scan without crowding the page.</h2>
-                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">Set the platform and username above, then use this panel for depth, thresholds, and range.</p>
+                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#8d8696]">Set the platform and username above, then use this panel for depth, thresholds, and range.</p>
                 </div>
-                <button type="button" onClick={() => setAdvancedSettingsOpen(false)} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-orange-500/10 bg-orange-500/[0.04] text-slate-400 transition hover:bg-orange-500/[0.08] hover:text-white" aria-label="Close">
+                <button type="button" onClick={() => setAdvancedSettingsOpen(false)} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-orange-500/10 bg-orange-500/[0.04] text-[#8d8696] transition hover:bg-orange-500/[0.08] hover:text-white" aria-label="Close">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M18 6 6 18M6 6l12 12" /></svg>
                 </button>
               </div>
@@ -300,7 +300,7 @@ export function ScanSection() {
               <div className="mt-6 space-y-3">
                 {/* Time control */}
                 <div className="space-y-2">
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                  <span className="text-xs font-medium uppercase tracking-wider text-[#565061]">
                     Time Control
                     <HelpTip text="Filter which game speeds to include. Multi-select is supported." />
                   </span>
@@ -330,7 +330,7 @@ export function ScanSection() {
                             }
                           }}
                           className={`rounded-md text-[11px] font-semibold transition-all duration-200 ${
-                            isActive ? "bg-gradient-to-r from-orange-500 to-red-500 text-white" : "text-slate-400 hover:bg-orange-500/[0.08] hover:text-slate-200"
+                            isActive ? "bg-gradient-to-r from-orange-500 to-red-500 text-white" : "text-[#8d8696] hover:bg-orange-500/[0.08] hover:text-white"
                           }`}
                         >
                           {tc.label}
@@ -344,13 +344,13 @@ export function ScanSection() {
                 <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                   <div className="col-span-2 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                      <span className="text-xs font-medium uppercase tracking-wider text-[#565061]">
                         Games
                         <HelpTip text="Scan your N most recent games (Last N), or pick a date range." />
                       </span>
                       <div className="grid h-6 grid-cols-2 gap-0.5 rounded-md bg-black/30 p-0.5">
-                        <button type="button" onClick={() => setGameRangeMode("count")} className={`rounded px-1.5 text-[10px] font-semibold transition-all ${gameRangeMode === "count" ? "bg-orange-500/80 text-white" : "text-slate-500 hover:text-slate-300"}`}>Last N</button>
-                        <button type="button" onClick={() => setGameRangeMode("since")} className={`rounded px-1.5 text-[10px] font-semibold transition-all ${gameRangeMode === "since" ? "bg-orange-500/80 text-white" : "text-slate-500 hover:text-slate-300"}`}>Range</button>
+                        <button type="button" onClick={() => setGameRangeMode("count")} className={`rounded px-1.5 text-[10px] font-semibold transition-all ${gameRangeMode === "count" ? "bg-orange-500/80 text-white" : "text-[#565061] hover:text-[#f0edf2]"}`}>Last N</button>
+                        <button type="button" onClick={() => setGameRangeMode("since")} className={`rounded px-1.5 text-[10px] font-semibold transition-all ${gameRangeMode === "since" ? "bg-orange-500/80 text-white" : "text-[#565061] hover:text-[#f0edf2]"}`}>Range</button>
                       </div>
                     </div>
                     {gameRangeMode === "count" ? (
@@ -363,7 +363,7 @@ export function ScanSection() {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <span className="text-xs font-medium uppercase tracking-wider text-slate-500">CP Threshold</span>
+                    <span className="text-xs font-medium uppercase tracking-wider text-[#565061]">CP Threshold</span>
                     <input type="number" min={1} max={1000} value={cpThreshold} onChange={(e) => setCpThreshold(Math.min(1000, Math.max(1, Number(e.target.value) || 1)))} className="h-10 w-full rounded-lg bg-black/40 px-3 text-sm text-white outline-none" />
                   </div>
                 </div>

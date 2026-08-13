@@ -69,7 +69,7 @@ export function GoalWidget({
         <div className="relative flex flex-col items-center text-center">
           <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/15 text-2xl">🎯</span>
           <h3 className="mt-3 text-base font-bold text-white">Set a Goal</h3>
-          <p className="mt-1 max-w-xs text-xs text-slate-400">
+          <p className="mt-1 max-w-xs text-xs text-[#8d8696]">
             Set a target rating or accuracy and track your progress toward it.
           </p>
           <button
@@ -96,7 +96,7 @@ export function GoalWidget({
               className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition-all ${
                 goalType === "rating"
                   ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
-                  : "bg-white/[0.03] text-white/40 border border-white/[0.06] hover:text-white/60"
+                  : "bg-[#ff5a1f]/[0.04] text-white/40 border border-[#1e1a24] hover:text-white/60"
               }`}
             >
               🏆 Target Rating
@@ -106,7 +106,7 @@ export function GoalWidget({
               className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition-all ${
                 goalType === "accuracy"
                   ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                  : "bg-white/[0.03] text-white/40 border border-white/[0.06] hover:text-white/60"
+                  : "bg-[#ff5a1f]/[0.04] text-white/40 border border-[#1e1a24] hover:text-white/60"
               }`}
             >
               🎯 Target Accuracy
@@ -123,7 +123,7 @@ export function GoalWidget({
               value={goalValue}
               onChange={(e) => setGoalValue(e.target.value)}
               placeholder={goalType === "rating" ? "1500" : "80"}
-              className="mt-1 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder-white/20 focus:border-cyan-500/50 focus:outline-none"
+              className="mt-1 w-full rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-2 text-sm text-white placeholder-white/20 focus:border-cyan-500/50 focus:outline-none"
               min={goalType === "accuracy" ? 1 : 100}
               max={goalType === "accuracy" ? 100 : 3500}
             />
@@ -145,7 +145,7 @@ export function GoalWidget({
             </button>
             <button
               onClick={() => { setEditing(false); }}
-              className="rounded-lg border border-white/10 px-4 py-2 text-xs text-white/50 hover:text-white/70"
+              className="rounded-lg border border-[#1e1a24] px-4 py-2 text-xs text-white/50 hover:text-white/70"
             >
               Cancel
             </button>
@@ -168,14 +168,14 @@ export function GoalWidget({
       <div className="relative">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.06] text-xl">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1e1a24] text-xl">
               {achieved ? "🎉" : isRating ? "🏆" : "🎯"}
             </span>
             <div>
               <h3 className="text-sm font-bold text-white">
                 {achieved ? "Goal Achieved!" : `Target: ${goal!.target}${isRating ? "" : "%"}`}
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[#8d8696]">
                 {achieved
                   ? `You've hit your ${isRating ? "rating" : "accuracy"} goal!`
                   : remaining != null
@@ -188,7 +188,7 @@ export function GoalWidget({
             <button
               onClick={() => { setGoalType(goal!.type); setGoalValue(String(goal!.target)); setEditing(true); }}
               title="Edit goal"
-              className="rounded-lg p-1.5 text-white/20 transition-colors hover:bg-white/[0.06] hover:text-white/50"
+              className="rounded-lg p-1.5 text-white/20 transition-colors hover:bg-[#1e1a24] hover:text-white/50"
             >
               <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
@@ -214,7 +214,7 @@ export function GoalWidget({
             </span>
             <span className="font-bold text-white/50">{progress.toFixed(0)}%</span>
           </div>
-          <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+          <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-[#1e1a24]">
             <div
               className={`h-full rounded-full ${barColor} transition-all duration-700`}
               style={{ width: `${progress}%` }}

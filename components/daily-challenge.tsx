@@ -324,7 +324,7 @@ export function DailyChallenge({ allTactics }: DailyChallengeProps) {
               {tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium text-white/50"
+                  className="rounded-full bg-[#1e1a24] px-2 py-0.5 text-[10px] font-medium text-white/50"
                 >
                   {tag}
                 </span>
@@ -347,7 +347,7 @@ export function DailyChallenge({ allTactics }: DailyChallengeProps) {
               </p>
               <button
                 onClick={handleReveal}
-                className="mt-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-white/50 transition-colors hover:bg-white/[0.08] hover:text-white/70"
+                className="mt-2 rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1.5 text-xs text-white/50 transition-colors hover:bg-[#1e1a24] hover:text-white/70"
               >
                 Reveal answer
               </button>

@@ -306,7 +306,7 @@ export function AchievementsPanel({ ctx }: { ctx: AchievementCtx }) {
       </div>
 
       {/* Progress bar */}
-      <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-[#1e1a24]">
         <div
           className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-700"
           style={{ width: `${(unlocked.length / ACHIEVEMENTS.length) * 100}%` }}
@@ -324,7 +324,7 @@ export function AchievementsPanel({ ctx }: { ctx: AchievementCtx }) {
               className={`group relative flex flex-col items-center gap-1.5 rounded-xl border p-3 text-center transition-all ${
                 isUnlocked
                   ? `${c.border} ${c.bg} shadow-lg ${c.glow}`
-                  : "border-white/[0.04] bg-white/[0.015] opacity-40"
+                  : "border-[#1e1a24] bg-[#ff5a1f]/[0.02] opacity-40"
               }`}
             >
               <span className={`text-2xl ${isUnlocked ? "" : "grayscale"}`}>{a.icon}</span>

@@ -77,10 +77,10 @@ export function CommunityPuzzleInlinePlayer({
       {(showFooterBar || showPlayToggle || href) && (
         <div className="flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
           {showFooterBar ? (
-            <div className="max-w-full rounded-full border border-white/[0.08] bg-black/20 px-3 py-1.5 text-[11px] leading-relaxed text-slate-300">
+            <div className="max-w-full rounded-full border border-[#1e1a24] bg-black/20 px-3 py-1.5 text-[11px] leading-relaxed text-[#f0edf2]">
               {puzzleData.previousMove ? (
                 <>
-                  <span className="font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  <span className="font-semibold uppercase tracking-[0.14em] text-[#565061]">
                     Last Move
                   </span>{" "}
                   <span className="ml-1 font-mono text-white">
@@ -89,7 +89,7 @@ export function CommunityPuzzleInlinePlayer({
                 </>
               ) : (
                 <>
-                  <span className="font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  <span className="font-semibold uppercase tracking-[0.14em] text-[#565061]">
                     Puzzle Start
                   </span>{" "}
                   <span className="ml-1 font-mono text-white">
@@ -116,7 +116,7 @@ export function CommunityPuzzleInlinePlayer({
             {href && (
               <Link
                 href={href}
-                className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:border-white/[0.16] hover:text-white"
+                className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1.5 text-xs font-semibold text-[#f0edf2] transition hover:border-[#ff5a1f]/25 hover:text-white"
               >
                 Open full puzzle
               </Link>

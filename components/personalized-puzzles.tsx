@@ -572,36 +572,36 @@ function PuzzleBoard({
             </span>
             <div>
               <h2 className="text-xl font-bold text-white">Personalized Puzzles</h2>
-              <p className="text-sm text-slate-400">Find the best move — matched to your weaknesses</p>
+              <p className="text-sm text-[#8d8696]">Find the best move — matched to your weaknesses</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.04] text-[#8d8696] transition-colors hover:bg-[#1e1a24] hover:text-white"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
           </button>
         </div>
 
         {/* Stats bar */}
-        <div className="mb-5 flex flex-wrap items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-2.5">
+        <div className="mb-5 flex flex-wrap items-center gap-4 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-4 py-2.5">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-slate-500">Solved</span>
+            <span className="text-xs text-[#565061]">Solved</span>
             <span className="text-sm font-bold text-emerald-400">{solved}</span>
           </div>
-          <div className="h-4 w-px bg-white/10" />
+          <div className="h-4 w-px bg-[#ff5a1f]/10" />
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-slate-500">Streak</span>
+            <span className="text-xs text-[#565061]">Streak</span>
             <span className="text-sm font-bold text-orange-400">{"\uD83D\uDD25"} {streak}</span>
           </div>
-          <div className="h-4 w-px bg-white/10" />
+          <div className="h-4 w-px bg-[#ff5a1f]/10" />
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-slate-500">Best</span>
+            <span className="text-xs text-[#565061]">Best</span>
             <span className="text-sm font-bold text-amber-400">{bestStreak}</span>
           </div>
           <div className="ml-auto flex items-center gap-1.5">
-            <span className="text-xs text-slate-500">Theme</span>
+            <span className="text-xs text-[#565061]">Theme</span>
             <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">{themeLabel}</span>
           </div>
         </div>
@@ -632,11 +632,11 @@ function PuzzleBoard({
           {/* Right panel */}
           <div className="flex flex-col gap-4">
             {/* Puzzle info */}
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-bold text-white">Puzzle #{currentIdx + 1}</h3>
-                  <p className="mt-0.5 text-xs text-slate-500">Rating: {rating}</p>
+                  <p className="mt-0.5 text-xs text-[#565061]">Rating: {rating}</p>
                 </div>
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-bold ${
@@ -646,7 +646,7 @@ function PuzzleBoard({
                         ? "bg-red-500/15 text-red-400"
                         : state === "solving"
                           ? "bg-violet-500/15 text-violet-400"
-                          : "bg-slate-500/15 text-slate-400"
+                          : "bg-slate-500/15 text-[#8d8696]"
                   }`}
                 >
                   {state === "correct"
@@ -662,7 +662,7 @@ function PuzzleBoard({
               {puzzle && (
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {puzzle.puzzle.themes.slice(0, 5).map((t) => (
-                    <span key={t} className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-slate-500">
+                    <span key={t} className="rounded-full bg-[#ff5a1f]/5 px-2 py-0.5 text-[10px] text-[#565061]">
                       {t}
                     </span>
                   ))}
@@ -671,8 +671,8 @@ function PuzzleBoard({
             </div>
 
             {/* Instructions */}
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-              <p className="text-xs font-medium text-slate-400">
+            <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4">
+              <p className="text-xs font-medium text-[#8d8696]">
                 {state === "setup" && "Watch the opponent's move..."}
                 {state === "solving" && (
                   <>
@@ -695,10 +695,10 @@ function PuzzleBoard({
             {/* Solved progress */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500">Progress</span>
-                <span className="text-slate-400">{solved} / {queue.length} puzzles</span>
+                <span className="text-[#565061]">Progress</span>
+                <span className="text-[#8d8696]">{solved} / {queue.length} puzzles</span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-[#1e1a24]">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-500"
                   style={{ width: `${Math.min(progress, 100)}%` }}
@@ -733,7 +733,7 @@ function PuzzleBoard({
                   href={`https://lichess.org/training/${puzzle.puzzle.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-xs font-medium text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                  className="flex items-center gap-1.5 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-2.5 text-xs font-medium text-[#8d8696] transition-colors hover:bg-[#1e1a24] hover:text-white"
                 >
                   Open on Lichess ↗
                 </a>
@@ -828,7 +828,7 @@ export function PersonalizedPuzzles({ tactics, endgames, leaks, onExpandedChange
               <h3 className="mt-5 text-2xl font-extrabold text-white md:text-3xl">
                 Practice Your Weak Spots
               </h3>
-              <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-slate-400">
+              <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[#8d8696]">
                 We found patterns you struggle with. Load personalized Lichess puzzles that target your exact weaknesses — forks you miss, pins you overlook, endgames you botch.
               </p>
 
@@ -848,17 +848,17 @@ export function PersonalizedPuzzles({ tactics, endgames, leaks, onExpandedChange
                 <div className="flex flex-col items-center gap-2 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] px-4 py-3">
                   <span className="text-lg">{"\uD83C\uDFAF"}</span>
                   <p className="text-xs font-bold text-white">Targeted Training</p>
-                  <p className="text-[10px] text-slate-500">Matched to your scan</p>
+                  <p className="text-[10px] text-[#565061]">Matched to your scan</p>
                 </div>
                 <div className="flex flex-col items-center gap-2 rounded-xl border border-cyan-500/15 bg-cyan-500/[0.04] px-4 py-3">
                   <span className="text-lg">{"\u265F\uFE0F"}</span>
                   <p className="text-xs font-bold text-white">Interactive Board</p>
-                  <p className="text-[10px] text-slate-500">Click or drag to solve</p>
+                  <p className="text-[10px] text-[#565061]">Click or drag to solve</p>
                 </div>
                 <div className="flex flex-col items-center gap-2 rounded-xl border border-violet-500/15 bg-violet-500/[0.04] px-4 py-3">
                   <span className="text-lg">{"\u267E\uFE0F"}</span>
                   <p className="text-xs font-bold text-white">Unlimited & Free</p>
-                  <p className="text-[10px] text-slate-500">Powered by Lichess</p>
+                  <p className="text-[10px] text-[#565061]">Powered by Lichess</p>
                 </div>
               </div>
 

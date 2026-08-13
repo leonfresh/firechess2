@@ -1480,7 +1480,7 @@ export function CommunityPostComposer({
     return (
       <div className="flex flex-col gap-5 md:flex-row md:items-start">
         <section
-          className={`space-y-3 rounded-[2rem] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-3 sm:p-4 md:sticky md:top-0 md:flex-none ${quickPostMode ? "md:w-[320px]" : "md:w-[440px]"}`}
+          className={`space-y-3 rounded-[2rem] border border-[#1e1a24] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-3 sm:p-4 md:sticky md:top-0 md:flex-none ${quickPostMode ? "md:w-[320px]" : "md:w-[440px]"}`}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
@@ -1498,7 +1498,7 @@ export function CommunityPostComposer({
                     ? "Update live post"
                     : "Live board"}
               </h2>
-              <p className="mt-1 hidden text-sm leading-relaxed text-slate-400 md:block">
+              <p className="mt-1 hidden text-sm leading-relaxed text-[#8d8696] md:block">
                 {quickPostMode
                   ? "Sample board is live. Edit it directly or swap in your own position in the setup panel."
                   : editingPost
@@ -1513,10 +1513,10 @@ export function CommunityPostComposer({
 
           <div
             ref={boardRef}
-            className="rounded-[1.75rem] border border-white/[0.08] bg-black/20 p-2.5"
+            className="rounded-[1.75rem] border border-[#1e1a24] bg-black/20 p-2.5"
           >
             <div
-              className={`mx-auto overflow-hidden rounded-[1.5rem] border border-white/[0.08] shadow-[0_24px_60px_rgba(0,0,0,0.35)] ${quickPostMode ? "max-w-[320px]" : "max-w-[420px]"}`}
+              className={`mx-auto overflow-hidden rounded-[1.5rem] border border-[#1e1a24] shadow-[0_24px_60px_rgba(0,0,0,0.35)] ${quickPostMode ? "max-w-[320px]" : "max-w-[420px]"}`}
             >
               <Chessboard
                 id={`community-workbench-${boardInstanceId}`}
@@ -1541,7 +1541,7 @@ export function CommunityPostComposer({
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 text-xs text-slate-300">
+          <div className="flex flex-wrap gap-2 text-xs text-[#f0edf2]">
             <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-cyan-300">
               {quickPostMode
                 ? "Preview ready"
@@ -1549,20 +1549,20 @@ export function CommunityPostComposer({
                   ? "PGN ready"
                   : "Extended view"}
             </span>
-            <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1">
+            <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-1">
               {moveHistory.length} {moveHistory.length === 1 ? "ply" : "plies"}
             </span>
-            <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1">
+            <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-1">
               {lineSourceLabel}
             </span>
             {!quickPostMode ? (
-              <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1">
+              <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-1">
                 {COMMUNITY_SOURCE_LABELS[sourceType]}
               </span>
             ) : null}
           </div>
 
-          <p className="text-sm leading-relaxed text-slate-400">
+          <p className="text-sm leading-relaxed text-[#8d8696]">
             {boardStatus}
           </p>
 
@@ -1571,7 +1571,7 @@ export function CommunityPostComposer({
               type="button"
               onClick={undoLastMove}
               disabled={moveHistory.length === 0}
-              className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm font-semibold text-slate-200 transition hover:border-white/[0.16] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-2 text-sm font-semibold text-white transition hover:border-[#ff5a1f]/25 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               Undo
             </button>
@@ -1582,14 +1582,14 @@ export function CommunityPostComposer({
                   value === "white" ? "black" : "white",
                 )
               }
-              className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm font-semibold text-slate-200 transition hover:border-white/[0.16] hover:text-white"
+              className="rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-2 text-sm font-semibold text-white transition hover:border-[#ff5a1f]/25 hover:text-white"
             >
               Flip
             </button>
             <button
               type="button"
               onClick={resetToStartPosition}
-              className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm font-semibold text-slate-200 transition hover:border-white/[0.16] hover:text-white"
+              className="rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-2 text-sm font-semibold text-white transition hover:border-[#ff5a1f]/25 hover:text-white"
             >
               Reset
             </button>
@@ -1598,10 +1598,10 @@ export function CommunityPostComposer({
 
         <section
           ref={publishSectionRef}
-          className="min-w-0 rounded-[2rem] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-5 sm:p-6 md:flex-1"
+          className="min-w-0 rounded-[2rem] border border-[#1e1a24] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-5 sm:p-6 md:flex-1"
         >
           {streamlinedWorkbenchMode ? (
-            <div className="mb-4 rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] px-4 py-4 sm:px-5">
+            <div className="mb-4 rounded-[1.75rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-4 sm:px-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200/70">
@@ -1610,16 +1610,16 @@ export function CommunityPostComposer({
                   <h3 className="mt-1 text-xl font-bold tracking-tight text-white">
                     Board Workbench
                   </h3>
-                  <p className="mt-1 text-sm leading-relaxed text-slate-400">
+                  <p className="mt-1 text-sm leading-relaxed text-[#8d8696]">
                     Same flow as the quick modal, but with a larger board and
                     optional extras tucked away below.
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2 text-xs text-slate-300">
+                <div className="flex flex-wrap gap-2 text-xs text-[#f0edf2]">
                   <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-cyan-300">
                     Streamlined
                   </span>
-                  <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1">
+                  <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-1">
                     {kind === "puzzle" ? "Puzzle flow" : "Position flow"}
                   </span>
                 </div>
@@ -1628,18 +1628,18 @@ export function CommunityPostComposer({
           ) : null}
 
           {quickPostMode ? (
-            <section className="mb-4 rounded-[1.75rem] border border-white/[0.08] bg-black/15 p-4">
+            <section className="mb-4 rounded-[1.75rem] border border-[#1e1a24] bg-black/15 p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <h3 className="text-sm font-semibold text-white">
                     Choose post type
                   </h3>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  <p className="mt-1 text-xs leading-relaxed text-[#565061]">
                     Publish this report position as a discussion spot or turn it
                     into a puzzle with an engine-suggested line.
                   </p>
                 </div>
-                <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-[11px] text-slate-300">
+                <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-1 text-[11px] text-[#f0edf2]">
                   {kind === "puzzle" ? "Puzzle flow" : "Position flow"}
                 </span>
               </div>
@@ -1648,7 +1648,7 @@ export function CommunityPostComposer({
                 <button
                   type="button"
                   onClick={activateQuickPositionPost}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${kind !== "puzzle" ? "bg-white text-black" : "bg-white/[0.05] text-slate-300 hover:bg-white/[0.08] hover:text-white"}`}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${kind !== "puzzle" ? "bg-white text-black" : "bg-[#ff5a1f]/[0.05] text-[#f0edf2] hover:bg-[#1e1a24] hover:text-white"}`}
                 >
                   Position post
                 </button>
@@ -1665,20 +1665,20 @@ export function CommunityPostComposer({
 
           <section
             ref={loadSectionRef}
-            className="rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] p-4"
+            className="rounded-[1.75rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-4"
           >
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-sm font-semibold text-white">
                   {quickPostMode ? "Enter FEN or PGN" : "Load a position"}
                 </h3>
-                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                <p className="mt-1 text-xs leading-relaxed text-[#565061]">
                   {quickPostMode
                     ? "Replace the default preview board with your own position or line."
                     : "Paste a FEN or PGN only when you want to replace the live board on the left."}
                 </p>
               </div>
-              <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-[11px] text-slate-300">
+              <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-1 text-[11px] text-[#f0edf2]">
                 {quickPostMode ? "Visible by default" : "Board loader"}
               </span>
             </div>
@@ -1694,14 +1694,14 @@ export function CommunityPostComposer({
               <button
                 type="button"
                 onClick={() => setInputMode("fen")}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${inputMode === "fen" ? "bg-white text-black" : "bg-white/[0.05] text-slate-300 hover:bg-white/[0.08] hover:text-white"}`}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${inputMode === "fen" ? "bg-white text-black" : "bg-[#ff5a1f]/[0.05] text-[#f0edf2] hover:bg-[#1e1a24] hover:text-white"}`}
               >
                 FEN
               </button>
               <button
                 type="button"
                 onClick={() => setInputMode("pgn")}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${inputMode === "pgn" ? "bg-white text-black" : "bg-white/[0.05] text-slate-300 hover:bg-white/[0.08] hover:text-white"}`}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${inputMode === "pgn" ? "bg-white text-black" : "bg-[#ff5a1f]/[0.05] text-[#f0edf2] hover:bg-[#1e1a24] hover:text-white"}`}
               >
                 PGN
               </button>
@@ -1709,7 +1709,7 @@ export function CommunityPostComposer({
 
             {inputMode === "fen" ? (
               <label className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                   FEN
                 </span>
                 <textarea
@@ -1717,12 +1717,12 @@ export function CommunityPostComposer({
                   value={fenInput}
                   onChange={(event) => setFenInput(event.target.value)}
                   placeholder="r1bq1rk1/pp1nbppp/2p1pn2/3p4/2PP4/2N1PN2/PPQ2PPP/R1B1KB1R w KQ - 0 8"
-                  className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 font-mono text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                  className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 font-mono text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
                 />
               </label>
             ) : (
               <label className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                   PGN
                 </span>
                 <textarea
@@ -1730,13 +1730,13 @@ export function CommunityPostComposer({
                   value={pgnInput}
                   onChange={(event) => setPgnInput(event.target.value)}
                   placeholder="1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6"
-                  className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 font-mono text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                  className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 font-mono text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
                 />
               </label>
             )}
 
             <div className="mt-4 flex items-center justify-between gap-3">
-              <p className="text-xs leading-relaxed text-slate-500">
+              <p className="text-xs leading-relaxed text-[#565061]">
                 The preview board updates from the input above.
               </p>
               <button
@@ -1763,7 +1763,7 @@ export function CommunityPostComposer({
                   <h3 className="mt-1 text-lg font-bold text-white">
                     Lock the start, then add the exact line
                   </h3>
-                  <p className="mt-1 text-sm leading-relaxed text-slate-300">
+                  <p className="mt-1 text-sm leading-relaxed text-[#f0edf2]">
                     Keep the current board on the solver position. If you loaded
                     a PGN, FireChess also saves the move that led here. Then
                     either drag the continuation on the preview board or paste
@@ -1773,7 +1773,7 @@ export function CommunityPostComposer({
                 <button
                   type="button"
                   onClick={closeQuickPuzzleBuilder}
-                  className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:text-white"
+                  className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1.5 text-xs font-semibold text-[#f0edf2] transition hover:text-white"
                 >
                   Close
                 </button>
@@ -1793,7 +1793,7 @@ export function CommunityPostComposer({
                   <button
                     type="button"
                     onClick={clearPuzzleMode}
-                    className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:text-white"
+                    className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-1.5 text-xs font-semibold text-[#f0edf2] transition hover:text-white"
                   >
                     Clear puzzle line
                   </button>
@@ -1813,7 +1813,7 @@ export function CommunityPostComposer({
                 <button
                   type="button"
                   onClick={revertQuickPuzzleBuilder}
-                  className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:text-white"
+                  className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-1.5 text-xs font-semibold text-[#f0edf2] transition hover:text-white"
                 >
                   Use regular post instead
                 </button>
@@ -1826,8 +1826,8 @@ export function CommunityPostComposer({
               ) : null}
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-white/[0.08] bg-black/15 px-4 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                <div className="rounded-2xl border border-[#1e1a24] bg-black/15 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     Puzzle start
                   </p>
                   {puzzleBuilder && puzzlePreviousMove ? (
@@ -1838,7 +1838,7 @@ export function CommunityPostComposer({
                           serializePuzzleLineMove(puzzlePreviousMove),
                         )}
                       </p>
-                      <p className="mt-1 break-all font-mono text-[11px] text-slate-400">
+                      <p className="mt-1 break-all font-mono text-[11px] text-[#8d8696]">
                         {puzzleBuilder.startFen}
                       </p>
                     </>
@@ -1847,12 +1847,12 @@ export function CommunityPostComposer({
                       <p className="mt-2 text-sm font-semibold text-white">
                         {puzzleSideToMove} to move from this saved position
                       </p>
-                      <p className="mt-1 break-all font-mono text-[11px] text-slate-400">
+                      <p className="mt-1 break-all font-mono text-[11px] text-[#8d8696]">
                         {puzzleBuilder.startFen}
                       </p>
                     </>
                   ) : (
-                    <p className="mt-2 text-sm leading-relaxed text-slate-400">
+                    <p className="mt-2 text-sm leading-relaxed text-[#8d8696]">
                       Lock the current board as the puzzle start. PGN context is
                       optional now, but it helps FireChess show the lead-in move
                       on the published card.
@@ -1860,8 +1860,8 @@ export function CommunityPostComposer({
                   )}
                 </div>
 
-                <div className="rounded-2xl border border-white/[0.08] bg-black/15 px-4 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                <div className="rounded-2xl border border-[#1e1a24] bg-black/15 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     Recorded solution
                   </p>
                   {puzzleSolutionMoves.length > 0 ? (
@@ -1871,7 +1871,7 @@ export function CommunityPostComposer({
                         {puzzleSolutionMoves.length === 1 ? "ply" : "plies"}{" "}
                         captured
                       </p>
-                      <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                      <p className="mt-1 text-xs leading-relaxed text-[#8d8696]">
                         {puzzleSolutionMoves
                           .map((move) =>
                             formatCommunityLineMove(
@@ -1882,7 +1882,7 @@ export function CommunityPostComposer({
                       </p>
                     </>
                   ) : (
-                    <p className="mt-2 text-sm leading-relaxed text-slate-400">
+                    <p className="mt-2 text-sm leading-relaxed text-[#8d8696]">
                       No continuation yet. Record it on the preview board or
                       paste the SAN line below.
                     </p>
@@ -1891,7 +1891,7 @@ export function CommunityPostComposer({
               </div>
 
               <label className="mt-4 block space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                   Solution line in SAN
                 </span>
                 <textarea
@@ -1901,7 +1901,7 @@ export function CommunityPostComposer({
                     setQuickPuzzleSanInput(event.target.value)
                   }
                   placeholder="Qh5+ Kd7 Qf7#"
-                  className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 font-mono text-sm text-white placeholder:text-slate-500 focus:border-fuchsia-500/40 focus:outline-none"
+                  className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 font-mono text-sm text-white placeholder:text-[#565061] focus:border-fuchsia-500/40 focus:outline-none"
                 />
               </label>
 
@@ -1914,7 +1914,7 @@ export function CommunityPostComposer({
                 >
                   Apply SAN line
                 </button>
-                <p className="text-xs leading-relaxed text-slate-400">
+                <p className="text-xs leading-relaxed text-[#8d8696]">
                   Board moves and SAN input both update the same saved solution
                   line.
                 </p>
@@ -1932,14 +1932,14 @@ export function CommunityPostComposer({
             <span className="rounded-full border border-fuchsia-500/20 bg-fuchsia-500/10 px-3 py-1 text-fuchsia-200">
               {COMMUNITY_KIND_LABELS[kind]}
             </span>
-            <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-slate-300">
+            <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-1 text-[#f0edf2]">
               {COMMUNITY_SOURCE_LABELS[sourceType]}
             </span>
           </div>
 
           <div className="mt-6 grid gap-4">
             <label className="space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                 Title
               </span>
               <input
@@ -1947,12 +1947,12 @@ export function CommunityPostComposer({
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
                 placeholder={titlePlaceholder}
-                className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
               />
             </label>
 
             <label className="space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                 Caption
               </span>
               <textarea
@@ -1960,12 +1960,12 @@ export function CommunityPostComposer({
                 value={prompt}
                 onChange={(event) => setPrompt(event.target.value)}
                 placeholder={promptPlaceholder}
-                className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
               />
             </label>
 
             <label className="space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                 Optional notes
               </span>
               <textarea
@@ -1973,17 +1973,17 @@ export function CommunityPostComposer({
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 placeholder={descriptionPlaceholder}
-                className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
               />
             </label>
 
-            <details className="rounded-[1.5rem] border border-white/[0.08] bg-black/15 px-4 py-3">
-              <summary className="cursor-pointer list-none text-sm font-semibold text-slate-200">
+            <details className="rounded-[1.5rem] border border-[#1e1a24] bg-black/15 px-4 py-3">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-white">
                 Optional metadata
               </summary>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     Opening name
                   </span>
                   <input
@@ -1991,12 +1991,12 @@ export function CommunityPostComposer({
                     value={openingName}
                     onChange={(event) => setOpeningName(event.target.value)}
                     placeholder="Italian Game"
-                    className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                    className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
                   />
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     Tags
                   </span>
                   <input
@@ -2004,37 +2004,37 @@ export function CommunityPostComposer({
                     value={tags}
                     onChange={(event) => setTags(event.target.value)}
                     placeholder="fork, rapid, opening"
-                    className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                    className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
                   />
                 </label>
               </div>
             </details>
           </div>
 
-          <div className="mt-5 grid gap-3 rounded-[1.5rem] border border-white/[0.08] bg-black/15 p-4 sm:grid-cols-2">
+          <div className="mt-5 grid gap-3 rounded-[1.5rem] border border-[#1e1a24] bg-black/15 p-4 sm:grid-cols-2">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                 Snapshot
               </p>
               <p className="mt-1 text-sm font-semibold text-white">
                 {COMMUNITY_KIND_LABELS[kind]} ·{" "}
                 {COMMUNITY_SOURCE_LABELS[sourceType]}
               </p>
-              <p className="mt-1 text-xs text-slate-400">{boardStatus}</p>
+              <p className="mt-1 text-xs text-[#8d8696]">{boardStatus}</p>
               {kind === "puzzle" && puzzlePreviousMove ? (
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-[#8d8696]">
                   Previous move:{" "}
                   {formatCommunityLineMove(
                     serializePuzzleLineMove(puzzlePreviousMove),
                   )}
                 </p>
               ) : kind === "puzzle" && puzzleBuilder ? (
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-[#8d8696]">
                   Standalone puzzle start: {puzzleSideToMove} to move
                 </p>
               ) : null}
               {kind === "puzzle" && puzzleSolutionMoves.length > 0 ? (
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-[#8d8696]">
                   Solution:{" "}
                   {puzzleSolutionMoves
                     .map((move) =>
@@ -2045,10 +2045,10 @@ export function CommunityPostComposer({
               ) : null}
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                 Board FEN
               </p>
-              <p className="mt-1 break-all font-mono text-[11px] text-slate-400">
+              <p className="mt-1 break-all font-mono text-[11px] text-[#8d8696]">
                 {kind === "puzzle"
                   ? (puzzleBuilder?.startFen ?? currentFen)
                   : currentFen}
@@ -2057,8 +2057,8 @@ export function CommunityPostComposer({
           </div>
 
           {streamlinedWorkbenchMode ? (
-            <details className="mt-5 rounded-[1.5rem] border border-white/[0.08] bg-black/15 px-4 py-3">
-              <summary className="cursor-pointer list-none text-sm font-semibold text-slate-200">
+            <details className="mt-5 rounded-[1.5rem] border border-[#1e1a24] bg-black/15 px-4 py-3">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-white">
                 Advanced tools
               </summary>
 
@@ -2070,7 +2070,7 @@ export function CommunityPostComposer({
                         <h4 className="text-sm font-bold text-white">
                           Analysis report
                         </h4>
-                        <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                        <p className="mt-1 text-xs leading-relaxed text-[#8d8696]">
                           Send this PGN into the full analyzer when you want the
                           long-form report.
                         </p>
@@ -2079,7 +2079,7 @@ export function CommunityPostComposer({
                         className={`rounded-full border px-3 py-1 text-[11px] font-semibold ${
                           analysisReady
                             ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-300"
-                            : "border-white/[0.08] bg-white/[0.03] text-slate-400"
+                            : "border-[#1e1a24] bg-[#ff5a1f]/[0.04] text-[#8d8696]"
                         }`}
                       >
                         {analysisReady ? "Ready" : "Need PGN"}
@@ -2087,8 +2087,8 @@ export function CommunityPostComposer({
                     </div>
 
                     <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                      <div className="rounded-2xl border border-white/[0.08] bg-black/20 px-3 py-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      <div className="rounded-2xl border border-[#1e1a24] bg-black/20 px-3 py-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                           Line
                         </p>
                         <p className="mt-1 text-sm font-semibold text-white">
@@ -2096,16 +2096,16 @@ export function CommunityPostComposer({
                           {moveHistory.length === 1 ? "ply" : "plies"}
                         </p>
                       </div>
-                      <div className="rounded-2xl border border-white/[0.08] bg-black/20 px-3 py-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      <div className="rounded-2xl border border-[#1e1a24] bg-black/20 px-3 py-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                           Root
                         </p>
                         <p className="mt-1 text-sm font-semibold text-white">
                           {lineSourceLabel}
                         </p>
                       </div>
-                      <div className="rounded-2xl border border-white/[0.08] bg-black/20 px-3 py-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      <div className="rounded-2xl border border-[#1e1a24] bg-black/20 px-3 py-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                           Engine
                         </p>
                         <p className="mt-1 text-sm font-semibold text-white">
@@ -2126,11 +2126,11 @@ export function CommunityPostComposer({
                     </button>
                   </div>
 
-                  <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
+                  <div className="rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-4">
                     <div className="mb-4 flex items-center justify-between gap-3">
                       <div>
                         <h4 className="text-sm font-bold text-white">Engine</h4>
-                        <p className="mt-1 text-xs text-slate-400">
+                        <p className="mt-1 text-xs text-[#8d8696]">
                           Turn on live eval only when you want extra guidance.
                         </p>
                       </div>
@@ -2140,7 +2140,7 @@ export function CommunityPostComposer({
                         className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
                           engineEnabled
                             ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-                            : "border-white/[0.08] bg-white/[0.03] text-slate-400 hover:text-white"
+                            : "border-[#1e1a24] bg-[#ff5a1f]/[0.04] text-[#8d8696] hover:text-white"
                         }`}
                       >
                         {engineEnabled ? "Engine On" : "Engine Off"}
@@ -2149,7 +2149,7 @@ export function CommunityPostComposer({
 
                     <div className="mb-4 flex items-center gap-3">
                       <label className="min-w-0 flex-1 space-y-2">
-                        <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                           Depth
                         </span>
                         <select
@@ -2158,7 +2158,7 @@ export function CommunityPostComposer({
                             setEngineDepth(Number(event.target.value))
                           }
                           disabled={!engineEnabled}
-                          className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white focus:border-orange-500/40 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                          className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white focus:border-orange-500/40 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {[8, 10, 12, 14, 16].map((depth) => (
                             <option key={depth} value={depth}>
@@ -2167,8 +2167,8 @@ export function CommunityPostComposer({
                           ))}
                         </select>
                       </label>
-                      <div className="rounded-2xl border border-white/[0.08] bg-black/15 px-4 py-3 text-right">
-                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      <div className="rounded-2xl border border-[#1e1a24] bg-black/15 px-4 py-3 text-right">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                           Eval
                         </p>
                         <p className="mt-1 text-lg font-black text-white">
@@ -2182,7 +2182,7 @@ export function CommunityPostComposer({
                         {engineError}
                       </p>
                     ) : !engineEnabled ? (
-                      <p className="rounded-2xl border border-white/[0.08] bg-black/15 px-4 py-3 text-sm text-slate-400">
+                      <p className="rounded-2xl border border-[#1e1a24] bg-black/15 px-4 py-3 text-sm text-[#8d8696]">
                         The board stays fully interactive with the engine off.
                       </p>
                     ) : engineBusy ? (
@@ -2190,10 +2190,10 @@ export function CommunityPostComposer({
                         {Array.from({ length: 2 }).map((_, index) => (
                           <div
                             key={index}
-                            className="animate-pulse rounded-2xl border border-white/[0.06] bg-black/15 px-4 py-3"
+                            className="animate-pulse rounded-2xl border border-[#1e1a24] bg-black/15 px-4 py-3"
                           >
-                            <div className="h-4 w-20 rounded bg-white/[0.08]" />
-                            <div className="mt-2 h-3 w-full rounded bg-white/[0.05]" />
+                            <div className="h-4 w-20 rounded bg-[#1e1a24]" />
+                            <div className="mt-2 h-3 w-full rounded bg-[#ff5a1f]/[0.05]" />
                           </div>
                         ))}
                       </div>
@@ -2202,11 +2202,11 @@ export function CommunityPostComposer({
                         {engineLines.slice(0, 2).map((line, index) => (
                           <div
                             key={line.key}
-                            className="rounded-2xl border border-white/[0.06] bg-black/15 px-4 py-3"
+                            className="rounded-2xl border border-[#1e1a24] bg-black/15 px-4 py-3"
                           >
                             <div className="flex items-center justify-between gap-3">
                               <div>
-                                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                                   {index === 0
                                     ? "Top line"
                                     : `Line ${index + 1}`}
@@ -2219,27 +2219,27 @@ export function CommunityPostComposer({
                                 {line.eval}
                               </span>
                             </div>
-                            <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                            <p className="mt-2 text-xs leading-relaxed text-[#8d8696]">
                               {line.pv || "No principal variation returned."}
                             </p>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="rounded-2xl border border-white/[0.08] bg-black/15 px-4 py-3 text-sm text-slate-400">
+                      <p className="rounded-2xl border border-[#1e1a24] bg-black/15 px-4 py-3 text-sm text-[#8d8696]">
                         No engine line available for this position yet.
                       </p>
                     )}
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
+                <div className="rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div>
                       <h4 className="text-sm font-bold text-white">
                         Current line
                       </h4>
-                      <p className="mt-1 text-xs text-slate-400">
+                      <p className="mt-1 text-xs text-[#8d8696]">
                         Move grades and line history stay here when you need
                         them.
                       </p>
@@ -2264,7 +2264,7 @@ export function CommunityPostComposer({
                   </div>
 
                   {moveHistory.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] px-4 py-5 text-sm text-slate-500">
+                    <div className="rounded-2xl border border-dashed border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-4 py-5 text-sm text-[#565061]">
                       The workbench is live. Start moving pieces or load a PGN
                       to begin building a line.
                     </div>
@@ -2278,7 +2278,7 @@ export function CommunityPostComposer({
                         return (
                           <div
                             key={move.id}
-                            className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5"
+                            className="flex items-center justify-between gap-3 rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-3 py-2.5"
                           >
                             <div className="min-w-0">
                               <p className="truncate font-mono text-sm text-white">
@@ -2286,7 +2286,7 @@ export function CommunityPostComposer({
                                   ? `${move.moveNumber}. ${move.san}`
                                   : `${move.moveNumber}... ${move.san}`}
                               </p>
-                              <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                              <p className="mt-0.5 truncate text-[11px] text-[#565061]">
                                 {move.bestMoveSan &&
                                 move.bestMoveSan !== move.san
                                   ? `Engine preferred ${move.bestMoveSan}`
@@ -2311,11 +2311,11 @@ export function CommunityPostComposer({
                                   {badge.label}
                                 </span>
                               ) : (
-                                <span className="inline-flex rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-slate-400">
+                                <span className="inline-flex rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-2.5 py-1 text-[11px] font-semibold text-[#8d8696]">
                                   {engineEnabled ? "Pending" : "Manual"}
                                 </span>
                               )}
-                              <p className="mt-1 text-[11px] text-slate-500">
+                              <p className="mt-1 text-[11px] text-[#565061]">
                                 {formatLoss(move.cpLoss)}
                               </p>
                             </div>
@@ -2329,8 +2329,8 @@ export function CommunityPostComposer({
             </details>
           ) : null}
 
-          <div className="mt-6 flex flex-col gap-4 border-t border-white/[0.08] pt-5 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs leading-relaxed text-slate-500">
+          <div className="mt-6 flex flex-col gap-4 border-t border-[#1e1a24] pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs leading-relaxed text-[#565061]">
               {streamlinedWorkbenchMode ? (
                 "Advanced tools stay tucked away above so the workbench feels closer to the quick composer."
               ) : (
@@ -2371,7 +2371,7 @@ export function CommunityPostComposer({
     >
       <section
         ref={boardSectionRef}
-        className="rounded-3xl border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6"
+        className="rounded-3xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5 sm:p-6"
       >
         <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-3">
@@ -2384,7 +2384,7 @@ export function CommunityPostComposer({
                     ? "New Community Post"
                     : "Board Workbench"}
             </h2>
-            <p className="max-w-2xl text-sm leading-relaxed text-slate-400">
+            <p className="max-w-2xl text-sm leading-relaxed text-[#8d8696]">
               {quickPostMode
                 ? "Use the small board preview, add a short caption, and publish. If you need puzzle setup or heavier editing, jump to the full board workbench."
                 : editingPost
@@ -2393,7 +2393,7 @@ export function CommunityPostComposer({
                     ? "Start from the sample board, switch into puzzle mode only if you need it, and publish without the heavier workbench extras."
                     : "Build the line directly on the board, grade moves live, and send the finished PGN into the full analyzer when you want the report."}
             </p>
-            <div className="flex flex-wrap gap-2 text-xs text-slate-300">
+            <div className="flex flex-wrap gap-2 text-xs text-[#f0edf2]">
               <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-cyan-300">
                 {analysisReady
                   ? "PGN ready"
@@ -2403,11 +2403,11 @@ export function CommunityPostComposer({
                       ? "Sample board live"
                       : "Sandbox mode"}
               </span>
-              <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1">
+              <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-1">
                 {moveHistory.length}{" "}
                 {moveHistory.length === 1 ? "ply" : "plies"}
               </span>
-              <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1">
+              <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-1">
                 {lineSourceLabel}
               </span>
             </div>
@@ -2433,7 +2433,7 @@ export function CommunityPostComposer({
                   type="button"
                   onClick={undoLastMove}
                   disabled={moveHistory.length === 0}
-                  className="rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-white/[0.16] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:border-[#ff5a1f]/25 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Undo
                 </button>
@@ -2444,14 +2444,14 @@ export function CommunityPostComposer({
                       value === "white" ? "black" : "white",
                     )
                   }
-                  className="rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-white/[0.16] hover:text-white"
+                  className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:border-[#ff5a1f]/25 hover:text-white"
                 >
                   Flip
                 </button>
                 <button
                   type="button"
                   onClick={resetToStartPosition}
-                  className="rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-white/[0.16] hover:text-white"
+                  className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:border-[#ff5a1f]/25 hover:text-white"
                 >
                   Reset
                 </button>
@@ -2469,7 +2469,7 @@ export function CommunityPostComposer({
                   <button
                     type="button"
                     onClick={clearPuzzleMode}
-                    className="rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-white/[0.16] hover:text-white"
+                    className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:border-[#ff5a1f]/25 hover:text-white"
                   >
                     Clear Puzzle
                   </button>
@@ -2478,7 +2478,7 @@ export function CommunityPostComposer({
                   type="button"
                   onClick={undoLastMove}
                   disabled={moveHistory.length === 0}
-                  className="rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-white/[0.16] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:border-[#ff5a1f]/25 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Undo
                 </button>
@@ -2489,14 +2489,14 @@ export function CommunityPostComposer({
                       value === "white" ? "black" : "white",
                     )
                   }
-                  className="rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-white/[0.16] hover:text-white"
+                  className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:border-[#ff5a1f]/25 hover:text-white"
                 >
                   Flip
                 </button>
                 <button
                   type="button"
                   onClick={resetToStartPosition}
-                  className="rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-white/[0.16] hover:text-white"
+                  className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:border-[#ff5a1f]/25 hover:text-white"
                 >
                   Start Position
                 </button>
@@ -2507,10 +2507,10 @@ export function CommunityPostComposer({
 
         <div
           ref={boardRef}
-          className={`${quickPostMode ? "mx-auto max-w-[280px] rounded-3xl border border-white/[0.06] bg-black/15 p-3" : "rounded-3xl border border-white/[0.06] bg-black/15 p-3 sm:p-4"}`}
+          className={`${quickPostMode ? "mx-auto max-w-[280px] rounded-3xl border border-[#1e1a24] bg-black/15 p-3" : "rounded-3xl border border-[#1e1a24] bg-black/15 p-3 sm:p-4"}`}
         >
           {quickPostMode ? (
-            <div className="mx-auto min-w-0 overflow-hidden rounded-2xl border border-white/[0.08] shadow-2xl shadow-black/35">
+            <div className="mx-auto min-w-0 overflow-hidden rounded-2xl border border-[#1e1a24] shadow-2xl shadow-black/35">
               <Chessboard
                 id={`community-workbench-${boardInstanceId}`}
                 position={currentFen}
@@ -2538,7 +2538,7 @@ export function CommunityPostComposer({
                 evalCp={engineEnabled ? engineEvalWhite : null}
                 height={boardSize}
               />
-              <div className="min-w-0 overflow-hidden rounded-2xl border border-white/[0.08] shadow-2xl shadow-black/35">
+              <div className="min-w-0 overflow-hidden rounded-2xl border border-[#1e1a24] shadow-2xl shadow-black/35">
                 <Chessboard
                   id={`community-workbench-${boardInstanceId}`}
                   position={currentFen}
@@ -2565,33 +2565,33 @@ export function CommunityPostComposer({
         </div>
 
         <div
-          className={`mt-4 flex flex-col gap-3 rounded-2xl border border-white/[0.06] bg-black/10 px-4 py-3 ${quickPostMode ? "" : "sm:flex-row sm:items-center sm:justify-between"}`}
+          className={`mt-4 flex flex-col gap-3 rounded-2xl border border-[#1e1a24] bg-black/10 px-4 py-3 ${quickPostMode ? "" : "sm:flex-row sm:items-center sm:justify-between"}`}
         >
           <div>
             <p className="text-sm font-semibold text-white">{boardStatus}</p>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[#565061]">
               {moveHistory.length} {moveHistory.length === 1 ? "ply" : "plies"}
               {generatedPgn
                 ? " loaded into the current line"
                 : " in the current line"}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-[#8d8696]">
             {quickPostMode ? (
               <>
                 <span className="rounded-full border border-fuchsia-500/20 bg-fuchsia-500/10 px-3 py-1 text-fuchsia-200">
                   {COMMUNITY_KIND_LABELS[kind]}
                 </span>
-                <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1">
+                <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-1">
                   {COMMUNITY_SOURCE_LABELS[sourceType]}
                 </span>
               </>
             ) : (
               <>
-                <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1">
+                <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-1">
                   Engine {engineEnabled ? "on" : "off"}
                 </span>
-                <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1">
+                <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-1">
                   Eval {formatEval(engineEvalWhite)}
                 </span>
                 {bestMoveSan ? (
@@ -2605,13 +2605,13 @@ export function CommunityPostComposer({
         </div>
 
         {!quickPostMode ? (
-          <section className="mt-5 rounded-3xl border border-white/[0.06] bg-black/10 p-4">
+          <section className="mt-5 rounded-3xl border border-[#1e1a24] bg-black/10 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
                 <h3 className="text-lg font-bold text-white">
                   Live move grades
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-[#565061]">
                   The board uses the same badge language as the full analysis
                   report while you build the line.
                 </p>
@@ -2649,7 +2649,7 @@ export function CommunityPostComposer({
             </div>
 
             {moveHistory.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] px-4 py-6 text-sm text-slate-500">
+              <div className="rounded-2xl border border-dashed border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-4 py-6 text-sm text-[#565061]">
                 The workbench is live. Start moving pieces or load a PGN to
                 begin building a line.
               </div>
@@ -2663,7 +2663,7 @@ export function CommunityPostComposer({
                   return (
                     <div
                       key={move.id}
-                      className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5"
+                      className="flex items-center justify-between gap-3 rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-3 py-2.5"
                     >
                       <div className="min-w-0">
                         <p className="truncate font-mono text-sm text-white">
@@ -2671,7 +2671,7 @@ export function CommunityPostComposer({
                             ? `${move.moveNumber}. ${move.san}`
                             : `${move.moveNumber}... ${move.san}`}
                         </p>
-                        <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                        <p className="mt-0.5 truncate text-[11px] text-[#565061]">
                           {move.bestMoveSan && move.bestMoveSan !== move.san
                             ? `Engine preferred ${move.bestMoveSan}`
                             : "Current line"}
@@ -2695,11 +2695,11 @@ export function CommunityPostComposer({
                             {badge.label}
                           </span>
                         ) : (
-                          <span className="inline-flex rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-slate-400">
+                          <span className="inline-flex rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-2.5 py-1 text-[11px] font-semibold text-[#8d8696]">
                             {engineEnabled ? "Pending" : "Manual"}
                           </span>
                         )}
-                        <p className="mt-1 text-[11px] text-slate-500">
+                        <p className="mt-1 text-[11px] text-[#565061]">
                           {formatLoss(move.cpLoss)}
                         </p>
                       </div>
@@ -2719,7 +2719,7 @@ export function CommunityPostComposer({
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-lg font-bold text-white">Puzzle Builder</h3>
-                <p className="text-sm leading-relaxed text-slate-300">
+                <p className="text-sm leading-relaxed text-[#f0edf2]">
                   Mark the current board as the solver's start position, then
                   enter the winning line on the live board. FireChess saves the
                   opponent's last move plus verified SAN for the full solution.
@@ -2732,7 +2732,7 @@ export function CommunityPostComposer({
                   className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
                     puzzleGuideOpen
                       ? "border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-200"
-                      : "border-white/[0.08] bg-white/[0.03] text-slate-300 hover:text-white"
+                      : "border-[#1e1a24] bg-[#ff5a1f]/[0.04] text-[#f0edf2] hover:text-white"
                   }`}
                 >
                   {puzzleGuideOpen ? "Hide steps" : "Show steps"}
@@ -2786,23 +2786,23 @@ export function CommunityPostComposer({
                   </span>
                 </div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <div className="rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                       Start FEN
                     </p>
-                    <p className="mt-1 break-all font-mono text-[11px] text-slate-300">
+                    <p className="mt-1 break-all font-mono text-[11px] text-[#f0edf2]">
                       {puzzleBuilder.startFen}
                     </p>
                   </div>
-                  <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <div className="rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                       Solution Line
                     </p>
                     <p className="mt-1 text-sm font-semibold text-white">
                       {puzzleSolutionMoves.length}{" "}
                       {puzzleSolutionMoves.length === 1 ? "ply" : "plies"}
                     </p>
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="mt-1 text-xs text-[#8d8696]">
                       Every move below is generated and verified by chess.js
                       SAN.
                     </p>
@@ -2817,18 +2817,18 @@ export function CommunityPostComposer({
                   className={`rounded-2xl border px-4 py-3 ${
                     puzzleSetupReady
                       ? "border-emerald-500/20 bg-emerald-500/[0.06]"
-                      : "border-white/[0.08] bg-black/15"
+                      : "border-[#1e1a24] bg-black/15"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                         Step 1
                       </p>
                       <p className="mt-1 text-sm font-semibold text-white">
                         Reach the puzzle start, then press Start Puzzle Mode
                       </p>
-                      <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                      <p className="mt-1 text-xs leading-relaxed text-[#8d8696]">
                         The board should be sitting on the exact solver
                         position, after the opponent's last move. Load a PGN or
                         play moves until that previous move is in the line, then
@@ -2839,7 +2839,7 @@ export function CommunityPostComposer({
                       className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                         puzzleSetupReady
                           ? "bg-emerald-500/15 text-emerald-300"
-                          : "bg-white/[0.06] text-slate-300"
+                          : "bg-[#1e1a24] text-[#f0edf2]"
                       }`}
                     >
                       {puzzleSetupReady ? "Done" : "Next"}
@@ -2851,7 +2851,7 @@ export function CommunityPostComposer({
                       onClick={() =>
                         scrollSectionIntoView(boardSectionRef.current)
                       }
-                      className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:text-white"
+                      className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-1.5 text-xs font-semibold text-[#f0edf2] transition hover:text-white"
                     >
                       Jump to board
                     </button>
@@ -2860,7 +2860,7 @@ export function CommunityPostComposer({
                       onClick={() =>
                         scrollSectionIntoView(loadSectionRef.current)
                       }
-                      className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:text-white"
+                      className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-1.5 text-xs font-semibold text-[#f0edf2] transition hover:text-white"
                     >
                       Open FEN / PGN loader
                     </button>
@@ -2879,18 +2879,18 @@ export function CommunityPostComposer({
                   className={`rounded-2xl border px-4 py-3 ${
                     puzzleLineReady
                       ? "border-emerald-500/20 bg-emerald-500/[0.06]"
-                      : "border-white/[0.08] bg-black/15"
+                      : "border-[#1e1a24] bg-black/15"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                         Step 2
                       </p>
                       <p className="mt-1 text-sm font-semibold text-white">
                         Enter the correct line on the board for both sides
                       </p>
-                      <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                      <p className="mt-1 text-xs leading-relaxed text-[#8d8696]">
                         Once puzzle mode is active, every move you make after
                         that point becomes the saved solution line. FireChess
                         keeps the verified SAN notation for every move and
@@ -2901,7 +2901,7 @@ export function CommunityPostComposer({
                       className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                         puzzleLineReady
                           ? "bg-emerald-500/15 text-emerald-300"
-                          : "bg-white/[0.06] text-slate-300"
+                          : "bg-[#1e1a24] text-[#f0edf2]"
                       }`}
                     >
                       {puzzleLineReady ? "Done" : "Next"}
@@ -2909,7 +2909,7 @@ export function CommunityPostComposer({
                   </div>
                   <div className="mt-3 space-y-2">
                     {puzzleSolutionMoves.length === 0 ? (
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-[#8d8696]">
                         No solution moves recorded yet. Start puzzle mode, then
                         play the correct continuation on the live board.
                       </p>
@@ -2918,7 +2918,7 @@ export function CommunityPostComposer({
                         {puzzleSolutionMoves.map((move) => (
                           <div
                             key={move.id}
-                            className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-2"
+                            className="flex items-center justify-between gap-3 rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-2"
                           >
                             <p className="font-mono text-sm text-white">
                               {formatCommunityLineMove(
@@ -2939,18 +2939,18 @@ export function CommunityPostComposer({
                   className={`rounded-2xl border px-4 py-3 ${
                     puzzlePromptReady && puzzleNotesReady
                       ? "border-emerald-500/20 bg-emerald-500/[0.06]"
-                      : "border-white/[0.08] bg-black/15"
+                      : "border-[#1e1a24] bg-black/15"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                         Step 3
                       </p>
                       <p className="mt-1 text-sm font-semibold text-white">
                         Write the prompt and explanation, then publish
                       </p>
-                      <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                      <p className="mt-1 text-xs leading-relaxed text-[#8d8696]">
                         The prompt is what solvers see first. Keep the full line
                         and the theme in the solution box so players can solve,
                         then review the explanation afterward.
@@ -2960,7 +2960,7 @@ export function CommunityPostComposer({
                       className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                         puzzlePromptReady && puzzleNotesReady
                           ? "bg-emerald-500/15 text-emerald-300"
-                          : "bg-white/[0.06] text-slate-300"
+                          : "bg-[#1e1a24] text-[#f0edf2]"
                       }`}
                     >
                       {puzzlePromptReady && puzzleNotesReady ? "Ready" : "Next"}
@@ -2979,7 +2979,7 @@ export function CommunityPostComposer({
                       onClick={() =>
                         scrollSectionIntoView(publishSectionRef.current)
                       }
-                      className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:text-white"
+                      className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-1.5 text-xs font-semibold text-[#f0edf2] transition hover:text-white"
                     >
                       Review publish panel
                     </button>
@@ -2987,7 +2987,7 @@ export function CommunityPostComposer({
                 </div>
               </div>
             ) : (
-              <p className="mt-4 text-xs leading-relaxed text-slate-400">
+              <p className="mt-4 text-xs leading-relaxed text-[#8d8696]">
                 Show the steps whenever you want a reminder of the puzzle flow.
               </p>
             )}
@@ -3002,7 +3002,7 @@ export function CommunityPostComposer({
                   <h3 className="text-lg font-bold text-white">
                     Analysis report
                   </h3>
-                  <p className="text-sm leading-relaxed text-slate-300">
+                  <p className="text-sm leading-relaxed text-[#f0edf2]">
                     Open the long-form analyzer with this PGN loaded and jump
                     straight into the report flow.
                   </p>
@@ -3011,7 +3011,7 @@ export function CommunityPostComposer({
                   className={`rounded-full border px-3 py-1 text-[11px] font-semibold ${
                     analysisReady
                       ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-300"
-                      : "border-white/[0.08] bg-white/[0.03] text-slate-400"
+                      : "border-[#1e1a24] bg-[#ff5a1f]/[0.04] text-[#8d8696]"
                   }`}
                 >
                   {analysisReady ? "Report ready" : "Need PGN"}
@@ -3030,8 +3030,8 @@ export function CommunityPostComposer({
               </div>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-                <div className="rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                <div className="rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     Line
                   </p>
                   <p className="mt-1 text-sm font-semibold text-white">
@@ -3039,16 +3039,16 @@ export function CommunityPostComposer({
                     {moveHistory.length === 1 ? "ply" : "plies"}
                   </p>
                 </div>
-                <div className="rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                <div className="rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     Root
                   </p>
                   <p className="mt-1 text-sm font-semibold text-white">
                     {lineSourceLabel}
                   </p>
                 </div>
-                <div className="rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                <div className="rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     Engine
                   </p>
                   <p className="mt-1 text-sm font-semibold text-white">
@@ -3057,7 +3057,7 @@ export function CommunityPostComposer({
                 </div>
               </div>
 
-              <p className="mt-4 text-xs leading-relaxed text-slate-300/80">
+              <p className="mt-4 text-xs leading-relaxed text-[#f0edf2]/80">
                 {analysisReady
                   ? "The analyzer will load this PGN and auto-run the report so you land on the full breakdown, not an empty form."
                   : "Load a PGN or play through the game here first. Once the workbench has PGN context, the full report unlocks."}
@@ -3073,11 +3073,11 @@ export function CommunityPostComposer({
               </button>
             </section>
 
-            <section className="rounded-3xl border border-white/[0.08] bg-white/[0.03] p-5">
+            <section className="rounded-3xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
                   <h3 className="text-lg font-bold text-white">Engine</h3>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-[#8d8696]">
                     Live analysis for the current board state.
                   </p>
                 </div>
@@ -3087,7 +3087,7 @@ export function CommunityPostComposer({
                   className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
                     engineEnabled
                       ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-                      : "border-white/[0.08] bg-white/[0.03] text-slate-400 hover:text-white"
+                      : "border-[#1e1a24] bg-[#ff5a1f]/[0.04] text-[#8d8696] hover:text-white"
                   }`}
                 >
                   {engineEnabled ? "Engine On" : "Engine Off"}
@@ -3096,7 +3096,7 @@ export function CommunityPostComposer({
 
               <div className="mb-4 flex items-center gap-3">
                 <label className="min-w-0 flex-1 space-y-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     Depth
                   </span>
                   <select
@@ -3105,7 +3105,7 @@ export function CommunityPostComposer({
                       setEngineDepth(Number(event.target.value))
                     }
                     disabled={!engineEnabled}
-                    className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white focus:border-orange-500/40 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white focus:border-orange-500/40 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {[8, 10, 12, 14, 16].map((depth) => (
                       <option key={depth} value={depth}>
@@ -3114,8 +3114,8 @@ export function CommunityPostComposer({
                     ))}
                   </select>
                 </label>
-                <div className="rounded-2xl border border-white/[0.08] bg-black/15 px-4 py-3 text-right">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                <div className="rounded-2xl border border-[#1e1a24] bg-black/15 px-4 py-3 text-right">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     Eval
                   </p>
                   <p className="mt-1 text-lg font-black text-white">
@@ -3129,7 +3129,7 @@ export function CommunityPostComposer({
                   {engineError}
                 </p>
               ) : !engineEnabled ? (
-                <p className="rounded-2xl border border-white/[0.08] bg-black/15 px-4 py-3 text-sm text-slate-400">
+                <p className="rounded-2xl border border-[#1e1a24] bg-black/15 px-4 py-3 text-sm text-[#8d8696]">
                   The board stays fully interactive with the engine off. Turn it
                   back on when you want best lines and move badges.
                 </p>
@@ -3138,10 +3138,10 @@ export function CommunityPostComposer({
                   {Array.from({ length: 3 }).map((_, index) => (
                     <div
                       key={index}
-                      className="animate-pulse rounded-2xl border border-white/[0.06] bg-black/15 px-4 py-3"
+                      className="animate-pulse rounded-2xl border border-[#1e1a24] bg-black/15 px-4 py-3"
                     >
-                      <div className="h-4 w-20 rounded bg-white/[0.08]" />
-                      <div className="mt-2 h-3 w-full rounded bg-white/[0.05]" />
+                      <div className="h-4 w-20 rounded bg-[#1e1a24]" />
+                      <div className="mt-2 h-3 w-full rounded bg-[#ff5a1f]/[0.05]" />
                     </div>
                   ))}
                 </div>
@@ -3150,11 +3150,11 @@ export function CommunityPostComposer({
                   {engineLines.map((line, index) => (
                     <div
                       key={line.key}
-                      className="rounded-2xl border border-white/[0.06] bg-black/15 px-4 py-3"
+                      className="rounded-2xl border border-[#1e1a24] bg-black/15 px-4 py-3"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                             {index === 0 ? "Top line" : `Line ${index + 1}`}
                           </p>
                           <p className="mt-1 font-mono text-sm font-semibold text-white">
@@ -3165,14 +3165,14 @@ export function CommunityPostComposer({
                           {line.eval}
                         </span>
                       </div>
-                      <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                      <p className="mt-2 text-xs leading-relaxed text-[#8d8696]">
                         {line.pv || "No principal variation returned."}
                       </p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="rounded-2xl border border-white/[0.08] bg-black/15 px-4 py-3 text-sm text-slate-400">
+                <p className="rounded-2xl border border-[#1e1a24] bg-black/15 px-4 py-3 text-sm text-[#8d8696]">
                   No engine line available for this position yet.
                 </p>
               )}
@@ -3182,33 +3182,33 @@ export function CommunityPostComposer({
 
         <section
           ref={loadSectionRef}
-          className="rounded-3xl border border-white/[0.08] bg-white/[0.03] p-5"
+          className="rounded-3xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5"
         >
           {quickPostMode ? (
-            <details className="rounded-2xl border border-white/[0.08] bg-black/15">
+            <details className="rounded-2xl border border-[#1e1a24] bg-black/15">
               <summary className="cursor-pointer list-none px-4 py-4">
                 <p className="text-sm font-semibold text-white">
                   Change board preview
                 </p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                <p className="mt-1 text-xs leading-relaxed text-[#565061]">
                   Paste a FEN or PGN only when you want to replace the sample
                   board.
                 </p>
               </summary>
 
-              <div className="border-t border-white/[0.08] px-4 py-4">
+              <div className="border-t border-[#1e1a24] px-4 py-4">
                 <div className="mb-4 flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => setInputMode("fen")}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${inputMode === "fen" ? "bg-white text-black" : "bg-white/[0.05] text-slate-300 hover:bg-white/[0.08] hover:text-white"}`}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${inputMode === "fen" ? "bg-white text-black" : "bg-[#ff5a1f]/[0.05] text-[#f0edf2] hover:bg-[#1e1a24] hover:text-white"}`}
                   >
                     FEN
                   </button>
                   <button
                     type="button"
                     onClick={() => setInputMode("pgn")}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${inputMode === "pgn" ? "bg-white text-black" : "bg-white/[0.05] text-slate-300 hover:bg-white/[0.08] hover:text-white"}`}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${inputMode === "pgn" ? "bg-white text-black" : "bg-[#ff5a1f]/[0.05] text-[#f0edf2] hover:bg-[#1e1a24] hover:text-white"}`}
                   >
                     PGN
                   </button>
@@ -3216,7 +3216,7 @@ export function CommunityPostComposer({
 
                 {inputMode === "fen" ? (
                   <label className="space-y-2">
-                    <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                       FEN
                     </span>
                     <textarea
@@ -3224,12 +3224,12 @@ export function CommunityPostComposer({
                       value={fenInput}
                       onChange={(event) => setFenInput(event.target.value)}
                       placeholder="r1bq1rk1/pp1nbppp/2p1pn2/3p4/2PP4/2N1PN2/PPQ2PPP/R1B1KB1R w KQ - 0 8"
-                      className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 font-mono text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                      className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 font-mono text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
                     />
                   </label>
                 ) : (
                   <label className="space-y-2">
-                    <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                       PGN
                     </span>
                     <textarea
@@ -3237,13 +3237,13 @@ export function CommunityPostComposer({
                       value={pgnInput}
                       onChange={(event) => setPgnInput(event.target.value)}
                       placeholder="1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6"
-                      className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 font-mono text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                      className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 font-mono text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
                     />
                   </label>
                 )}
 
                 <div className="mt-4 flex items-center justify-between gap-3">
-                  <p className="text-xs leading-relaxed text-slate-500">
+                  <p className="text-xs leading-relaxed text-[#565061]">
                     The publish action uses the live board preview on the left.
                   </p>
                   <button
@@ -3266,7 +3266,7 @@ export function CommunityPostComposer({
                 <h3 className="text-lg font-bold text-white">
                   {minimal ? "Swap the sample board" : "Load a position"}
                 </h3>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-[#8d8696]">
                   {minimal
                     ? "The sample board is live by default. Paste a FEN or PGN only when you want to replace it."
                     : "Paste a FEN or PGN, then continue editing from that exact board."}
@@ -3277,14 +3277,14 @@ export function CommunityPostComposer({
                 <button
                   type="button"
                   onClick={() => setInputMode("fen")}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${inputMode === "fen" ? "bg-white text-black" : "bg-white/[0.05] text-slate-300 hover:bg-white/[0.08] hover:text-white"}`}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${inputMode === "fen" ? "bg-white text-black" : "bg-[#ff5a1f]/[0.05] text-[#f0edf2] hover:bg-[#1e1a24] hover:text-white"}`}
                 >
                   FEN
                 </button>
                 <button
                   type="button"
                   onClick={() => setInputMode("pgn")}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${inputMode === "pgn" ? "bg-white text-black" : "bg-white/[0.05] text-slate-300 hover:bg-white/[0.08] hover:text-white"}`}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${inputMode === "pgn" ? "bg-white text-black" : "bg-[#ff5a1f]/[0.05] text-[#f0edf2] hover:bg-[#1e1a24] hover:text-white"}`}
                 >
                   PGN
                 </button>
@@ -3292,7 +3292,7 @@ export function CommunityPostComposer({
 
               {inputMode === "fen" ? (
                 <label className="space-y-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     FEN
                   </span>
                   <textarea
@@ -3300,12 +3300,12 @@ export function CommunityPostComposer({
                     value={fenInput}
                     onChange={(event) => setFenInput(event.target.value)}
                     placeholder="r1bq1rk1/pp1nbppp/2p1pn2/3p4/2PP4/2N1PN2/PPQ2PPP/R1B1KB1R w KQ - 0 8"
-                    className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 font-mono text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                    className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 font-mono text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
                   />
                 </label>
               ) : (
                 <label className="space-y-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     PGN
                   </span>
                   <textarea
@@ -3313,13 +3313,13 @@ export function CommunityPostComposer({
                     value={pgnInput}
                     onChange={(event) => setPgnInput(event.target.value)}
                     placeholder="1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6"
-                    className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 font-mono text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                    className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 font-mono text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
                   />
                 </label>
               )}
 
               <div className="mt-4 flex items-center justify-between gap-3">
-                <p className="text-xs leading-relaxed text-slate-500">
+                <p className="text-xs leading-relaxed text-[#565061]">
                   The publish action uses the live board state on the left, not
                   the raw text box.
                 </p>
@@ -3341,7 +3341,7 @@ export function CommunityPostComposer({
 
         <section
           ref={publishSectionRef}
-          className="rounded-3xl border border-white/[0.08] bg-white/[0.03] p-5"
+          className="rounded-3xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5"
         >
           {quickPostMode ? (
             <>
@@ -3352,7 +3352,7 @@ export function CommunityPostComposer({
                       ? "Quick puzzle details"
                       : "Quick post details"}
                   </h3>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-[#8d8696]">
                     {kind === "puzzle"
                       ? "Keep the solver prompt short. FireChess saves the puzzle start, previous move, and exact solution line from the builder above."
                       : "Keep it short. FireChess will use the board preview on the left and fill in sane defaults if you leave fields blank."}
@@ -3365,7 +3365,7 @@ export function CommunityPostComposer({
 
               <div className="grid gap-4">
                 <label className="space-y-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     Title
                   </span>
                   <input
@@ -3373,12 +3373,12 @@ export function CommunityPostComposer({
                     value={title}
                     onChange={(event) => setTitle(event.target.value)}
                     placeholder={titlePlaceholder}
-                    className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                    className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
                   />
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     Caption
                   </span>
                   <textarea
@@ -3386,12 +3386,12 @@ export function CommunityPostComposer({
                     value={prompt}
                     onChange={(event) => setPrompt(event.target.value)}
                     placeholder={promptPlaceholder}
-                    className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                    className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
                   />
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     Optional notes
                   </span>
                   <textarea
@@ -3399,17 +3399,17 @@ export function CommunityPostComposer({
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
                     placeholder={descriptionPlaceholder}
-                    className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                    className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
                   />
                 </label>
 
-                <details className="rounded-2xl border border-white/[0.08] bg-black/15 px-4 py-3">
-                  <summary className="cursor-pointer list-none text-sm font-semibold text-slate-200">
+                <details className="rounded-2xl border border-[#1e1a24] bg-black/15 px-4 py-3">
+                  <summary className="cursor-pointer list-none text-sm font-semibold text-white">
                     Optional metadata
                   </summary>
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
                     <label className="space-y-2">
-                      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                         Opening name
                       </span>
                       <input
@@ -3417,12 +3417,12 @@ export function CommunityPostComposer({
                         value={openingName}
                         onChange={(event) => setOpeningName(event.target.value)}
                         placeholder="Italian Game"
-                        className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                        className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
                       />
                     </label>
 
                     <label className="space-y-2">
-                      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                         Tags
                       </span>
                       <input
@@ -3430,25 +3430,25 @@ export function CommunityPostComposer({
                         value={tags}
                         onChange={(event) => setTags(event.target.value)}
                         placeholder="fork, rapid, opening"
-                        className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                        className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
                       />
                     </label>
                   </div>
                 </details>
               </div>
 
-              <div className="mt-5 rounded-2xl border border-white/[0.08] bg-black/15 px-4 py-3 text-xs text-slate-400">
+              <div className="mt-5 rounded-2xl border border-[#1e1a24] bg-black/15 px-4 py-3 text-xs text-[#8d8696]">
                 <p>
-                  <span className="font-semibold text-slate-200">Board:</span>{" "}
+                  <span className="font-semibold text-white">Board:</span>{" "}
                   {boardStatus}
                 </p>
                 <p className="mt-1">
-                  <span className="font-semibold text-slate-200">Source:</span>{" "}
+                  <span className="font-semibold text-white">Source:</span>{" "}
                   {COMMUNITY_SOURCE_LABELS[sourceType]} · {lineSourceLabel}
                 </p>
                 {kind === "puzzle" && puzzlePreviousMove ? (
                   <p className="mt-1">
-                    <span className="font-semibold text-slate-200">
+                    <span className="font-semibold text-white">
                       Previous move:
                     </span>{" "}
                     {formatCommunityLineMove(
@@ -3458,7 +3458,7 @@ export function CommunityPostComposer({
                 ) : null}
                 {kind === "puzzle" && puzzleSolutionMoves.length > 0 ? (
                   <p className="mt-1">
-                    <span className="font-semibold text-slate-200">
+                    <span className="font-semibold text-white">
                       Solution SAN:
                     </span>{" "}
                     {puzzleSolutionMoves
@@ -3471,7 +3471,7 @@ export function CommunityPostComposer({
               </div>
 
               <div className="mt-5 flex items-center justify-between gap-3">
-                <p className="text-xs leading-relaxed text-slate-500">
+                <p className="text-xs leading-relaxed text-[#565061]">
                   Need the full analyzer or a heavier board workflow? Use the{" "}
                   <a
                     href="/board"
@@ -3501,7 +3501,7 @@ export function CommunityPostComposer({
                 <h3 className="text-lg font-bold text-white">
                   Publish snapshot
                 </h3>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-[#8d8696]">
                   {kind === "puzzle"
                     ? "Puzzle mode publishes the marked start position, the opponent's last move, and the verified SAN solution line."
                     : "Turn the live board into a position, opening, or puzzle post with real board data."}
@@ -3509,11 +3509,11 @@ export function CommunityPostComposer({
               </div>
 
               {kind === "puzzle" ? (
-                <div className="mb-4 rounded-2xl border border-fuchsia-500/20 bg-fuchsia-500/[0.06] px-4 py-3 text-sm text-slate-200">
+                <div className="mb-4 rounded-2xl border border-fuchsia-500/20 bg-fuchsia-500/[0.06] px-4 py-3 text-sm text-white">
                   <p className="font-semibold text-fuchsia-200">
                     Puzzle recipe
                   </p>
-                  <div className="mt-2 grid gap-1.5 text-xs leading-relaxed text-slate-300">
+                  <div className="mt-2 grid gap-1.5 text-xs leading-relaxed text-[#f0edf2]">
                     <p>
                       <span className="font-semibold text-white">1.</span> Stop
                       the board on the solver position after the opponent's last
@@ -3535,7 +3535,7 @@ export function CommunityPostComposer({
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     Post Kind
                   </span>
                   <select
@@ -3543,7 +3543,7 @@ export function CommunityPostComposer({
                     onChange={(event) =>
                       setKind(event.target.value as CommunityPostKind)
                     }
-                    className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white focus:border-orange-500/40 focus:outline-none"
+                    className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white focus:border-orange-500/40 focus:outline-none"
                   >
                     {Object.entries(COMMUNITY_KIND_LABELS).map(
                       ([value, label]) => (
@@ -3556,7 +3556,7 @@ export function CommunityPostComposer({
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     Source
                   </span>
                   <select
@@ -3564,7 +3564,7 @@ export function CommunityPostComposer({
                     onChange={(event) =>
                       setSourceType(event.target.value as CommunitySourceType)
                     }
-                    className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white focus:border-orange-500/40 focus:outline-none"
+                    className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white focus:border-orange-500/40 focus:outline-none"
                   >
                     {Object.entries(COMMUNITY_SOURCE_LABELS).map(
                       ([value, label]) => (
@@ -3577,7 +3577,7 @@ export function CommunityPostComposer({
                 </label>
 
                 <label className="space-y-2 sm:col-span-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     Title
                   </span>
                   <input
@@ -3585,12 +3585,12 @@ export function CommunityPostComposer({
                     value={title}
                     onChange={(event) => setTitle(event.target.value)}
                     placeholder={titlePlaceholder}
-                    className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                    className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
                   />
                 </label>
 
                 <label className="space-y-2 sm:col-span-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     {kind === "puzzle" ? "Prompt for solvers" : "Prompt"}
                   </span>
                   <textarea
@@ -3598,12 +3598,12 @@ export function CommunityPostComposer({
                     value={prompt}
                     onChange={(event) => setPrompt(event.target.value)}
                     placeholder={promptPlaceholder}
-                    className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                    className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
                   />
                 </label>
 
                 <label className="space-y-2 sm:col-span-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     {kind === "puzzle"
                       ? "Solution / explanation"
                       : "Notes or solution"}
@@ -3613,12 +3613,12 @@ export function CommunityPostComposer({
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
                     placeholder={descriptionPlaceholder}
-                    className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                    className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
                   />
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     Board orientation
                   </span>
                   <select
@@ -3626,7 +3626,7 @@ export function CommunityPostComposer({
                     onChange={(event) =>
                       setOrientation(event.target.value as "white" | "black")
                     }
-                    className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white focus:border-orange-500/40 focus:outline-none"
+                    className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white focus:border-orange-500/40 focus:outline-none"
                   >
                     <option value="white">White</option>
                     <option value="black">Black</option>
@@ -3634,7 +3634,7 @@ export function CommunityPostComposer({
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     Opening name
                   </span>
                   <input
@@ -3642,12 +3642,12 @@ export function CommunityPostComposer({
                     value={openingName}
                     onChange={(event) => setOpeningName(event.target.value)}
                     placeholder="Italian Game"
-                    className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                    className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
                   />
                 </label>
 
                 <label className="space-y-2 sm:col-span-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
                     Tags
                   </span>
                   <input
@@ -3655,32 +3655,32 @@ export function CommunityPostComposer({
                     value={tags}
                     onChange={(event) => setTags(event.target.value)}
                     placeholder="fork, endgame, italian, rapid"
-                    className="w-full rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+                    className="w-full rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
                   />
                 </label>
               </div>
 
-              <div className="mt-5 rounded-2xl border border-white/[0.08] bg-black/15 px-4 py-3 text-sm text-slate-300">
+              <div className="mt-5 rounded-2xl border border-[#1e1a24] bg-black/15 px-4 py-3 text-sm text-[#f0edf2]">
                 <p className="font-semibold text-white">Current snapshot</p>
-                <div className="mt-2 grid gap-2 text-xs text-slate-400">
+                <div className="mt-2 grid gap-2 text-xs text-[#8d8696]">
                   <p>
-                    <span className="font-semibold text-slate-200">
+                    <span className="font-semibold text-white">
                       Collection:
                     </span>{" "}
                     {collectionKey}
                   </p>
                   <p>
-                    <span className="font-semibold text-slate-200">
+                    <span className="font-semibold text-white">
                       Board FEN:
                     </span>{" "}
-                    <span className="font-mono text-[11px] text-slate-500">
+                    <span className="font-mono text-[11px] text-[#565061]">
                       {kind === "puzzle"
                         ? (puzzleBuilder?.startFen ?? currentFen)
                         : currentFen}
                     </span>
                   </p>
                   <p>
-                    <span className="font-semibold text-slate-200">PGN:</span>{" "}
+                    <span className="font-semibold text-white">PGN:</span>{" "}
                     {kind === "puzzle"
                       ? puzzleContextPgn
                         ? "Context PGN ends on the opponent's last move. The solution line is saved separately with verified SAN."
@@ -3691,7 +3691,7 @@ export function CommunityPostComposer({
                   </p>
                   {kind === "puzzle" && puzzlePreviousMove ? (
                     <p>
-                      <span className="font-semibold text-slate-200">
+                      <span className="font-semibold text-white">
                         Previous move:
                       </span>{" "}
                       {formatCommunityLineMove(
@@ -3701,7 +3701,7 @@ export function CommunityPostComposer({
                   ) : null}
                   {kind === "puzzle" && puzzleSolutionMoves.length > 0 ? (
                     <p>
-                      <span className="font-semibold text-slate-200">
+                      <span className="font-semibold text-white">
                         Solution SAN:
                       </span>{" "}
                       {puzzleSolutionMoves
@@ -3715,7 +3715,7 @@ export function CommunityPostComposer({
                   ) : null}
                   {normalizedTags.length > 0 ? (
                     <p>
-                      <span className="font-semibold text-slate-200">
+                      <span className="font-semibold text-white">
                         Tags:
                       </span>{" "}
                       {normalizedTags.map((tag) => `#${tag}`).join(" ")}
@@ -3725,7 +3725,7 @@ export function CommunityPostComposer({
               </div>
 
               <div className="mt-5 flex items-center justify-between gap-3">
-                <p className="text-xs leading-relaxed text-slate-500">
+                <p className="text-xs leading-relaxed text-[#565061]">
                   {kind === "puzzle"
                     ? "Publish saves the puzzle start, the opponent's last move, the verified SAN solution line, and your written explanation to the real community API."
                     : "Publish sends the current board, the current line, and the written notes to the real community API."}

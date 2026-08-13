@@ -211,7 +211,7 @@ export function GuidedWalkBoard({ fen, userMove, bestMove, userColor, mode, prai
               Not quite. The green arrow shows the best move — try again.
             </p>
           ) : (
-            <p className="text-slate-400">
+            <p className="text-[#8d8696]">
               Drag the best move for{" "}
               {userColor === "white" ? "White" : "Black"}.
             </p>
@@ -228,11 +228,11 @@ export function GuidedWalkBoard({ fen, userMove, bestMove, userColor, mode, prai
             </span>
           ) : (
             <>
-              <span className="flex items-center gap-1.5 text-slate-400">
+              <span className="flex items-center gap-1.5 text-[#8d8696]">
                 <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" />
                 You played
               </span>
-              <span className="flex items-center gap-1.5 text-slate-400">
+              <span className="flex items-center gap-1.5 text-[#8d8696]">
                 <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-500" />
                 Best move
               </span>

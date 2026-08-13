@@ -37,7 +37,7 @@ export function HowItWorks() {
         <h2 className="mt-3 text-2xl font-bold text-white sm:text-3xl">
           From username to game plan in three steps
         </h2>
-        <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-slate-400 sm:text-base">
+        <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-[#8d8696] sm:text-base">
           No uploads, no setup. FireChess reads your public games and does the
           rest — right in your browser.
         </p>
@@ -51,7 +51,7 @@ export function HowItWorks() {
         {steps.map((item) => (
           <div
             key={item.step}
-            className="group relative rounded-2xl border border-white/[0.04] p-5 text-center transition-all duration-300 hover:border-orange-400/15 hover:shadow-[0_0_40px_-16px_rgba(249,115,22,0.12)]"
+            className="group relative rounded-2xl border border-[#1e1a24] p-5 text-center transition-all duration-300 hover:border-orange-400/15 hover:shadow-[0_0_40px_-16px_rgba(249,115,22,0.12)]"
           >
             <div className="relative mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-400/[0.07] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
               <item.icon className="h-5 w-5 text-orange-300" />
@@ -62,7 +62,7 @@ export function HowItWorks() {
             <h3 className="mt-4 text-base font-semibold text-white">
               {item.title}
             </h3>
-            <p className="mt-1.5 text-sm leading-relaxed text-slate-400">
+            <p className="mt-1.5 text-sm leading-relaxed text-[#8d8696]">
               {item.text}
             </p>
           </div>

@@ -89,7 +89,7 @@ export function CommunityLoop({ authenticated, userId }: Props) {
                 <h2 className="text-2xl font-bold text-white sm:text-3xl">
                   Turn every report into a board people can actually use.
                 </h2>
-                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300/80 sm:text-base">
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#f0edf2]/80 sm:text-base">
                   Once the scan finds the leak, you should be able to cut the
                   exact position, ask a sharper question, collect ideas, and
                   keep the lesson inside your study workflow.
@@ -98,7 +98,7 @@ export function CommunityLoop({ authenticated, userId }: Props) {
             </div>
 
             <div className="flex flex-col gap-3 lg:items-end">
-              <p className="max-w-sm text-sm leading-relaxed text-slate-400 lg:text-right">
+              <p className="max-w-sm text-sm leading-relaxed text-[#8d8696] lg:text-right">
                 Fresh positions, opening debates, and study boards should stay
                 playable right on the homepage.
               </p>
@@ -149,7 +149,7 @@ export function CommunityLoop({ authenticated, userId }: Props) {
                     <h3 className="mt-1 text-base font-semibold text-white transition-colors group-hover:text-orange-100">
                       {item.title}
                     </h3>
-                    <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-400">
+                    <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#8d8696]">
                       {item.description}
                     </p>
                   </div>
@@ -179,17 +179,17 @@ export function CommunityLoop({ authenticated, userId }: Props) {
                 Study Flow
               </p>
 
-              <div className="space-y-4 border-l border-white/[0.08] pl-4 sm:pl-5">
+              <div className="space-y-4 border-l border-[#1e1a24] pl-4 sm:pl-5">
                 {studyFlow.map((item) => (
                   <div key={item.step} className="relative">
                     <span className="absolute -left-[1.3rem] top-1.5 h-2.5 w-2.5 rounded-full bg-amber-200/70 shadow-[0_0_0_6px_rgba(251,191,36,0.06)] sm:-left-[1.55rem]" />
-                    <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-slate-500">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-[#565061]">
                       Step {item.step}
                     </p>
                     <h3 className="mt-1.5 text-sm font-semibold text-white">
                       {item.title}
                     </h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-slate-400">
+                    <p className="mt-1.5 text-sm leading-relaxed text-[#8d8696]">
                       {item.description}
                     </p>
                   </div>

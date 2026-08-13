@@ -242,7 +242,7 @@ export function HeroBoard() {
           <span
             key={p}
             className={`h-1 rounded-full transition-all duration-300 ${
-              phase === p ? "w-4 bg-[#ff5a1f]" : "w-1 bg-white/15"
+              phase === p ? "w-4 bg-[#ff5a1f]" : "w-1 bg-[#ff5a1f]/15"
             }`}
           />
         ))}

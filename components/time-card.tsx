@@ -191,12 +191,12 @@ const VERDICT_CONFIG = {
   neutral: {
     icon: "⏱️",
     label: "Neutral",
-    color: "text-slate-400",
+    color: "text-[#8d8696]",
     bgColor: "bg-slate-500/10",
     borderColor: "border-slate-500/20",
     gradientFrom: "from-slate-500/[0.06]",
     tagBg: "bg-slate-500/15",
-    tagText: "text-slate-400",
+    tagText: "text-[#8d8696]",
     arrowColor: "rgba(148, 163, 184, 0.9)",
     squareBg: "rgba(148, 163, 184, 0.2)",
   },
@@ -425,7 +425,7 @@ export function TimeCard({
         {/* Board side */}
         <div
           ref={boardSizeRef}
-          className="relative overflow-hidden border-b border-white/[0.04] bg-white/[0.01] p-3 sm:p-5 md:border-b-0 md:border-r"
+          className="relative overflow-hidden border-b border-[#1e1a24] bg-[#ff5a1f]/[0.02] p-3 sm:p-5 md:border-b-0 md:border-r"
         >
           <div className="mx-auto flex w-full max-w-[460px] items-start gap-2 sm:gap-3">
             {moment.evalBefore != null && (
@@ -454,7 +454,7 @@ export function TimeCard({
           </div>
           {/* Arrow legend */}
           {bestArrows.length > 0 && (
-            <div className="mx-auto mt-2 flex w-full max-w-[460px] items-center gap-3 pl-[27px] text-[10px] text-slate-500">
+            <div className="mx-auto mt-2 flex w-full max-w-[460px] items-center gap-3 pl-[27px] text-[10px] text-[#565061]">
               <span className="flex items-center gap-1">
                 <span
                   className="inline-block h-1.5 w-4 rounded-sm"
@@ -543,11 +543,11 @@ export function TimeCard({
           </div>
 
           {/* Time insight callout */}
-          <div className="rounded-xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+          <div className="rounded-xl border border-[#1e1a24] bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-[#565061]">
               Time Insight
             </p>
-            <p className="mt-2 text-[13px] leading-relaxed text-slate-200">
+            <p className="mt-2 text-[13px] leading-relaxed text-white">
               Spent{" "}
               <span
                 className={`rounded-md px-1.5 py-0.5 font-bold ${config.tagBg} ${config.tagText}`}
@@ -555,15 +555,15 @@ export function TimeCard({
                 {formatTime(moment.timeSpentSec)}
               </span>{" "}
               on this move with{" "}
-              <span className="rounded-md bg-white/[0.06] px-1.5 py-0.5 font-bold text-slate-300">
+              <span className="rounded-md bg-[#1e1a24] px-1.5 py-0.5 font-bold text-[#f0edf2]">
                 {formatTime(moment.timeRemainingSec)}
               </span>{" "}
               remaining on the clock.
             </p>
             <div className="mt-3 flex items-center gap-2">
-              <span className="text-[10px] text-slate-500">Played:</span>
+              <span className="text-[10px] text-[#565061]">Played:</span>
               <span
-                className={`rounded-md px-2 py-0.5 font-mono text-sm font-bold ${displayVerdict === "justified" ? "bg-emerald-500/15 text-emerald-400" : displayVerdict === "efficient" ? "bg-sky-500/15 text-sky-300" : moment.cpLoss && moment.cpLoss >= 100 ? "bg-red-500/15 text-red-400" : "bg-white/[0.06] text-slate-200"}`}
+                className={`rounded-md px-2 py-0.5 font-mono text-sm font-bold ${displayVerdict === "justified" ? "bg-emerald-500/15 text-emerald-400" : displayVerdict === "efficient" ? "bg-sky-500/15 text-sky-300" : moment.cpLoss && moment.cpLoss >= 100 ? "bg-red-500/15 text-red-400" : "bg-[#1e1a24] text-white"}`}
               >
                 {userSan ?? moment.userMove}
               </span>
@@ -574,7 +574,7 @@ export function TimeCard({
               )}
               {bestSan && moment.bestMove !== moment.userMove && (
                 <>
-                  <span className="text-[10px] text-slate-500">Best:</span>
+                  <span className="text-[10px] text-[#565061]">Best:</span>
                   <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 font-mono text-sm font-bold text-emerald-400">
                     {bestSan}
                   </span>
@@ -601,32 +601,32 @@ export function TimeCard({
           </div>
 
           {/* Time analysis reasoning */}
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#565061]">
               Time Analysis
             </p>
-            <p className="mt-2 text-sm leading-relaxed text-slate-300">
+            <p className="mt-2 text-sm leading-relaxed text-[#f0edf2]">
               {moment.reason}
             </p>
           </div>
 
           {/* Complexity meter */}
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+          <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-[#565061]">
                 Position Complexity
               </p>
-              <span className="text-xs font-bold text-slate-300">
+              <span className="text-xs font-bold text-[#f0edf2]">
                 {moment.complexity}/100
               </span>
             </div>
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#1e1a24]">
               <div
                 className={`h-full rounded-full transition-all ${complexityColor}`}
                 style={{ width: `${moment.complexity}%` }}
               />
             </div>
-            <div className="mt-1 flex justify-between text-[10px] text-slate-600">
+            <div className="mt-1 flex justify-between text-[10px] text-[#565061]">
               <span>Simple</span>
               <span>Critical</span>
             </div>
@@ -726,7 +726,7 @@ export function TimeCard({
             <button
               type="button"
               onClick={copyFen}
-              className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-xs text-slate-400 transition hover:bg-white/[0.05] hover:text-slate-200"
+              className="flex items-center gap-1.5 rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-3 py-1.5 text-xs text-[#8d8696] transition hover:bg-[#ff5a1f]/[0.05] hover:text-white"
             >
               {fenCopied ? (
                 <>
@@ -779,7 +779,7 @@ export function TimeCard({
                 )}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-slate-400 transition hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-slate-200"
+                className="flex items-center gap-1.5 rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-1.5 text-xs font-semibold text-[#8d8696] transition hover:border-[#ff5a1f]/25 hover:bg-[#1e1a24] hover:text-white"
               >
                 <svg
                   width="11"

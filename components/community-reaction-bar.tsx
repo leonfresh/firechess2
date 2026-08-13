@@ -67,13 +67,13 @@ export function CommunityReactionBar({
   };
 
   return (
-    <div className="space-y-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
+    <div className="space-y-3 rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-4">
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <button
           type="button"
           onClick={() => handleReaction("like")}
           disabled={isPending}
-          className={`rounded-full border px-4 py-2 font-semibold transition-colors ${liked ? "border-red-500/30 bg-red-500/10 text-red-300" : "border-white/[0.08] bg-white/[0.02] text-slate-300 hover:border-white/[0.16] hover:text-white"}`}
+          className={`rounded-full border px-4 py-2 font-semibold transition-colors ${liked ? "border-red-500/30 bg-red-500/10 text-red-300" : "border-[#1e1a24] bg-[#ff5a1f]/[0.03] text-[#f0edf2] hover:border-[#ff5a1f]/25 hover:text-white"}`}
         >
           ❤️ Like {likes}
         </button>
@@ -81,11 +81,11 @@ export function CommunityReactionBar({
           type="button"
           onClick={() => handleReaction("save")}
           disabled={isPending}
-          className={`rounded-full border px-4 py-2 font-semibold transition-colors ${saved ? "border-amber-500/30 bg-amber-500/10 text-amber-300" : "border-white/[0.08] bg-white/[0.02] text-slate-300 hover:border-white/[0.16] hover:text-white"}`}
+          className={`rounded-full border px-4 py-2 font-semibold transition-colors ${saved ? "border-amber-500/30 bg-amber-500/10 text-amber-300" : "border-[#1e1a24] bg-[#ff5a1f]/[0.03] text-[#f0edf2] hover:border-[#ff5a1f]/25 hover:text-white"}`}
         >
           🔖 Save {saves}
         </button>
-        <span className="rounded-full border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-slate-300">
+        <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-4 py-2 text-[#f0edf2]">
           💬 {initialComments} comments
         </span>
       </div>

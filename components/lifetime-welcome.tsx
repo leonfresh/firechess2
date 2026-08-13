@@ -116,7 +116,7 @@ export function ProWelcomeModal() {
         <button
           type="button"
           onClick={dismiss}
-          className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-slate-800 text-slate-400 transition-colors hover:bg-slate-700 hover:text-white"
+          className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-[#1e1a24] bg-slate-800 text-[#8d8696] transition-colors hover:bg-slate-700 hover:text-white"
           aria-label="Dismiss"
         >
           ✕
@@ -137,7 +137,7 @@ export function ProWelcomeModal() {
             <h2 className="text-xl font-black text-white">
               {isLifetime ? "You're in — forever." : "Welcome to Pro."}
             </h2>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-[#8d8696]">
               {isLifetime ? (
                 <>
                   Welcome to{" "}
@@ -163,19 +163,19 @@ export function ProWelcomeModal() {
             {FEATURES.map((f) => (
               <div
                 key={f.title}
-                className="flex gap-3 rounded-xl border border-white/[0.07] bg-white/[0.04] p-3"
+                className="flex gap-3 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.05] p-3"
               >
                 <span className="mt-0.5 text-lg leading-none">{f.icon}</span>
                 <div>
                   <p className="text-sm font-semibold text-white">{f.title}</p>
-                  <p className="mt-0.5 text-xs text-slate-400">{f.body}</p>
+                  <p className="mt-0.5 text-xs text-[#8d8696]">{f.body}</p>
                 </div>
               </div>
             ))}
           </div>
 
           {/* Footer note */}
-          <p className="mb-4 text-center text-xs text-slate-500">
+          <p className="mb-4 text-center text-xs text-[#565061]">
             {isLifetime
               ? "No recurring fees. No feature downgrades. You're locked in as a founding member."
               : "Your Pro features are active right now — start a scan to see the difference."}
@@ -197,7 +197,7 @@ export function ProWelcomeModal() {
             <button
               type="button"
               onClick={dismiss}
-              className="flex-1 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm font-medium text-slate-300 transition-colors hover:bg-white/[0.08] hover:text-white"
+              className="flex-1 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-4 py-3 text-sm font-medium text-[#f0edf2] transition-colors hover:bg-[#1e1a24] hover:text-white"
             >
               Explore Dashboard
             </button>

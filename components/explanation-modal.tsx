@@ -372,14 +372,14 @@ export function ExplanationModal({
 
       {/* Modal */}
       <div
-        className="relative z-10 max-h-[95vh] w-full max-w-5xl overflow-y-auto rounded-3xl border border-white/[0.1] bg-slate-950 shadow-2xl shadow-black/50"
+        className="relative z-10 max-h-[95vh] w-full max-w-5xl overflow-y-auto rounded-3xl border border-[#1e1a24] bg-slate-950 shadow-lg shadow-black/40"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white"
+          className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-[#1e1a24] text-[#8d8696] transition-colors hover:bg-[#ff5a1f]/[0.12] hover:text-white"
         >
           <svg
             width="16"
@@ -395,7 +395,7 @@ export function ExplanationModal({
 
         {/* ── Header ── */}
         <div
-          className={`border-b border-white/[0.06] bg-gradient-to-r ${colors.grad} p-5 sm:p-6`}
+          className={`border-b border-[#1e1a24] bg-gradient-to-r ${colors.grad} p-5 sm:p-6`}
         >
           <div className="flex items-center gap-4">
             <span
@@ -408,7 +408,7 @@ export function ExplanationModal({
                 {title ?? "Move Explanation"}
               </h2>
               {subtitle && (
-                <p className="mt-0.5 text-sm text-slate-400">{subtitle}</p>
+                <p className="mt-0.5 text-sm text-[#8d8696]">{subtitle}</p>
               )}
             </div>
             {hasRich && richExplanation.evalShift && (
@@ -432,7 +432,7 @@ export function ExplanationModal({
         >
           {/* ─── Board Column ─── */}
           {hasBoard && (
-            <div className="border-b border-white/[0.06] lg:border-b-0 lg:border-r p-4 sm:p-5 flex flex-col items-center gap-3">
+            <div className="border-b border-[#1e1a24] lg:border-b-0 lg:border-r p-4 sm:p-5 flex flex-col items-center gap-3">
               <div ref={boardContainerRef} className="w-full max-w-[460px]">
                 <div className="flex items-start gap-2">
                   <EvalBar evalCp={evalCp} height={boardSize} />
@@ -459,14 +459,14 @@ export function ExplanationModal({
 
               {/* Line toggle — shown when alternate line is provided */}
               {altSteps.length > 0 && (
-                <div className="w-full max-w-[460px] flex gap-1 rounded-xl border border-white/[0.06] bg-white/[0.02] p-1">
+                <div className="w-full max-w-[460px] flex gap-1 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-1">
                   <button
                     type="button"
                     onClick={() => handleSwitchLine(0)}
                     className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
                       activeLine === 0
                         ? `${colors.pill}`
-                        : "text-slate-400 hover:text-white"
+                        : "text-[#8d8696] hover:text-white"
                     }`}
                   >
                     ✓ Best Line
@@ -477,7 +477,7 @@ export function ExplanationModal({
                     className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
                       activeLine === 1
                         ? "bg-rose-500/15 text-rose-400"
-                        : "text-slate-400 hover:text-white"
+                        : "text-[#8d8696] hover:text-white"
                     }`}
                   >
                     ⚔️ {altUciLabel ?? "If they take?"}
@@ -487,7 +487,7 @@ export function ExplanationModal({
 
               {/* Move list display */}
               {activeSteps.length > 0 && (
-                <div className="w-full max-w-[460px] rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                <div className="w-full max-w-[460px] rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-3 py-2">
                   <div className="flex flex-wrap gap-1">
                     {activeSteps.map((s, i) => {
                       const moveNum = (() => {
@@ -519,11 +519,11 @@ export function ExplanationModal({
                           className={`inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs font-mono transition-colors ${
                             i === stepIdx
                               ? `${colors.pill} font-bold`
-                              : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
+                              : "text-[#8d8696] hover:text-white hover:bg-[#1e1a24]"
                           }`}
                         >
                           {moveNum && (
-                            <span className="text-slate-500 text-[10px]">
+                            <span className="text-[#565061] text-[10px]">
                               {moveNum}
                             </span>
                           )}
@@ -542,7 +542,7 @@ export function ExplanationModal({
                     type="button"
                     onClick={goFirst}
                     disabled={stepIdx <= -1}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1e1a24] text-[#8d8696] transition-colors hover:bg-[#ff5a1f]/[0.12] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <svg
                       width="14"
@@ -560,7 +560,7 @@ export function ExplanationModal({
                     type="button"
                     onClick={goPrev}
                     disabled={stepIdx <= -1}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1e1a24] text-[#8d8696] transition-colors hover:bg-[#ff5a1f]/[0.12] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <svg
                       width="14"
@@ -579,7 +579,7 @@ export function ExplanationModal({
                     className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
                       playing
                         ? `${colors.pill}`
-                        : "bg-white/[0.06] text-slate-400 hover:bg-white/[0.12] hover:text-white"
+                        : "bg-[#1e1a24] text-[#8d8696] hover:bg-[#ff5a1f]/[0.12] hover:text-white"
                     }`}
                   >
                     {playing ? (
@@ -611,7 +611,7 @@ export function ExplanationModal({
                     type="button"
                     onClick={goNext}
                     disabled={stepIdx >= activeSteps.length - 1}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1e1a24] text-[#8d8696] transition-colors hover:bg-[#ff5a1f]/[0.12] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <svg
                       width="14"
@@ -628,7 +628,7 @@ export function ExplanationModal({
                     type="button"
                     onClick={goLast}
                     disabled={stepIdx >= activeSteps.length - 1}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1e1a24] text-[#8d8696] transition-colors hover:bg-[#ff5a1f]/[0.12] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <svg
                       width="14"
@@ -642,7 +642,7 @@ export function ExplanationModal({
                       <line x1="2" y1="5" x2="2" y2="19" />
                     </svg>
                   </button>
-                  <span className="ml-2 text-[11px] font-mono text-slate-500 tabular-nums">
+                  <span className="ml-2 text-[11px] font-mono text-[#565061] tabular-nums">
                     {stepIdx + 1 < 0 ? 0 : stepIdx + 1}/{activeSteps.length}
                   </span>
                 </div>
@@ -659,11 +659,11 @@ export function ExplanationModal({
                   <div
                     className={`rounded-xl border ${colors.border} ${colors.bg} p-4`}
                   >
-                    <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[#565061]">
                       🎬 What Happened
                     </p>
                     <p
-                      className="text-sm font-medium leading-relaxed text-slate-200"
+                      className="text-sm font-medium leading-relaxed text-white"
                       dangerouslySetInnerHTML={{
                         __html: md(richExplanation.moveDescription),
                       }}
@@ -679,7 +679,7 @@ export function ExplanationModal({
                 {richExplanation.themeCards &&
                   richExplanation.themeCards.length > 0 && (
                     <div>
-                      <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-[#565061]">
                         🏷️ Themes Detected
                       </p>
                       <div className="grid gap-2 sm:grid-cols-2">
@@ -698,7 +698,7 @@ export function ExplanationModal({
                                   {card.label}
                                 </p>
                                 {card.description && (
-                                  <p className="mt-0.5 text-[12px] leading-relaxed text-slate-400">
+                                  <p className="mt-0.5 text-[12px] leading-relaxed text-[#8d8696]">
                                     {card.description}
                                   </p>
                                 )}
@@ -710,7 +710,7 @@ export function ExplanationModal({
                     </div>
                   )}
 
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4">
                   <div className="mb-2 flex items-center gap-2">
                     <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-500/10 text-sm">
                       💡
@@ -720,7 +720,7 @@ export function ExplanationModal({
                     </h3>
                   </div>
                   <p
-                    className="text-sm leading-relaxed text-slate-300"
+                    className="text-sm leading-relaxed text-[#f0edf2]"
                     dangerouslySetInnerHTML={{
                       __html: md(richExplanation.coaching),
                     }}
@@ -755,7 +755,7 @@ export function ExplanationModal({
                 )}
 
                 {richExplanation.observations.length > 0 && (
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                  <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4">
                     <div className="mb-2 flex items-center gap-2">
                       <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-500/10 text-sm">
                         🔍
@@ -768,11 +768,11 @@ export function ExplanationModal({
                       {richExplanation.observations.map((obs, i) => (
                         <div
                           key={i}
-                          className="flex items-start gap-2.5 rounded-lg border border-white/[0.04] bg-white/[0.01] p-2.5"
+                          className="flex items-start gap-2.5 rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.02] p-2.5"
                         >
                           <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-600" />
                           <p
-                            className="text-[12px] leading-relaxed text-slate-400"
+                            className="text-[12px] leading-relaxed text-[#8d8696]"
                             dangerouslySetInnerHTML={{
                               __html: md(obs),
                             }}
@@ -796,7 +796,7 @@ export function ExplanationModal({
                       : "border-red-500/20 bg-red-500/[0.04]"
                   } p-4`}
                 >
-                  <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[#565061]">
                     🎬 What Happened
                   </p>
                   <div className="flex items-center justify-between gap-3">
@@ -866,7 +866,7 @@ export function ExplanationModal({
                 )}
 
                 {simpleExplanation.line && (
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                  <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4">
                     <div className="mb-2 flex items-center gap-2">
                       <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-500/10 text-sm">
                         📋
@@ -878,7 +878,7 @@ export function ExplanationModal({
                           : "After Your Move"}
                       </h3>
                     </div>
-                    <p className="text-sm font-mono leading-loose text-slate-300 break-words">
+                    <p className="text-sm font-mono leading-loose text-[#f0edf2] break-words">
                       {simpleExplanation.line}
                     </p>
                   </div>
@@ -891,7 +891,7 @@ export function ExplanationModal({
               <div
                 className={`rounded-xl border ${colors.border} ${colors.bg} p-4`}
               >
-                <p className="text-sm leading-relaxed text-slate-300">
+                <p className="text-sm leading-relaxed text-[#f0edf2]">
                   {plainExplanation}
                 </p>
               </div>

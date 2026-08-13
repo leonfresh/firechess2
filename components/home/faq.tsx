@@ -36,13 +36,13 @@ export function Faq() {
           {FAQ_ITEMS.map((f) => (
             <details
               key={f.q}
-              className="group rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 transition-colors hover:border-white/[0.14]"
+              className="group rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-5 transition-colors hover:border-[#ff5a1f]/25"
             >
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-semibold text-white">
                 {f.q}
-                <ChevronDown className="h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200 group-open:rotate-180" />
+                <ChevronDown className="h-5 w-5 shrink-0 text-[#8d8696] transition-transform duration-200 group-open:rotate-180" />
               </summary>
-              <p className="mt-3 text-sm leading-relaxed text-slate-300/90">
+              <p className="mt-3 text-sm leading-relaxed text-[#f0edf2]/90">
                 {f.a}
               </p>
             </details>

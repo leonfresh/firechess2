@@ -1551,7 +1551,7 @@ export function MistakeCard({
         {/* Board side */}
         <div
           ref={boardSizeRef}
-          className="relative overflow-hidden border-b border-white/[0.04] bg-white/[0.01] p-3 sm:p-5 md:border-b-0 md:border-r"
+          className="relative overflow-hidden border-b border-[#1e1a24] bg-[#ff5a1f]/[0.02] p-3 sm:p-5 md:border-b-0 md:border-r"
         >
           <div className="mx-auto flex w-full max-w-[460px] items-start gap-2 sm:gap-3">
             <EvalBar evalCp={displayedEvalCp} height={boardSize} />
@@ -1602,7 +1602,7 @@ export function MistakeCard({
                   Freeplay
                 </span>
                 {freeplayEvaluating && (
-                  <span className="text-[10px] text-slate-500 animate-pulse">
+                  <span className="text-[10px] text-[#565061] animate-pulse">
                     Evaluating…
                   </span>
                 )}
@@ -1615,7 +1615,7 @@ export function MistakeCard({
                   </span>
                 )}
                 {freeplayHistory.length > 1 && (
-                  <span className="text-[10px] tabular-nums text-slate-500">
+                  <span className="text-[10px] tabular-nums text-[#565061]">
                     {freeplayHistory.length - 1} move
                     {freeplayHistory.length - 1 !== 1 ? "s" : ""}
                   </span>
@@ -1625,7 +1625,7 @@ export function MistakeCard({
                 {/* Undo */}
                 <button
                   type="button"
-                  className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-30"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-[#8d8696] transition-colors hover:bg-[#1e1a24] hover:text-white disabled:opacity-30"
                   onClick={undoFreeplay}
                   disabled={freeplayHistory.length <= 1}
                   title="Undo move"
@@ -1645,7 +1645,7 @@ export function MistakeCard({
                 {/* Reset */}
                 <button
                   type="button"
-                  className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-amber-500/[0.15] hover:text-amber-400 disabled:opacity-30"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-[#8d8696] transition-colors hover:bg-amber-500/[0.15] hover:text-amber-400 disabled:opacity-30"
                   onClick={resetFreeplay}
                   disabled={freeplayHistory.length <= 1}
                   title="Reset to starting position"
@@ -1665,7 +1665,7 @@ export function MistakeCard({
                 {/* Exit freeplay */}
                 <button
                   type="button"
-                  className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-500/[0.15] hover:text-red-400"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-[#8d8696] transition-colors hover:bg-red-500/[0.15] hover:text-red-400"
                   onClick={exitFreeplay}
                   title="Exit freeplay"
                 >
@@ -1690,7 +1690,7 @@ export function MistakeCard({
             <div className="mx-auto mt-2 flex w-full max-w-[460px] pl-[27px]">
               <button
                 type="button"
-                className="flex h-7 items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.03] px-2.5 text-[11px] text-slate-400 transition-colors hover:border-emerald-500/20 hover:bg-emerald-500/[0.06] hover:text-emerald-400"
+                className="flex h-7 items-center gap-1.5 rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-2.5 text-[11px] text-[#8d8696] transition-colors hover:border-emerald-500/20 hover:bg-emerald-500/[0.06] hover:text-emerald-400"
                 onClick={enterFreeplay}
               >
                 <svg
@@ -1753,7 +1753,7 @@ export function MistakeCard({
                     ) : null;
                   })()}
                 {openingName && (
-                  <span className="rounded-lg bg-white/[0.04] px-2 py-1 text-[10px] font-medium text-slate-400">
+                  <span className="rounded-lg bg-[#ff5a1f]/[0.05] px-2 py-1 text-[10px] font-medium text-[#8d8696]">
                     {openingName}
                   </span>
                 )}
@@ -1791,11 +1791,11 @@ export function MistakeCard({
           </div>
 
           {/* KEY INSIGHT — Pattern Detected callout (hero-style) */}
-          <div className="rounded-xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+          <div className="rounded-xl border border-[#1e1a24] bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-[#565061]">
               Pattern Detected
             </p>
-            <p className="mt-2 text-[13px] leading-relaxed text-slate-200">
+            <p className="mt-2 text-[13px] leading-relaxed text-white">
               You reached this position{" "}
               <span className="rounded-md bg-amber-500/15 px-1.5 py-0.5 font-bold text-amber-400">
                 {leak.reachCount}×
@@ -1809,7 +1809,7 @@ export function MistakeCard({
               </span>
             </p>
             <div className="mt-3 flex items-center gap-2">
-              <span className="text-[10px] text-slate-500">Better:</span>
+              <span className="text-[10px] text-[#565061]">Better:</span>
               <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 font-mono text-sm font-bold text-emerald-400">
                 {bestMove?.san ?? "N/A"}
               </span>
@@ -1836,13 +1836,13 @@ export function MistakeCard({
                     <p className="text-[10px] font-medium uppercase tracking-wider text-indigo-400/70">
                       Known Opening Line
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-400">
+                    <p className="mt-0.5 text-xs text-[#8d8696]">
                       Your move{" "}
-                      <span className="font-mono font-bold text-slate-300">
+                      <span className="font-mono font-bold text-[#f0edf2]">
                         {badMove?.san}
                       </span>{" "}
                       is played in{" "}
-                      <span className="font-semibold text-slate-300">
+                      <span className="font-semibold text-[#f0edf2]">
                         {gm.toLocaleString()}
                       </span>{" "}
                       database games with a{" "}
@@ -1869,13 +1869,13 @@ export function MistakeCard({
                   <p className="text-[10px] font-medium uppercase tracking-wider text-emerald-400/70">
                     Practical Opening Choice
                   </p>
-                  <p className="mt-0.5 text-xs text-slate-400">
+                  <p className="mt-0.5 text-xs text-[#8d8696]">
                     Your move{" "}
-                    <span className="font-mono font-bold text-slate-300">
+                    <span className="font-mono font-bold text-[#f0edf2]">
                       {badMove?.san}
                     </span>{" "}
                     is played in{" "}
-                    <span className="font-semibold text-slate-300">
+                    <span className="font-semibold text-[#f0edf2]">
                       {userMoveExplorerData.totalGames.toLocaleString()}
                     </span>{" "}
                     games with a{" "}
@@ -1892,7 +1892,7 @@ export function MistakeCard({
           {/* Eval Shift (hero-style) */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-[#565061]">
                 Eval Shift
               </span>
               <span className="rounded-md bg-red-500/10 px-2 py-0.5 text-xs font-bold text-red-400">
@@ -1900,16 +1900,16 @@ export function MistakeCard({
               </span>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] px-3 py-2.5 text-center">
-                <p className="text-[9px] font-medium uppercase tracking-wider text-slate-500">
+              <div className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.025] px-3 py-2.5 text-center">
+                <p className="text-[9px] font-medium uppercase tracking-wider text-[#565061]">
                   Before
                 </p>
-                <p className="mt-0.5 text-lg font-bold text-slate-200">
+                <p className="mt-0.5 text-lg font-bold text-white">
                   {formatEval(whiteEvalBefore, { showPlus: true })}
                 </p>
               </div>
               <div className="rounded-lg border border-red-500/20 bg-red-500/[0.04] px-3 py-2.5 text-center">
-                <p className="text-[9px] font-medium uppercase tracking-wider text-slate-500">
+                <p className="text-[9px] font-medium uppercase tracking-wider text-[#565061]">
                   After
                 </p>
                 <p className="mt-0.5 text-lg font-bold text-red-400">
@@ -1940,7 +1940,7 @@ export function MistakeCard({
             return (
               <div className="stat-card px-3.5 py-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">
                     Your Record With This Line
                   </p>
                   <p className={`text-sm font-bold ${pctColor}`}>{pct}%</p>
@@ -1962,10 +1962,10 @@ export function MistakeCard({
                     <div className="bg-red-500" style={{ width: `${barL}%` }} />
                   )}
                 </div>
-                <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-500">
+                <div className="mt-1.5 flex items-center justify-between text-[10px] text-[#565061]">
                   <span>
                     <span className="font-semibold text-emerald-400">{w}W</span>{" "}
-                    · <span className="font-semibold text-slate-400">{d}D</span>{" "}
+                    · <span className="font-semibold text-[#8d8696]">{d}D</span>{" "}
                     · <span className="font-semibold text-red-400">{l}L</span>
                   </span>
                   <span>
@@ -2000,7 +2000,7 @@ export function MistakeCard({
                 <p className="text-[10px] font-medium uppercase tracking-wider text-blue-400/70">
                   Opening Explorer
                 </p>
-                <p className="mt-0.5 text-xs text-slate-400">
+                <p className="mt-0.5 text-xs text-[#8d8696]">
                   {explorerTotal > 0
                     ? `What other players chose here · ${explorerTotal.toLocaleString()} games in database`
                     : "See what other players chose in this position"}
@@ -2020,12 +2020,12 @@ export function MistakeCard({
             </button>
 
             {showExplorer && (
-              <div className="animate-fade-in overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.02]">
+              <div className="animate-fade-in overflow-hidden rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03]">
                 {explorerMoves.length > 0 ? (
                   <>
                     {/* Info tooltip */}
-                    <div className="border-b border-white/[0.04] px-3.5 py-2">
-                      <p className="text-[11px] text-slate-500">
+                    <div className="border-b border-[#1e1a24] px-3.5 py-2">
+                      <p className="text-[11px] text-[#565061]">
                         Moves played by rated players (1600–2500) in this exact
                         position on Lichess. Sorted by win rate. Popularity
                         shown as % of total games.
@@ -2033,7 +2033,7 @@ export function MistakeCard({
                     </div>
 
                     {/* Table header */}
-                    <div className="grid grid-cols-[minmax(50px,1fr)_60px_1fr_50px] items-center gap-1 px-3.5 py-1.5 text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                    <div className="grid grid-cols-[minmax(50px,1fr)_60px_1fr_50px] items-center gap-1 px-3.5 py-1.5 text-[10px] font-medium uppercase tracking-wider text-[#565061]">
                       <span>Move</span>
                       <span className="text-right">Games</span>
                       <span className="text-center">White / Draw / Black</span>
@@ -2061,7 +2061,7 @@ export function MistakeCard({
                           <div
                             key={`${m.uci}-${idx}`}
                             className={`grid grid-cols-[minmax(50px,1fr)_60px_1fr_50px] items-center gap-1 px-3.5 py-1.5 text-xs ${
-                              idx % 2 === 0 ? "bg-white/[0.01]" : ""
+                              idx % 2 === 0 ? "bg-[#ff5a1f]/[0.02]" : ""
                             } ${isDbPick ? "ring-1 ring-blue-500/30 bg-blue-500/[0.06]" : ""}`}
                           >
                             {/* Move name */}
@@ -2074,18 +2074,18 @@ export function MistakeCard({
                                       ? "text-red-400"
                                       : isDbPick
                                         ? "text-blue-400"
-                                        : "text-slate-300"
+                                        : "text-[#f0edf2]"
                                 }`}
                               >
                                 {m.san}
                               </span>
-                              <span className="text-[10px] text-slate-500">
+                              <span className="text-[10px] text-[#565061]">
                                 {popularity.toFixed(0)}%
                               </span>
                             </div>
 
                             {/* Game count */}
-                            <span className="text-right tabular-nums text-slate-400">
+                            <span className="text-right tabular-nums text-[#8d8696]">
                               {m.totalGames >= 1_000_000
                                 ? `${(m.totalGames / 1_000_000).toFixed(1)}M`
                                 : m.totalGames >= 1_000
@@ -2113,7 +2113,7 @@ export function MistakeCard({
                             </div>
 
                             {/* Win rate */}
-                            <span className="text-right tabular-nums font-medium text-slate-300">
+                            <span className="text-right tabular-nums font-medium text-[#f0edf2]">
                               {(m.winRate * 100).toFixed(0)}%
                             </span>
                           </div>
@@ -2121,7 +2121,7 @@ export function MistakeCard({
                       })}
 
                     {/* Legend */}
-                    <div className="flex items-center gap-4 border-t border-white/[0.04] px-3.5 py-2 text-[10px] text-slate-500">
+                    <div className="flex items-center gap-4 border-t border-[#1e1a24] px-3.5 py-2 text-[10px] text-[#565061]">
                       <span className="flex items-center gap-1">
                         <span className="inline-block h-2 w-4 rounded-sm bg-white" />{" "}
                         White wins
@@ -2174,14 +2174,14 @@ export function MistakeCard({
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                         />
                       </svg>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-[#8d8696]">
                         Loading explorer data…
                       </p>
                     </div>
                   </div>
                 ) : (
                   <div className="px-3.5 py-4 text-center">
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-[#565061]">
                       This position is too deep or rare for the Lichess
                       database. No games with enough occurrences found.
                     </p>
@@ -2200,7 +2200,7 @@ export function MistakeCard({
                   <p className="text-[10px] font-medium uppercase tracking-wider text-blue-400/70">
                     Top Database Pick · Engine Approved ✓
                   </p>
-                  <p className="mt-0.5 text-xs text-slate-400">
+                  <p className="mt-0.5 text-xs text-[#8d8696]">
                     <span className="font-mono font-bold text-blue-400">
                       {dbPickMove.san}
                     </span>{" "}
@@ -2246,15 +2246,15 @@ export function MistakeCard({
             </div>
           )}
 
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[#565061]">
             <span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-400" />
             Green = best move
-            <span className="mx-2 text-slate-600">|</span>
+            <span className="mx-2 text-[#565061]">|</span>
             <span className="mr-1 inline-block h-2 w-2 rounded-full bg-red-400" />
             Red = your move
             {dbPick && dbPickApproved && (
               <>
-                <span className="mx-2 text-slate-600">|</span>
+                <span className="mx-2 text-[#565061]">|</span>
                 <span className="mr-1 inline-block h-2 w-2 rounded-full bg-blue-500" />
                 Blue = database pick
               </>
@@ -2262,9 +2262,9 @@ export function MistakeCard({
           </p>
 
           {/* FEN block */}
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+          <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-3">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                 Position FEN
               </span>
               <button
@@ -2275,7 +2275,7 @@ export function MistakeCard({
                 {fenCopied ? "✓ Copied" : "Copy"}
               </button>
             </div>
-            <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-lg border border-white/[0.04] bg-white/[0.01] p-2.5 font-mono text-[11px] text-slate-500">
+            <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.02] p-2.5 font-mono text-[11px] text-[#565061]">
               {leak.fenBefore}
             </pre>
           </div>
@@ -2406,11 +2406,11 @@ export function MistakeCard({
             )}
 
             {animating && (
-              <div className="ml-1 flex items-center gap-1 rounded-xl border border-white/[0.08] bg-white/[0.03] p-1">
+              <div className="ml-1 flex items-center gap-1 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-1">
                 {/* First */}
                 <button
                   type="button"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-30"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-[#8d8696] transition-colors hover:bg-[#1e1a24] hover:text-white disabled:opacity-30"
                   onClick={pvFirst}
                   disabled={pvStepIndex <= -1}
                   title="First"
@@ -2427,7 +2427,7 @@ export function MistakeCard({
                 {/* Prev */}
                 <button
                   type="button"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-30"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-[#8d8696] transition-colors hover:bg-[#1e1a24] hover:text-white disabled:opacity-30"
                   onClick={pvPrev}
                   disabled={pvStepIndex <= -1}
                   title="Previous move"
@@ -2444,7 +2444,7 @@ export function MistakeCard({
                 {/* Play / Pause */}
                 <button
                   type="button"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-[#8d8696] transition-colors hover:bg-[#1e1a24] hover:text-white"
                   onClick={() => setPvAutoplay((a) => !a)}
                   title={pvAutoplay ? "Pause" : "Autoplay"}
                 >
@@ -2471,7 +2471,7 @@ export function MistakeCard({
                 {/* Next */}
                 <button
                   type="button"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-30"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-[#8d8696] transition-colors hover:bg-[#1e1a24] hover:text-white disabled:opacity-30"
                   onClick={pvNext}
                   disabled={pvStepIndex >= pvSteps.length - 1}
                   title="Next move"
@@ -2488,7 +2488,7 @@ export function MistakeCard({
                 {/* Last */}
                 <button
                   type="button"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-30"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-[#8d8696] transition-colors hover:bg-[#1e1a24] hover:text-white disabled:opacity-30"
                   onClick={pvLast}
                   disabled={pvStepIndex >= pvSteps.length - 1}
                   title="Last"
@@ -2503,13 +2503,13 @@ export function MistakeCard({
                   </svg>
                 </button>
                 {/* Move counter */}
-                <span className="px-1.5 text-[11px] tabular-nums text-slate-500">
+                <span className="px-1.5 text-[11px] tabular-nums text-[#565061]">
                   {pvStepIndex + 1}/{pvSteps.length}
                 </span>
                 {/* Stop / Close */}
                 <button
                   type="button"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-500/[0.15] hover:text-red-400"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-[#8d8696] transition-colors hover:bg-red-500/[0.15] hover:text-red-400"
                   onClick={stopAnimation}
                   title="Stop and reset"
                 >
@@ -2563,7 +2563,7 @@ export function MistakeCard({
                               : tab === "best"
                                 ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
                                 : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
-                            : "bg-white/[0.04] text-slate-500 border border-transparent hover:bg-white/[0.08] hover:text-slate-400"
+                            : "bg-[#ff5a1f]/[0.05] text-[#565061] border border-transparent hover:bg-[#1e1a24] hover:text-[#8d8696]"
                         }`}
                       >
                         {tab === "played"
@@ -2589,7 +2589,7 @@ export function MistakeCard({
                   >
                     <div className="flex items-center justify-between gap-3">
                       <p
-                        className="text-sm font-medium text-slate-200"
+                        className="text-sm font-medium text-white"
                         dangerouslySetInnerHTML={{
                           __html: (
                             richExplanation.moveDescription ??
@@ -2635,13 +2635,13 @@ export function MistakeCard({
                             .map((card, i) => (
                               <span
                                 key={i}
-                                className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-0.5 text-[10px] font-medium text-slate-400"
+                                className="inline-flex items-center gap-1 rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-2 py-0.5 text-[10px] font-medium text-[#8d8696]"
                               >
                                 {card.icon} {card.label}
                               </span>
                             ))}
                           {richExplanation.themeCards.length > 3 && (
-                            <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] text-slate-500">
+                            <span className="rounded-full bg-[#ff5a1f]/[0.05] px-2 py-0.5 text-[10px] text-[#565061]">
                               +{richExplanation.themeCards.length - 3} more
                             </span>
                           )}
@@ -2649,7 +2649,7 @@ export function MistakeCard({
                       )}
 
                     {/* Expand hint */}
-                    <p className="mt-2 flex items-center gap-1 text-[11px] text-slate-500">
+                    <p className="mt-2 flex items-center gap-1 text-[11px] text-[#565061]">
                       <svg
                         width="12"
                         height="12"
@@ -2665,7 +2665,7 @@ export function MistakeCard({
                   </button>
                 </>
               ) : (
-                <p className="text-sm text-slate-300">{explanation}</p>
+                <p className="text-sm text-[#f0edf2]">{explanation}</p>
               )}
             </div>
           )}

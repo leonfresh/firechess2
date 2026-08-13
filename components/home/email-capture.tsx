@@ -78,7 +78,7 @@ export function EmailCapture() {
             <h2 className="text-2xl font-bold text-white sm:text-3xl">
               Get the mistakes costing you rating — every week, free.
             </h2>
-            <p className="mx-auto max-w-md text-sm leading-relaxed text-slate-400 sm:text-base lg:mx-0">
+            <p className="mx-auto max-w-md text-sm leading-relaxed text-[#8d8696] sm:text-base lg:mx-0">
               One email a week with the opening lines, tactics, and endgames
               that trip up players at your level. No spam. Unsubscribe in one
               click.
@@ -94,7 +94,7 @@ export function EmailCapture() {
                   <p className="text-sm font-semibold text-emerald-200">
                     You&apos;re subscribed
                   </p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                  <p className="mt-1 text-xs leading-relaxed text-[#8d8696]">
                     {message}
                   </p>
                 </div>
@@ -102,10 +102,10 @@ export function EmailCapture() {
             ) : (
               <form onSubmit={onSubmit} className="space-y-3">
                 <div
-                  className={`flex flex-col gap-2 overflow-hidden rounded-2xl border bg-white/[0.03] p-1 transition-colors duration-200 sm:flex-row sm:items-center focus-within:border-orange-400/30 focus-within:bg-white/[0.05] ${
+                  className={`flex flex-col gap-2 overflow-hidden rounded-2xl border bg-[#ff5a1f]/[0.04] p-1 transition-colors duration-200 sm:flex-row sm:items-center focus-within:border-orange-400/30 focus-within:bg-[#ff5a1f]/[0.05] ${
                     status === "error"
                       ? "border-red-500/35"
-                      : "border-white/[0.06]"
+                      : "border-[#1e1a24]"
                   }`}
                 >
                   <div className="flex flex-1 items-center gap-2 px-3 py-2">
@@ -120,7 +120,7 @@ export function EmailCapture() {
                       }}
                       placeholder="you@email.com"
                       aria-label="Email address"
-                      className="flex-1 bg-transparent text-base text-white outline-none placeholder:text-slate-500"
+                      className="flex-1 bg-transparent text-base text-white outline-none placeholder:text-[#565061]"
                     />
                   </div>
                   <button
@@ -160,7 +160,7 @@ export function EmailCapture() {
                 {status === "error" && (
                   <p className="px-2 text-xs text-red-400">{message}</p>
                 )}
-                <p className="px-2 text-[11px] text-slate-500">
+                <p className="px-2 text-[11px] text-[#565061]">
                   Join improvers getting weekly insights. Unsubscribe anytime.
                 </p>
               </form>

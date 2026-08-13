@@ -28,13 +28,13 @@ export function ReportViewToggle({
   ];
 
   return (
-    <div className="sticky top-0 z-40 -mx-4 mb-2 border-b border-white/[0.06] bg-[#030712]/85 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+    <div className="sticky top-0 z-40 -mx-4 mb-2 border-b border-[#1e1a24] bg-[#030712]/85 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
       <div className="mx-auto flex max-w-6xl items-center justify-center gap-3">
-        <span className="mr-1 hidden text-xs font-semibold uppercase tracking-[0.22em] text-slate-500 sm:inline">
+        <span className="mr-1 hidden text-xs font-semibold uppercase tracking-[0.22em] text-[#565061] sm:inline">
           View
         </span>
         <div
-          className={`inline-flex items-center gap-1 rounded-2xl border border-white/[0.08] bg-black/30 p-1.5 transition ${
+          className={`inline-flex items-center gap-1 rounded-2xl border border-[#1e1a24] bg-black/30 p-1.5 transition ${
             disabled ? "pointer-events-none opacity-40" : ""
           }`}
         >
@@ -50,7 +50,7 @@ export function ReportViewToggle({
                 className={`min-w-[7.5rem] rounded-xl px-6 py-2.5 text-sm font-bold tracking-wide transition ${
                   selected
                     ? "bg-white text-slate-950 shadow-md shadow-black/30"
-                    : "text-slate-300 hover:bg-white/[0.08] hover:text-white"
+                    : "text-[#f0edf2] hover:bg-[#1e1a24] hover:text-white"
                 }`}
               >
                 {option.label}

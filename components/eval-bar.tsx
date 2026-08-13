@@ -32,7 +32,7 @@ export function EvalBar({ evalCp, height = 340 }: EvalBarProps) {
   return (
     <div className="flex flex-col items-center gap-2">
       <div
-        className="relative overflow-hidden rounded-lg border border-white/[0.08]"
+        className="relative overflow-hidden rounded-lg border border-[#1e1a24]"
         style={{ width: 24, height }}
         aria-label="Evaluation bar"
       >
@@ -54,10 +54,10 @@ export function EvalBar({ evalCp, height = 340 }: EvalBarProps) {
           }}
         />
         {/* Center line indicator */}
-        <div className="absolute left-0 top-1/2 w-full border-t border-white/10" />
+        <div className="absolute left-0 top-1/2 w-full border-t border-[#1e1a24]" />
       </div>
       <span
-        className={`font-mono text-[10px] font-semibold ${isWhiteAdvantage ? "text-slate-300" : "text-slate-500"}`}
+        className={`font-mono text-[10px] font-semibold ${isWhiteAdvantage ? "text-[#f0edf2]" : "text-[#565061]"}`}
       >
         {label}
       </span>

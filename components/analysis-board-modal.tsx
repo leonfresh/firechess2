@@ -48,10 +48,10 @@ export function AnalysisBoardModal({
       aria-label="Position analysis board"
     >
       <div
-        className="mx-auto flex h-full w-full max-w-7xl flex-col overflow-hidden rounded-[2rem] border border-white/[0.08] bg-[#030712] shadow-[0_40px_120px_rgba(0,0,0,0.6)]"
+        className="mx-auto flex h-full w-full max-w-7xl flex-col overflow-hidden rounded-[2rem] border border-[#1e1a24] bg-[#030712] shadow-[0_40px_120px_rgba(0,0,0,0.6)]"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-white/[0.08] bg-white/[0.03] px-4 py-3 sm:px-5">
+        <div className="flex items-center justify-between border-b border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-3 sm:px-5">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-200/65">
               Report analysis
@@ -63,7 +63,7 @@ export function AnalysisBoardModal({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-slate-300 transition hover:border-white/[0.16] hover:text-white"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] text-[#f0edf2] transition hover:border-[#ff5a1f]/25 hover:text-white"
             aria-label="Close analysis board"
           >
             <svg

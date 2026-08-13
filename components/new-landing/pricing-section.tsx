@@ -20,9 +20,9 @@ const PLANS = [
     cta: "Start scanning",
     popular: false,
     gradient: "from-slate-500/20 to-slate-600/10",
-    border: "border-white/10",
+    border: "border-[#1e1a24]",
     button:
-      "bg-white/[0.06] text-white hover:bg-white/[0.1] border border-white/10",
+      "bg-[#1e1a24] text-white hover:bg-[#ff5a1f]/[0.1] border border-[#1e1a24]",
   },
   {
     name: "Pro",
@@ -80,7 +80,7 @@ export function PricingSection() {
       <div className="relative mx-auto max-w-7xl">
         {/* Section header */}
         <div className="mb-16 text-center">
-          <span className="mb-4 inline-block rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-slate-400">
+          <span className="mb-4 inline-block rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-[#8d8696]">
             Pricing
           </span>
           <h2 className="mb-4 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
@@ -89,7 +89,7 @@ export function PricingSection() {
               serious improvement
             </span>
           </h2>
-          <p className="mx-auto max-w-2xl text-lg text-slate-400">
+          <p className="mx-auto max-w-2xl text-lg text-[#8d8696]">
             Start free, upgrade when you're ready. No hidden fees, cancel
             anytime.
           </p>
@@ -97,7 +97,7 @@ export function PricingSection() {
 
         {/* Billing toggle */}
         <div className="mb-12 flex justify-center">
-          <div className="inline-flex rounded-full border border-white/10 bg-white/[0.03] p-1">
+          <div className="inline-flex rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-1">
             {(["monthly", "yearly"] as const).map((period) => (
               <button
                 key={period}
@@ -105,7 +105,7 @@ export function PricingSection() {
                 className={`rounded-full px-6 py-2 text-sm font-medium transition-all ${
                   billingPeriod === period
                     ? "bg-orange-500 text-white"
-                    : "text-slate-400 hover:text-white"
+                    : "text-[#8d8696] hover:text-white"
                 }`}
               >
                 {period === "monthly" ? "Monthly" : "Yearly"}
@@ -147,13 +147,13 @@ export function PricingSection() {
                     className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${
                       isPopular
                         ? "bg-orange-500/20 text-orange-400"
-                        : "bg-white/[0.06] text-slate-400"
+                        : "bg-[#1e1a24] text-[#8d8696]"
                     }`}
                   >
                     <Icon className="h-6 w-6" />
                   </div>
                   <h3 className="text-xl font-bold text-white">{plan.name}</h3>
-                  <p className="text-sm text-slate-400">{plan.description}</p>
+                  <p className="text-sm text-[#8d8696]">{plan.description}</p>
                 </div>
 
                 {/* Price */}
@@ -162,7 +162,7 @@ export function PricingSection() {
                     <span className="text-4xl font-bold text-white">
                       {plan.price}
                     </span>
-                    <span className="text-slate-500">{plan.period}</span>
+                    <span className="text-[#565061]">{plan.period}</span>
                   </div>
                   {billingPeriod === "yearly" && plan.name === "Pro" && (
                     <p className="mt-1 text-sm text-emerald-400">
@@ -177,10 +177,10 @@ export function PricingSection() {
                     <li key={feature} className="flex items-start gap-3">
                       <Check
                         className={`mt-0.5 h-5 w-5 flex-shrink-0 ${
-                          isPopular ? "text-orange-400" : "text-slate-500"
+                          isPopular ? "text-orange-400" : "text-[#565061]"
                         }`}
                       />
-                      <span className="text-sm text-slate-300">{feature}</span>
+                      <span className="text-sm text-[#f0edf2]">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -198,8 +198,8 @@ export function PricingSection() {
 
         {/* Money-back guarantee */}
         <div className="mt-12 text-center">
-          <p className="text-sm text-slate-500">
-            <span className="font-medium text-slate-400">
+          <p className="text-sm text-[#565061]">
+            <span className="font-medium text-[#8d8696]">
               30-day money-back guarantee
             </span>{" "}
             — no questions asked. If you don't improve, we refund you.

@@ -903,7 +903,7 @@ export function PositionAnalysisBoard({
   return (
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
       <div className="space-y-4">
-        <div className="rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
+        <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200/70">
@@ -912,7 +912,7 @@ export function PositionAnalysisBoard({
               <h3 className="mt-2 text-2xl font-black tracking-tight text-white">
                 {title}
               </h3>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#8d8696]">
                 {subtitle}
               </p>
             </div>
@@ -925,7 +925,7 @@ export function PositionAnalysisBoard({
                     prev === "white" ? "black" : "white",
                   )
                 }
-                className="rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08]"
+                className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1e1a24]"
               >
                 Flip
               </button>
@@ -949,7 +949,7 @@ export function PositionAnalysisBoard({
         </div>
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(17rem,20rem)]">
-          <div className="rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5">
+          <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-4 sm:p-5">
             <div ref={boardRef} className="mx-auto w-full max-w-[640px]">
               <div className="flex items-start gap-2 sm:gap-3">
                 <EvalBar evalCp={engineEval ?? 0} height={boardSize} />
@@ -988,7 +988,7 @@ export function PositionAnalysisBoard({
                   onClick={goToStart}
                   disabled={cursorId === ROOT_ID}
                   title="Go to start"
-                  className="rounded-lg border border-white/[0.1] bg-white/[0.04] px-2.5 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-2.5 py-2 text-xs font-semibold text-white transition hover:bg-[#1e1a24] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   ⇤
                 </button>
@@ -997,7 +997,7 @@ export function PositionAnalysisBoard({
                   onClick={stepBackward}
                   disabled={cursorId === ROOT_ID}
                   title="Previous move"
-                  className="rounded-lg border border-white/[0.1] bg-white/[0.04] px-2.5 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-2.5 py-2 text-xs font-semibold text-white transition hover:bg-[#1e1a24] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   ←
                 </button>
@@ -1006,7 +1006,7 @@ export function PositionAnalysisBoard({
                   onClick={stepForward}
                   disabled={cursorChildren.length === 0}
                   title="Next move"
-                  className="rounded-lg border border-white/[0.1] bg-white/[0.04] px-2.5 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-2.5 py-2 text-xs font-semibold text-white transition hover:bg-[#1e1a24] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   →
                 </button>
@@ -1015,7 +1015,7 @@ export function PositionAnalysisBoard({
                   onClick={goToEnd}
                   disabled={cursorChildren.length === 0}
                   title="Go to end of line"
-                  className="rounded-lg border border-white/[0.1] bg-white/[0.04] px-2.5 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-2.5 py-2 text-xs font-semibold text-white transition hover:bg-[#1e1a24] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   ⇥
                 </button>
@@ -1025,14 +1025,14 @@ export function PositionAnalysisBoard({
                 onClick={undoMove}
                 disabled={cursorId === ROOT_ID}
                 title="Delete this move and its continuation"
-                className="rounded-lg border border-white/[0.1] bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#1e1a24] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Undo
               </button>
               <button
                 type="button"
                 onClick={resetBoard}
-                className="rounded-lg border border-white/[0.1] bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08]"
+                className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#1e1a24]"
               >
                 Reset
               </button>
@@ -1042,17 +1042,17 @@ export function PositionAnalysisBoard({
                     Playing {variationPlayback.label}
                   </span>
                 ) : null}
-                <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-slate-300">
+                <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-2.5 py-1 text-[11px] font-semibold text-[#f0edf2]">
                   {currentStateText}
                 </span>
-                <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-slate-300">
+                <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-2.5 py-1 text-[11px] font-semibold text-[#f0edf2]">
                   Eval {formatEval(engineEval)}
                 </span>
               </div>
             </div>
 
             {lastMove && lastMoveJudgement ? (
-              <div className="mt-4 rounded-[1.25rem] border border-white/[0.08] bg-black/15 p-4">
+              <div className="mt-4 rounded-[1.25rem] border border-[#1e1a24] bg-black/15 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <MoveBadge
@@ -1064,17 +1064,17 @@ export function PositionAnalysisBoard({
                       {lastMove.san}
                     </span>
                   </div>
-                  <span className="font-mono text-xs text-slate-400">
+                  <span className="font-mono text-xs text-[#8d8696]">
                     {formatEval(lastMoveJudgement.evalBefore)} →{" "}
                     {formatEval(lastMoveJudgement.evalAfter)}
                   </span>
                 </div>
-                <p className="mt-2 text-sm leading-relaxed text-slate-300">
+                <p className="mt-2 text-sm leading-relaxed text-[#f0edf2]">
                   {lastMoveJudgement.commentary}
                 </p>
                 {lastMoveJudgement.bestMoveSan &&
                 lastMoveJudgement.bestMoveSan !== lastMove.san ? (
-                  <p className="mt-2 text-xs text-slate-400">
+                  <p className="mt-2 text-xs text-[#8d8696]">
                     Engine preferred{" "}
                     <span className="font-semibold text-emerald-300">
                       {lastMoveJudgement.bestMoveSan}
@@ -1084,17 +1084,17 @@ export function PositionAnalysisBoard({
                 ) : null}
               </div>
             ) : lastMove ? (
-              <div className="mt-4 rounded-[1.25rem] border border-white/[0.08] bg-black/15 p-4 text-sm text-slate-400">
+              <div className="mt-4 rounded-[1.25rem] border border-[#1e1a24] bg-black/15 p-4 text-sm text-[#8d8696]">
                 Reviewing the previous move with Stockfish...
               </div>
             ) : null}
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] p-5">
+            <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#565061]">
                     Engine
                   </p>
                   <p className="mt-1 text-sm font-semibold text-white">
@@ -1106,7 +1106,7 @@ export function PositionAnalysisBoard({
                     <button
                       type="button"
                       onClick={stopVariationPlayback}
-                      className="rounded-lg border border-white/[0.1] bg-white/[0.04] px-2.5 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08]"
+                      className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1e1a24]"
                     >
                       Stop
                     </button>
@@ -1116,7 +1116,7 @@ export function PositionAnalysisBoard({
                     onChange={(event) =>
                       setEngineDepth(Number(event.target.value))
                     }
-                    className="rounded-lg border border-white/[0.1] bg-slate-950/70 px-2 py-1.5 text-xs font-semibold text-slate-200 outline-none"
+                    className="rounded-lg border border-[#1e1a24] bg-slate-950/70 px-2 py-1.5 text-xs font-semibold text-white outline-none"
                   >
                     {[10, 12, 14, 16, 18].map((depth) => (
                       <option key={depth} value={depth}>
@@ -1135,14 +1135,14 @@ export function PositionAnalysisBoard({
                       className={`rounded-2xl border p-3 ${
                         index === 0
                           ? "border-emerald-500/20 bg-emerald-500/[0.06]"
-                          : "border-white/[0.08] bg-white/[0.02]"
+                          : "border-[#1e1a24] bg-[#ff5a1f]/[0.03]"
                       }`}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-sm font-semibold text-white">
                           {index === 0 ? "Best move" : `Line ${index + 1}`}
                         </p>
-                        <span className="text-xs font-bold text-slate-300">
+                        <span className="text-xs font-bold text-[#f0edf2]">
                           {formatEval(line.eval)}
                         </span>
                       </div>
@@ -1150,7 +1150,7 @@ export function PositionAnalysisBoard({
                         {line.san ?? "—"}
                       </p>
                       {line.pv ? (
-                        <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                        <p className="mt-2 text-xs leading-relaxed text-[#8d8696]">
                           {line.pv}
                         </p>
                       ) : null}
@@ -1176,7 +1176,7 @@ export function PositionAnalysisBoard({
                     </div>
                   ))
                 ) : (
-                  <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 text-sm text-slate-400">
+                  <div className="rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4 text-sm text-[#8d8696]">
                     {engineBusy
                       ? "Reading the position with Stockfish..."
                       : "No engine line available yet."}
@@ -1185,15 +1185,15 @@ export function PositionAnalysisBoard({
               </div>
             </div>
 
-            <div className="rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#565061]">
                 Load position
               </p>
               <div className="mt-3 space-y-3">
                 <textarea
                   value={fenInput}
                   onChange={(event) => setFenInput(event.target.value)}
-                  className="h-24 w-full rounded-xl border border-white/[0.08] bg-slate-950/70 px-3 py-2 font-mono text-xs text-slate-200 outline-none transition focus:border-cyan-500/30"
+                  className="h-24 w-full rounded-xl border border-[#1e1a24] bg-slate-950/70 px-3 py-2 font-mono text-xs text-white outline-none transition focus:border-cyan-500/30"
                 />
                 <button
                   type="button"
@@ -1208,17 +1208,17 @@ export function PositionAnalysisBoard({
         </div>
       </div>
 
-      <div className="rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] p-5">
+      <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#565061]">
               Moves
             </p>
             <p className="mt-1 text-sm font-semibold text-white">
               Current branch
             </p>
           </div>
-          <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-slate-300">
+          <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-2.5 py-1 text-[11px] font-semibold text-[#f0edf2]">
             {flatPlies.length} ply
           </span>
         </div>
@@ -1229,7 +1229,7 @@ export function PositionAnalysisBoard({
               const cell = (ply: FlatPly | undefined, showEllipsis: boolean) => {
                 if (!ply) {
                   return (
-                    <span className="text-xs text-slate-600">
+                    <span className="text-xs text-[#565061]">
                       {showEllipsis ? "…" : "—"}
                     </span>
                   );
@@ -1246,8 +1246,8 @@ export function PositionAnalysisBoard({
                       isActive
                         ? "bg-cyan-500/20 ring-1 ring-cyan-400/40"
                         : onPath
-                          ? "bg-white/[0.05] hover:bg-white/[0.1]"
-                          : "opacity-60 hover:bg-white/[0.06] hover:opacity-100"
+                          ? "bg-[#ff5a1f]/[0.05] hover:bg-[#ff5a1f]/[0.1]"
+                          : "opacity-60 hover:bg-[#1e1a24] hover:opacity-100"
                     }`}
                   >
                     <span className="flex items-center gap-1.5">
@@ -1268,7 +1268,7 @@ export function PositionAnalysisBoard({
                         </span>
                       ) : null}
                     </span>
-                    <span className="block truncate text-[11px] font-mono text-slate-500">
+                    <span className="block truncate text-[11px] font-mono text-[#565061]">
                       {n.uci}
                     </span>
                   </button>
@@ -1282,10 +1282,10 @@ export function PositionAnalysisBoard({
                   className={`grid grid-cols-[2.5rem_minmax(0,1fr)_minmax(0,1fr)] items-start gap-2 rounded-xl border px-3 py-1.5 ${
                     row.depth > 0
                       ? "border-cyan-500/[0.14] bg-cyan-500/[0.03] border-l-2 border-l-cyan-500/30"
-                      : "border-white/[0.06] bg-white/[0.02]"
+                      : "border-[#1e1a24] bg-[#ff5a1f]/[0.03]"
                   }`}
                 >
-                  <span className="text-xs font-bold text-slate-500">
+                  <span className="text-xs font-bold text-[#565061]">
                     {row.moveNumber}.
                   </span>
                   <div className="min-w-0">
@@ -1298,7 +1298,7 @@ export function PositionAnalysisBoard({
               );
             })
           ) : (
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 text-sm text-slate-400">
+            <div className="rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4 text-sm text-[#8d8696]">
               Start playing moves from the board to build a new branch from this
               position.
             </div>

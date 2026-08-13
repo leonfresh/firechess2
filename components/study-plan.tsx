@@ -151,11 +151,11 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
   if (loading) {
     return (
       <div className="glass-card animate-pulse p-6">
-        <div className="h-5 w-40 rounded bg-white/10" />
+        <div className="h-5 w-40 rounded bg-[#ff5a1f]/10" />
         <div className="mt-4 space-y-3">
-          <div className="h-12 rounded-xl bg-white/5" />
-          <div className="h-12 rounded-xl bg-white/5" />
-          <div className="h-12 rounded-xl bg-white/5" />
+          <div className="h-12 rounded-xl bg-[#ff5a1f]/5" />
+          <div className="h-12 rounded-xl bg-[#ff5a1f]/5" />
+          <div className="h-12 rounded-xl bg-[#ff5a1f]/5" />
         </div>
       </div>
     );
@@ -176,7 +176,7 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
             </svg>
           </div>
           <h3 className="text-xl font-extrabold text-white">Unlock Your Personal Study Plan</h3>
-          <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">
+          <p className="mx-auto mt-2 max-w-md text-sm text-[#8d8696]">
             Run an analysis scan and FireChess builds a weekly study plan around your biggest weaknesses — with daily tasks, drills, and progress tracking.
           </p>
           <Link
@@ -230,17 +230,17 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
               )}
             </div>
             <h3 className="mt-2 text-2xl font-extrabold text-white md:text-3xl">{plan.title}</h3>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-[#8d8696]">
               {completedCount}/{totalCount} tasks · {plan.currentStreak} day streak
             </p>
 
             {/* Progress bar */}
             <div className="mt-4">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500">Progress</span>
+                <span className="text-[#565061]">Progress</span>
                 <span className="font-bold text-white">{plan.progress}%</span>
               </div>
-              <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+              <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-[#1e1a24]">
                 <div
                   className={`h-full rounded-full ${progressColor(plan.progress)} transition-all duration-500`}
                   style={{ width: `${plan.progress}%` }}
@@ -275,10 +275,10 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
 
       {/* Daily Habits */}
       {recurringTasks.length > 0 && (
-        <div className="border-t border-white/[0.06] px-6 pb-2 pt-4 md:px-8">
+        <div className="border-t border-[#1e1a24] px-6 pb-2 pt-4 md:px-8">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-violet-400/70">Daily Habits</span>
-            <span className="h-px flex-1 bg-white/[0.06]" />
+            <span className="h-px flex-1 bg-[#1e1a24]" />
           </div>
           <div className="mt-2 space-y-1.5">
             {recurringTasks.map((task) => (
@@ -297,10 +297,10 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
 
       {/* Weekly Tasks */}
       {weeklyTasks.length > 0 && (
-        <div className="border-t border-white/[0.06] px-6 pb-4 pt-4 md:px-8">
+        <div className="border-t border-[#1e1a24] px-6 pb-4 pt-4 md:px-8">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-violet-400/70">This Week</span>
-            <span className="h-px flex-1 bg-white/[0.06]" />
+            <span className="h-px flex-1 bg-[#1e1a24]" />
           </div>
           <div className="mt-2 space-y-1.5">
             {weeklyTasks.map((task) => (
@@ -319,10 +319,10 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
 
       {/* 100% celebration */}
       {plan.progress === 100 && (
-        <div className="border-t border-white/[0.06] px-6 py-5 text-center md:px-8">
+        <div className="border-t border-[#1e1a24] px-6 py-5 text-center md:px-8">
           <div className="rounded-xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/[0.06] to-cyan-500/[0.06] p-5">
             <p className="text-lg font-bold text-emerald-300">🎉 All tasks complete!</p>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-[#8d8696]">
               Run a new scan to generate a fresh study plan and track your improvement.
             </p>
             <Link href="/" className="btn-primary mt-3 inline-flex items-center gap-2 text-sm">
@@ -359,8 +359,8 @@ function TaskRow({
     <div
       className={`group rounded-lg border transition-all ${
         task.completed
-          ? "border-white/[0.04] bg-white/[0.015] opacity-60"
-          : `${colors.border} bg-white/[0.025] hover:bg-white/[0.04]`
+          ? "border-[#1e1a24] bg-[#ff5a1f]/[0.02] opacity-60"
+          : `${colors.border} bg-[#ff5a1f]/[0.025] hover:bg-[#ff5a1f]/[0.05]`
       }`}
     >
       <div className="flex items-center gap-2.5 p-2.5">
@@ -371,7 +371,7 @@ function TaskRow({
           className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-all ${
             task.completed
               ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-400"
-              : "border-white/15 bg-white/[0.03] hover:border-white/30"
+              : "border-[#1e1a24] bg-[#ff5a1f]/[0.04] hover:border-[#1e1a24]"
           } ${toggling ? "animate-pulse" : ""}`}
         >
           {task.completed && (
@@ -394,7 +394,7 @@ function TaskRow({
               <span className="rounded-full bg-violet-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase text-violet-400">Daily</span>
             )}
             {task.dayIndex && !task.recurring && (
-              <span className="rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[9px] text-white/30">Day {task.dayIndex}</span>
+              <span className="rounded-full bg-[#1e1a24] px-1.5 py-0.5 text-[9px] text-white/30">Day {task.dayIndex}</span>
             )}
           </div>
         </div>
@@ -407,7 +407,7 @@ function TaskRow({
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="rounded p-1 text-white/20 transition-colors hover:bg-white/[0.06] hover:text-white/50"
+              className="rounded p-1 text-white/20 transition-colors hover:bg-[#1e1a24] hover:text-white/50"
               title="Open resource"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -419,7 +419,7 @@ function TaskRow({
           )}
           <button
             onClick={onExpand}
-            className="rounded p-1 text-white/20 transition-colors hover:bg-white/[0.06] hover:text-white/50"
+            className="rounded p-1 text-white/20 transition-colors hover:bg-[#1e1a24] hover:text-white/50"
           >
             <svg
               width="12"
@@ -436,8 +436,8 @@ function TaskRow({
 
       {/* Expanded description */}
       {expanded && (
-        <div className="animate-fade-in border-t border-white/5 px-2.5 pb-2.5 pt-2">
-          <p className="text-xs leading-relaxed text-slate-400">{task.description}</p>
+        <div className="animate-fade-in border-t border-[#1e1a24] px-2.5 pb-2.5 pt-2">
+          <p className="text-xs leading-relaxed text-[#8d8696]">{task.description}</p>
         </div>
       )}
     </div>

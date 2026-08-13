@@ -273,7 +273,7 @@ export function CommunityBoardPreview({
   return (
     <div
       ref={frameRef}
-      className="w-full max-w-full overflow-hidden rounded-2xl border border-white/[0.08] bg-black/30 shadow-xl shadow-black/20"
+      className="w-full max-w-full overflow-hidden rounded-2xl border border-[#1e1a24] bg-black/30 shadow-xl shadow-black/20"
       style={{ maxWidth: `${size}px` }}
     >
       {href && !hasReplayControls ? (
@@ -285,27 +285,27 @@ export function CommunityBoardPreview({
       )}
 
       {hasReplayControls ? (
-        <div className="border-t border-white/[0.08] bg-white/[0.03] px-3 py-3">
+        <div className="border-t border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-3">
           <div className="flex flex-col gap-2 text-[11px] sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
-              <span className="font-semibold uppercase tracking-[0.16em] text-slate-500">
+              <span className="font-semibold uppercase tracking-[0.16em] text-[#565061]">
                 Game Replay
               </span>
-              <p className="mt-1 truncate font-mono text-slate-200">
+              <p className="mt-1 truncate font-mono text-white">
                 {currentStepIndex === 0 ? "Start position" : currentReplayLabel}
               </p>
             </div>
-            <span className="self-start rounded-full border border-white/[0.08] bg-black/20 px-2.5 py-1 text-[11px] font-semibold text-slate-300 sm:self-auto">
+            <span className="self-start rounded-full border border-[#1e1a24] bg-black/20 px-2.5 py-1 text-[11px] font-semibold text-[#f0edf2] sm:self-auto">
               {currentStepIndex}/{maxStepIndex}
             </span>
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5 text-slate-200 sm:flex-nowrap">
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5 text-white sm:flex-nowrap">
             <button
               type="button"
               onClick={jumpToStart}
               disabled={currentStepIndex === 0}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] transition hover:border-white/[0.16] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] transition hover:border-[#ff5a1f]/25 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Jump to start"
             >
               <svg
@@ -324,7 +324,7 @@ export function CommunityBoardPreview({
               type="button"
               onClick={stepBackward}
               disabled={currentStepIndex === 0}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] transition hover:border-white/[0.16] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] transition hover:border-[#ff5a1f]/25 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Previous move"
             >
               <svg
@@ -366,7 +366,7 @@ export function CommunityBoardPreview({
               type="button"
               onClick={stepForward}
               disabled={currentStepIndex >= maxStepIndex}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] transition hover:border-white/[0.16] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] transition hover:border-[#ff5a1f]/25 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Next move"
             >
               <svg
@@ -382,7 +382,7 @@ export function CommunityBoardPreview({
               type="button"
               onClick={jumpToEnd}
               disabled={currentStepIndex >= maxStepIndex}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] transition hover:border-white/[0.16] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] transition hover:border-[#ff5a1f]/25 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Jump to end"
             >
               <svg
@@ -397,11 +397,11 @@ export function CommunityBoardPreview({
           </div>
         </div>
       ) : lastMove ? (
-        <div className="flex items-center justify-between gap-3 border-t border-white/[0.08] bg-white/[0.03] px-3 py-2 text-[11px]">
-          <span className="font-semibold uppercase tracking-[0.16em] text-slate-500">
+        <div className="flex items-center justify-between gap-3 border-t border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-2 text-[11px]">
+          <span className="font-semibold uppercase tracking-[0.16em] text-[#565061]">
             Previous Move
           </span>
-          <span className="truncate font-mono text-slate-200">
+          <span className="truncate font-mono text-white">
             {lastMove.label}
           </span>
         </div>

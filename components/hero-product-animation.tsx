@@ -180,7 +180,7 @@ function InputPhase() {
         </span>
         <div>
           <p className="text-xs font-bold text-white">Control Center</p>
-          <p className="text-[10px] text-slate-500">Configure your scan</p>
+          <p className="text-[10px] text-[#565061]">Configure your scan</p>
         </div>
         <span className="ml-auto flex items-center gap-1 rounded-full bg-cyan-500/10 px-2 py-0.5 text-[9px] font-semibold text-cyan-400">
           <span className="h-1 w-1 animate-pulse rounded-full bg-cyan-400" />{" "}
@@ -189,16 +189,16 @@ function InputPhase() {
       </div>
 
       {/* Platform + username bar */}
-      <div className="mb-2.5 flex items-center overflow-hidden rounded-xl border border-amber-500/30 bg-white/[0.04]">
+      <div className="mb-2.5 flex items-center overflow-hidden rounded-xl border border-amber-500/30 bg-[#ff5a1f]/[0.05]">
         <div className="flex shrink-0 items-center gap-0.5 px-1.5 py-1.5">
           <span className="rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 px-2 py-1 text-[10px] font-bold text-slate-950">
             Lichess
           </span>
-          <span className="px-2 py-1 text-[10px] font-semibold text-slate-500">
+          <span className="px-2 py-1 text-[10px] font-semibold text-[#565061]">
             Chess.com
           </span>
         </div>
-        <div className="mx-1 h-4 w-px bg-white/10" />
+        <div className="mx-1 h-4 w-px bg-[#ff5a1f]/10" />
         {/* Typewriter username */}
         <div className="flex items-center gap-0 py-2 pl-2">
           <span
@@ -215,7 +215,7 @@ function InputPhase() {
       </div>
 
       {/* Scan mode row */}
-      <div className="mb-2.5 grid grid-cols-4 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1">
+      <div className="mb-2.5 grid grid-cols-4 gap-1 rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-1">
         {[
           { label: "📖 Openings", active: true },
           { label: "⚡ Tactics", active: false },
@@ -227,7 +227,7 @@ function InputPhase() {
             className={`rounded-md py-1 text-center text-[9px] font-semibold ${
               active
                 ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950"
-                : "text-slate-500"
+                : "text-[#565061]"
             }`}
           >
             {label}
@@ -244,12 +244,12 @@ function InputPhase() {
         ].map(({ label, value }) => (
           <div
             key={label}
-            className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5"
+            className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-2.5 py-1.5"
           >
-            <p className="text-[8px] font-medium uppercase tracking-wider text-slate-600">
+            <p className="text-[8px] font-medium uppercase tracking-wider text-[#565061]">
               {label}
             </p>
-            <p className="text-xs font-bold text-slate-200">{value}</p>
+            <p className="text-xs font-bold text-white">{value}</p>
           </div>
         ))}
       </div>
@@ -311,12 +311,12 @@ function ScanningPhase() {
           <p className="text-sm font-semibold text-white">
             🚀 Analyzing games...
           </p>
-          <p className="truncate text-[11px] text-slate-400">
+          <p className="truncate text-[11px] text-[#8d8696]">
             Lichess · Blitz · 300 games · Depth 12
           </p>
         </div>
         <span
-          className="shrink-0 rounded-lg bg-white/[0.06] px-2 py-1 font-mono text-[11px] font-medium text-slate-300"
+          className="shrink-0 rounded-lg bg-[#1e1a24] px-2 py-1 font-mono text-[11px] font-medium text-[#f0edf2]"
           style={{ animation: "hpa-fade-in 0.3s ease 1.8s both" }}
         >
           82%
@@ -324,7 +324,7 @@ function ScanningPhase() {
       </div>
 
       {/* Progress bar */}
-      <div className="mb-4 h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+      <div className="mb-4 h-2 w-full overflow-hidden rounded-full bg-[#1e1a24]">
         <div
           className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500"
           style={{
@@ -347,7 +347,7 @@ function ScanningPhase() {
             >
               <span className="text-base">{icon}</span>
               <span
-                className={`text-[10px] font-medium ${isDone ? "text-emerald-400" : "text-slate-500"}`}
+                className={`text-[10px] font-medium ${isDone ? "text-emerald-400" : "text-[#565061]"}`}
               >
                 {label}
               </span>
@@ -365,7 +365,7 @@ function ScanningPhase() {
       </div>
 
       {/* Live log */}
-      <div className="mt-4 rounded-xl border border-white/[0.05] bg-black/20 px-3 py-2.5">
+      <div className="mt-4 rounded-xl border border-[#1e1a24] bg-black/20 px-3 py-2.5">
         {[
           { msg: "✓ Downloaded 247 games", delay: 0.5 },
           { msg: "✓ Parsed 12,140 positions", delay: 1.1 },
@@ -373,7 +373,7 @@ function ScanningPhase() {
         ].map(({ msg, delay }) => (
           <p
             key={msg}
-            className="font-mono text-[10px] text-slate-400"
+            className="font-mono text-[10px] text-[#8d8696]"
             style={{ animation: `hpa-fade-in 0.4s ease ${delay}s both` }}
           >
             {msg}
@@ -390,7 +390,7 @@ function LeaksPhase() {
       {/* Header */}
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-[#565061]">
             Scan Complete
           </p>
           <p className="text-sm font-bold text-white">
@@ -398,7 +398,7 @@ function LeaksPhase() {
           </p>
         </div>
         <div className="text-right">
-          <p className="text-[9px] text-slate-500">247 games · MagnusCarlsen</p>
+          <p className="text-[9px] text-[#565061]">247 games · MagnusCarlsen</p>
           <p className="text-[11px] font-bold text-amber-400">Accuracy: 74%</p>
         </div>
       </div>
@@ -406,7 +406,7 @@ function LeaksPhase() {
       {/* Mini chessboard */}
       <div className="mb-3 flex gap-3">
         <div
-          className="h-[80px] w-[80px] shrink-0 overflow-hidden rounded-lg border border-white/[0.08]"
+          className="h-[80px] w-[80px] shrink-0 overflow-hidden rounded-lg border border-[#1e1a24]"
           style={{ animation: "hpa-fade-in 0.4s ease 0.3s both" }}
         >
           <Chessboard
@@ -430,7 +430,7 @@ function LeaksPhase() {
           ].map(({ color, label }) => (
             <span
               key={label}
-              className="flex items-center gap-1.5 text-[10px] text-slate-400"
+              className="flex items-center gap-1.5 text-[10px] text-[#8d8696]"
             >
               <span className={`h-2 w-2 rounded-full ${color}`} />
               {label}
@@ -447,7 +447,7 @@ function LeaksPhase() {
         {LEAKS.map(({ opening, variant, games, cp }, i) => (
           <div
             key={opening}
-            className="flex items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2"
+            className="flex items-center gap-2.5 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-2"
             style={{
               animation: `hpa-slide-up 0.4s ease ${0.4 + i * 0.18}s both`,
             }}
@@ -456,10 +456,10 @@ function LeaksPhase() {
               <p className="truncate text-[11px] font-semibold text-slate-100">
                 {opening}
               </p>
-              <p className="truncate text-[9px] text-slate-500">{variant}</p>
+              <p className="truncate text-[9px] text-[#565061]">{variant}</p>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
-              <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[9px] font-medium text-slate-400">
+              <span className="rounded bg-[#1e1a24] px-1.5 py-0.5 text-[9px] font-medium text-[#8d8696]">
                 ×{games}
               </span>
               <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[9px] font-bold text-red-400">
@@ -476,7 +476,7 @@ function LeaksPhase() {
 function InsightsPhase() {
   return (
     <div style={{ animation: "hpa-phase-enter 0.45s ease both" }}>
-      <p className="mb-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+      <p className="mb-3 text-[10px] font-bold uppercase tracking-wider text-[#565061]">
         Strength Analysis
       </p>
       <div className="flex gap-4">
@@ -567,18 +567,18 @@ function InsightsPhase() {
             ].map(({ label, val, color }, i) => (
               <div
                 key={label}
-                className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2 py-1.5"
+                className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-2 py-1.5"
                 style={{
                   animation: `hpa-fade-in 0.35s ease ${0.3 + i * 0.1}s both`,
                 }}
               >
-                <p className="text-[8px] text-slate-500">{label}</p>
+                <p className="text-[8px] text-[#565061]">{label}</p>
                 <p className={`text-xs font-bold ${color}`}>{val}</p>
               </div>
             ))}
           </div>
 
-          <p className="text-[9px] font-bold uppercase tracking-wider text-slate-600">
+          <p className="text-[9px] font-bold uppercase tracking-wider text-[#565061]">
             Top Patterns
           </p>
           <div className="flex flex-wrap gap-1">
@@ -634,14 +634,14 @@ export function HeroProductAnimation({ paused }: { paused?: boolean }) {
       <div className="pointer-events-none absolute -inset-4 rounded-3xl bg-gradient-to-br from-emerald-500/10 via-cyan-500/5 to-violet-500/10 blur-2xl" />
 
       {/* Browser chrome wrapper */}
-      <div className="relative overflow-hidden rounded-2xl border border-white/[0.10] bg-slate-900/90 shadow-2xl shadow-black/40 backdrop-blur-sm">
+      <div className="relative overflow-hidden rounded-2xl border border-[#1e1a24] bg-slate-900/90 shadow-2xl shadow-black/40 backdrop-blur-sm">
         {/* Title bar */}
-        <div className="flex items-center gap-1.5 border-b border-white/[0.06] bg-white/[0.02] px-4 py-2.5">
+        <div className="flex items-center gap-1.5 border-b border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-4 py-2.5">
           <div className="h-2.5 w-2.5 rounded-full bg-red-500/50" />
           <div className="h-2.5 w-2.5 rounded-full bg-amber-500/50" />
           <div className="h-2.5 w-2.5 rounded-full bg-emerald-500/50" />
-          <div className="mx-3 flex-1 overflow-hidden rounded-md bg-white/[0.05] px-3 py-1">
-            <p className="truncate text-[10px] text-slate-500">firechess.app</p>
+          <div className="mx-3 flex-1 overflow-hidden rounded-md bg-[#ff5a1f]/[0.05] px-3 py-1">
+            <p className="truncate text-[10px] text-[#565061]">firechess.app</p>
           </div>
         </div>
 
@@ -654,7 +654,7 @@ export function HeroProductAnimation({ paused }: { paused?: boolean }) {
         </div>
 
         {/* Phase indicator dots */}
-        <div className="flex items-center justify-center gap-2 border-t border-white/[0.04] px-4 py-3">
+        <div className="flex items-center justify-center gap-2 border-t border-[#1e1a24] px-4 py-3">
           {PHASES.map((p, i) => (
             <button
               key={p}
@@ -666,12 +666,12 @@ export function HeroProductAnimation({ paused }: { paused?: boolean }) {
               className={`h-1.5 rounded-full transition-all duration-300 ${
                 i === phaseIndex
                   ? "w-5 bg-emerald-400"
-                  : "w-1.5 bg-white/15 hover:bg-white/30"
+                  : "w-1.5 bg-[#ff5a1f]/15 hover:bg-[#ff5a1f]/30"
               }`}
               aria-label={`Go to phase: ${p}`}
             />
           ))}
-          <span className="ml-auto text-[9px] font-medium capitalize text-slate-600">
+          <span className="ml-auto text-[9px] font-medium capitalize text-[#565061]">
             {phase}
           </span>
         </div>

@@ -50,9 +50,9 @@ export function CommunityFlashcards({ posts }: { posts: FlashcardPost[] }) {
 
   if (posts.length === 0) {
     return (
-      <div className="rounded-3xl border border-white/[0.08] bg-white/[0.03] p-6 sm:p-7">
+      <div className="rounded-3xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-6 sm:p-7">
         <h2 className="text-lg font-bold text-white">Flashcard Review</h2>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#8d8696]">
           This profile has not shared any verified puzzle posts yet. Flashcard
           mode now only includes existing community puzzles with stored solve
           lines, so every card can be played out like a real puzzle.
@@ -62,11 +62,11 @@ export function CommunityFlashcards({ posts }: { posts: FlashcardPost[] }) {
   }
 
   return (
-    <div className="rounded-3xl border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(217,70,239,0.12),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(56,189,248,0.1),transparent_30%),rgba(255,255,255,0.03)] p-5 sm:p-6">
+    <div className="rounded-3xl border border-[#1e1a24] bg-[radial-gradient(circle_at_top_left,rgba(217,70,239,0.12),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(56,189,248,0.1),transparent_30%),rgba(255,255,255,0.03)] p-5 sm:p-6">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-white">Flashcard Review</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#8d8696]">
             This deck now uses only verified puzzle posts from the profile. Pick
             the move on the board, then keep playing the line as each opponent
             reply autoplays between your turns.
@@ -89,11 +89,11 @@ export function CommunityFlashcards({ posts }: { posts: FlashcardPost[] }) {
         />
 
         <div className="space-y-4">
-          <div className="rounded-2xl border border-white/[0.08] bg-black/20 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <div className="rounded-2xl border border-[#1e1a24] bg-black/20 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
               How This Mode Works
             </p>
-            <div className="mt-3 space-y-2 text-sm leading-relaxed text-slate-300">
+            <div className="mt-3 space-y-2 text-sm leading-relaxed text-[#f0edf2]">
               <p>
                 1. The deck only includes community posts that already have a
                 stored puzzle line.
@@ -106,15 +106,15 @@ export function CommunityFlashcards({ posts }: { posts: FlashcardPost[] }) {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/[0.08] bg-black/20 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <div className="rounded-2xl border border-[#1e1a24] bg-black/20 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#565061]">
               Puzzle Deck
             </p>
             <div className="mt-3 space-y-3">
               {posts.map((post, index) => (
                 <div
                   key={post.slug}
-                  className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-3"
+                  className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-3"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -125,26 +125,26 @@ export function CommunityFlashcards({ posts }: { posts: FlashcardPost[] }) {
                         {post.title}
                       </p>
                     </div>
-                    <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] text-slate-400">
+                    <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-2.5 py-1 text-[11px] text-[#8d8696]">
                       {post.kind}
                     </span>
                   </div>
 
-                  <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                  <p className="mt-2 text-xs leading-relaxed text-[#8d8696]">
                     {post.prompt}
                   </p>
 
-                  <div className="mt-3 rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2 text-xs text-slate-300">
+                  <div className="mt-3 rounded-xl border border-[#1e1a24] bg-black/20 px-3 py-2 text-xs text-[#f0edf2]">
                     {post.previousMove ? (
                       <>
-                        <span className="text-slate-500">Last move:</span>{" "}
+                        <span className="text-[#565061]">Last move:</span>{" "}
                         <span className="font-mono text-white">
                           {formatLineMove(post.previousMove)}
                         </span>
                       </>
                     ) : (
                       <>
-                        <span className="text-slate-500">Puzzle start:</span>{" "}
+                        <span className="text-[#565061]">Puzzle start:</span>{" "}
                         <span className="font-mono text-white">
                           {post.orientation === "white"
                             ? "White to move"
@@ -155,7 +155,7 @@ export function CommunityFlashcards({ posts }: { posts: FlashcardPost[] }) {
                   </div>
 
                   {post.description && (
-                    <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                    <p className="mt-2 text-xs leading-relaxed text-[#565061]">
                       {post.description}
                     </p>
                   )}

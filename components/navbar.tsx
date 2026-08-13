@@ -308,7 +308,7 @@ export function Navbar() {
           {/* ── Logo ── */}
           <Link
             href="/?landing=1"
-            className="group inline-flex items-center gap-2.5 text-base font-bold text-white transition-colors hover:text-slate-200"
+            className="group inline-flex items-center gap-2.5 text-base font-bold text-white transition-colors hover:text-white"
           >
             <FlameMark />
             <span className="tracking-tight">FireChess</span>
@@ -324,7 +324,7 @@ export function Navbar() {
                 className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   isAnalyzeActive
                     ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]"
-                    : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"
+                    : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"
                 }`}
               >
                 Analyze
@@ -342,13 +342,13 @@ export function Navbar() {
                 <div className="min-w-[200px] rounded-xl border border-[#1e1a24] bg-[#0d0b0e]/97 p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${pathname === "/" ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${pathname === "/" ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
                   >
                     🔍 Analyze Games
                   </Link>
                   <Link
                     href="/analyze"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/analyze") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/analyze") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
                   >
                     ♟️ PGN Analyzer
                   </Link>
@@ -360,7 +360,7 @@ export function Navbar() {
                   </Link>
                   <Link
                     href="/review"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/review") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/review") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
                   >
                     📺 Game Review
                   </Link>
@@ -382,7 +382,7 @@ export function Navbar() {
                 className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   isTrainActive
                     ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]"
-                    : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"
+                    : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"
                 }`}
               >
                 Play
@@ -412,7 +412,7 @@ export function Navbar() {
                   </Link>
                   <Link
                     href="/puzzles"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/puzzles") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/puzzles") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
                   >
                     🎯 Puzzles & Drills
                   </Link>
@@ -424,7 +424,7 @@ export function Navbar() {
                   </Link>
                   <Link
                     href="/guess"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/guess") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/guess") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
                   >
                     🧩 Guess the Move
                   </Link>
@@ -460,7 +460,7 @@ export function Navbar() {
                 className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   isLearnActive
                     ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]"
-                    : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"
+                    : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"
                 }`}
               >
                 Learn
@@ -478,7 +478,7 @@ export function Navbar() {
                 <div className="min-w-[200px] rounded-xl border border-[#1e1a24] bg-[#0d0b0e]/97 p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/openings"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/openings") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/openings") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
                   >
                     📖 Openings
                   </Link>
@@ -549,7 +549,7 @@ export function Navbar() {
                 className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   isExploreActive
                     ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]"
-                    : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"
+                    : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"
                 }`}
               >
                 Explore
@@ -567,7 +567,7 @@ export function Navbar() {
                 <div className="min-w-[180px] rounded-xl border border-[#1e1a24] bg-[#0d0b0e]/97 p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/blog"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/blog") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/blog") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
                   >
                     📝 Blog
                   </Link>
@@ -591,7 +591,7 @@ export function Navbar() {
                   </Link>
                   <Link
                     href="/about"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/about") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/about") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
                   >
                     About
                   </Link>
@@ -604,7 +604,7 @@ export function Navbar() {
                   </Link>
                   <Link
                     href="/changelog"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/changelog") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/changelog") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
                   >
                     Changelog
                     {authenticated && hasUnseenChanges && (
@@ -639,7 +639,7 @@ export function Navbar() {
               <button
                 type="button"
                 onClick={() => signIn(undefined, { callbackUrl: "/" })}
-                className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-[#8d8696] transition-colors hover:bg-white/[0.04] hover:text-white"
+                className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-[#8d8696] transition-colors hover:bg-[#ff5a1f]/[0.05] hover:text-white"
               >
                 Sign in
               </button>
@@ -658,13 +658,13 @@ export function Navbar() {
                 )}
                 <Link
                   href="/dashboard"
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${isActive("/dashboard") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${isActive("/dashboard") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
                 >
                   Dashboard
                 </Link>
                 <Link
                   href={notificationHref}
-                  className={`relative flex h-9 w-9 items-center justify-center rounded-lg border transition-colors ${notificationActive ? "border-white/[0.14] bg-white/[0.08] text-white" : "border-white/[0.08] bg-white/[0.04] text-[#8d8696] hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white"}`}
+                  className={`relative flex h-9 w-9 items-center justify-center rounded-lg border transition-colors ${notificationActive ? "border-[#ff5a1f]/25 bg-[#1e1a24] text-white" : "border-[#1e1a24] bg-[#ff5a1f]/[0.05] text-[#8d8696] hover:border-[#ff5a1f]/25 hover:bg-[#1e1a24] hover:text-white"}`}
                   title={
                     isAdmin ? "Feedback notifications" : "Support notifications"
                   }
@@ -697,7 +697,7 @@ export function Navbar() {
                   <button
                     type="button"
                     onClick={() => setProfileOpen((p) => !p)}
-                    className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.04] px-2.5 py-1.5 text-sm text-white transition-all hover:border-white/[0.15] hover:bg-white/[0.08]"
+                    className="flex items-center gap-2 rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-2.5 py-1.5 text-sm text-white transition-all hover:border-[#ff5a1f]/25 hover:bg-[#1e1a24]"
                   >
                     {unreadMessages > 0 && (
                       <span className="absolute -right-1 -top-1 z-10 flex h-2.5 w-2.5">
@@ -756,8 +756,8 @@ export function Navbar() {
                   </button>
 
                   {profileOpen && (
-                    <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(8,12,28,0.98),rgba(24,18,44,0.96))] shadow-2xl animate-in fade-in slide-in-from-top-2 backdrop-blur-xl">
-                      <div className="border-b border-white/[0.06] px-4 py-3">
+                    <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-[#1e1a24] bg-[linear-gradient(180deg,rgba(8,12,28,0.98),rgba(24,18,44,0.96))] shadow-2xl animate-in fade-in slide-in-from-top-2 backdrop-blur-xl">
+                      <div className="border-b border-[#1e1a24] px-4 py-3">
                         <p className="truncate text-sm font-medium text-white">
                           {user?.name ?? "User"}
                         </p>
@@ -1058,7 +1058,7 @@ export function Navbar() {
           <button
             type="button"
             onClick={() => setMobileOpen((p) => !p)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04] text-slate-300 transition-colors hover:bg-white/[0.08] hover:text-white lg:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] text-[#f0edf2] transition-colors hover:bg-[#1e1a24] hover:text-white lg:hidden"
             aria-label="Toggle menu"
           >
             {mobileOpen ? (
@@ -1101,7 +1101,7 @@ export function Navbar() {
             className="fixed inset-0 z-40 bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.12),transparent_24%),rgba(2,6,23,0.72)] backdrop-blur-sm lg:hidden"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="fixed inset-y-0 right-0 z-50 w-72 overflow-y-auto border-l border-white/[0.08] bg-[linear-gradient(180deg,rgba(7,11,28,0.97),rgba(10,16,36,0.96)_52%,rgba(30,19,52,0.94))] px-4 pb-8 pt-4 shadow-[-24px_0_80px_-40px_rgba(125,211,252,0.5)] backdrop-blur-2xl lg:hidden">
+          <div className="fixed inset-y-0 right-0 z-50 w-72 overflow-y-auto border-l border-[#1e1a24] bg-[linear-gradient(180deg,rgba(7,11,28,0.97),rgba(10,16,36,0.96)_52%,rgba(30,19,52,0.94))] px-4 pb-8 pt-4 shadow-[-24px_0_80px_-40px_rgba(125,211,252,0.5)] backdrop-blur-2xl lg:hidden">
             {/* Header row: user info + close */}
             <div className="mb-5 flex items-center justify-between">
               {authenticated && user ? (
@@ -1170,7 +1170,7 @@ export function Navbar() {
                   key={link.href}
                   href={link.href}
                   onClick={closeMobileMenu}
-                  className={`rounded-xl border px-3 py-3 text-left transition-colors ${link.active ? "border-white/[0.12] bg-white/[0.08] text-white" : "border-white/[0.06] bg-white/[0.03] text-slate-300 hover:border-white/[0.1] hover:bg-white/[0.05] hover:text-white"}`}
+                  className={`rounded-xl border px-3 py-3 text-left transition-colors ${link.active ? "border-[#1e1a24] bg-[#1e1a24] text-white" : "border-[#1e1a24] bg-[#ff5a1f]/[0.04] text-[#f0edf2] hover:border-[#1e1a24] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
                 >
                   <p className="text-sm font-semibold">{link.label}</p>
                   <p className="mt-1 text-xs text-[#565061]">
@@ -1186,7 +1186,7 @@ export function Navbar() {
               return (
                 <div
                   key={section.key}
-                  className="mb-1 overflow-hidden rounded-xl border border-white/[0.05] bg-white/[0.02]"
+                  className="mb-1 overflow-hidden rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03]"
                 >
                   <button
                     type="button"
@@ -1205,7 +1205,7 @@ export function Navbar() {
                     </svg>
                   </button>
                   {isExpanded && (
-                    <div className="border-t border-white/[0.05] px-2 pb-2 pt-1 space-y-0.5">
+                    <div className="border-t border-[#1e1a24] px-2 pb-2 pt-1 space-y-0.5">
                       {section.links.map((link) => {
                         const active =
                           link.href === "/"
@@ -1219,7 +1219,7 @@ export function Navbar() {
                               closeMobileMenu();
                               link.onClick?.();
                             }}
-                            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${active ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
+                            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${active ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
                           >
                             {link.label}
                             {link.hasBadge && (
@@ -1236,7 +1236,7 @@ export function Navbar() {
 
             {/* Account section (auth only) */}
             {authenticated && (
-              <div className="mb-1 overflow-hidden rounded-xl border border-white/[0.05] bg-white/[0.02]">
+              <div className="mb-1 overflow-hidden rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03]">
                 <button
                   type="button"
                   onClick={() => toggleSection("account")}
@@ -1254,11 +1254,11 @@ export function Navbar() {
                   </svg>
                 </button>
                 {openSections["account"] && (
-                  <div className="border-t border-white/[0.05] px-2 pb-2 pt-1 space-y-0.5">
+                  <div className="border-t border-[#1e1a24] px-2 pb-2 pt-1 space-y-0.5">
                     <Link
                       href="/dashboard"
                       onClick={closeMobileMenu}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/dashboard") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/dashboard") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
                     >
                       Dashboard
                     </Link>
@@ -1266,7 +1266,7 @@ export function Navbar() {
                       <Link
                         href={`/community/profile/${user.id}`}
                         onClick={closeMobileMenu}
-                        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/community/profile") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
+                        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/community/profile") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
                       >
                         Public Community Profile
                       </Link>
@@ -1274,14 +1274,14 @@ export function Navbar() {
                     <Link
                       href="/account"
                       onClick={closeMobileMenu}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/account") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/account") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
                     >
                       Account & Billing
                     </Link>
                     <Link
                       href="/support"
                       onClick={closeMobileMenu}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/support") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/support") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
                     >
                       My Tickets
                       {!isAdmin && unreadMessages > 0
@@ -1294,7 +1294,7 @@ export function Navbar() {
                     <Link
                       href="/feedback"
                       onClick={closeMobileMenu}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/feedback") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"}`}
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/feedback") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
                     >
                       Feedback
                     </Link>
@@ -1353,7 +1353,7 @@ export function Navbar() {
                       setMobileOpen(false);
                       signOut({ callbackUrl: "/" });
                     }}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/[0.08] px-4 py-2 text-sm font-medium text-[#8d8696] transition-colors hover:border-white/[0.15] hover:text-white"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#1e1a24] px-4 py-2 text-sm font-medium text-[#8d8696] transition-colors hover:border-[#ff5a1f]/25 hover:text-white"
                   >
                     Sign out
                   </button>
@@ -1364,7 +1364,7 @@ export function Navbar() {
                       setMobileOpen(false);
                       signIn(undefined, { callbackUrl: "/" });
                     }}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/[0.12] bg-white/[0.04] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/[0.08]"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1e1a24]"
                   >
                     Sign in
                   </button>
@@ -1382,7 +1382,7 @@ export function Navbar() {
             if (e.target === e.currentTarget) setCoinShopOpen(false);
           }}
         >
-          <div className="relative w-full max-w-3xl rounded-2xl border border-white/[0.08] bg-[#0d0a06] shadow-2xl">
+          <div className="relative w-full max-w-3xl rounded-2xl border border-[#1e1a24] bg-[#0d0a06] shadow-2xl">
             <button
               type="button"
               onClick={() => setCoinShopOpen(false)}

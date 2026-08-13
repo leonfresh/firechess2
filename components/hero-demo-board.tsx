@@ -378,9 +378,9 @@ export function HeroDemoBoard({
   const boardOrientation = current.fen.includes(" b ") ? "black" : "white";
 
   return (
-    <article className="w-full overflow-hidden rounded-[1.7rem] border border-white/[0.08] bg-[linear-gradient(160deg,rgba(7,11,28,0.88),rgba(10,16,36,0.94)_48%,rgba(29,18,49,0.92))] shadow-[0_34px_90px_-52px_rgba(125,211,252,0.45)] backdrop-blur-sm sm:grid sm:grid-cols-[auto_1fr]">
+    <article className="w-full overflow-hidden rounded-[1.7rem] border border-[#1e1a24] bg-[linear-gradient(160deg,rgba(7,11,28,0.88),rgba(10,16,36,0.94)_48%,rgba(29,18,49,0.92))] shadow-[0_34px_90px_-52px_rgba(125,211,252,0.45)] backdrop-blur-sm sm:grid sm:grid-cols-[auto_1fr]">
       {/* ── Left column: board ── */}
-      <div className="p-2.5 sm:border-r sm:border-white/[0.05] sm:p-3">
+      <div className="p-2.5 sm:border-r sm:border-[#1e1a24] sm:p-3">
         <div className="flex items-start gap-1.5">
           <MiniEvalBar evalCp={current.evalBefore} height={heroBoardSize} />
           <div
@@ -410,7 +410,7 @@ export function HeroDemoBoard({
       {/* ── Right column: info strip + controls ── */}
       <div className="flex min-w-0 flex-col">
         {/* Info strip */}
-        <div className="flex-1 border-t border-white/[0.05] px-2.5 py-2 sm:border-t-0 sm:px-3 sm:py-3">
+        <div className="flex-1 border-t border-[#1e1a24] px-2.5 py-2 sm:border-t-0 sm:px-3 sm:py-3">
           {/* Badge row */}
           <div className="flex flex-wrap items-center gap-1.5">
             <span
@@ -449,7 +449,7 @@ export function HeroDemoBoard({
           </div>
 
           {/* Title */}
-          <p className="mt-1.5 text-[10px] font-semibold leading-snug text-slate-400">
+          <p className="mt-1.5 text-[10px] font-semibold leading-snug text-[#8d8696]">
             {current.title}
           </p>
 
@@ -458,7 +458,7 @@ export function HeroDemoBoard({
             <span className="text-[32px] font-black leading-none tabular-nums text-amber-300">
               {current.reachCount}×
             </span>
-            <span className="mb-1 text-[10px] leading-tight text-slate-400">
+            <span className="mb-1 text-[10px] leading-tight text-[#8d8696]">
               you played this line
               <br />
               across your games
@@ -470,7 +470,7 @@ export function HeroDemoBoard({
             <span className="rounded bg-red-500/15 px-1.5 py-0.5 font-mono text-[11px] font-bold text-red-300">
               {current.playedSan}
             </span>
-            <span className="text-[10px] text-slate-600">→</span>
+            <span className="text-[10px] text-[#565061]">→</span>
             <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 font-mono text-[11px] font-bold text-emerald-300">
               {current.bestSan}
             </span>
@@ -478,11 +478,11 @@ export function HeroDemoBoard({
 
           {/* Eval before/after — inline chips */}
           <div className="mt-1.5 flex items-center gap-1.5">
-            <span className="rounded bg-white/[0.04] px-1.5 py-0.5 font-mono text-[9px] text-slate-400 tabular-nums">
+            <span className="rounded bg-[#ff5a1f]/[0.05] px-1.5 py-0.5 font-mono text-[9px] text-[#8d8696] tabular-nums">
               {formatEval(current.evalBefore)}
             </span>
             <svg
-              className="h-3 w-3 shrink-0 text-slate-600"
+              className="h-3 w-3 shrink-0 text-[#565061]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -498,7 +498,7 @@ export function HeroDemoBoard({
               {formatEval(current.evalAfter)}
             </span>
             {/* Legend */}
-            <span className="ml-auto flex items-center gap-2 text-[8px] text-slate-600">
+            <span className="ml-auto flex items-center gap-2 text-[8px] text-[#565061]">
               <span className="flex items-center gap-1">
                 <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
                 Best
@@ -512,7 +512,7 @@ export function HeroDemoBoard({
         </div>
 
         {/* ── Controls ── */}
-        <div className="flex items-center gap-1.5 border-t border-white/[0.05] px-2.5 py-1.5 sm:px-3">
+        <div className="flex items-center gap-1.5 border-t border-[#1e1a24] px-2.5 py-1.5 sm:px-3">
           <button
             type="button"
             className="btn-secondary flex h-6 items-center gap-1 px-2 text-[10px]"
@@ -552,7 +552,7 @@ export function HeroDemoBoard({
             className={`flex h-6 items-center gap-1.5 rounded-lg border px-2 text-[10px] font-medium transition-all duration-200 ${
               autoplay
                 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-                : "border-white/[0.08] bg-white/[0.03] text-slate-500 hover:text-slate-300"
+                : "border-[#1e1a24] bg-[#ff5a1f]/[0.04] text-[#565061] hover:text-[#f0edf2]"
             }`}
             onClick={() => setAutoplay((prev) => !prev)}
           >
@@ -573,7 +573,7 @@ export function HeroDemoBoard({
                 className={`h-1.5 rounded-full transition-all duration-300 ${
                   i === index % scenarios.length
                     ? "w-4 bg-emerald-400"
-                    : "w-1.5 bg-white/[0.08] hover:bg-white/20"
+                    : "w-1.5 bg-[#1e1a24] hover:bg-[#ff5a1f]/20"
                 }`}
               />
             ))}

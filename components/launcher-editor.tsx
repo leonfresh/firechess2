@@ -131,7 +131,7 @@ function AppIcon({ app, section, isEditing, isDrop, onDragStart, onDragOver, onD
 function EmptySlot({ section, onAdd }: { section: Section; onAdd: () => void }) {
   return (
     <button onClick={onAdd} className="group flex flex-col items-center gap-1.5">
-      <div className="flex aspect-square w-full max-w-[72px] items-center justify-center rounded-[22%] border-2 border-dashed border-white/20 bg-white/[0.03] transition-colors group-hover:border-emerald-500/50 group-hover:bg-emerald-500/10">
+      <div className="flex aspect-square w-full max-w-[72px] items-center justify-center rounded-[22%] border-2 border-dashed border-[#ff5a1f]/20 bg-[#ff5a1f]/[0.04] transition-colors group-hover:border-emerald-500/50 group-hover:bg-emerald-500/10">
         <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6 text-white/30 group-hover:text-emerald-400">
           <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -360,7 +360,7 @@ export function LauncherEditor({
         onClick={() => setShowPicker(null)}
       >
         <div
-          className="w-full max-w-md rounded-t-2xl border border-white/[0.08] bg-[#0c1520] p-5 sm:rounded-2xl"
+          className="w-full max-w-md rounded-t-2xl border border-[#1e1a24] bg-[#0c1520] p-5 sm:rounded-2xl"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="mb-4 flex items-center justify-between">
@@ -372,7 +372,7 @@ export function LauncherEditor({
             </div>
             <button
               onClick={() => setShowPicker(null)}
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.06] text-white/50 hover:bg-white/10 hover:text-white"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1e1a24] text-white/50 hover:bg-[#ff5a1f]/10 hover:text-white"
             >
               <svg viewBox="0 0 10 10" fill="none" className="h-3 w-3">
                 <line x1="2" y1="2" x2="8" y2="8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -431,13 +431,13 @@ export function LauncherEditor({
             <>
               <button
                 onClick={resetToDefault}
-                className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-white/50 transition-colors hover:bg-white/[0.08] hover:text-white/80"
+                className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1.5 text-xs font-medium text-white/50 transition-colors hover:bg-[#1e1a24] hover:text-white/80"
               >
                 Reset
               </button>
               <button
                 onClick={() => setIsEditing(false)}
-                className="rounded-lg border border-white/[0.12] bg-white/[0.06] px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/10"
+                className="rounded-lg border border-[#1e1a24] bg-[#1e1a24] px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#ff5a1f]/10"
               >
                 Done
               </button>
@@ -445,7 +445,7 @@ export function LauncherEditor({
           ) : (
             <button
               onClick={() => setIsEditing(true)}
-              className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
+              className="flex items-center gap-1.5 rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1.5 text-xs font-medium text-white/70 transition-colors hover:bg-[#1e1a24] hover:text-white"
             >
               <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
                 <path
@@ -468,7 +468,7 @@ export function LauncherEditor({
         <div className="pointer-events-none absolute inset-x-8 bottom-0 h-16 rounded-[40px] bg-emerald-500/[0.08] blur-2xl" />
 
         {/* Device outer body */}
-        <div className="relative rounded-[36px] border border-white/[0.1] bg-gradient-to-b from-[#1c2a3a] via-[#111c2a] to-[#0c1520] p-[10px] shadow-2xl shadow-black/70 ring-1 ring-white/[0.04]">
+        <div className="relative rounded-[36px] border border-[#1e1a24] bg-gradient-to-b from-[#1c2a3a] via-[#111c2a] to-[#0c1520] p-[10px] shadow-2xl shadow-black/70 ring-1 ring-white/[0.04]">
           {/* Side buttons (decorative) */}
           <div className="absolute -left-[3px] top-24 h-8 w-[3px] rounded-l-sm bg-gradient-to-b from-white/[0.08] to-white/[0.04]" />
           <div className="absolute -left-[3px] top-36 h-12 w-[3px] rounded-l-sm bg-gradient-to-b from-white/[0.08] to-white/[0.04]" />
@@ -521,7 +521,7 @@ export function LauncherEditor({
 
               {/* Editing banner */}
               {isEditing && (
-                <div className="relative mb-3 rounded-xl border border-white/[0.06] bg-white/[0.04] px-4 py-2 text-center text-[11px] text-white/50">
+                <div className="relative mb-3 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-4 py-2 text-center text-[11px] text-white/50">
                   Drag to reorder or swap · Tap <span className="font-bold text-white/70">✕</span> to remove · Drag from tray below to add
                 </div>
               )}
@@ -554,11 +554,11 @@ export function LauncherEditor({
               </div>
 
               {/* Dock separator */}
-              <div className="my-4 border-t border-white/[0.06]" />
+              <div className="my-4 border-t border-[#1e1a24]" />
 
               {/* Dock */}
               <div
-                className="flex items-center justify-around rounded-2xl border border-white/[0.06] bg-white/[0.04] px-4 py-2.5 backdrop-blur-md"
+                className="flex items-center justify-around rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-4 py-2.5 backdrop-blur-md"
                 onDragOver={isEditing ? handleSectionDragOver("dock") : undefined}
                 onDrop={isEditing ? handleSectionDrop("dock") : undefined}
               >
@@ -582,7 +582,7 @@ export function LauncherEditor({
                     onClick={() => setShowPicker("dock")}
                     className="group flex flex-col items-center gap-1"
                   >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-[20%] border-2 border-dashed border-white/20 bg-white/[0.03] transition-colors group-hover:border-emerald-500/50 group-hover:bg-emerald-500/10">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-[20%] border-2 border-dashed border-[#ff5a1f]/20 bg-[#ff5a1f]/[0.04] transition-colors group-hover:border-emerald-500/50 group-hover:bg-emerald-500/10">
                       <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-white/30 group-hover:text-emerald-400">
                         <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                         <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -596,7 +596,7 @@ export function LauncherEditor({
 
             {/* Home indicator */}
             <div className="flex justify-center bg-[#060e18] pb-2 pt-1">
-              <div className="h-1 w-24 rounded-full bg-white/20" />
+              <div className="h-1 w-24 rounded-full bg-[#ff5a1f]/20" />
             </div>
           </div>
         </div>
@@ -604,7 +604,7 @@ export function LauncherEditor({
 
       {/* Available apps tray — shows when editing and there are unplaced apps */}
       {isEditing && availableApps.length > 0 && (
-        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] px-4 py-4">
+        <div className="rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-4 py-4">
           <p className="mb-3 text-center text-[11px] font-medium text-white/40">
             Available apps — drag into the grid or dock, or tap to add
           </p>

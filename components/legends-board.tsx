@@ -384,7 +384,7 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
         showToast("⚡ Perfect sync!", "text-emerald-400", 1800);
         playSound(moveResult.captured ? "capture" : "move");
       } else {
-        showToast("� Legend disagrees…", "text-slate-400", 1800);
+        showToast("� Legend disagrees…", "text-[#8d8696]", 1800);
         playSound(moveResult.captured ? "capture" : "move");
       }
 
@@ -603,10 +603,10 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
   if (phase === "briefing") {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-        <div className="max-w-lg w-full bg-slate-900 border border-white/[0.08] rounded-2xl overflow-hidden shadow-2xl">
+        <div className="max-w-lg w-full bg-slate-900 border border-[#1e1a24] rounded-2xl overflow-hidden shadow-2xl">
           {/* Header */}
-          <div className="bg-gradient-to-r from-violet-950/60 to-slate-900 px-6 py-5 border-b border-white/[0.06]">
-            <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold tracking-widest uppercase mb-2">
+          <div className="bg-gradient-to-r from-violet-950/60 to-slate-900 px-6 py-5 border-b border-[#1e1a24]">
+            <div className="flex items-center gap-2 text-[#8d8696] text-xs font-semibold tracking-widest uppercase mb-2">
               <span>�</span> Legends
             </div>
             <h1 className="text-2xl font-black text-white leading-tight">
@@ -619,32 +619,32 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
             {/* Players */}
             <div className="flex items-center justify-between text-sm">
               <div>
-                <div className="text-slate-400 text-xs uppercase tracking-widest mb-0.5">
+                <div className="text-[#8d8696] text-xs uppercase tracking-widest mb-0.5">
                   White
                 </div>
                 <div className="text-white font-semibold">{game.whiteName}</div>
                 {game.whiteElo && (
-                  <div className="text-slate-500 text-xs">{game.whiteElo}</div>
+                  <div className="text-[#565061] text-xs">{game.whiteElo}</div>
                 )}
               </div>
-              <div className="text-slate-500 text-lg font-bold">vs</div>
+              <div className="text-[#565061] text-lg font-bold">vs</div>
               <div className="text-right">
-                <div className="text-slate-400 text-xs uppercase tracking-widest mb-0.5">
+                <div className="text-[#8d8696] text-xs uppercase tracking-widest mb-0.5">
                   Black
                 </div>
                 <div className="text-white font-semibold">{game.blackName}</div>
                 {game.blackElo && (
-                  <div className="text-slate-500 text-xs">{game.blackElo}</div>
+                  <div className="text-[#565061] text-xs">{game.blackElo}</div>
                 )}
               </div>
             </div>
 
-            <div className="text-slate-400 text-xs">
+            <div className="text-[#8d8696] text-xs">
               {game.tournament} · {game.eventDate?.slice(0, 4)}
               {game.openingName && (
                 <>
                   {" "}
-                  · <span className="text-slate-300">{game.openingName}</span>
+                  · <span className="text-[#f0edf2]">{game.openingName}</span>
                 </>
               )}
             </div>
@@ -666,10 +666,10 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
 
             {/* Context */}
             <div>
-              <div className="text-slate-400 text-xs uppercase tracking-widest mb-1.5">
+              <div className="text-[#8d8696] text-xs uppercase tracking-widest mb-1.5">
                 Mission Briefing
               </div>
-              <p className="text-slate-200 text-sm leading-relaxed">
+              <p className="text-white text-sm leading-relaxed">
                 {game.missionContext}
               </p>
             </div>
@@ -683,12 +683,12 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
             </div>
 
             {/* You play as */}
-            <div className="text-sm text-slate-300">
+            <div className="text-sm text-[#f0edf2]">
               You play as{" "}
               <span className="font-bold text-white">
                 {game.playAs === "white" ? game.whiteName : game.blackName}
               </span>
-              <span className="text-slate-500"> ({game.playAs})</span>
+              <span className="text-[#565061]"> ({game.playAs})</span>
             </div>
           </div>
 
@@ -714,12 +714,12 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
 
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-slate-900 border border-white/[0.08] rounded-2xl overflow-hidden shadow-2xl">
+        <div className="max-w-md w-full bg-slate-900 border border-[#1e1a24] rounded-2xl overflow-hidden shadow-2xl">
           {/* Header */}
-          <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-6 py-5 border-b border-white/[0.06] text-center">
+          <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-6 py-5 border-b border-[#1e1a24] text-center">
             <div className="text-3xl mb-1">�</div>
             <h2 className="text-xl font-black text-white">Mission Complete</h2>
-            <div className="text-slate-400 text-sm mt-1">
+            <div className="text-[#8d8696] text-sm mt-1">
               {game.missionTitle}
             </div>
           </div>
@@ -730,7 +730,7 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
               <div className={`text-7xl font-black ${syncColor(syncRate)}`}>
                 {syncRate}%
               </div>
-              <div className="text-slate-400 text-sm mt-1">
+              <div className="text-[#8d8696] text-sm mt-1">
                 Sync with the Ghost
               </div>
 
@@ -745,19 +745,19 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
 
             {/* Stats */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-slate-800/60 rounded-xl p-3 text-center border border-white/[0.05]">
+              <div className="bg-slate-800/60 rounded-xl p-3 text-center border border-[#1e1a24]">
                 <div className="text-2xl font-black text-white">
                   {movesPlayed}
                 </div>
-                <div className="text-slate-400 text-xs mt-0.5">
+                <div className="text-[#8d8696] text-xs mt-0.5">
                   Moves Played
                 </div>
               </div>
-              <div className="bg-slate-800/60 rounded-xl p-3 text-center border border-white/[0.05]">
+              <div className="bg-slate-800/60 rounded-xl p-3 text-center border border-[#1e1a24]">
                 <div className="text-2xl font-black text-white">
                   {Math.round(syncPoints)}
                 </div>
-                <div className="text-slate-400 text-xs mt-0.5">Matched</div>
+                <div className="text-[#8d8696] text-xs mt-0.5">Matched</div>
               </div>
             </div>
 
@@ -819,7 +819,7 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
 
             <a
               href="/legends"
-              className="block text-center text-slate-500 hover:text-slate-300 text-sm transition-colors"
+              className="block text-center text-[#565061] hover:text-[#f0edf2] text-sm transition-colors"
             >
               ← Back to missions
             </a>
@@ -839,27 +839,27 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col">
       {/* Top bar */}
-      <div className="border-b border-white/[0.06] bg-slate-900/80 backdrop-blur px-4 py-3 flex items-center justify-between">
+      <div className="border-b border-[#1e1a24] bg-slate-900/80 backdrop-blur px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-lg">�</span>
           <div>
             <div className="text-white font-bold text-sm leading-tight">
               {game.missionTitle}
             </div>
-            <div className="text-slate-500 text-xs">
+            <div className="text-[#565061] text-xs">
               {game.whiteName} vs {game.blackName} ·{" "}
               {game.eventDate?.slice(0, 4)}
             </div>
           </div>
         </div>
         {phase === "timelapse" && (
-          <div className="text-slate-500 text-xs animate-pulse">
+          <div className="text-[#565061] text-xs animate-pulse">
             Traveling to the moment…
           </div>
         )}
         {phase === "play" && (
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-slate-400">Sync</span>
+            <span className="text-[#8d8696]">Sync</span>
             <span className={`font-black text-base ${syncColor(liveSyncRate)}`}>
               {liveSyncRate}%
             </span>
@@ -871,7 +871,7 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
         {/* Board */}
         <div className="flex flex-col items-center gap-3 flex-1">
           {/* Opponent label */}
-          <div className="text-slate-400 text-xs self-start pl-1">
+          <div className="text-[#8d8696] text-xs self-start pl-1">
             {isFlipped
               ? userSide
               : game.playAs === "white"
@@ -900,13 +900,13 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
           </div>
 
           {/* User label */}
-          <div className="text-slate-200 text-sm font-semibold self-start pl-1">
+          <div className="text-white text-sm font-semibold self-start pl-1">
             {isFlipped
               ? game.playAs === "white"
                 ? game.blackName
                 : game.whiteName
               : userSide}
-            <span className="text-slate-500 text-xs font-normal ml-1">
+            <span className="text-[#565061] text-xs font-normal ml-1">
               ({game.playAs})
             </span>
           </div>
@@ -915,7 +915,7 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
           {phase === "play" && (isAnalyzing || lastMoveBadge) && !cookFound && (
             <div className="md:hidden w-full max-w-[560px]">
               {isAnalyzing ? (
-                <div className="flex items-center gap-1.5 text-slate-400 text-xs pl-1">
+                <div className="flex items-center gap-1.5 text-[#8d8696] text-xs pl-1">
                   <span className="inline-block w-2 h-2 rounded-full bg-slate-500 animate-pulse" />
                   Analysing…
                 </div>
@@ -933,8 +933,8 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
         {/* Sidebar */}
         <div className="hidden md:flex flex-col gap-4 w-64 shrink-0">
           {/* Sync meter */}
-          <div className="bg-slate-900 border border-white/[0.08] rounded-xl p-4">
-            <div className="text-slate-400 text-xs uppercase tracking-widest font-semibold mb-3">
+          <div className="bg-slate-900 border border-[#1e1a24] rounded-xl p-4">
+            <div className="text-[#8d8696] text-xs uppercase tracking-widest font-semibold mb-3">
               Sync Meter
             </div>
             <div
@@ -948,13 +948,13 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
                 style={{ width: `${Math.min(100, liveSyncRate)}%` }}
               />
             </div>
-            <div className="text-slate-500 text-xs mt-2">
+            <div className="text-[#565061] text-xs mt-2">
               {Math.round(syncPoints)} / {movesPlayed} matched
             </div>
           </div>
 
           {/* Ghost trace toggle */}
-          <div className="bg-slate-900 border border-white/[0.08] rounded-xl p-4">
+          <div className="bg-slate-900 border border-[#1e1a24] rounded-xl p-4">
             <label className="flex items-center gap-3 cursor-pointer">
               <div
                 onClick={() => setGhostTrace((v) => !v)}
@@ -965,10 +965,10 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
                 />
               </div>
               <div>
-                <div className="text-sm text-slate-200 font-medium">
+                <div className="text-sm text-white font-medium">
                   Ghost Trace
                 </div>
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-[#565061]">
                   Show master's target square
                 </div>
               </div>
@@ -992,12 +992,12 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
             <div
               className={`rounded-xl p-3 text-center border transition-all ${
                 isAnalyzing
-                  ? "bg-slate-800/60 border-white/[0.05]"
+                  ? "bg-slate-800/60 border-[#1e1a24]"
                   : `${lastMoveBadge?.bg ?? ""}`
               }`}
             >
               {isAnalyzing ? (
-                <div className="flex items-center justify-center gap-1.5 text-slate-400 text-xs">
+                <div className="flex items-center justify-center gap-1.5 text-[#8d8696] text-xs">
                   <span className="inline-block w-2 h-2 rounded-full bg-slate-500 animate-pulse" />
                   Analysing…
                 </div>
@@ -1011,11 +1011,11 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
 
           {/* Mission context */}
           {phase === "play" && (
-            <div className="bg-slate-900 border border-white/[0.08] rounded-xl p-4">
-              <div className="text-slate-400 text-xs uppercase tracking-widest font-semibold mb-2">
+            <div className="bg-slate-900 border border-[#1e1a24] rounded-xl p-4">
+              <div className="text-[#8d8696] text-xs uppercase tracking-widest font-semibold mb-2">
                 Mission
               </div>
-              <p className="text-slate-300 text-xs leading-relaxed">
+              <p className="text-[#f0edf2] text-xs leading-relaxed">
                 {game.missionObjective}
               </p>
             </div>
@@ -1026,7 +1026,7 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-slate-800/90 backdrop-blur border border-white/[0.1] shadow-xl text-sm font-semibold ${toast.color} pointer-events-none`}
+          className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-slate-800/90 backdrop-blur border border-[#1e1a24] shadow-xl text-sm font-semibold ${toast.color} pointer-events-none`}
         >
           {toast.msg}
         </div>

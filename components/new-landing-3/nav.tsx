@@ -124,8 +124,8 @@ export function Nl3Nav({ onScanClick }: { onScanClick: () => void }) {
                 aria-haspopup="true"
                 className={`flex items-center gap-1 rounded-lg px-3 py-2 text-[13.5px] font-medium transition-colors ${
                   menuActive(m)
-                    ? "bg-white/[0.06] text-white"
-                    : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"
+                    ? "bg-[#1e1a24] text-white"
+                    : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"
                 }`}
               >
                 {m.label}
@@ -154,7 +154,7 @@ export function Nl3Nav({ onScanClick }: { onScanClick: () => void }) {
                       className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors ${
                         isActive(item.href)
                           ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]"
-                          : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"
+                          : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"
                       }`}
                     >
                       <span className="text-sm">{item.icon}</span>
@@ -169,8 +169,8 @@ export function Nl3Nav({ onScanClick }: { onScanClick: () => void }) {
             href="/pricing"
             className={`rounded-lg px-3 py-2 text-[13.5px] font-medium transition-colors ${
               isActive("/pricing")
-                ? "bg-white/[0.06] text-white"
-                : "text-[#8d8696] hover:bg-white/[0.04] hover:text-white"
+                ? "bg-[#1e1a24] text-white"
+                : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"
             }`}
           >
             Pricing

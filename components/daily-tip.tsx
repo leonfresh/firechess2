@@ -14,7 +14,7 @@ export function DailyTipWidget() {
   const meta = TIP_TYPE_LABELS[tip.type] ?? TIP_TYPE_LABELS.tip;
 
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 transition-colors hover:border-white/[0.10]">
+    <div className="rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-5 transition-colors hover:border-[#1e1a24]">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -33,25 +33,25 @@ export function DailyTipWidget() {
 
       {/* Body */}
       <div className="mt-3 min-h-[60px]">
-        <p className={`text-sm leading-relaxed ${tip.type === "quote" ? "italic text-slate-300" : "text-slate-300"}`}>
+        <p className={`text-sm leading-relaxed ${tip.type === "quote" ? "italic text-[#f0edf2]" : "text-[#f0edf2]"}`}>
           {tip.type === "quote" ? `"${tip.text}"` : tip.text}
         </p>
         {tip.author && (
-          <p className="mt-1.5 text-xs text-slate-500">— {tip.author}</p>
+          <p className="mt-1.5 text-xs text-[#565061]">— {tip.author}</p>
         )}
         {tip.category && (
-          <span className="mt-2 inline-block rounded bg-white/[0.04] px-2 py-0.5 text-[10px] text-slate-500">
+          <span className="mt-2 inline-block rounded bg-[#ff5a1f]/[0.05] px-2 py-0.5 text-[10px] text-[#565061]">
             {tip.category}
           </span>
         )}
       </div>
 
       {/* Navigation */}
-      <div className="mt-3 flex items-center justify-between border-t border-white/[0.06] pt-3">
+      <div className="mt-3 flex items-center justify-between border-t border-[#1e1a24] pt-3">
         <button
           type="button"
           onClick={() => setOffset((o) => o - 1)}
-          className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-white/[0.06] hover:text-white"
+          className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-[#565061] transition-colors hover:bg-[#1e1a24] hover:text-white"
           title="Previous tip"
         >
           <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -59,13 +59,13 @@ export function DailyTipWidget() {
           </svg>
           Prev
         </button>
-        <span className="text-[10px] text-slate-600">
+        <span className="text-[10px] text-[#565061]">
           #{tip.id} of {DAILY_TIPS.length}
         </span>
         <button
           type="button"
           onClick={() => setOffset((o) => o + 1)}
-          className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-white/[0.06] hover:text-white"
+          className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-[#565061] transition-colors hover:bg-[#1e1a24] hover:text-white"
           title="Next tip"
         >
           Next

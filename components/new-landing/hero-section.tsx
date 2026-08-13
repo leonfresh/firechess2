@@ -73,7 +73,7 @@ export function HeroSection({
             </h1>
 
             {/* Subhead */}
-            <p className="mb-8 max-w-lg text-lg leading-relaxed text-slate-400 sm:text-xl">
+            <p className="mb-8 max-w-lg text-lg leading-relaxed text-[#8d8696] sm:text-xl">
               FireChess scans your Lichess & Chess.com games to find the
               mistakes you keep repeating — then turns each one into a drill
               you can actually fix.
@@ -94,7 +94,7 @@ export function HeroSection({
 
               <button
                 onClick={onSeeSampleClick}
-                className="inline-flex h-14 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-8 text-base font-medium text-slate-300 backdrop-blur-sm transition-all duration-300 hover:border-white/20 hover:bg-white/[0.06] hover:text-white"
+                className="inline-flex h-14 items-center justify-center gap-2 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-8 text-base font-medium text-[#f0edf2] backdrop-blur-sm transition-all duration-300 hover:border-[#ff5a1f]/20 hover:bg-[#1e1a24] hover:text-white"
               >
                 <Search className="h-4 w-4" />
                 See sample reports
@@ -102,7 +102,7 @@ export function HeroSection({
 
               <a
                 href="/review"
-                className="inline-flex h-14 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-8 text-base font-medium text-slate-300 backdrop-blur-sm transition-all duration-300 hover:border-white/20 hover:bg-white/[0.06] hover:text-white"
+                className="inline-flex h-14 items-center justify-center gap-2 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-8 text-base font-medium text-[#f0edf2] backdrop-blur-sm transition-all duration-300 hover:border-[#ff5a1f]/20 hover:bg-[#1e1a24] hover:text-white"
               >
                 <Target className="h-4 w-4" />
                 Game Review
@@ -110,7 +110,7 @@ export function HeroSection({
             </div>
 
             {/* Trust indicators */}
-            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500 lg:justify-start">
+            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-[#565061] lg:justify-start">
               <div className="flex items-center gap-2">
                 <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20">
                   <Zap className="h-3 w-3 text-emerald-400" />
@@ -133,26 +133,26 @@ export function HeroSection({
 
             {/* Stats */}
             {siteStats && (
-              <div className="mt-10 flex items-center gap-8 border-t border-white/[0.06] pt-8">
+              <div className="mt-10 flex items-center gap-8 border-t border-[#1e1a24] pt-8">
                 <div>
                   <div className="text-2xl font-bold text-white sm:text-3xl">
                     {siteStats.totalReports.toLocaleString()}
                   </div>
-                  <div className="text-sm text-slate-500">Reports generated</div>
+                  <div className="text-sm text-[#565061]">Reports generated</div>
                 </div>
-                <div className="h-12 w-px bg-white/[0.06]" />
+                <div className="h-12 w-px bg-[#1e1a24]" />
                 <div>
                   <div className="text-2xl font-bold text-white sm:text-3xl">
                     {siteStats.totalUsers.toLocaleString()}
                   </div>
-                  <div className="text-sm text-slate-500">Players improved</div>
+                  <div className="text-sm text-[#565061]">Players improved</div>
                 </div>
-                <div className="h-12 w-px bg-white/[0.06]" />
+                <div className="h-12 w-px bg-[#1e1a24]" />
                 <div>
                   <div className="text-2xl font-bold text-white sm:text-3xl">
                     {siteStats.lifetimeMembers.toLocaleString()}
                   </div>
-                  <div className="text-sm text-slate-500">Lifetime members</div>
+                  <div className="text-sm text-[#565061]">Lifetime members</div>
                 </div>
               </div>
             )}

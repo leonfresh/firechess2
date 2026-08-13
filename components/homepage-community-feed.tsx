@@ -185,13 +185,13 @@ export function HomepageCommunityFeed() {
         <div className="relative animate-pulse space-y-6">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
             <div className="space-y-3">
-              <div className="h-4 w-28 rounded-full bg-white/[0.07]" />
-              <div className="h-7 w-80 max-w-[80%] rounded bg-white/[0.09]" />
-              <div className="h-4 w-[28rem] max-w-[90%] rounded bg-white/[0.05]" />
+              <div className="h-4 w-28 rounded-full bg-[#ff5a1f]/[0.07]" />
+              <div className="h-7 w-80 max-w-[80%] rounded bg-[#ff5a1f]/[0.09]" />
+              <div className="h-4 w-[28rem] max-w-[90%] rounded bg-[#ff5a1f]/[0.05]" />
             </div>
             <div className="space-y-3">
-              <div className="h-11 w-40 rounded-xl bg-white/[0.06]" />
-              <div className="h-4 w-44 rounded bg-white/[0.05]" />
+              <div className="h-11 w-40 rounded-xl bg-[#1e1a24]" />
+              <div className="h-4 w-44 rounded bg-[#ff5a1f]/[0.05]" />
             </div>
           </div>
 
@@ -199,7 +199,7 @@ export function HomepageCommunityFeed() {
             {Array.from({ length: 5 }).map((_, index) => (
               <div
                 key={index}
-                className="h-10 w-28 rounded-full bg-white/[0.05]"
+                className="h-10 w-28 rounded-full bg-[#ff5a1f]/[0.05]"
               />
             ))}
           </div>
@@ -214,15 +214,15 @@ export function HomepageCommunityFeed() {
             {Array.from({ length: 6 }).map((_, index) => (
               <div
                 key={index}
-                className="overflow-hidden rounded-[2.1rem] bg-white/[0.04] p-4 shadow-[0_24px_70px_-48px_rgba(2,6,23,0.95)] backdrop-blur-sm"
+                className="overflow-hidden rounded-[2.1rem] bg-[#ff5a1f]/[0.05] p-4 shadow-[0_24px_70px_-48px_rgba(2,6,23,0.95)] backdrop-blur-sm"
               >
                 <div className="space-y-4">
-                  <div className="aspect-square w-full rounded-2xl bg-white/[0.06]" />
+                  <div className="aspect-square w-full rounded-2xl bg-[#1e1a24]" />
                   <div>
-                    <div className="h-4 w-24 rounded bg-white/[0.06]" />
-                    <div className="mt-3 h-5 w-5/6 rounded bg-white/[0.08]" />
-                    <div className="mt-2 h-4 w-4/6 rounded bg-white/[0.05]" />
-                    <div className="mt-4 h-4 w-full rounded bg-white/[0.05]" />
+                    <div className="h-4 w-24 rounded bg-[#1e1a24]" />
+                    <div className="mt-3 h-5 w-5/6 rounded bg-[#1e1a24]" />
+                    <div className="mt-2 h-4 w-4/6 rounded bg-[#ff5a1f]/[0.05]" />
+                    <div className="mt-4 h-4 w-full rounded bg-[#ff5a1f]/[0.05]" />
                   </div>
                 </div>
               </div>
@@ -242,7 +242,7 @@ export function HomepageCommunityFeed() {
           <p className="text-sm font-semibold text-white">
             Community feed unavailable
           </p>
-          <p className="mt-1 text-sm text-slate-400">{state.error}</p>
+          <p className="mt-1 text-sm text-[#8d8696]">{state.error}</p>
           <Link
             href="/community"
             className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-orange-300 hover:text-orange-200"
@@ -276,14 +276,14 @@ export function HomepageCommunityFeed() {
           <p className="text-base font-semibold text-white">
             No community posts yet
           </p>
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-[#8d8696]">
             The homepage will pull real positions from the database as soon as
             the first public posts are published.
           </p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/community"
-              className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-white/[0.14] hover:bg-white/[0.05]"
+              className="inline-flex items-center gap-2 rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.05]"
             >
               Browse community
             </Link>
@@ -306,13 +306,13 @@ export function HomepageCommunityFeed() {
       <div className="relative">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-3xl">
-            <p className="max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
+            <p className="max-w-2xl text-sm leading-relaxed text-[#8d8696] sm:text-base">
               {activeCategory.description}
             </p>
           </div>
 
           <div className="flex flex-col gap-3 sm:items-end">
-            <div className="flex items-center gap-1 rounded-full border border-white/[0.08] bg-black/10 p-1 backdrop-blur-sm">
+            <div className="flex items-center gap-1 rounded-full border border-[#1e1a24] bg-black/10 p-1 backdrop-blur-sm">
               {(["new", "hot"] as const).map((mode) => {
                 const selected = mode === sort;
                 return (
@@ -320,7 +320,7 @@ export function HomepageCommunityFeed() {
                     key={mode}
                     type="button"
                     onClick={() => setSort(mode)}
-                    className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors ${selected ? "bg-white/[0.08] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]" : "text-slate-400 hover:text-white"}`}
+                    className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors ${selected ? "bg-[#1e1a24] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]" : "text-[#8d8696] hover:text-white"}`}
                   >
                     {mode === "new" ? "✨ New" : "🔥 Hot"}
                   </button>
@@ -328,7 +328,7 @@ export function HomepageCommunityFeed() {
               })}
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 sm:justify-end">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-[#565061] sm:justify-end">
               <span>
                 {state.loading
                   ? "Refreshing feed..."
@@ -352,7 +352,7 @@ export function HomepageCommunityFeed() {
                 key={option.id}
                 type="button"
                 onClick={() => setCategory(option.id)}
-                className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-semibold transition ${selected ? option.accentClass : "border-white/[0.08] bg-white/[0.02] text-slate-300 hover:border-white/[0.16] hover:text-white"}`}
+                className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-semibold transition ${selected ? option.accentClass : "border-[#1e1a24] bg-[#ff5a1f]/[0.03] text-[#f0edf2] hover:border-[#ff5a1f]/25 hover:text-white"}`}
               >
                 <span>{option.label}</span>
                 <span className="rounded-full bg-black/20 px-2 py-0.5 text-[11px] text-inherit">
@@ -373,11 +373,11 @@ export function HomepageCommunityFeed() {
         )}
 
         {filteredPosts.length === 0 ? (
-          <div className="mt-6 rounded-[1.9rem] bg-white/[0.04] px-6 py-12 text-center backdrop-blur-sm">
+          <div className="mt-6 rounded-[1.9rem] bg-[#ff5a1f]/[0.05] px-6 py-12 text-center backdrop-blur-sm">
             <p className="text-base font-semibold text-white">
               No boards in this category yet
             </p>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-400">
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[#8d8696]">
               Switch filters or open the full community hub to browse the rest
               of the live feed.
             </p>
@@ -385,7 +385,7 @@ export function HomepageCommunityFeed() {
               <button
                 type="button"
                 onClick={() => setCategory("all")}
-                className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-white/[0.14] hover:bg-white/[0.05]"
+                className="inline-flex items-center gap-2 rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.05]"
               >
                 Show all boards
               </button>
@@ -409,7 +409,7 @@ export function HomepageCommunityFeed() {
               {visiblePosts.map((post) => (
                 <article
                   key={post.id}
-                  className="group relative flex h-full flex-col overflow-hidden rounded-[2.15rem] border border-white/[0.04] bg-[linear-gradient(160deg,rgba(7,12,24,0.58),rgba(10,15,30,0.46)_55%,rgba(15,23,42,0.6))] p-5 shadow-[0_28px_70px_-52px_rgba(2,6,23,0.82)] backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-white/[0.08] hover:shadow-[0_36px_100px_-56px_rgba(56,189,248,0.16)]"
+                  className="group relative flex h-full flex-col overflow-hidden rounded-[2.15rem] border border-[#1e1a24] bg-[linear-gradient(160deg,rgba(7,12,24,0.58),rgba(10,15,30,0.46)_55%,rgba(15,23,42,0.6))] p-5 shadow-[0_28px_70px_-52px_rgba(2,6,23,0.82)] backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-[#1e1a24] hover:shadow-[0_36px_100px_-56px_rgba(56,189,248,0.16)]"
                 >
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.05),transparent_30%),radial-gradient(circle_at_85%_0%,rgba(56,189,248,0.08),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(249,115,22,0.08),transparent_32%)] opacity-70" />
                   {(() => {
@@ -430,7 +430,7 @@ export function HomepageCommunityFeed() {
                     return (
                       <div className="relative flex h-full flex-col">
                         <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                          <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                             <span
                               className={`rounded-full border px-3 py-1 ${theme.badge}`}
                             >
@@ -439,7 +439,7 @@ export function HomepageCommunityFeed() {
                           </div>
 
                           <div className="ml-auto flex items-center gap-2">
-                            <span className="shrink-0 pt-1 text-[11px] font-medium text-slate-500">
+                            <span className="shrink-0 pt-1 text-[11px] font-medium text-[#565061]">
                               {formatCreatedAt(post.createdAt)}
                             </span>
                             <CommunityPostAdminMenu
@@ -490,7 +490,7 @@ export function HomepageCommunityFeed() {
                             <h3 className="line-clamp-2 text-lg font-bold tracking-tight text-white transition-colors group-hover:text-orange-300">
                               {post.title}
                             </h3>
-                            <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-400">
+                            <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[#8d8696]">
                               {summary}
                             </p>
                           </Link>
@@ -526,7 +526,7 @@ export function HomepageCommunityFeed() {
                               </div>
                             </div>
 
-                            <span className="ml-auto shrink-0 text-[11px] font-semibold text-slate-400">
+                            <span className="ml-auto shrink-0 text-[11px] font-semibold text-[#8d8696]">
                               {formatSignalCount(totalSignals)}
                             </span>
                           </div>
@@ -539,8 +539,8 @@ export function HomepageCommunityFeed() {
             </div>
 
             {filteredPosts.length > visiblePosts.length && (
-              <div className="mt-5 flex flex-col gap-3 rounded-2xl bg-white/[0.04] px-4 py-3 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-slate-400">
+              <div className="mt-5 flex flex-col gap-3 rounded-2xl bg-[#ff5a1f]/[0.05] px-4 py-3 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-[#8d8696]">
                   {filteredPosts.length - visiblePosts.length} more board
                   {filteredPosts.length - visiblePosts.length === 1
                     ? ""

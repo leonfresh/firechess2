@@ -78,7 +78,7 @@ export function OppositeCastlingCard({ games }: OppositeCastlingCardProps) {
           </div>
           <div>
             <p className="text-[11px] font-bold text-white">Opposite-side Castling</p>
-            <p className="text-[10px] text-slate-500">Win rate when both sides castle opposite</p>
+            <p className="text-[10px] text-[#565061]">Win rate when both sides castle opposite</p>
           </div>
         </div>
         <span className="shrink-0 rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-400">
@@ -89,15 +89,15 @@ export function OppositeCastlingCard({ games }: OppositeCastlingCardProps) {
       <div className="mt-4 grid grid-cols-3 gap-3">
         <div className="rounded-xl bg-black/30 p-3 text-center">
           <p className="text-lg font-bold text-white">{winRate.toFixed(0)}%</p>
-          <p className="text-[10px] text-slate-500">Win rate</p>
+          <p className="text-[10px] text-[#565061]">Win rate</p>
         </div>
         <div className="rounded-xl bg-black/30 p-3 text-center">
           <p className="text-lg font-bold text-amber-400">{stat.userWins}</p>
-          <p className="text-[10px] text-slate-500">Wins</p>
+          <p className="text-[10px] text-[#565061]">Wins</p>
         </div>
         <div className="rounded-xl bg-black/30 p-3 text-center">
           <p className="text-lg font-bold text-red-400">{stat.userLosses}</p>
-          <p className="text-[10px] text-slate-500">Losses</p>
+          <p className="text-[10px] text-[#565061]">Losses</p>
         </div>
       </div>
     </div>

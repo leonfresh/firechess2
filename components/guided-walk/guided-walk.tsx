@@ -364,7 +364,7 @@ export function GuidedWalk(props: GuidedWalkProps) {
                   ? "w-8 bg-orange-400"
                   : i < step
                     ? "w-3 bg-orange-400/60"
-                    : "w-3 bg-white/15"
+                    : "w-3 bg-[#ff5a1f]/15"
               }`}
             />
           ))}
@@ -372,7 +372,7 @@ export function GuidedWalk(props: GuidedWalkProps) {
         <button
           type="button"
           onClick={props.onFinish}
-          className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 transition-colors hover:text-white"
+          className="inline-flex items-center gap-1 text-xs font-medium text-[#565061] transition-colors hover:text-white"
         >
           Skip walkthrough
           <X className="h-3.5 w-3.5" />
@@ -451,17 +451,17 @@ export function GuidedWalk(props: GuidedWalkProps) {
       </div>
 
       {/* Bottom nav — pinned to the bottom of the viewport. */}
-      <div className="relative z-10 mx-auto flex w-full max-w-4xl shrink-0 items-center justify-between gap-3 border-t border-white/[0.07] px-5 py-5 sm:px-8">
+      <div className="relative z-10 mx-auto flex w-full max-w-4xl shrink-0 items-center justify-between gap-3 border-t border-[#1e1a24] px-5 py-5 sm:px-8">
         <button
           type="button"
           onClick={back}
           disabled={step === 0}
-          className="inline-flex items-center gap-1 rounded-xl px-3 py-2 text-sm font-medium text-slate-400 transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+          className="inline-flex items-center gap-1 rounded-xl px-3 py-2 text-sm font-medium text-[#8d8696] transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
         >
           <ChevronLeft className="h-4 w-4" />
           Back
         </button>
-        <span className="text-xs font-medium text-slate-600">
+        <span className="text-xs font-medium text-[#565061]">
           {step + 1} / {totalSteps}
         </span>
         <button
@@ -514,7 +514,7 @@ function HeadlineStep({
           costing you the most rating
         </span>
       </h2>
-      <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-400">
+      <p className="mt-4 max-w-md text-sm leading-relaxed text-[#8d8696]">
         We compared every move in {username}&apos;s games against Stockfish 18.
         Here&apos;s what matters most — then we&apos;ll walk you through it.
       </p>
@@ -545,7 +545,7 @@ function HeadlineStep({
       </div>
 
       {vibeTitle && (
-        <p className="mt-6 text-sm italic text-slate-500">
+        <p className="mt-6 text-sm italic text-[#565061]">
           Verdict: {vibeTitle}
         </p>
       )}
@@ -580,7 +580,7 @@ function RadarStep({
         tone="orange"
       />
       {narrative && (
-        <p className="mt-4 max-w-lg text-sm leading-relaxed text-slate-400">
+        <p className="mt-4 max-w-lg text-sm leading-relaxed text-[#8d8696]">
           {narrative.confidenceLead}
         </p>
       )}
@@ -608,11 +608,11 @@ function RadarStep({
               <span className="text-amber-400">{weakest?.value}</span>
             </p>
           </div>
-          <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4 text-center">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-4 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#565061]">
               Overall
             </p>
-            <p className="mt-1 text-3xl font-black text-white">{avg}<span className="text-base text-slate-500">/100</span></p>
+            <p className="mt-1 text-3xl font-black text-white">{avg}<span className="text-base text-[#565061]">/100</span></p>
           </div>
         </div>
       </div>
@@ -660,8 +660,8 @@ function TopLeakStep({
           mode="static"
         />
         <div className="space-y-4">
-          <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
-            <p className="text-sm leading-relaxed text-slate-300">
+          <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-4">
+            <p className="text-sm leading-relaxed text-[#f0edf2]">
               {leak.userMove ? (
                 <>
                   You played{" "}
@@ -722,13 +722,13 @@ function TopLeakStep({
                 <p className="text-[10px] font-medium uppercase tracking-wider text-indigo-400/70">
                   Known Opening Line
                 </p>
-                <p className="mt-0.5 text-xs text-slate-400">
+                <p className="mt-0.5 text-xs text-[#8d8696]">
                   Your move{" "}
-                  <span className="font-mono font-bold text-slate-300">
+                  <span className="font-mono font-bold text-[#f0edf2]">
                     {userSan ?? leak.userMove}
                   </span>{" "}
                   is played in{" "}
-                  <span className="font-semibold text-slate-300">
+                  <span className="font-semibold text-[#f0edf2]">
                     {leak.dbGames.toLocaleString()}
                   </span>{" "}
                   database games with a{" "}
@@ -744,7 +744,7 @@ function TopLeakStep({
 
           {isSideline ? (
             <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] p-4">
-              <p className="text-xs leading-relaxed text-slate-400">
+              <p className="text-xs leading-relaxed text-[#8d8696]">
                 <span className="font-semibold text-emerald-300">Nothing to fix:</span>{" "}
                 This isn't a mistake — it's a sideline you know. The engine just prefers a different
                 move, but your choice is well-established in practice with decent results.
@@ -752,7 +752,7 @@ function TopLeakStep({
             </div>
           ) : (
             <div className="rounded-xl border border-orange-500/15 bg-orange-500/[0.04] p-4">
-              <p className="text-xs leading-relaxed text-slate-400">
+              <p className="text-xs leading-relaxed text-[#8d8696]">
                 <span className="font-semibold text-orange-300">Why it matters:</span>{" "}
                 A leak that shows up in {leak.reachCount ?? 1} of your games is a
                 habit, not a blunder. Fix this one position and you fix it every
@@ -800,12 +800,12 @@ function TacticStep({
           mode="interactive"
         />
         <div className="space-y-4 lg:pt-1">
-          <p className="text-sm leading-relaxed text-slate-400">
+          <p className="text-sm leading-relaxed text-[#8d8696]">
             Drag the best move onto the board — instant feedback. This is the kind
             of pattern that, once you see it, you stop losing to.
           </p>
           <div className="rounded-xl border border-cyan-500/15 bg-cyan-500/[0.04] p-4">
-            <p className="text-xs leading-relaxed text-slate-400">
+            <p className="text-xs leading-relaxed text-[#8d8696]">
               <span className="font-semibold text-cyan-300">Tip:</span>{" "}
               {tactic.mateIn
                 ? `Forced mate in ${tactic.mateIn} — look for forcing checks and captures that narrow the king's escape squares.`
@@ -841,13 +841,13 @@ function MotifStep({ motif }: { motif: DerivedMotif }) {
             mode="static"
           />
         ) : (
-          <div className="flex aspect-square items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.03] text-sm text-slate-500">
+          <div className="flex aspect-square items-center justify-center rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] text-sm text-[#565061]">
             No example position available
           </div>
         )}
         <div className="space-y-4 lg:pt-1">
-          <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
-            <p className="text-sm leading-relaxed text-slate-300">
+          <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-4">
+            <p className="text-sm leading-relaxed text-[#f0edf2]">
               You made <span className="font-bold text-white">{motif.count}</span>{" "}
               {motif.count === 1 ? "mistake" : "mistakes"} fitting this pattern,
               averaging{" "}
@@ -869,7 +869,7 @@ function MotifStep({ motif }: { motif: DerivedMotif }) {
             </div>
           </div>
           <div className="rounded-xl border border-cyan-500/15 bg-cyan-500/[0.04] p-4">
-            <p className="text-xs leading-relaxed text-slate-400">
+            <p className="text-xs leading-relaxed text-[#8d8696]">
               <span className="font-semibold text-cyan-300">Pattern training:</span>{" "}
               Recognizing <em>{motif.name.toLowerCase()}</em> when it appears
               on the board lets you find the right continuation instead of an
@@ -903,20 +903,20 @@ function BrilliantStep({ brilliant }: { brilliant: BrilliantMove }) {
           praise
         />
         <div className="space-y-4 lg:pt-1">
-          <p className="text-sm leading-relaxed text-slate-300">
+          <p className="text-sm leading-relaxed text-[#f0edf2]">
             Not every finding here is a leak. The engine flagged this move as
             brilliant — a deep, non-obvious idea that most players miss. You
             found it.
           </p>
           {brilliant.reason && (
             <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] p-4">
-              <p className="text-xs leading-relaxed text-slate-300">
+              <p className="text-xs leading-relaxed text-[#f0edf2]">
                 <span className="font-semibold text-emerald-300">Why it&apos;s strong:</span>{" "}
                 {brilliant.reason}
               </p>
             </div>
           )}
-          <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
+          <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-4">
             <div className="grid grid-cols-2 gap-2 text-center">
               <MiniStat
                 label="Eval swing"
@@ -957,8 +957,8 @@ function EndgameStep({ endgame }: { endgame: EndgameMistake }) {
           mode="static"
         />
         <div className="space-y-4 lg:pt-1">
-          <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
-            <p className="text-sm leading-relaxed text-slate-300">
+          <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-4">
+            <p className="text-sm leading-relaxed text-[#f0edf2]">
               {endgame.userMove ? (
                 <>
                   You played{" "}
@@ -1000,7 +1000,7 @@ function EndgameStep({ endgame }: { endgame: EndgameMistake }) {
             </div>
           </div>
           <div className="rounded-xl border border-sky-500/15 bg-sky-500/[0.04] p-4">
-            <p className="text-xs leading-relaxed text-slate-400">
+            <p className="text-xs leading-relaxed text-[#8d8696]">
               <span className="font-semibold text-sky-300">Why endgames matter:</span>{" "}
               Endgames are where points are banked or thrown away. Fewer pieces
               means fewer calculations — the right technique here is pure
@@ -1030,7 +1030,7 @@ function ProfileStep({
         icon={<Trophy className="h-4 w-4" />}
         tone="orange"
       />
-      <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-400">
+      <p className="mt-4 max-w-2xl text-sm leading-relaxed text-[#8d8696]">
         {narrative.coachingParagraph}
       </p>
 
@@ -1045,8 +1045,8 @@ function ProfileStep({
         ))}
       </div>
 
-      <div className="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
-        <p className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+      <div className="mt-4 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-4">
+        <p className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-[#565061]">
           All dimensions
         </p>
         <div className="space-y-2">
@@ -1096,10 +1096,10 @@ function ProfileBar({ dimension, value }: { dimension: string; value: number }) 
           : "bg-red-400";
   return (
     <div className="flex items-center gap-3">
-      <span className="w-24 shrink-0 truncate text-xs text-slate-500">
+      <span className="w-24 shrink-0 truncate text-xs text-[#565061]">
         {dimension}
       </span>
-      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#1e1a24]">
         <div
           className={`h-1.5 rounded-full ${barBg} transition-all duration-700`}
           style={{ width: `${value}%` }}
@@ -1143,7 +1143,7 @@ function PlanStep({
         icon={<ListChecks className="h-4 w-4" />}
         tone="orange"
       />
-      <p className="mt-3 text-sm leading-relaxed text-slate-400">
+      <p className="mt-3 text-sm leading-relaxed text-[#8d8696]">
         Drill these until they&apos;re automatic. The full report has every
         position, deeper analysis, and shareable cards.
       </p>
@@ -1153,21 +1153,21 @@ function PlanStep({
           planItems.map((item, i) => (
             <div
               key={i}
-              className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] p-3.5"
+              className="flex items-center gap-3 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-3.5"
             >
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-500/20 text-xs font-bold text-orange-300">
                 {i + 1}
               </span>
-              <span className="flex-1 text-sm text-slate-200">
+              <span className="flex-1 text-sm text-white">
                 {item.label}
               </span>
-              <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              <span className="rounded-full bg-[#1e1a24] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#8d8696]">
                 {item.tag}
               </span>
             </div>
           ))
         ) : (
-          <p className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4 text-sm text-slate-400">
+          <p className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-4 text-sm text-[#8d8696]">
             No specific drills to queue — your scan came back clean. Keep
             playing and scan again after a batch of new games.
           </p>
@@ -1176,7 +1176,7 @@ function PlanStep({
 
       {mentalStats && (
         <div className="mt-4 rounded-xl border border-cyan-500/15 bg-cyan-500/[0.04] p-4">
-          <p className="text-xs leading-relaxed text-slate-400">
+          <p className="text-xs leading-relaxed text-[#8d8696]">
             <span className="font-semibold text-cyan-300">Clock check:</span>{" "}
             {tiltInsight(mentalStats, username)}
           </p>
@@ -1192,14 +1192,14 @@ function PlanStep({
       )}
 
       {/* ── Share card ── */}
-      <div className="mt-5 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-sky-500/[0.06] to-violet-500/[0.04] p-5">
+      <div className="mt-5 rounded-2xl border border-[#1e1a24] bg-gradient-to-br from-sky-500/[0.06] to-violet-500/[0.04] p-5">
         <div className="flex items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/15 text-sky-300">
             <Share2 className="h-5 w-5" />
           </span>
           <div className="flex-1">
             <h4 className="text-base font-bold text-white">Share your report</h4>
-            <p className="mt-1 text-xs leading-relaxed text-slate-400">
+            <p className="mt-1 text-xs leading-relaxed text-[#8d8696]">
               Let others see your chess profile — accuracy, rating, and leak
               rate in one post.
             </p>
@@ -1248,7 +1248,7 @@ function ShareOnXButton({
       href={`https://twitter.com/intent/tweet?text=${text}&url=${url}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-1.5 rounded-xl bg-white/[0.06] px-4 py-2.5 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/[0.12] hover:text-white"
+      className="inline-flex items-center gap-1.5 rounded-xl bg-[#1e1a24] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#ff5a1f]/[0.12] hover:text-white"
     >
       <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -1274,7 +1274,7 @@ function CopyLinkButton() {
     <button
       type="button"
       onClick={copy}
-      className="inline-flex items-center gap-1.5 rounded-xl bg-white/[0.06] px-4 py-2.5 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/[0.12] hover:text-white"
+      className="inline-flex items-center gap-1.5 rounded-xl bg-[#1e1a24] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#ff5a1f]/[0.12] hover:text-white"
     >
       <Copy className="h-4 w-4" />
       {copied ? "Copied!" : "Copy link"}
@@ -1304,7 +1304,7 @@ function SavePrompt({
               ? "Already on your dashboard"
               : "Saved to your profile"}
           </p>
-          <p className="mt-0.5 text-xs leading-relaxed text-slate-400">
+          <p className="mt-0.5 text-xs leading-relaxed text-[#8d8696]">
             Find it anytime on your dashboard. The full report below has every
             position and deeper analysis.
           </p>
@@ -1317,7 +1317,7 @@ function SavePrompt({
   const isError = saveStatus === "error";
 
   return (
-    <div className="mt-5 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-cyan-500/[0.06] to-emerald-500/[0.04] p-5">
+    <div className="mt-5 rounded-2xl border border-[#1e1a24] bg-gradient-to-br from-cyan-500/[0.06] to-emerald-500/[0.04] p-5">
       <div className="flex items-start gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-300">
           <Bookmark className="h-5 w-5" />
@@ -1326,7 +1326,7 @@ function SavePrompt({
           <h4 className="text-base font-bold text-white">
             {authenticated ? "Save this report" : "Keep this report"}
           </h4>
-          <p className="mt-1 text-xs leading-relaxed text-slate-400">
+          <p className="mt-1 text-xs leading-relaxed text-[#8d8696]">
             {authenticated
               ? "Lock these findings to your profile so you can come back to them anytime."
               : "Create a free account to save this scan to your profile before it expires in 24 hours."}
@@ -1421,8 +1421,8 @@ function Stat({
   color: string;
 }) {
   return (
-    <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-3 text-left">
-      <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+    <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-3 text-left">
+      <p className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">
         {label}
       </p>
       <p className={`mt-1 text-2xl font-bold tabular-nums ${color}`}>{value}</p>
@@ -1450,7 +1450,7 @@ function MiniStat({
   return (
     <div>
       <p className={`text-base font-bold tabular-nums ${color}`}>{value}</p>
-      <p className="text-[10px] uppercase tracking-wider text-slate-500">
+      <p className="text-[10px] uppercase tracking-wider text-[#565061]">
         {label}
       </p>
     </div>
@@ -1472,7 +1472,7 @@ function EmptyStep({
         {icon}
       </div>
       <h3 className="mt-4 text-xl font-bold text-white">{title}</h3>
-      <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-400">
+      <p className="mt-2 max-w-sm text-sm leading-relaxed text-[#8d8696]">
         {text}
       </p>
     </div>
@@ -1498,14 +1498,14 @@ function CrossRefStep({ insight }: { insight: TimePositionalInsight }) {
           are connected
         </span>
       </h2>
-      <p className="mt-4 max-w-lg text-sm leading-relaxed text-slate-400">
+      <p className="mt-4 max-w-lg text-sm leading-relaxed text-[#8d8696]">
         {pct}% of your {verdictLabel} moves involved <strong className="text-white">{insight.motifName.toLowerCase()}</strong>.
         Each one cost ~{cpCost} pawns. This isn't a coincidence — it's a habit you can break.
       </p>
       <div className="mt-6 rounded-2xl border border-violet-500/15 bg-violet-500/[0.04] px-6 py-4">
-        <p className="text-sm leading-relaxed text-slate-300">{insight.insight}</p>
+        <p className="text-sm leading-relaxed text-[#f0edf2]">{insight.insight}</p>
       </div>
-      <div className="mt-4 flex items-center gap-4 text-[11px] text-slate-500">
+      <div className="mt-4 flex items-center gap-4 text-[11px] text-[#565061]">
         <span>{insight.motifIcon} {insight.motifName}</span>
         <span>·</span>
         <span>{insight.overlapCount}x detected</span>
@@ -1537,7 +1537,7 @@ function LessonStep({
           into a 2-minute lesson
         </span>
       </h2>
-      <p className="mt-4 max-w-lg text-sm leading-relaxed text-slate-400">
+      <p className="mt-4 max-w-lg text-sm leading-relaxed text-[#8d8696]">
         We generated a personalized interactive lesson from your own games. See the exact positions where {insight.motifName.toLowerCase()} and {insight.timeVerdict} moves overlapped — then practice finding the right move.
       </p>
       <button
@@ -1548,7 +1548,7 @@ function LessonStep({
         <Sparkles className="h-4 w-4" />
         Start the lesson
       </button>
-      <p className="mt-3 text-[11px] text-slate-500">~2 min · based on your actual games</p>
+      <p className="mt-3 text-[11px] text-[#565061]">~2 min · based on your actual games</p>
     </div>
   );
 }

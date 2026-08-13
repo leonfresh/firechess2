@@ -120,7 +120,7 @@ function PercentileBar({
       : "bg-cyan-500/10";
 
   return (
-    <div className="space-y-2 rounded-xl border border-white/5 bg-white/[0.02] p-4">
+    <div className="space-y-2 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4">
       <div className="flex items-center justify-between">
         <span className="text-xs text-white/40">{label}</span>
         <span className="text-xs font-medium text-white/50">{value}</span>

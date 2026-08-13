@@ -717,7 +717,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
               <h3 className="text-base font-bold text-white">{variantConfig.label}</h3>
               <span className={`rounded-full ${accent.pillBg} px-2.5 py-0.5 text-xs font-semibold`}>{drillPositions.length} {drillPositions.length === 1 ? "card" : "cards"}</span>
             </div>
-            <p className="mt-0.5 text-sm text-slate-400">{subtitleMap[drillVariant]}</p>
+            <p className="mt-0.5 text-sm text-[#8d8696]">{subtitleMap[drillVariant]}</p>
           </div>
           <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${accent.btnBg} transition-colors`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={`${accent.text} transition-transform group-hover:translate-x-0.5`}><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -728,7 +728,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
       {isOpen && current && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm" style={{ isolation: "isolate" }}>
           <div
-            className="animate-fade-in w-full max-w-[1200px] rounded-2xl border border-white/[0.08] p-6 md:p-8"
+            className="animate-fade-in w-full max-w-[1200px] rounded-2xl border border-[#1e1a24] p-6 md:p-8"
             style={{
               background: "linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(15,23,42,0.95) 100%)",
               boxShadow: "0 0 0 1px rgba(255,255,255,0.03) inset, 0 20px 60px -12px rgba(0,0,0,0.5)",
@@ -740,7 +740,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 text-xl">{variantConfig.emoji}</span>
                 <div>
                   <h2 className="text-xl font-bold text-white">{variantConfig.label}</h2>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-[#8d8696]">
                     {continuationMode ? "Play out the winning combination" : "Find the best move on the board"}
                   </p>
                 </div>
@@ -753,7 +753,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
                   </div>
                 )}
                 {/* Solved counter */}
-                <div className="flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-sm text-slate-300">
+                <div className="flex items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1.5 text-sm text-[#f0edf2]">
                   <span className="text-base">✅</span> {solvedSet.size}/{drillPositions.length}
                 </div>
                 <button
@@ -774,7 +774,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
             {allSolved && (
               <div className="mb-5 animate-fade-in rounded-xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/[0.08] to-cyan-500/[0.08] p-4 text-center">
                 <p className="text-lg font-bold text-emerald-300">🎉 All puzzles solved!</p>
-                <p className="mt-1 text-sm text-slate-400">
+                <p className="mt-1 text-sm text-[#8d8696]">
                   Best streak: <span className="font-semibold text-orange-400">🔥 {bestStreak}</span>
                   {" · "}You can keep practicing or close the drill.
                 </p>
@@ -814,7 +814,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-white">Puzzle {index + 1}</span>
-                      <span className="text-slate-500">of {drillPositions.length}</span>
+                      <span className="text-[#565061]">of {drillPositions.length}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       {/* Category badge */}
@@ -833,7 +833,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
                       </span>
                     </div>
                   </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-[#1e1a24]">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-500"
                       style={{ width: `${((index + 1) / drillPositions.length) * 100}%` }}
@@ -851,7 +851,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
                             ? "scale-125 bg-cyan-400"
                             : solvedSet.has(i)
                             ? "bg-emerald-500/70"
-                            : "bg-white/[0.12] hover:bg-white/[0.2]"
+                            : "bg-[#ff5a1f]/[0.12] hover:bg-[#ff5a1f]/[0.2]"
                         }`}
                         title={`Puzzle ${i + 1}${solvedSet.has(i) ? " (solved)" : ""}`}
                       />
@@ -869,7 +869,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
                     ? "border-red-500/20 bg-red-500/[0.04]"
                     : evaluating
                     ? "border-cyan-500/20 bg-cyan-500/[0.04]"
-                    : "border-white/[0.06] bg-white/[0.02]"
+                    : "border-[#1e1a24] bg-[#ff5a1f]/[0.03]"
                 }`}>
                   {solved ? (
                     <>
@@ -884,7 +884,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
                             {moveBadge.label === "Best" ? "⭐ " : ""}{moveBadge.label}
                           </span>
                         )}
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-[#8d8696]">
                           {continuationMode ? "Continue the combination..." : "Auto-advancing..."}
                         </p>
                       </div>
@@ -896,7 +896,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
                       </span>
                       <div>
                         <span className="font-semibold text-violet-300">Opponent is responding...</span>
-                        <p className="text-xs text-slate-400">Continue the combination after they move</p>
+                        <p className="text-xs text-[#8d8696]">Continue the combination after they move</p>
                       </div>
                     </>
                   ) : evaluating ? (
@@ -906,7 +906,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
                       </span>
                       <div>
                         <span className="font-semibold text-cyan-300">Evaluating your move...</span>
-                        <p className="text-xs text-slate-400">Stockfish is checking move quality</p>
+                        <p className="text-xs text-[#8d8696]">Stockfish is checking move quality</p>
                       </div>
                     </>
                   ) : feedback ? (
@@ -924,19 +924,19 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-[#8d8696]">
                           {attempts >= 3 ? "Hint: the correct piece is highlighted" : `Attempt ${attempts}/3 — piece snaps back`}
                         </p>
                       </div>
                     </>
                   ) : (
                     <>
-                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.05] text-lg text-slate-400">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#ff5a1f]/[0.05] text-lg text-[#8d8696]">
                         {boardOrientation === "white" ? "♔" : "♚"}
                       </span>
                       <div>
-                        <span className="text-slate-200">Your turn as <span className="font-semibold">{boardOrientation}</span></span>
-                        <p className="text-xs text-slate-500">
+                        <span className="text-white">Your turn as <span className="font-semibold">{boardOrientation}</span></span>
+                        <p className="text-xs text-[#565061]">
                           {continuationMode
                             ? `Continue the combination! (move ${continuationMoveCount + 1})`
                             : "Drag the best move on the board"}
@@ -948,8 +948,8 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
 
                 {/* Eval info */}
                 {typeof current.evalBefore === "number" && (
-                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-2.5 text-sm text-slate-400">
-                    Position eval: <span className="font-mono font-medium text-slate-200">
+                  <div className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-4 py-2.5 text-sm text-[#8d8696]">
+                    Position eval: <span className="font-mono font-medium text-white">
                       {current.evalBefore > 0 ? "+" : ""}{(current.evalBefore / 100).toFixed(1)}
                     </span>
                     {" · "}Loss: <span className="font-mono font-medium text-red-400">
@@ -967,7 +967,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
                     Prev
-                    <kbd className="ml-1 hidden rounded border border-white/10 bg-white/[0.04] px-1 py-0.5 text-[10px] text-slate-500 sm:inline">←</kbd>
+                    <kbd className="ml-1 hidden rounded border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-1 py-0.5 text-[10px] text-[#565061] sm:inline">←</kbd>
                   </button>
                   <button
                     type="button"
@@ -975,7 +975,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
                     onClick={goNext}
                   >
                     Next
-                    <kbd className="ml-1 hidden rounded border border-white/10 bg-white/[0.04] px-1 py-0.5 text-[10px] text-slate-500 sm:inline">→</kbd>
+                    <kbd className="ml-1 hidden rounded border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-1 py-0.5 text-[10px] text-[#565061] sm:inline">→</kbd>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                   </button>
                   <button
@@ -991,7 +991,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                     Hint
-                    <kbd className="ml-1 hidden rounded border border-white/10 bg-white/[0.04] px-1 py-0.5 text-[10px] text-slate-500 sm:inline">H</kbd>
+                    <kbd className="ml-1 hidden rounded border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-1 py-0.5 text-[10px] text-[#565061] sm:inline">H</kbd>
                   </button>
                   <button
                     type="button"
@@ -1011,12 +1011,12 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 105.64-12.36L1 10"/></svg>
                     Reset
-                    <kbd className="ml-1 hidden rounded border border-white/10 bg-white/[0.04] px-1 py-0.5 text-[10px] text-slate-500 sm:inline">R</kbd>
+                    <kbd className="ml-1 hidden rounded border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-1 py-0.5 text-[10px] text-[#565061] sm:inline">R</kbd>
                   </button>
                 </div>
 
                 {/* Keyboard shortcuts legend */}
-                <p className="mt-auto hidden text-xs text-slate-600 sm:block">
+                <p className="mt-auto hidden text-xs text-[#565061] sm:block">
                   ← → navigate · H hint · R reset · Esc close
                 </p>
               </div>

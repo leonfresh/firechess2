@@ -161,14 +161,14 @@ export function DashboardScanWidget() {
         </span>
         <div>
           <h3 className="text-sm font-bold text-white">New Scan</h3>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-[11px] text-[#565061]">
             Analyze your recent games
           </p>
         </div>
       </div>
 
       {/* Platform + Username */}
-      <div className="flex items-center overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.04]">
+      <div className="flex items-center overflow-hidden rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.05]">
         <div className="flex shrink-0 gap-0.5 px-2 py-2">
           {(["lichess", "chesscom", "pgn"] as const).map((s) => (
             <button
@@ -178,14 +178,14 @@ export function DashboardScanWidget() {
               className={`rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition-all ${
                 source === s
                   ? "bg-gradient-to-r from-amber-200 to-orange-300 text-slate-950"
-                  : "text-slate-400 hover:text-slate-200"
+                  : "text-[#8d8696] hover:text-white"
               }`}
             >
               {s === "lichess" ? "Lichess" : s === "chesscom" ? "Chess.com" : "PGN"}
             </button>
           ))}
         </div>
-        <div className="h-6 w-px shrink-0 bg-white/[0.10]" />
+        <div className="h-6 w-px shrink-0 bg-[#ff5a1f]/10" />
         <input
           type="text"
           value={username}
@@ -196,7 +196,7 @@ export function DashboardScanWidget() {
             : source === "pgn" ? "Your name (as in PGN)"
             : "Pick a platform"
           }
-          className="flex-1 bg-transparent px-3 py-3 text-sm text-white outline-none placeholder:text-slate-500"
+          className="flex-1 bg-transparent px-3 py-3 text-sm text-white outline-none placeholder:text-[#565061]"
         />
       </div>
 
@@ -205,7 +205,7 @@ export function DashboardScanWidget() {
           value={pgnText}
           onChange={(e) => setPgnText(e.target.value)}
           placeholder="Paste one or more PGN games here..."
-          className="h-24 w-full resize-y rounded-xl bg-black/30 p-3 font-mono text-xs text-white outline-none placeholder:text-slate-500"
+          className="h-24 w-full resize-y rounded-xl bg-black/30 p-3 font-mono text-xs text-white outline-none placeholder:text-[#565061]"
         />
       )}
 
@@ -213,7 +213,7 @@ export function DashboardScanWidget() {
       <button
         type="button"
         onClick={() => setAdvancedOpen(!advancedOpen)}
-        className="flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors"
+        className="flex items-center gap-2 text-xs font-medium text-[#8d8696] hover:text-white transition-colors"
       >
         <svg className={`h-3 w-3 transition-transform ${advancedOpen ? "rotate-90" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
           <path d="M9 5l7 7-7 7" />
@@ -222,10 +222,10 @@ export function DashboardScanWidget() {
       </button>
 
       {advancedOpen && (
-        <div className="space-y-3 rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
+        <div className="space-y-3 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4">
           {/* Time control */}
           <div>
-            <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+            <span className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">
               Time Control
             </span>
             <div className="mt-1 grid h-9 grid-cols-5 gap-1">
@@ -248,7 +248,7 @@ export function DashboardScanWidget() {
                   className={`rounded-md text-[10px] font-semibold transition-all ${
                     speed.includes(tc)
                       ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950"
-                      : "text-slate-400 hover:bg-white/[0.05]"
+                      : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05]"
                   }`}
                 >
                   {tc === "all" ? "All" : tc.charAt(0).toUpperCase() + tc.slice(1)}
@@ -259,17 +259,17 @@ export function DashboardScanWidget() {
 
           {/* Game range mode toggle */}
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+            <span className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">
               Range
             </span>
-            <div className="flex h-6 gap-0.5 rounded-md border border-white/[0.06] bg-white/[0.02] p-0.5">
+            <div className="flex h-6 gap-0.5 rounded-md border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-0.5">
               <button
                 type="button"
                 onClick={() => setGameRangeMode("count")}
                 className={`rounded px-2 text-[10px] font-semibold transition-all ${
                   gameRangeMode === "count"
                     ? "bg-emerald-500/80 text-slate-950"
-                    : "text-slate-500"
+                    : "text-[#565061]"
                 }`}
               >
                 Last N
@@ -280,7 +280,7 @@ export function DashboardScanWidget() {
                 className={`rounded px-2 text-[10px] font-semibold transition-all ${
                   gameRangeMode === "since"
                     ? "bg-emerald-500/80 text-slate-950"
-                    : "text-slate-500"
+                    : "text-[#565061]"
                 }`}
               >
                 Range
@@ -292,7 +292,7 @@ export function DashboardScanWidget() {
           <div className="grid grid-cols-2 gap-3">
             {gameRangeMode === "count" ? (
               <div className="space-y-1">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Games</span>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">Games</span>
                 <input
                   type="number"
                   min={1}
@@ -304,7 +304,7 @@ export function DashboardScanWidget() {
               </div>
             ) : (
               <div className="space-y-1">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">From</span>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">From</span>
                 <input
                   type="date"
                   value={sinceDate}
@@ -316,7 +316,7 @@ export function DashboardScanWidget() {
               </div>
             )}
             <div className="space-y-1">
-              <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Moves</span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">Moves</span>
               <input
                 type="number"
                 min={1}
@@ -327,7 +327,7 @@ export function DashboardScanWidget() {
               />
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">CP Threshold</span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">CP Threshold</span>
               <input
                 type="number"
                 min={1}
@@ -338,7 +338,7 @@ export function DashboardScanWidget() {
               />
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Depth</span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">Depth</span>
               <input
                 type="number"
                 min={6}

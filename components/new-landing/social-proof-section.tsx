@@ -46,7 +46,7 @@ export function SocialProofSection() {
             return (
               <div
                 key={stat.label}
-                className="flex items-center justify-center gap-4 rounded-2xl border border-white/[0.06] bg-[#0c0f15] p-6"
+                className="flex items-center justify-center gap-4 rounded-2xl border border-[#1e1a24] bg-[#0c0f15] p-6"
               >
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/10 text-orange-400">
                   <Icon className="h-6 w-6" />
@@ -55,7 +55,7 @@ export function SocialProofSection() {
                   <div className="text-2xl font-bold text-white">
                     {stat.value}
                   </div>
-                  <div className="text-sm text-slate-500">{stat.label}</div>
+                  <div className="text-sm text-[#565061]">{stat.label}</div>
                 </div>
               </div>
             );
@@ -64,7 +64,7 @@ export function SocialProofSection() {
 
         {/* Testimonials */}
         <div className="mb-16 text-center">
-          <span className="mb-4 inline-block rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-slate-400">
+          <span className="mb-4 inline-block rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-[#8d8696]">
             Testimonials
           </span>
           <h2 className="mb-4 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
@@ -73,7 +73,7 @@ export function SocialProofSection() {
               actually improving
             </span>
           </h2>
-          <p className="mx-auto max-w-2xl text-lg text-slate-400">
+          <p className="mx-auto max-w-2xl text-lg text-[#8d8696]">
             Real results from real players who fixed their repeating mistakes.
           </p>
         </div>
@@ -82,21 +82,21 @@ export function SocialProofSection() {
           {TESTIMONIALS.map((testimonial, index) => (
             <div
               key={testimonial.author}
-              className="group relative rounded-2xl border border-white/[0.06] bg-[#0c0f15] p-6 transition-all duration-500 hover:border-orange-500/20 hover:bg-orange-500/[0.02]"
+              className="group relative rounded-2xl border border-[#1e1a24] bg-[#0c0f15] p-6 transition-all duration-500 hover:border-orange-500/20 hover:bg-orange-500/[0.02]"
             >
               {/* Quote icon */}
               <div className="mb-4 text-4xl text-orange-500/20">"</div>
 
-              <p className="mb-6 leading-relaxed text-slate-300">
+              <p className="mb-6 leading-relaxed text-[#f0edf2]">
                 {testimonial.quote}
               </p>
 
-              <div className="flex items-center justify-between border-t border-white/[0.06] pt-4">
+              <div className="flex items-center justify-between border-t border-[#1e1a24] pt-4">
                 <div>
                   <div className="font-semibold text-white">
                     {testimonial.author}
                   </div>
-                  <div className="text-sm text-slate-500">
+                  <div className="text-sm text-[#565061]">
                     {testimonial.role}
                   </div>
                 </div>
@@ -112,7 +112,7 @@ export function SocialProofSection() {
         </div>
 
         {/* Discord CTA */}
-        <div className="mt-16 overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-r from-[#5865F2]/10 to-[#5865F2]/5 p-8 sm:p-12">
+        <div className="mt-16 overflow-hidden rounded-2xl border border-[#1e1a24] bg-gradient-to-r from-[#5865F2]/10 to-[#5865F2]/5 p-8 sm:p-12">
           <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#5865F2]/20 text-[#5865F2]">
@@ -122,7 +122,7 @@ export function SocialProofSection() {
                 <h3 className="text-xl font-bold text-white">
                   Join the FireChess community
                 </h3>
-                <p className="text-slate-400">
+                <p className="text-[#8d8696]">
                   Get help, share your progress, and discuss chess improvement.
                 </p>
               </div>

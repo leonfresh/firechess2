@@ -70,14 +70,14 @@ export function CommunityPostCard({ post }: { post: CommunityPostCardData }) {
 
       <div className="relative flex h-full flex-col">
         <div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-5">
-          <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
             <span className={`rounded-full border px-3 py-1 ${theme.badge}`}>
               {COMMUNITY_KIND_LABELS[post.kind]}
             </span>
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            <span className="shrink-0 pt-1 text-[11px] font-medium text-slate-500">
+            <span className="shrink-0 pt-1 text-[11px] font-medium text-[#565061]">
               {createdAt}
             </span>
             <CommunityPostAdminMenu slug={post.slug} title={post.title} />
@@ -127,7 +127,7 @@ export function CommunityPostCard({ post }: { post: CommunityPostCardData }) {
             <h3 className="text-[1.12rem] font-bold tracking-tight text-white transition-colors group-hover:text-orange-200">
               {post.title}
             </h3>
-            <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-400">
+            <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[#8d8696]">
               {summary}
             </p>
           </Link>
@@ -163,7 +163,7 @@ export function CommunityPostCard({ post }: { post: CommunityPostCardData }) {
               </div>
             </div>
 
-            <span className="ml-auto shrink-0 text-[11px] font-semibold text-slate-400">
+            <span className="ml-auto shrink-0 text-[11px] font-semibold text-[#8d8696]">
               {formatSignalCount(totalSignals)}
             </span>
           </div>

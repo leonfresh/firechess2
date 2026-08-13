@@ -462,20 +462,20 @@ export function ChaosLobby({
                   <span className="text-xl font-bold text-purple-400">
                     {timerLabel}
                   </span>
-                  <span className="text-[9px] uppercase tracking-wider text-slate-500">
+                  <span className="text-[9px] uppercase tracking-wider text-[#565061]">
                     remaining
                   </span>
                 </div>
               </div>
 
               {/* Searching label */}
-              <div className="flex items-center gap-2 text-sm text-slate-400">
+              <div className="flex items-center gap-2 text-sm text-[#8d8696]">
                 <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
                 Searching for opponent…
               </div>
 
               {/* Progress bar */}
-              <div className="h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
+              <div className="h-1 w-full overflow-hidden rounded-full bg-[#1e1a24]">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-1000"
                   style={{ width: `${progressPct}%` }}
@@ -504,7 +504,7 @@ export function ChaosLobby({
           )}
 
           {!isSignedIn && searchState === "idle" && (
-            <p className="text-xs text-slate-600">
+            <p className="text-xs text-[#565061]">
               (Sign in required to matchmake)
             </p>
           )}
@@ -512,14 +512,14 @@ export function ChaosLobby({
       )}
 
       {/* ── Lobby Chat ── */}
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
+      <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] overflow-hidden">
         {/* Chat header */}
-        <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2.5">
+        <div className="flex items-center justify-between border-b border-[#1e1a24] px-4 py-2.5">
           <div className="flex items-center gap-2">
             <span className="text-sm">💬</span>
             <span className="text-xs font-bold text-white">Lobby Chat</span>
           </div>
-          <span className="text-[10px] text-slate-500">
+          <span className="text-[10px] text-[#565061]">
             {messages.length} message{messages.length !== 1 ? "s" : ""}
           </span>
         </div>
@@ -533,7 +533,7 @@ export function ChaosLobby({
                 alt=""
                 className="h-10 w-10 object-contain opacity-50"
               />
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-[#565061]">
                 No messages yet. Say hello while you wait!
               </p>
             </div>
@@ -541,7 +541,7 @@ export function ChaosLobby({
           {messages.map((msg) => (
             <div
               key={msg.id}
-              className="group flex items-start gap-2 rounded-lg px-2 py-1 hover:bg-white/[0.03]"
+              className="group flex items-start gap-2 rounded-lg px-2 py-1 hover:bg-[#ff5a1f]/[0.04]"
             >
               {msg.userImage ? (
                 <img
@@ -558,10 +558,10 @@ export function ChaosLobby({
                 <span className="text-[11px] font-semibold text-purple-400">
                   {msg.userName}
                 </span>
-                <span className="ml-1.5 text-[10px] text-slate-600">
+                <span className="ml-1.5 text-[10px] text-[#565061]">
                   {formatTime(msg.createdAt)}
                 </span>
-                <p className="text-xs leading-relaxed text-slate-300 break-words">
+                <p className="text-xs leading-relaxed text-[#f0edf2] break-words">
                   {msg.message}
                 </p>
               </div>
@@ -577,7 +577,7 @@ export function ChaosLobby({
               e.preventDefault();
               sendMessage();
             }}
-            className="flex gap-1.5 border-t border-white/[0.06] p-2"
+            className="flex gap-1.5 border-t border-[#1e1a24] p-2"
           >
             <input
               type="text"
@@ -585,7 +585,7 @@ export function ChaosLobby({
               onChange={(e) => setChatInput(e.target.value)}
               placeholder="Type a message…"
               maxLength={200}
-              className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs text-white outline-none placeholder:text-slate-600 focus:border-purple-500/40"
+              className="flex-1 rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1.5 text-xs text-white outline-none placeholder:text-[#565061] focus:border-purple-500/40"
             />
             <button
               type="submit"
@@ -596,7 +596,7 @@ export function ChaosLobby({
             </button>
           </form>
         ) : (
-          <div className="border-t border-white/[0.06] p-2 text-center text-[10px] text-slate-600">
+          <div className="border-t border-[#1e1a24] p-2 text-center text-[10px] text-[#565061]">
             Sign in to chat
           </div>
         )}

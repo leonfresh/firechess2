@@ -143,7 +143,7 @@ export function AppGridSection() {
         <h2 className="text-xl font-bold text-white sm:text-2xl">
           All FireChess Modes
         </h2>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-[#565061]">
           Play, analyse, improve — everything in one place
         </p>
       </div>
@@ -171,7 +171,7 @@ export function AppGridSection() {
                 <svg className="h-[11px] w-[11px] text-white/40 sm:h-3 sm:w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M1 9l4-4 4 4" /><path d="M1 17l4-4 4 4" />
                 </svg>
-                <div className="relative h-2.5 w-[18px] rounded-[2px] border border-white/25 overflow-hidden">
+                <div className="relative h-2.5 w-[18px] rounded-[2px] border border-[#1e1a24] overflow-hidden">
                   <div className="absolute inset-0 m-[1.5px] rounded-[1px] bg-emerald-400 w-[60%]" />
                 </div>
               </div>
@@ -197,7 +197,7 @@ export function AppGridSection() {
 
             {/* Dock */}
             <div className="flex justify-center pb-1.5 pt-0.5 sm:pb-2">
-              <div className="flex items-center gap-1.5 rounded-2xl bg-white/[0.06] px-3 py-1.5 backdrop-blur-md sm:gap-2 sm:px-4 sm:py-2">
+              <div className="flex items-center gap-1.5 rounded-2xl bg-[#1e1a24] px-3 py-1.5 backdrop-blur-md sm:gap-2 sm:px-4 sm:py-2">
                 {DOCK_APPS.map((app) => (
                   <AppIcon key={app.href} app={app} size="sm" />
                 ))}
@@ -206,7 +206,7 @@ export function AppGridSection() {
 
             {/* Home indicator */}
             <div className="flex justify-center pb-1.5 sm:pb-2">
-              <div className="h-[3px] w-[24px] rounded-full bg-white/25 sm:h-[4px] sm:w-[28px]" />
+              <div className="h-[3px] w-[24px] rounded-full bg-[#ff5a1f]/25 sm:h-[4px] sm:w-[28px]" />
             </div>
           </div>
         </div>

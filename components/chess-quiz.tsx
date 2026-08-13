@@ -815,7 +815,7 @@ export function ChessQuiz({ question, onComplete }: Props) {
       <div className="grid gap-2.5">
         {question.options.map((opt, idx) => {
           let style =
-            "border border-white/[0.08] bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.06] hover:text-white";
+            "border border-[#1e1a24] bg-[#ff5a1f]/[0.04] text-[#f0edf2] hover:border-[#ff5a1f]/20 hover:bg-[#1e1a24] hover:text-white";
           if (revealed) {
             if (idx === question.answer) {
               style =
@@ -824,7 +824,7 @@ export function ChessQuiz({ question, onComplete }: Props) {
               style = "border border-red-500/40 bg-red-500/[0.10] text-red-300";
             } else {
               style =
-                "border border-white/[0.05] bg-white/[0.01] text-slate-600";
+                "border border-[#1e1a24] bg-[#ff5a1f]/[0.02] text-[#565061]";
             }
           }
           return (

@@ -258,7 +258,7 @@ export function CoinShop() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowHistory(!showHistory)}
-            className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] text-white/40 transition-colors hover:bg-white/[0.08]"
+            className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-2.5 py-1 text-[11px] text-white/40 transition-colors hover:bg-[#1e1a24]"
           >
             {showHistory ? "Hide" : "History"}
           </button>
@@ -273,7 +273,7 @@ export function CoinShop() {
 
       {/* ─── Earning History (collapsible) ─── */}
       {showHistory && (
-        <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
+        <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4">
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-white/30">
             Recent Activity
           </h3>
@@ -333,7 +333,7 @@ export function CoinShop() {
         return (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-white">Preview</h3>
-            <div className="flex items-stretch gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-4">
+            <div className="flex items-stretch gap-3 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4">
               {/* Eval Bar preview */}
               <div
                 className="flex w-5 shrink-0 overflow-hidden rounded-md"
@@ -497,7 +497,7 @@ export function CoinShop() {
                 className={`group relative overflow-hidden rounded-xl border p-3 text-left transition-all ${
                   active
                     ? "border-emerald-500/40 bg-emerald-500/[0.06]"
-                    : "border-white/5 bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.04]"
+                    : "border-[#1e1a24] bg-[#ff5a1f]/[0.03] hover:border-[#1e1a24] hover:bg-[#ff5a1f]/[0.05]"
                 }`}
               >
                 {/* Mini board preview with pieces */}
@@ -610,7 +610,7 @@ export function CoinShop() {
                 className={`group relative overflow-hidden rounded-xl border p-3 text-left transition-all ${
                   active
                     ? "border-emerald-500/40 bg-emerald-500/[0.06]"
-                    : "border-white/5 bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.04]"
+                    : "border-[#1e1a24] bg-[#ff5a1f]/[0.03] hover:border-[#1e1a24] hover:bg-[#ff5a1f]/[0.05]"
                 }`}
               >
                 {/* Preview — 4 piece images */}
@@ -684,7 +684,7 @@ export function CoinShop() {
                 className={`group relative overflow-hidden rounded-xl border p-3 text-left transition-all ${
                   active
                     ? "border-emerald-500/40 bg-emerald-500/[0.06]"
-                    : "border-white/5 bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.04]"
+                    : "border-[#1e1a24] bg-[#ff5a1f]/[0.03] hover:border-[#1e1a24] hover:bg-[#ff5a1f]/[0.05]"
                 }`}
               >
                 {/* Preview — mini eval bar */}
@@ -763,7 +763,7 @@ export function CoinShop() {
                     ? "border-emerald-500/40 bg-emerald-500/[0.06]"
                     : isFounderExclusive && !isLifetime
                       ? "border-amber-500/10 bg-amber-500/[0.02] opacity-60"
-                      : "border-white/5 bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.04]"
+                      : "border-[#1e1a24] bg-[#ff5a1f]/[0.03] hover:border-[#1e1a24] hover:bg-[#ff5a1f]/[0.05]"
                 }`}
               >
                 <span
@@ -843,7 +843,7 @@ export function CoinShop() {
                     ? "border-emerald-500/40 bg-emerald-500/10"
                     : isFounderExclusive && !isLifetime
                       ? "border-amber-500/10 bg-amber-500/[0.02] opacity-60"
-                      : "border-white/5 bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.04]"
+                      : "border-[#1e1a24] bg-[#ff5a1f]/[0.03] hover:border-[#1e1a24] hover:bg-[#ff5a1f]/[0.05]"
                 }`}
               >
                 {/* Preview circle */}
@@ -896,7 +896,7 @@ export function CoinShop() {
       {/* ─── Board Settings ─── */}
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-white">Board Settings</h3>
-        <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] p-4">
+        <div className="flex items-center justify-between rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4">
           <div className="flex items-center gap-3">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/10 text-sm">
               🔢
@@ -919,7 +919,7 @@ export function CoinShop() {
               showToast(next ? "Coordinates shown" : "Coordinates hidden");
             }}
             className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
-              showCoords ? "bg-emerald-500" : "bg-white/10"
+              showCoords ? "bg-emerald-500" : "bg-[#ff5a1f]/10"
             }`}
           >
             <span
@@ -932,7 +932,7 @@ export function CoinShop() {
       </div>
 
       {/* ─── How to Earn ─── */}
-      <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
+      <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4">
         <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/30">
           How to Earn Coins
         </h3>
@@ -961,7 +961,7 @@ function EarnInfo({
   amount: string;
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-lg bg-white/[0.02] p-2">
+    <div className="flex items-center gap-2 rounded-lg bg-[#ff5a1f]/[0.03] p-2">
       <span className="text-base">{icon}</span>
       <div>
         <p className="text-[10px] text-white/40">{label}</p>

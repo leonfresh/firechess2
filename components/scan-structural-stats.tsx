@@ -65,9 +65,9 @@ export function ScanStructuralStats({ report }: Props) {
   return (
     <div className="space-y-6">
       {/* Title */}
-      <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
+      <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5 sm:p-6">
         <h3 className="text-lg font-bold text-white">🏗️ Positional Structure</h3>
-        <p className="mt-1 text-sm text-slate-400">
+        <p className="mt-1 text-sm text-[#8d8696]">
           How your win rate shifts depending on the pawn structure and piece
           placement in your games.
         </p>
@@ -82,7 +82,7 @@ export function ScanStructuralStats({ report }: Props) {
               className="rounded-xl border border-cyan-500/20 bg-cyan-500/[0.04] px-4 py-3 text-sm text-cyan-300"
             >
               <span className="font-semibold">💡 {insight.text}</span>
-              <span className="ml-2 text-xs text-slate-500">
+              <span className="ml-2 text-xs text-[#565061]">
                 ({insight.axis})
               </span>
             </div>
@@ -101,14 +101,14 @@ export function ScanStructuralStats({ report }: Props) {
           return (
             <div
               key={axis}
-              className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4"
+              className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4"
             >
               <div className="mb-3 flex items-center gap-2">
                 <span className="text-lg">{meta.icon}</span>
                 <span className="text-sm font-semibold text-white">
                   {meta.label}
                 </span>
-                <span className="ml-auto text-xs text-slate-500">
+                <span className="ml-auto text-xs text-[#565061]">
                   {totalGames}g
                 </span>
               </div>
@@ -119,7 +119,7 @@ export function ScanStructuralStats({ report }: Props) {
                   return (
                     <div key={entry.pattern}>
                       <div className="mb-1 flex items-center justify-between text-xs">
-                        <span className="text-slate-300 font-medium">
+                        <span className="text-[#f0edf2] font-medium">
                           {patternLabel(axis, entry.pattern)}
                         </span>
                         <span className={winRateColor(pct)}>
@@ -127,7 +127,7 @@ export function ScanStructuralStats({ report }: Props) {
                         </span>
                       </div>
                       {/* Win/Draw/Loss bar */}
-                      <div className="mb-1 flex h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                      <div className="mb-1 flex h-2 overflow-hidden rounded-full bg-[#1e1a24]">
                         {entry.wins > 0 && (
                           <div
                             className="bg-emerald-400 transition-all"
@@ -147,7 +147,7 @@ export function ScanStructuralStats({ report }: Props) {
                           />
                         )}
                       </div>
-                      <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                      <div className="flex items-center gap-2 text-[10px] text-[#565061]">
                         <span className="text-emerald-400 font-medium">{entry.wins}W</span>
                         <span className="text-amber-400 font-medium">{entry.draws}D</span>
                         <span className="text-red-400 font-medium">{entry.losses}L</span>
@@ -164,8 +164,8 @@ export function ScanStructuralStats({ report }: Props) {
 
       {/* Best pattern highlight */}
       {topInsights.length > 0 && (
-        <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
-          <h4 className="mb-3 text-sm font-semibold text-slate-300">
+        <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5 sm:p-6">
+          <h4 className="mb-3 text-sm font-semibold text-[#f0edf2]">
             Your Structural Strengths
           </h4>
           <div className="space-y-2">
@@ -173,7 +173,7 @@ export function ScanStructuralStats({ report }: Props) {
               <div key={i} className="flex items-start gap-3 text-sm">
                 <span className="mt-0.5 shrink-0 text-emerald-400">✓</span>
                 <div>
-                  <span className="text-slate-300">
+                  <span className="text-[#f0edf2]">
                     You win{" "}
                     <span className="font-bold text-emerald-400">
                       {insight.best.winPct}%

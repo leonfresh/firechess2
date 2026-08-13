@@ -404,7 +404,7 @@ export function InsightCards({
   return (
     <div className="space-y-6">
       {/* Section header */}
-      <div className="glass-card border-white/[0.08] bg-gradient-to-r from-fuchsia-500/[0.04] to-transparent p-6">
+      <div className="glass-card border-[#1e1a24] bg-gradient-to-r from-fuchsia-500/[0.04] to-transparent p-6">
         <div className="flex items-center gap-4">
           <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-fuchsia-500/15 text-3xl shadow-lg shadow-fuchsia-500/10">
             📊
@@ -418,7 +418,7 @@ export function InsightCards({
                 {avg}/100
               </span>
             </h2>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-[#8d8696]">
               {avg >= 75 ? (
                 <>
                   Strong profile. Your edge is{" "}
@@ -486,7 +486,7 @@ export function InsightCards({
                     </span>
                     <div>
                       <h3 className="font-bold text-white">{d.dimension}</h3>
-                      <p className="text-[11px] text-slate-500">{subtitle}</p>
+                      <p className="text-[11px] text-[#565061]">{subtitle}</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -504,7 +504,7 @@ export function InsightCards({
                 </div>
 
                 {/* Score bar */}
-                <div className="mt-4 h-1.5 w-full rounded-full bg-white/[0.06]">
+                <div className="mt-4 h-1.5 w-full rounded-full bg-[#1e1a24]">
                   <div
                     className={`h-1.5 rounded-full ${barBg(d.value)} transition-all duration-1000`}
                     style={{ width: `${d.value}%` }}
@@ -512,7 +512,7 @@ export function InsightCards({
                 </div>
 
                 {/* Short description */}
-                <p className="mt-3 text-[12px] leading-relaxed text-slate-400">
+                <p className="mt-3 text-[12px] leading-relaxed text-[#8d8696]">
                   {insight.desc}
                 </p>
 
@@ -572,14 +572,14 @@ export function InsightCards({
 
           {/* Modal content */}
           <div
-            className="relative z-10 max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-white/[0.1] bg-slate-950 shadow-2xl shadow-black/50"
+            className="relative z-10 max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-[#1e1a24] bg-slate-950 shadow-lg shadow-black/40"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}
             <button
               type="button"
               onClick={() => setModalDim(null)}
-              className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white"
+              className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[#1e1a24] text-[#8d8696] transition-colors hover:bg-[#ff5a1f]/[0.12] hover:text-white"
             >
               <svg
                 width="16"
@@ -595,7 +595,7 @@ export function InsightCards({
 
             {/* Modal header */}
             <div
-              className={`border-b border-white/[0.06] bg-gradient-to-r ${bgGrad(modalData.value)} p-6 sm:p-8`}
+              className={`border-b border-[#1e1a24] bg-gradient-to-r ${bgGrad(modalData.value)} p-6 sm:p-8`}
             >
               <div className="flex items-center gap-4">
                 <span
@@ -607,7 +607,7 @@ export function InsightCards({
                   <h2 className="text-2xl font-extrabold text-white">
                     {modalData.dimension}
                   </h2>
-                  <p className="text-sm text-slate-400">{modalSubtitle}</p>
+                  <p className="text-sm text-[#8d8696]">{modalSubtitle}</p>
                 </div>
                 <div className="text-right">
                   <div
@@ -624,7 +624,7 @@ export function InsightCards({
               </div>
 
               {/* Full-width score bar */}
-              <div className="mt-5 h-2.5 w-full rounded-full bg-white/[0.06]">
+              <div className="mt-5 h-2.5 w-full rounded-full bg-[#1e1a24]">
                 <div
                   className={`h-2.5 rounded-full ${barBg(modalData.value)} transition-all duration-1000`}
                   style={{ width: `${modalData.value}%` }}
@@ -634,7 +634,7 @@ export function InsightCards({
                 <span className="text-[10px] font-medium text-red-400/60">
                   0
                 </span>
-                <span className="text-[10px] font-medium text-slate-500">
+                <span className="text-[10px] font-medium text-[#565061]">
                   50
                 </span>
                 <span className="text-[10px] font-medium text-emerald-400/60">
@@ -658,7 +658,7 @@ export function InsightCards({
                       {modalInsight.keyStat.icon}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#565061]">
                         {modalInsight.keyStat.label}
                       </p>
                       <p
@@ -671,7 +671,7 @@ export function InsightCards({
                 )}
 
                 {/* Detailed Analysis */}
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+                <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-5">
                   <div className="mb-3 flex items-center gap-2">
                     <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-500/10 text-sm">
                       🔍
@@ -680,13 +680,13 @@ export function InsightCards({
                       Detailed Analysis
                     </h3>
                   </div>
-                  <p className="text-sm leading-relaxed text-slate-400">
+                  <p className="text-sm leading-relaxed text-[#8d8696]">
                     {modalInsight.analysis}
                   </p>
                 </div>
 
                 {/* What This Means */}
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+                <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-5">
                   <div className="mb-3 flex items-center gap-2">
                     <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-500/10 text-sm">
                       💡
@@ -695,7 +695,7 @@ export function InsightCards({
                       What This Means
                     </h3>
                   </div>
-                  <p className="text-sm leading-relaxed text-slate-400">
+                  <p className="text-sm leading-relaxed text-[#8d8696]">
                     {modalInsight.meaning}
                   </p>
                 </div>
@@ -704,7 +704,7 @@ export function InsightCards({
               {/* Right column — study plan & quick win */}
               <div className="space-y-4">
                 {/* Study Plan */}
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+                <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-5">
                   <div className="mb-4 flex items-center gap-2">
                     <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 text-sm">
                       📋
@@ -720,7 +720,7 @@ export function InsightCards({
                         className={`flex gap-3 rounded-xl border p-4 transition-all ${
                           si === 0
                             ? `${borderForValue(modalData.value)} bg-gradient-to-r ${bgGrad(modalData.value)}`
-                            : "border-white/[0.06] bg-white/[0.02]"
+                            : "border-[#1e1a24] bg-[#ff5a1f]/[0.03]"
                         }`}
                       >
                         <span
@@ -733,7 +733,7 @@ export function InsightCards({
                           {si + 1}
                         </span>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium leading-relaxed text-slate-300">
+                          <p className="text-sm font-medium leading-relaxed text-[#f0edf2]">
                             {step}
                           </p>
                         </div>
@@ -753,15 +753,15 @@ export function InsightCards({
                     >
                       Quick Win
                     </p>
-                    <p className="text-sm font-medium leading-relaxed text-slate-300">
+                    <p className="text-sm font-medium leading-relaxed text-[#f0edf2]">
                       {modalInsight.tip}
                     </p>
                   </div>
                 </div>
 
                 {/* Score context — all dimensions mini comparison */}
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-                  <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">
+                <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-5">
+                  <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-[#565061]">
                     How This Compares
                   </h3>
                   <div className="space-y-2">
@@ -770,16 +770,16 @@ export function InsightCards({
                         key={dd.dimension}
                         className="flex items-center gap-3"
                       >
-                        <span className="w-20 truncate text-xs text-slate-500">
+                        <span className="w-20 truncate text-xs text-[#565061]">
                           {dd.dimension}
                         </span>
                         <div className="flex-1">
-                          <div className="h-1.5 w-full rounded-full bg-white/[0.06]">
+                          <div className="h-1.5 w-full rounded-full bg-[#1e1a24]">
                             <div
                               className={`h-1.5 rounded-full ${
                                 dd.dimension === modalData.dimension
                                   ? barBg(dd.value)
-                                  : "bg-white/20"
+                                  : "bg-[#ff5a1f]/20"
                               } transition-all duration-500`}
                               style={{ width: `${dd.value}%` }}
                             />
@@ -789,7 +789,7 @@ export function InsightCards({
                           className={`w-8 text-right text-xs font-bold ${
                             dd.dimension === modalData.dimension
                               ? scoreColor(dd.value)
-                              : "text-slate-500"
+                              : "text-[#565061]"
                           }`}
                         >
                           {dd.value}
@@ -1496,7 +1496,7 @@ export function RadarLegend({
   return (
     <div className="space-y-3">
       {/* Overall summary sentence */}
-      <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-[11px] leading-relaxed text-slate-400">
+      <div className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-3 py-2.5 text-[11px] leading-relaxed text-[#8d8696]">
         {avg >= 75 ? (
           <>
             Strong overall profile ({avg}/100). Your biggest edge is{" "}
@@ -1576,7 +1576,7 @@ export function RadarLegend({
               <button
                 type="button"
                 onClick={() => setExpandedDim(isExpanded ? null : d.dimension)}
-                className="flex w-full items-center gap-3 rounded-lg px-1 py-0.5 text-left transition-colors hover:bg-white/[0.03]"
+                className="flex w-full items-center gap-3 rounded-lg px-1 py-0.5 text-left transition-colors hover:bg-[#ff5a1f]/[0.04]"
               >
                 <div className="flex-1">
                   <div className="mb-1 flex items-center justify-between">
@@ -1605,7 +1605,7 @@ export function RadarLegend({
                       </span>
                     </span>
                   </div>
-                  <div className="h-1 w-full rounded-full bg-white/5">
+                  <div className="h-1 w-full rounded-full bg-[#ff5a1f]/5">
                     <div
                       className={`h-1 rounded-full ${bg} transition-all duration-700`}
                       style={{ width: `${d.value}%`, opacity: 0.7 }}
@@ -1615,9 +1615,9 @@ export function RadarLegend({
               </button>
 
               {isExpanded && (
-                <div className="animate-fade-in mt-1.5 mb-1 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-[11px] leading-relaxed">
-                  <p className="text-slate-400">{insight.desc}</p>
-                  <p className="mt-1.5 text-slate-500">
+                <div className="animate-fade-in mt-1.5 mb-1 rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-3 py-2.5 text-[11px] leading-relaxed">
+                  <p className="text-[#8d8696]">{insight.desc}</p>
+                  <p className="mt-1.5 text-[#565061]">
                     <span className="font-semibold text-emerald-400/80">
                       How to improve:
                     </span>{" "}

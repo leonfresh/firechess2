@@ -79,7 +79,7 @@ export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props)
             </h1>
 
             {/* Subhead — one line, no paragraph */}
-            <p className="max-w-xl text-lg leading-relaxed text-slate-300/90">
+            <p className="max-w-xl text-lg leading-relaxed text-[#f0edf2]/90">
               FireChess scans your Lichess &amp; Chess.com games with Stockfish
               18, finds the mistakes you keep repeating, and turns each one into
               a position you can drill.
@@ -96,11 +96,11 @@ export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props)
             </button>
 
             {/* Quiet secondary affordances — sample link, free-forever, trailer */}
-            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-sm text-slate-400 lg:justify-start">
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-sm text-[#8d8696] lg:justify-start">
               <button
                 type="button"
                 onClick={onSeeSampleClick}
-                className="inline-flex items-center gap-1.5 font-medium transition-colors hover:text-slate-200"
+                className="inline-flex items-center gap-1.5 font-medium transition-colors hover:text-white"
               >
                 <PlayCircle className="h-4 w-4 text-orange-400" />
                 See a sample report
@@ -113,7 +113,7 @@ export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props)
                 href="https://www.youtube.com/watch?v=MpWsW10YE5M"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 transition-colors hover:text-slate-300"
+                className="inline-flex items-center gap-1.5 transition-colors hover:text-[#f0edf2]"
               >
                 <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M8 5v14l11-7z" />
@@ -124,7 +124,7 @@ export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props)
                 href={REDDIT_THREAD_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 transition-colors hover:text-slate-300"
+                className="inline-flex items-center gap-1.5 transition-colors hover:text-[#f0edf2]"
               >
                 <Star className="h-3.5 w-3.5 text-amber-300" />
                 Real feedback on r/chessbeginners
@@ -161,7 +161,7 @@ export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props)
           ].map((c) => (
             <span
               key={c.label}
-              className="flex items-center gap-2 text-sm text-slate-400"
+              className="flex items-center gap-2 text-sm text-[#8d8696]"
             >
               <c.icon className="h-4 w-4 text-orange-300/70" />
               {c.label}
@@ -176,7 +176,7 @@ export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props)
           this" (negative social proof) and hurt conversion more than they help.
           Re-add them once the numbers are large enough to be persuasive.
         */}
-        <div className="relative mt-14 border-t border-white/[0.06] pt-10 lg:mt-16">
+        <div className="relative mt-14 border-t border-[#1e1a24] pt-10 lg:mt-16">
           <div className="flex flex-wrap items-center justify-center gap-x-16 gap-y-6">
             {[
               {
@@ -204,7 +204,7 @@ export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props)
                     {item.value != null ? item.value.toLocaleString() : "—"}
                   </span>
                 </div>
-                <p className="text-sm text-slate-400">{item.label}</p>
+                <p className="text-sm text-[#8d8696]">{item.label}</p>
               </div>
             ))}
           </div>

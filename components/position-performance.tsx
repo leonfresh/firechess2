@@ -65,13 +65,13 @@ export function PositionPerformance({ leaks, hasProAccess }: PositionPerformance
     <section id="section-position-performance" className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#565061]">
             Position Performance
           </p>
           <h3 className="text-xl font-bold text-white">
             Positions you own &amp; positions that own you
           </h3>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-[#8d8696]">
             Your best and worst recurring positions, ranked by frequency and impact.
           </p>
         </div>
@@ -98,7 +98,7 @@ export function PositionPerformance({ leaks, hasProAccess }: PositionPerformance
               <PositionCard key={i} leak={leak} type="worst" />
             ))}
             {!hasProAccess && worst.length < PRO_LIMIT && (
-              <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-white/[0.06] py-4 text-xs text-slate-500">
+              <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-[#1e1a24] py-4 text-xs text-[#565061]">
                 <Sparkles className="h-3.5 w-3.5 text-orange-400" />
                 Upgrade to Pro for up to 10 positions
               </div>
@@ -120,7 +120,7 @@ export function PositionPerformance({ leaks, hasProAccess }: PositionPerformance
               <PositionCard key={i} leak={leak} type="best" />
             ))}
             {!hasProAccess && best.length < PRO_LIMIT && (
-              <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-white/[0.06] py-4 text-xs text-slate-500">
+              <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-[#1e1a24] py-4 text-xs text-[#565061]">
                 <Sparkles className="h-3.5 w-3.5 text-orange-400" />
                 Upgrade to Pro for up to 10 positions
               </div>
@@ -140,9 +140,9 @@ function PositionCard({ leak, type }: { leak: RepeatedOpeningLeak; type: "best" 
   const lossRate = total > 0 ? losses / total : 0;
 
   return (
-    <div className="flex gap-3 rounded-xl border border-white/[0.06] bg-black/20 p-3">
+    <div className="flex gap-3 rounded-xl border border-[#1e1a24] bg-black/20 p-3">
       {/* Mini board */}
-      <div className="h-[120px] w-[120px] shrink-0 overflow-hidden rounded-lg border border-white/[0.06]">
+      <div className="h-[120px] w-[120px] shrink-0 overflow-hidden rounded-lg border border-[#1e1a24]">
         <Chessboard
           position={leak.fenBefore}
           boardWidth={120}
@@ -157,7 +157,7 @@ function PositionCard({ leak, type }: { leak: RepeatedOpeningLeak; type: "best" 
         <p className="truncate text-[11px] font-semibold text-white">
           {leak.openingName || "Unknown position"}
         </p>
-        <p className="mt-0.5 text-[10px] text-slate-500">
+        <p className="mt-0.5 text-[10px] text-[#565061]">
           Reached {leak.reachCount || total} times · {total} games
         </p>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -170,7 +170,7 @@ function PositionCard({ leak, type }: { leak: RepeatedOpeningLeak; type: "best" 
             {(leak.cpLoss / 100).toFixed(1)} avg cp
           </span>
         </div>
-        <p className="mt-1 text-[9px] text-slate-500">
+        <p className="mt-1 text-[9px] text-[#565061]">
           {wins}W / {losses}L / {leak.userDraws ?? 0}D
         </p>
       </div>

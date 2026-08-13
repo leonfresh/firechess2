@@ -314,12 +314,12 @@ export function PieceMemory({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm font-medium text-slate-400">{position.label}</p>
+      <p className="text-sm font-medium text-[#8d8696]">{position.label}</p>
 
       {/* ── MEMORIZE PHASE ──────────────────────────────────────────── */}
       {phase === "memorize" && (
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs text-slate-500">
+          <div className="flex items-center justify-between text-xs text-[#565061]">
             <span>Study the position carefully…</span>
             <span
               className={`font-bold tabular-nums ${timeLeft <= 2 ? "text-red-400" : "text-amber-400"}`}
@@ -338,7 +338,7 @@ export function PieceMemory({
               customPieces={customPieces}
             />
           </div>
-          <div className="h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
+          <div className="h-1 w-full overflow-hidden rounded-full bg-[#1e1a24]">
             <div
               className="h-full rounded-full bg-amber-400 transition-all duration-1000"
               style={{ width: `${(timeLeft / viewSeconds) * 100}%` }}
@@ -355,7 +355,7 @@ export function PieceMemory({
           {/* LOCATION — interactive empty board */}
           {position.questionType === "location" && (
             <div className="space-y-3">
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#565061]">
                 {selected
                   ? `Selected: ${selected.toUpperCase()} — click another square or confirm`
                   : "Click the square on the board below"}
@@ -396,7 +396,7 @@ export function PieceMemory({
                     className={`flex flex-col items-center gap-1 rounded-xl border px-2 py-3 text-xs font-semibold transition-all ${
                       selected === opt.value
                         ? "border-amber-500/50 bg-amber-500/15 text-amber-300"
-                        : "border-white/[0.08] bg-white/[0.03] text-slate-400 hover:border-white/20 hover:text-white"
+                        : "border-[#1e1a24] bg-[#ff5a1f]/[0.04] text-[#8d8696] hover:border-[#ff5a1f]/20 hover:text-white"
                     }`}
                   >
                     <span className="text-2xl leading-none">{opt.symbol}</span>
@@ -428,7 +428,7 @@ export function PieceMemory({
                     className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-all ${
                       selected === choice
                         ? "border-amber-500/50 bg-amber-500/15 text-amber-300"
-                        : "border-white/[0.08] bg-white/[0.03] text-slate-400 hover:border-white/20 hover:text-white"
+                        : "border-[#1e1a24] bg-[#ff5a1f]/[0.04] text-[#8d8696] hover:border-[#ff5a1f]/20 hover:text-white"
                     }`}
                   >
                     {choice}
@@ -454,7 +454,7 @@ export function PieceMemory({
             <button
               type="button"
               onClick={() => setShowHint(true)}
-              className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
+              className="text-xs text-[#565061] hover:text-[#8d8696] transition-colors"
             >
               Show hint
             </button>
@@ -494,7 +494,7 @@ export function PieceMemory({
                 : `✗ The answer is: ${position.answer.toUpperCase()}`}
             </span>
             {!correct && (
-              <span className="ml-1 text-slate-400"> — {position.hint}</span>
+              <span className="ml-1 text-[#8d8696]"> — {position.hint}</span>
             )}
           </div>
         </div>

@@ -101,7 +101,7 @@ function PgnTab({ onLoad }: { onLoad: (pgn: string) => void }) {
     <div className="space-y-4">
       <textarea value={text} onChange={(e) => setText(e.target.value)}
         placeholder="1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 ..." rows={6}
-        className="w-full rounded-xl border border-white/[0.08] bg-black/30 p-4 font-mono text-sm text-slate-200 placeholder-slate-600 focus:border-orange-500/30 focus:outline-none" />
+        className="w-full rounded-xl border border-[#1e1a24] bg-black/30 p-4 font-mono text-sm text-white placeholder-slate-600 focus:border-orange-500/30 focus:outline-none" />
       <button onClick={() => text.trim() && onLoad(text.trim())} disabled={!text.trim()}
         className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
         <Upload className="h-4 w-4" /> Analyze Game
@@ -134,7 +134,7 @@ function ImportTab({ label, fetchFn, onLoad }: { label: string; fetchFn: (u: str
       <div className="flex gap-2">
         <input value={username} onChange={(e) => setUsername(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && username.trim() && !loading) document.getElementById(`import-btn-${label}`)?.click(); }}
           placeholder={`${label} username`}
-          className="flex-1 rounded-xl border border-white/[0.08] bg-black/30 px-4 py-3 text-sm text-slate-200 placeholder-slate-600 focus:border-orange-500/30 focus:outline-none" />
+          className="flex-1 rounded-xl border border-[#1e1a24] bg-black/30 px-4 py-3 text-sm text-white placeholder-slate-600 focus:border-orange-500/30 focus:outline-none" />
         <button id={`import-btn-${label}`} onClick={async () => { setLoading(true); setErr(null); setGames([]); const result = await fetchFn(username); if (result.length === 0) setErr("No games found."); else setGames(result); setLoading(false); }}
           disabled={!username.trim() || loading}
           className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
@@ -143,18 +143,18 @@ function ImportTab({ label, fetchFn, onLoad }: { label: string; fetchFn: (u: str
       </div>
       {err && <p className="text-sm text-red-400">{err}</p>}
       {games.length > 0 && (
-        <div className="max-h-[300px] space-y-1 overflow-y-auto rounded-xl border border-white/[0.08] bg-black/20 p-2">
+        <div className="max-h-[300px] space-y-1 overflow-y-auto rounded-xl border border-[#1e1a24] bg-black/20 p-2">
           {games.map((g, i) => (
             <button key={i} onClick={() => g.pgn && onLoad(g.pgn, g.orientation)}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-xs text-slate-300 transition hover:bg-white/[0.06]">
-              <span className="shrink-0 font-semibold text-slate-400">{g.white} vs {g.black}</span>
-              <span className="text-slate-500">{g.result}</span>
-              <span className="ml-auto text-slate-600">{g.date}</span>
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-xs text-[#f0edf2] transition hover:bg-[#1e1a24]">
+              <span className="shrink-0 font-semibold text-[#8d8696]">{g.white} vs {g.black}</span>
+              <span className="text-[#565061]">{g.result}</span>
+              <span className="ml-auto text-[#565061]">{g.date}</span>
             </button>
           ))}
         </div>
       )}
-      <p className="text-xs text-slate-500">Shows the 20 most recent games.</p>
+      <p className="text-xs text-[#565061]">Shows the 20 most recent games.</p>
     </div>
   );
 }
@@ -501,15 +501,15 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
   if (!gameLoaded) {
     return (
       <div className="mx-auto max-w-2xl space-y-4">
-        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6">
+        <div className="rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-6">
           <h2 className="mb-2 text-lg font-bold text-white">Game Review</h2>
-          <p className="mb-6 text-sm text-slate-400">
+          <p className="mb-6 text-sm text-[#8d8696]">
             Paste a PGN, or load your recent games from Lichess or Chess.com.
           </p>
-          <div className="mb-6 flex gap-1 rounded-xl border border-white/[0.08] bg-black/20 p-1">
+          <div className="mb-6 flex gap-1 rounded-xl border border-[#1e1a24] bg-black/20 p-1">
             {(["pgn", "lichess", "chesscom"] as const).map((tab) => (
               <button key={tab} onClick={() => setInputTab(tab)}
-                className={`flex-1 rounded-lg px-4 py-2 text-xs font-semibold transition ${inputTab === tab ? "bg-orange-500/20 text-orange-200" : "text-slate-400 hover:text-white"}`}>
+                className={`flex-1 rounded-lg px-4 py-2 text-xs font-semibold transition ${inputTab === tab ? "bg-orange-500/20 text-orange-200" : "text-[#8d8696] hover:text-white"}`}>
                 {tab === "pgn" ? "PGN" : tab === "lichess" ? "Lichess" : "Chess.com"}
               </button>
             ))}
@@ -518,7 +518,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
           {inputTab === "pgn" && <PgnTab onLoad={(pgn) => loadGame(pgn)} />}
           {inputTab === "lichess" && <ImportTab label="Lichess" fetchFn={fetchLichessGames} onLoad={(pgn) => loadGame(pgn)} />}
           {inputTab === "chesscom" && <ImportTab label="Chess.com" fetchFn={fetchChesscomGames} onLoad={(pgn) => loadGame(pgn)} />}
-          <p className="mt-4 text-xs text-slate-500">Use arrow keys ← → to navigate moves after loading.</p>
+          <p className="mt-4 text-xs text-[#565061]">Use arrow keys ← → to navigate moves after loading.</p>
         </div>
       </div>
     );
@@ -529,10 +529,10 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
       {/* Board panel */}
       <div className="space-y-4">
         {/* Game header */}
-        <div className="flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-5 py-3">
+        <div className="flex items-center gap-3 rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-5 py-3">
           <div className="flex-1 truncate">
             <p className="text-sm font-bold text-white">{meta?.white ?? "?"} vs {meta?.black ?? "?"}</p>
-            <p className="text-xs text-slate-400">{meta?.result ?? "*"} · {parsedMoves.length} moves</p>
+            <p className="text-xs text-[#8d8696]">{meta?.result ?? "*"} · {parsedMoves.length} moves</p>
           </div>
           {batchAnalyzing && (
             <span className="rounded-full bg-amber-500/10 px-3 py-1 text-[10px] text-amber-300">
@@ -553,25 +553,25 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
         {/* Stats bar */}
         {stats && (
           <div className="grid grid-cols-5 gap-2">
-            <div className="rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2 text-center">
-              <p className="text-[10px] text-slate-500">Accuracy</p>
+            <div className="rounded-xl border border-[#1e1a24] bg-black/20 px-3 py-2 text-center">
+              <p className="text-[10px] text-[#565061]">Accuracy</p>
               <p className="text-sm font-bold text-white">{stats.accuracy}%</p>
             </div>
-            <div className="rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2 text-center">
-              <p className="text-[10px] text-slate-500">Brilliant</p>
+            <div className="rounded-xl border border-[#1e1a24] bg-black/20 px-3 py-2 text-center">
+              <p className="text-[10px] text-[#565061]">Brilliant</p>
               <p className="text-sm font-bold text-cyan-300">{stats.brilliants}</p>
             </div>
-            <div className="rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2 text-center">
-              <p className="text-[10px] text-slate-500">Mistakes</p>
+            <div className="rounded-xl border border-[#1e1a24] bg-black/20 px-3 py-2 text-center">
+              <p className="text-[10px] text-[#565061]">Mistakes</p>
               <p className="text-sm font-bold text-amber-300">{stats.mistakes}</p>
             </div>
-            <div className="rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2 text-center">
-              <p className="text-[10px] text-slate-500">Blunders</p>
+            <div className="rounded-xl border border-[#1e1a24] bg-black/20 px-3 py-2 text-center">
+              <p className="text-[10px] text-[#565061]">Blunders</p>
               <p className="text-sm font-bold text-red-300">{stats.blunders}</p>
             </div>
-            <div className="rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2 text-center">
-              <p className="text-[10px] text-slate-500">Moves</p>
-              <p className="text-sm font-bold text-slate-300">{parsedMoves.length}</p>
+            <div className="rounded-xl border border-[#1e1a24] bg-black/20 px-3 py-2 text-center">
+              <p className="text-[10px] text-[#565061]">Moves</p>
+              <p className="text-sm font-bold text-[#f0edf2]">{parsedMoves.length}</p>
             </div>
           </div>
         )}
@@ -598,7 +598,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
 
         {/* Move info + judgement */}
         {judgement && (
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
+          <div className="rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-4">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <span className="text-xl font-bold text-white">
@@ -607,7 +607,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
                 <span className="text-lg font-semibold text-white">{lastMove?.san}</span>
                 <MoveBadge classification={judgement.classification} />
               </div>
-              <div className="text-xs text-slate-400">
+              <div className="text-xs text-[#8d8696]">
                 {(judgement.evalAfter / 100).toFixed(1)} · loss: {judgement.cpLoss}
               </div>
             </div>
@@ -616,7 +616,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
             {judgement.topLines && judgement.topLines.length > 0 && (
               <div className="mt-3 space-y-1">
                 <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Top engine lines</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#565061]">Top engine lines</p>
                   {judgement.bestPv.length > 1 && judgement.classification !== "best" && !playingPv && (
                     <button onClick={() => {
                       const chess = new Chess(currentMoveEval?.fenBefore ?? currentFen);
@@ -636,9 +636,9 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
                   const cpWhite = toWhitePerspective(currentFen, line.cp);
                   return (
                     <div key={i} className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs ${
-                      isPlayed ? "bg-orange-500/10 text-orange-200" : "text-slate-400"
+                      isPlayed ? "bg-orange-500/10 text-orange-200" : "text-[#8d8696]"
                     }`}>
-                      <span className="w-4 shrink-0 font-mono text-[10px] text-slate-500">{i + 1}.</span>
+                      <span className="w-4 shrink-0 font-mono text-[10px] text-[#565061]">{i + 1}.</span>
                       <span className="font-semibold">{line.san || "(unknown)"}</span>
                       <span className={`ml-auto font-mono ${cpWhite > 0 ? "text-emerald-400" : "text-red-400"}`}>
                         {(cpWhite / 100).toFixed(1)}
@@ -651,21 +651,21 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
               </div>
             )}
 
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-[#8d8696]">
               {MOVE_CLASSIFICATION_EMOJI[judgement.classification]} {judgement.commentary}
             </p>
             {judgement.bestMoveSan && judgement.classification !== "best" && judgement.classification !== "book" && (
-              <p className="mt-1 text-xs text-emerald-400">Best: {judgement.bestMoveSan} <span className="text-slate-500">(green arrow on board)</span></p>
+              <p className="mt-1 text-xs text-emerald-400">Best: {judgement.bestMoveSan} <span className="text-[#565061]">(green arrow on board)</span></p>
             )}
           </div>
         )}
 
         {/* Eval graph */}
         {evalHistory.length > 0 && (
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
+          <div className="rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-4">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-semibold text-slate-400">Evaluation graph</p>
-              <p className="text-[10px] text-slate-500">White advantage →</p>
+              <p className="text-xs font-semibold text-[#8d8696]">Evaluation graph</p>
+              <p className="text-[10px] text-[#565061]">White advantage →</p>
             </div>
             <div className="relative h-24 overflow-hidden rounded-lg bg-black/40">
               <svg viewBox={`0 ${-60} ${Math.max(1, evalHistory.length - 1)} 120`} className="h-full w-full" preserveAspectRatio="none">
@@ -706,25 +706,25 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
           />
         </div>
         {/* Move list */}
-        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03]">
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
-            <p className="text-xs font-semibold text-slate-400">Moves</p>
-            <span className="text-xs text-slate-500">{currentPly > 0 ? `${currentPly}/${parsedMoves.length}` : "Start"}</span>
+        <div className="rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04]">
+          <div className="flex items-center justify-between border-b border-[#1e1a24] px-4 py-3">
+            <p className="text-xs font-semibold text-[#8d8696]">Moves</p>
+            <span className="text-xs text-[#565061]">{currentPly > 0 ? `${currentPly}/${parsedMoves.length}` : "Start"}</span>
           </div>
 
           {/* Nav buttons */}
-          <div className="flex items-center justify-center gap-2 border-b border-white/[0.06] px-4 py-2.5">
+          <div className="flex items-center justify-center gap-2 border-b border-[#1e1a24] px-4 py-2.5">
             <button onClick={() => setCurrentPly(0)} disabled={currentPly === 0}
-              className="rounded-lg p-2 text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30"> <ChevronsLeft className="h-4 w-4" /> </button>
+              className="rounded-lg p-2 text-[#8d8696] transition hover:bg-[#1e1a24] hover:text-white disabled:opacity-30"> <ChevronsLeft className="h-4 w-4" /> </button>
             <button onClick={() => setCurrentPly((p) => Math.max(p - 1, 0))} disabled={currentPly === 0}
-              className="rounded-lg p-2 text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30"> <ChevronLeft className="h-5 w-5" /> </button>
-            <span className="min-w-[80px] text-center text-[11px] font-medium text-slate-400">
+              className="rounded-lg p-2 text-[#8d8696] transition hover:bg-[#1e1a24] hover:text-white disabled:opacity-30"> <ChevronLeft className="h-5 w-5" /> </button>
+            <span className="min-w-[80px] text-center text-[11px] font-medium text-[#8d8696]">
               {currentPly === 0 ? "Start" : `Move ${Math.ceil(currentPly / 2)}`}
             </span>
             <button onClick={() => setCurrentPly((p) => Math.min(p + 1, parsedMoves.length))} disabled={currentPly === parsedMoves.length}
-              className="rounded-lg p-2 text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30"> <ChevronRight className="h-5 w-5" /> </button>
+              className="rounded-lg p-2 text-[#8d8696] transition hover:bg-[#1e1a24] hover:text-white disabled:opacity-30"> <ChevronRight className="h-5 w-5" /> </button>
             <button onClick={() => setCurrentPly(parsedMoves.length)} disabled={currentPly === parsedMoves.length}
-              className="rounded-lg p-2 text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30"> <ChevronsRight className="h-4 w-4" /> </button>
+              className="rounded-lg p-2 text-[#8d8696] transition hover:bg-[#1e1a24] hover:text-white disabled:opacity-30"> <ChevronsRight className="h-4 w-4" /> </button>
           </div>
 
           {/* Move list */}
@@ -737,16 +737,16 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
                 const bPly = round * 2 + 1;
                 const isCurrentRow = currentPly === wPly + 1 || currentPly === bPly + 1;
                 return (
-                  <div key={round} className={`grid grid-cols-[36px_1fr_1fr] gap-1 px-3 py-2 text-xs transition-colors ${isCurrentRow ? "bg-orange-500/[0.08]" : "hover:bg-white/[0.02]"}`}>
-                    <span className="flex items-center text-slate-500">{round + 1}.</span>
+                  <div key={round} className={`grid grid-cols-[36px_1fr_1fr] gap-1 px-3 py-2 text-xs transition-colors ${isCurrentRow ? "bg-orange-500/[0.08]" : "hover:bg-[#ff5a1f]/[0.03]"}`}>
+                    <span className="flex items-center text-[#565061]">{round + 1}.</span>
                     <button onClick={() => setCurrentPly(wPly + 1)}
-                      className={`flex min-w-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-left transition ${currentPly === wPly + 1 ? "bg-orange-500/15 text-orange-200" : "text-white hover:bg-white/[0.04]"}`}>
+                      className={`flex min-w-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-left transition ${currentPly === wPly + 1 ? "bg-orange-500/15 text-orange-200" : "text-white hover:bg-[#ff5a1f]/[0.05]"}`}>
                       <span className="min-w-[3ch] truncate font-medium">{wMove.san}</span>
                       <span className={`ml-auto h-2 w-2 shrink-0 rounded-full ${allEvals[wPly] ? (CLASSIFICATION_DOT[allEvals[wPly].classification as MoveClassification] ?? "bg-slate-500") : "bg-transparent"}`} />
                     </button>
                     {bMove ? (
                       <button onClick={() => setCurrentPly(bPly + 1)}
-                        className={`flex min-w-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-left transition ${currentPly === bPly + 1 ? "bg-orange-500/15 text-orange-200" : "text-white hover:bg-white/[0.04]"}`}>
+                        className={`flex min-w-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-left transition ${currentPly === bPly + 1 ? "bg-orange-500/15 text-orange-200" : "text-white hover:bg-[#ff5a1f]/[0.05]"}`}>
                         <span className="min-w-[3ch] truncate font-medium">{bMove.san}</span>
                         <span className={`ml-auto h-2 w-2 shrink-0 rounded-full ${allEvals[bPly] ? (CLASSIFICATION_DOT[allEvals[bPly].classification as MoveClassification] ?? "bg-slate-500") : "bg-transparent"}`} />
                       </button>
@@ -759,7 +759,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
         </div>
 
         <button onClick={() => { setGameLoaded(false); setParsedMoves([]); setCurrentPly(0); setMeta(null); setEvalHistory([]); setAllEvals([]); setLlmSummary(null); setLlmCommentary({}); }}
-          className="w-full rounded-xl border border-white/[0.08] px-4 py-2.5 text-xs text-slate-400 transition hover:bg-white/[0.04] hover:text-white">
+          className="w-full rounded-xl border border-[#1e1a24] px-4 py-2.5 text-xs text-[#8d8696] transition hover:bg-[#ff5a1f]/[0.05] hover:text-white">
           ← New game
         </button>
       </div>
@@ -768,7 +768,7 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
       {showCoachModal && llmSummary && (
         <div className="fixed inset-0 z-[100] flex items-start justify-center bg-[rgba(2,6,23,0.82)] px-4 py-8 backdrop-blur-sm sm:items-center" onClick={() => setShowCoachModal(false)}>
           <div className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-[2rem] border border-orange-500/20 bg-[rgba(6,11,26,0.97)] p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setShowCoachModal(false)} className="absolute right-4 top-4 text-slate-500 transition hover:text-white">
+            <button onClick={() => setShowCoachModal(false)} className="absolute right-4 top-4 text-[#565061] transition hover:text-white">
               <X className="h-5 w-5" />
             </button>
             <div className="mb-4 flex items-center gap-3">
@@ -777,11 +777,11 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
               </div>
               <div>
                 <p className="text-sm font-bold text-white">Coach Analysis</p>
-                <p className="text-xs text-slate-400">{meta?.white} vs {meta?.black}</p>
+                <p className="text-xs text-[#8d8696]">{meta?.white} vs {meta?.black}</p>
               </div>
             </div>
 
-            <p className="mb-4 text-sm leading-relaxed text-slate-200">{llmSummary.summary}</p>
+            <p className="mb-4 text-sm leading-relaxed text-white">{llmSummary.summary}</p>
 
             {llmSummary.verdict && (
               <div className="mb-4 rounded-xl border border-orange-500/10 bg-orange-500/[0.04] p-4">
@@ -791,24 +791,24 @@ export function GameReview({ initialPgn }: { initialPgn?: string }) {
 
             {llmSummary.moveAdvice && (llmSummary.moveAdvice.opening || llmSummary.moveAdvice.middlegame || llmSummary.moveAdvice.endgame) && (
               <div className="mb-4 space-y-2">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Phase Advice</p>
-                {llmSummary.moveAdvice.opening && <p className="rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-slate-300"><span className="font-semibold text-slate-400">Opening:</span> {llmSummary.moveAdvice.opening}</p>}
-                {llmSummary.moveAdvice.middlegame && <p className="rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-slate-300"><span className="font-semibold text-slate-400">Middlegame:</span> {llmSummary.moveAdvice.middlegame}</p>}
-                {llmSummary.moveAdvice.endgame && <p className="rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-slate-300"><span className="font-semibold text-slate-400">Endgame:</span> {llmSummary.moveAdvice.endgame}</p>}
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#8d8696]">Phase Advice</p>
+                {llmSummary.moveAdvice.opening && <p className="rounded-lg bg-[#ff5a1f]/[0.04] px-3 py-2 text-xs text-[#f0edf2]"><span className="font-semibold text-[#8d8696]">Opening:</span> {llmSummary.moveAdvice.opening}</p>}
+                {llmSummary.moveAdvice.middlegame && <p className="rounded-lg bg-[#ff5a1f]/[0.04] px-3 py-2 text-xs text-[#f0edf2]"><span className="font-semibold text-[#8d8696]">Middlegame:</span> {llmSummary.moveAdvice.middlegame}</p>}
+                {llmSummary.moveAdvice.endgame && <p className="rounded-lg bg-[#ff5a1f]/[0.04] px-3 py-2 text-xs text-[#f0edf2]"><span className="font-semibold text-[#8d8696]">Endgame:</span> {llmSummary.moveAdvice.endgame}</p>}
               </div>
             )}
 
             {Object.keys(llmCommentary).length > 0 && (
               <div>
-                <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Key Move Notes</p>
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-[#8d8696]">Key Move Notes</p>
                 <div className="space-y-1.5">
                   {Object.entries(llmCommentary).slice(0, 10).map(([ply, note]) => {
                     const move = allEvals[parseInt(ply)];
                     if (!move) return null;
                     return (
                       <button key={ply} onClick={() => { setCurrentPly(parseInt(ply) + 1); setShowCoachModal(false); }}
-                        className="flex w-full gap-2 rounded-lg px-3 py-2 text-left text-xs text-slate-300 transition hover:bg-white/[0.04]">
-                        <span className="shrink-0 font-semibold text-slate-500">{Math.floor(parseInt(ply) / 2) + 1}{parseInt(ply) % 2 === 0 ? "." : "..."}</span>
+                        className="flex w-full gap-2 rounded-lg px-3 py-2 text-left text-xs text-[#f0edf2] transition hover:bg-[#ff5a1f]/[0.05]">
+                        <span className="shrink-0 font-semibold text-[#565061]">{Math.floor(parseInt(ply) / 2) + 1}{parseInt(ply) % 2 === 0 ? "." : "..."}</span>
                         <span>{note}</span>
                       </button>
                     );

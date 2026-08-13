@@ -85,7 +85,7 @@ const COLOR_MAP: Record<string, ColorPalette> = {
     card: "border-slate-500/20 bg-slate-500/[0.03]",
     bar: "bg-slate-400",
     ring: "ring-slate-500/25",
-    chip: "bg-slate-500/15 text-slate-300",
+    chip: "bg-slate-500/15 text-[#f0edf2]",
     icon: "bg-slate-500/15 shadow-slate-500/10",
   },
   violet: {
@@ -424,7 +424,7 @@ export function ScanPositionalMotifs({
                 <p className="text-sm font-black text-red-300">
                   Loose pieces are your most expensive habit
                 </p>
-                <p className="mt-1 text-sm leading-relaxed text-slate-300">
+                <p className="mt-1 text-sm leading-relaxed text-[#f0edf2]">
                   You left a piece hanging{" "}
                   <span className="font-bold text-red-400">
                     {hangingPiecesMotif.count}x
@@ -450,7 +450,7 @@ export function ScanPositionalMotifs({
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-400/70">
               Human-readable habits
             </p>
-            <p className="mt-1 text-sm leading-relaxed text-slate-300">
+            <p className="mt-1 text-sm leading-relaxed text-[#f0edf2]">
               {motifs.length === 1
                 ? "One concrete habit stands out across your games."
                 : `${motifs.length} concrete habits detected. The ones at the top are your highest-priority fixes.`}
@@ -502,7 +502,7 @@ export function ScanPositionalMotifs({
               ? "bg-orange-500/15 text-orange-400 ring-1 ring-orange-500/20"
               : motif.count >= Math.ceil(motifMax * 0.3)
                 ? "bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/20"
-                : "bg-white/[0.05] text-slate-400";
+                : "bg-[#ff5a1f]/[0.05] text-[#8d8696]";
         const isExpanded = expandedMotifs.has(motif.name);
         const hasExamples = motif.examples.length > 0;
 
@@ -531,7 +531,7 @@ export function ScanPositionalMotifs({
                   <span className={`text-xs font-bold ${severityClass}`}>
                     {motif.count}x detected
                   </span>
-                  <span className="text-[11px] text-slate-500">
+                  <span className="text-[11px] text-[#565061]">
                     avg -{(motif.avgCpLoss / 100).toFixed(1)} pawns
                   </span>
                 </div>
@@ -548,13 +548,13 @@ export function ScanPositionalMotifs({
                     {motif.name}
                   </h3>
                   <div className="mt-2 flex items-center gap-2">
-                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#1e1a24]">
                       <div
                         className={`h-full rounded-full ${colors.bar} transition-all duration-700`}
                         style={{ width: `${freqPct}%` }}
                       />
                     </div>
-                    <span className="shrink-0 text-[10px] font-medium text-slate-500">
+                    <span className="shrink-0 text-[10px] font-medium text-[#565061]">
                       {motif.count}/{motifMax} max
                     </span>
                   </div>
@@ -562,11 +562,11 @@ export function ScanPositionalMotifs({
               </div>
 
               {quote ? (
-                <blockquote className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-                  <p className="text-sm italic leading-relaxed text-slate-300">
+                <blockquote className="mt-4 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-4 py-3">
+                  <p className="text-sm italic leading-relaxed text-[#f0edf2]">
                     &ldquo;{quote}&rdquo;
                   </p>
-                  <p className="mt-1.5 text-[11px] font-medium text-slate-500">
+                  <p className="mt-1.5 text-[11px] font-medium text-[#565061]">
                     - {author}
                   </p>
                 </blockquote>
@@ -586,7 +586,7 @@ export function ScanPositionalMotifs({
                   className={`mt-4 flex w-full items-center justify-between rounded-xl border px-4 py-3 text-sm font-semibold transition-all ${
                     isExpanded
                       ? "border-amber-500/25 bg-amber-500/[0.08] text-amber-300"
-                      : "border-white/[0.08] bg-white/[0.03] text-slate-300 hover:border-amber-500/20 hover:bg-amber-500/[0.05] hover:text-amber-200"
+                      : "border-[#1e1a24] bg-[#ff5a1f]/[0.04] text-[#f0edf2] hover:border-amber-500/20 hover:bg-amber-500/[0.05] hover:text-amber-200"
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
@@ -623,19 +623,19 @@ export function ScanPositionalMotifs({
             </div>
 
             {isExpanded && hasExamples ? (
-              <div className="border-t border-white/[0.06] bg-white/[0.015] px-5 pb-5 pt-4">
+              <div className="border-t border-[#1e1a24] bg-[#ff5a1f]/[0.02] px-5 pb-5 pt-4">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#565061]">
                       Positions from your games
                     </p>
-                    <p className="mt-0.5 text-[11px] text-slate-500">
+                    <p className="mt-0.5 text-[11px] text-[#565061]">
                       Each board shows your move in red and the engine move in
                       green.
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-3 text-[10px] text-slate-500">
+                  <div className="flex items-center gap-3 text-[10px] text-[#565061]">
                     <span className="flex items-center gap-1">
                       <span
                         className="inline-block h-2 w-3.5 rounded-sm"
@@ -700,10 +700,10 @@ export function ScanPositionalMotifs({
                     return (
                       <div
                         key={`${example.fenBefore}-${exampleIndex}`}
-                        className="flex flex-col overflow-hidden rounded-2xl border border-white/[0.09] shadow-lg"
+                        className="flex flex-col overflow-hidden rounded-2xl border border-[#1e1a24] shadow-lg"
                       >
-                        <div className="flex items-center justify-between border-b border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        <div className="flex items-center justify-between border-b border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-3.5 py-2.5">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#8d8696]">
                             Move {moveNumber} - as {sideToMove}
                           </span>
                           <span
@@ -713,7 +713,7 @@ export function ScanPositionalMotifs({
                           </span>
                         </div>
 
-                        <div className="relative aspect-square w-full border-b border-white/[0.06]">
+                        <div className="relative aspect-square w-full border-b border-[#1e1a24]">
                           <Chessboard
                             id={boardId}
                             position={example.fenBefore}
@@ -734,7 +734,7 @@ export function ScanPositionalMotifs({
 
                         <div className="grid grid-cols-2 divide-x divide-white/[0.06]">
                           <div className="flex flex-col items-center gap-0.5 px-3 py-3">
-                            <span className="text-[9px] font-semibold uppercase tracking-widest text-slate-500">
+                            <span className="text-[9px] font-semibold uppercase tracking-widest text-[#565061]">
                               You played
                             </span>
                             {userMove ? (
@@ -742,14 +742,14 @@ export function ScanPositionalMotifs({
                                 {userMove.san}
                               </span>
                             ) : (
-                              <span className="text-[10px] text-slate-600">
+                              <span className="text-[10px] text-[#565061]">
                                 -
                               </span>
                             )}
                           </div>
 
                           <div className="flex flex-col items-center gap-0.5 px-3 py-3">
-                            <span className="text-[9px] font-semibold uppercase tracking-widest text-slate-500">
+                            <span className="text-[9px] font-semibold uppercase tracking-widest text-[#565061]">
                               Engine best
                             </span>
                             {bestMove ? (
@@ -757,14 +757,14 @@ export function ScanPositionalMotifs({
                                 {bestMove.san}
                               </span>
                             ) : (
-                              <span className="text-[10px] text-slate-600">
+                              <span className="text-[10px] text-[#565061]">
                                 -
                               </span>
                             )}
                           </div>
                         </div>
 
-                        <div className="flex flex-col gap-2 border-t border-white/[0.06] px-3.5 pb-3.5 pt-3">
+                        <div className="flex flex-col gap-2 border-t border-[#1e1a24] px-3.5 pb-3.5 pt-3">
                           <button
                             type="button"
                             onClick={async () => {
@@ -840,7 +840,7 @@ export function ScanPositionalMotifs({
                               href={example.gameUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] py-2 text-xs font-semibold text-slate-400 transition-all hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-slate-200"
+                              className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] py-2 text-xs font-semibold text-[#8d8696] transition-all hover:border-[#ff5a1f]/25 hover:bg-[#1e1a24] hover:text-white"
                             >
                               <svg
                                 width="11"
@@ -872,20 +872,20 @@ export function ScanPositionalMotifs({
                         .map((_, lockedIndex) => (
                           <div
                             key={`${motif.name}-locked-${lockedIndex}`}
-                            className="flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.015]"
+                            className="flex flex-col overflow-hidden rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.02]"
                           >
-                            <div className="flex items-center justify-between border-b border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                            <div className="flex items-center justify-between border-b border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-3.5 py-2.5">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-[#565061]">
                                 Locked
                               </span>
-                              <span className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[10px] text-slate-600">
+                              <span className="rounded-full bg-[#ff5a1f]/[0.05] px-2 py-0.5 text-[10px] text-[#565061]">
                                 Pro
                               </span>
                             </div>
 
-                            <div className="flex aspect-square w-full flex-col items-center justify-center gap-2 border-b border-white/[0.04] bg-white/[0.01]">
+                            <div className="flex aspect-square w-full flex-col items-center justify-center gap-2 border-b border-[#1e1a24] bg-[#ff5a1f]/[0.02]">
                               <span className="text-2xl">🔒</span>
-                              <p className="px-3 text-center text-[10px] font-semibold text-slate-500">
+                              <p className="px-3 text-center text-[10px] font-semibold text-[#565061]">
                                 Pro only
                               </p>
                             </div>
@@ -927,7 +927,7 @@ export function ScanPositionalMotifs({
               <p className="text-sm font-semibold text-white">
                 These habits often repeat unconsciously.
               </p>
-              <p className="mt-1 text-sm leading-relaxed text-slate-400">
+              <p className="mt-1 text-sm leading-relaxed text-[#8d8696]">
                 Awareness is the first step. Pause and ask yourself whether the
                 move has a concrete purpose before committing. Head to the{" "}
                 <Link

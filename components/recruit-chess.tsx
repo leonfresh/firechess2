@@ -3209,7 +3209,7 @@ function EncounterScreen({
             <p className="text-gray-400 text-sm mt-1">
               Pay <span className="text-yellow-400 font-bold">{goldCost}g</span>{" "}
               to promote a Bronze piece to{" "}
-              <span className="text-slate-300 font-semibold">Silver</span>. You
+              <span className="text-[#f0edf2] font-semibold">Silver</span>. You
               have {gameState.gold}g.
             </p>
           </div>

@@ -90,7 +90,7 @@ export function Nl3AppLauncher() {
             </div>
 
             {/* Dock */}
-            <div className="relative mx-auto mt-6 flex w-fit justify-center gap-3.5 rounded-[18px] bg-white/[0.05] px-4 py-2.5 backdrop-blur-md">
+            <div className="relative mx-auto mt-6 flex w-fit justify-center gap-3.5 rounded-[18px] bg-[#ff5a1f]/[0.05] px-4 py-2.5 backdrop-blur-md">
               {DOCK.map((a) => (
                 <Link
                   key={a.name}
@@ -105,7 +105,7 @@ export function Nl3AppLauncher() {
               ))}
             </div>
 
-            <div className="relative mx-auto mt-4 h-1 w-[120px] rounded-full bg-white/25" />
+            <div className="relative mx-auto mt-4 h-1 w-[120px] rounded-full bg-[#ff5a1f]/25" />
           </div>
         </div>
       </section>

@@ -28,7 +28,7 @@ export function HomepageBlogSection() {
             <h2 className="mt-2 text-2xl font-bold text-white sm:text-3xl">
               Chess Guides & Analysis Tips
             </h2>
-            <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-400">
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#8d8696]">
               Deep-dives on accuracy, tactics, openings, and how to actually
               improve — backed by engine data.
             </p>
@@ -60,7 +60,7 @@ export function HomepageBlogSection() {
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] shadow-[0_8px_32px_-16px_rgba(0,0,0,0.6)] transition-all duration-300 hover:-translate-y-1 hover:border-indigo-400/20 hover:bg-white/[0.04] hover:shadow-[0_16px_48px_-16px_rgba(99,102,241,0.18)]"
+              className="group flex flex-col overflow-hidden rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] shadow-[0_8px_32px_-16px_rgba(0,0,0,0.6)] transition-all duration-300 hover:-translate-y-1 hover:border-indigo-400/20 hover:bg-[#ff5a1f]/[0.05] hover:shadow-[0_16px_48px_-16px_rgba(99,102,241,0.18)]"
             >
               {/* Featured art */}
               <div className="relative overflow-hidden">
@@ -90,11 +90,11 @@ export function HomepageBlogSection() {
                   {post.title}
                 </h3>
 
-                <p className="mt-1.5 line-clamp-2 flex-1 text-xs leading-relaxed text-slate-500">
+                <p className="mt-1.5 line-clamp-2 flex-1 text-xs leading-relaxed text-[#565061]">
                   {post.description}
                 </p>
 
-                <div className="mt-3 flex items-center justify-between text-[11px] text-slate-600">
+                <div className="mt-3 flex items-center justify-between text-[11px] text-[#565061]">
                   <div className="flex items-center gap-1.5">
                     <time dateTime={post.date}>
                       {new Date(post.date).toLocaleDateString("en-US", {

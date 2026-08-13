@@ -74,7 +74,7 @@ export function GoogleTranslate() {
           if (!loaded) loadScript();
           setOpen((v) => !v);
         }}
-        className="flex items-center gap-1.5 text-[11px] text-slate-500 transition-colors hover:text-slate-300"
+        className="flex items-center gap-1.5 text-[11px] text-[#565061] transition-colors hover:text-[#f0edf2]"
         aria-label="Select language"
         aria-expanded={open}
       >
@@ -93,10 +93,10 @@ export function GoogleTranslate() {
       </button>
 
       {open && (
-        <div className="absolute bottom-full right-0 mb-2 min-w-[160px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-2 shadow-xl shadow-black/50 backdrop-blur-xl">
+        <div className="absolute bottom-full right-0 mb-2 min-w-[160px] rounded-xl border border-[#1e1a24] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-2 shadow-xl shadow-black/50 backdrop-blur-xl">
           <div
             id="google_translate_element"
-            className="[&_.goog-te-combo]:w-full [&_.goog-te-combo]:rounded-lg [&_.goog-te-combo]:border [&_.goog-te-combo]:border-white/[0.1] [&_.goog-te-combo]:bg-white/[0.04] [&_.goog-te-combo]:px-2 [&_.goog-te-combo]:py-1.5 [&_.goog-te-combo]:text-xs [&_.goog-te-combo]:text-white [&_.goog-te-combo]:outline-none [&_.goog-te-combo]:focus:ring-1 [&_.goog-te-combo]:focus:ring-orange-500/50"
+            className="[&_.goog-te-combo]:w-full [&_.goog-te-combo]:rounded-lg [&_.goog-te-combo]:border [&_.goog-te-combo]:border-[#1e1a24] [&_.goog-te-combo]:bg-[#ff5a1f]/[0.05] [&_.goog-te-combo]:px-2 [&_.goog-te-combo]:py-1.5 [&_.goog-te-combo]:text-xs [&_.goog-te-combo]:text-white [&_.goog-te-combo]:outline-none [&_.goog-te-combo]:focus:ring-1 [&_.goog-te-combo]:focus:ring-orange-500/50"
           />
         </div>
       )}

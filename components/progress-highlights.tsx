@@ -173,7 +173,7 @@ export function ProgressHighlights({
             className={`rounded-2xl border bg-gradient-to-br p-4 ${borderMap[h.color] ?? ""} ${bgMap[h.color] ?? ""}`}
           >
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-xl">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1e1a24] text-xl">
                 {h.icon}
               </span>
               <div>

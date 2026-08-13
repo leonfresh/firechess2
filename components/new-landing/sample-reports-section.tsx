@@ -129,7 +129,7 @@ function ReportCard({ report, isActive, onClick }: { report: SampleReport; isAct
               {report.imageUrl ? (
                 <img src={report.imageUrl} alt={report.displayName || report.username} className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-lg font-bold text-slate-400">
+                <div className="flex h-full w-full items-center justify-center text-lg font-bold text-[#8d8696]">
                   {(report.displayName || report.username)[0].toUpperCase()}
                 </div>
               )}
@@ -138,7 +138,7 @@ function ReportCard({ report, isActive, onClick }: { report: SampleReport; isAct
           </div>
           <div>
             <h3 className="font-semibold text-white">{report.displayName || report.username}</h3>
-            <p className="text-xs text-slate-400">{report.label}</p>
+            <p className="text-xs text-[#8d8696]">{report.label}</p>
           </div>
         </div>
         <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${tierBadgeColors[report.tier]}`}>
@@ -149,7 +149,7 @@ function ReportCard({ report, isActive, onClick }: { report: SampleReport; isAct
       <div className="mb-4 flex items-center gap-2">
         <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
         <span className="text-2xl font-bold text-white">{report.rating}</span>
-        <span className="text-sm text-slate-500">peak rating</span>
+        <span className="text-sm text-[#565061]">peak rating</span>
       </div>
 
       <div className="mb-4 grid grid-cols-3 gap-3">
@@ -162,14 +162,14 @@ function ReportCard({ report, isActive, onClick }: { report: SampleReport; isAct
             <div className={`text-lg font-bold ${color}`}>
               {value}
             </div>
-            <div className="text-[10px] uppercase tracking-wider text-slate-500">{label}</div>
+            <div className="text-[10px] uppercase tracking-wider text-[#565061]">{label}</div>
           </div>
         ))}
       </div>
 
       <div className="flex items-center justify-between pt-4">
-        <span className="text-sm text-slate-400 transition-colors group-hover:text-white">View full report</span>
-        <ArrowRight className="h-4 w-4 text-slate-500 transition-all group-hover:translate-x-1 group-hover:text-orange-400" />
+        <span className="text-sm text-[#8d8696] transition-colors group-hover:text-white">View full report</span>
+        <ArrowRight className="h-4 w-4 text-[#565061] transition-all group-hover:translate-x-1 group-hover:text-orange-400" />
       </div>
 
       <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-t from-orange-500/[0.05] to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />

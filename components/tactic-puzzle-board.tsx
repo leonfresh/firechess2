@@ -530,7 +530,7 @@ export function TacticPuzzleBoard({
       ? "border-emerald-500/50"
       : feedback?.tone === "revealed" || status === "revealed"
         ? "border-amber-500/40"
-        : "border-white/[0.08]";
+        : "border-[#1e1a24]";
 
   const highlightStyles = useMemo(() => {
     const styles: Record<string, CSSProperties> = {};
@@ -644,7 +644,7 @@ export function TacticPuzzleBoard({
         <button
           type="button"
           onClick={showSolution}
-          className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white"
+          className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1.5 text-xs font-medium text-[#8d8696] transition-colors hover:bg-[#1e1a24] hover:text-white"
         >
           Show solution
         </button>
@@ -653,7 +653,7 @@ export function TacticPuzzleBoard({
         <button
           type="button"
           onClick={() => reset(exIdx)}
-          className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white"
+          className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1.5 text-xs font-medium text-[#8d8696] transition-colors hover:bg-[#1e1a24] hover:text-white"
         >
           Reset puzzle
         </button>
@@ -684,7 +684,7 @@ export function TacticPuzzleBoard({
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                 i === exIdx
                   ? "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30"
-                  : "bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-white"
+                  : "bg-[#ff5a1f]/[0.05] text-[#8d8696] hover:bg-[#1e1a24] hover:text-white"
               }`}
             >
               Puzzle {i + 1}
@@ -696,13 +696,13 @@ export function TacticPuzzleBoard({
       {compact ? (
         <div className="space-y-3">
           {board}
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+          <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs font-bold uppercase tracking-wider text-amber-400/80">
                 {statusBadge}
               </p>
               {examples.length > 1 && (
-                <span className="rounded-full border border-white/[0.08] bg-black/20 px-2.5 py-1 text-[11px] text-slate-400">
+                <span className="rounded-full border border-[#1e1a24] bg-black/20 px-2.5 py-1 text-[11px] text-[#8d8696]">
                   {exIdx + 1} / {examples.length}
                 </span>
               )}
@@ -710,7 +710,7 @@ export function TacticPuzzleBoard({
             <p className="mt-2 text-sm font-medium leading-snug text-stone-200">
               {example.caption}
             </p>
-            <p className="mt-2 text-xs leading-relaxed text-slate-400">
+            <p className="mt-2 text-xs leading-relaxed text-[#8d8696]">
               {instruction}
             </p>
             {feedback && feedbackStyles && (
@@ -735,14 +735,14 @@ export function TacticPuzzleBoard({
           {board}
 
           <div className="flex min-w-0 flex-1 flex-col gap-3 md:pt-2">
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4">
               <p className="text-xs font-bold uppercase tracking-wider text-amber-400/80">
                 {statusBadge}
               </p>
               <p className="mt-1.5 text-sm font-medium leading-snug text-stone-200">
                 {example.caption}
               </p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-400">
+              <p className="mt-2 text-xs leading-relaxed text-[#8d8696]">
                 {instruction}
               </p>
 

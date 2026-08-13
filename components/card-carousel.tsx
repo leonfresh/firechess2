@@ -45,13 +45,13 @@ function GridModal({
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
       {/* Modal — scroll lives on the card itself, matching ExplanationModal */}
       <div
-        className="relative z-10 max-h-[95vh] w-full max-w-5xl overflow-y-auto rounded-3xl border border-white/[0.1] bg-slate-950 shadow-2xl shadow-black/50 animate-fade-in-up"
+        className="relative z-10 max-h-[95vh] w-full max-w-5xl overflow-y-auto rounded-3xl border border-[#1e1a24] bg-slate-950 shadow-lg shadow-black/40 animate-fade-in-up"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white"
+          className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-[#1e1a24] text-[#8d8696] transition-colors hover:bg-[#ff5a1f]/[0.12] hover:text-white"
           aria-label="Close"
         >
           <svg
@@ -167,10 +167,10 @@ export function CardCarousel({
           <button
             type="button"
             onClick={() => setVisibleCount((v) => v + defaultVisible)}
-            className="w-full rounded-xl border border-white/[0.07] bg-white/[0.03] py-3 text-sm font-semibold text-slate-400 transition-colors hover:border-white/[0.12] hover:bg-white/[0.05] hover:text-slate-200"
+            className="w-full rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] py-3 text-sm font-semibold text-[#8d8696] transition-colors hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.05] hover:text-white"
           >
             Show {Math.min(remaining, defaultVisible)} more
-            <span className="ml-1.5 text-slate-600">
+            <span className="ml-1.5 text-[#565061]">
               ({remaining} remaining)
             </span>
           </button>
@@ -199,7 +199,7 @@ export function CardCarousel({
                   setGridModalIndex(idx);
                 }
               }}
-              className="group relative overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.02] transition-all hover:border-white/[0.15] hover:bg-white/[0.04] animate-fade-in-up text-left"
+              className="group relative overflow-hidden rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] transition-all hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.05] animate-fade-in-up text-left"
               style={{ animationDelay: `${Math.min(idx, 12) * 50}ms` }}
             >
               {/* Preview: scaled-down card clipped to visible area */}
@@ -215,7 +215,7 @@ export function CardCarousel({
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent" />
               {/* Expand overlay */}
               <div className="absolute inset-x-0 bottom-0 flex items-center justify-center pb-3 pt-8">
-                <span className="flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-white/80 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
+                <span className="flex items-center gap-1.5 rounded-lg bg-[#ff5a1f]/10 px-3 py-1.5 text-[11px] font-semibold text-white/80 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
                   <svg
                     width="14"
                     height="14"
@@ -254,7 +254,7 @@ export function CardCarousel({
                     setGridModalIndex(Math.max(0, gridModalIndex - 1))
                   }
                   disabled={gridModalIndex === 0}
-                  className="rounded-lg border border-white/[0.1] bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-white/[0.1] disabled:opacity-30"
+                  className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#ff5a1f]/[0.1] disabled:opacity-30"
                 >
                   ← Prev
                 </button>
@@ -264,7 +264,7 @@ export function CardCarousel({
                     setGridModalIndex(Math.min(total - 1, gridModalIndex + 1))
                   }
                   disabled={gridModalIndex === total - 1}
-                  className="rounded-lg border border-white/[0.1] bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-white/[0.1] disabled:opacity-30"
+                  className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#ff5a1f]/[0.1] disabled:opacity-30"
                 >
                   Next →
                 </button>
@@ -278,10 +278,10 @@ export function CardCarousel({
           <button
             type="button"
             onClick={() => setVisibleCount((v) => v + defaultVisible)}
-            className="w-full rounded-xl border border-white/[0.07] bg-white/[0.03] py-3 text-sm font-semibold text-slate-400 transition-colors hover:border-white/[0.12] hover:bg-white/[0.05] hover:text-slate-200"
+            className="w-full rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] py-3 text-sm font-semibold text-[#8d8696] transition-colors hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.05] hover:text-white"
           >
             Show {Math.min(remaining, defaultVisible)} more
-            <span className="ml-1.5 text-slate-600">
+            <span className="ml-1.5 text-[#565061]">
               ({remaining} remaining)
             </span>
           </button>
@@ -296,12 +296,12 @@ export function CardCarousel({
   return (
     <div className="space-y-3">
       {/* Navigation header */}
-      <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+      <div className="flex items-center justify-between rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-3 py-2">
         <button
           type="button"
           onClick={goPrev}
           disabled={activeIndex === 0}
-          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-[#8d8696] transition-colors hover:bg-[#1e1a24] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
           aria-label="Previous card"
         >
           <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
@@ -315,14 +315,14 @@ export function CardCarousel({
         </button>
 
         <span className="text-sm font-semibold tabular-nums text-white">
-          {activeIndex + 1} <span className="text-slate-500">of</span> {total}
+          {activeIndex + 1} <span className="text-[#565061]">of</span> {total}
         </span>
 
         <button
           type="button"
           onClick={goNext}
           disabled={activeIndex === total - 1}
-          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-[#8d8696] transition-colors hover:bg-[#1e1a24] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
           aria-label="Next card"
         >
           Next
@@ -354,7 +354,7 @@ export function CardCarousel({
                   child
                 ) : (
                   /* Lightweight placeholder — preserves scroll width without mounting heavy card */
-                  <div className="aspect-[4/3] w-full rounded-xl bg-white/[0.02]" />
+                  <div className="aspect-[4/3] w-full rounded-xl bg-[#ff5a1f]/[0.03]" />
                 )}
               </div>
             );
@@ -412,7 +412,7 @@ export function CardCarousel({
               className={`h-1.5 rounded-full transition-all ${
                 i === activeIndex
                   ? "w-4 bg-emerald-400"
-                  : "w-1.5 bg-white/20 hover:bg-white/40"
+                  : "w-1.5 bg-[#ff5a1f]/20 hover:bg-[#ff5a1f]/40"
               }`}
               aria-label={`Go to card ${i + 1}`}
             />
@@ -422,12 +422,12 @@ export function CardCarousel({
 
       {/* Bottom navigation hint */}
       {total > 1 && (
-        <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+        <div className="flex items-center justify-between rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-3 py-2">
           <button
             type="button"
             onClick={goPrev}
             disabled={activeIndex === 0}
-            className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-white/[0.08] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+            className="flex items-center gap-1.5 rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1.5 text-xs font-medium text-[#f0edf2] transition-colors hover:bg-[#1e1a24] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
           >
             <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
               <path
@@ -442,7 +442,7 @@ export function CardCarousel({
             type="button"
             onClick={goNext}
             disabled={activeIndex === total - 1}
-            className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-white/[0.08] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+            className="flex items-center gap-1.5 rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1.5 text-xs font-medium text-[#f0edf2] transition-colors hover:bg-[#1e1a24] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
           >
             Next Position
             <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
@@ -530,7 +530,7 @@ export function ViewModeToggle({
   ];
 
   return (
-    <div className="inline-flex items-center rounded-xl border border-white/[0.1] bg-white/[0.04] p-1 shadow-lg shadow-black/20">
+    <div className="inline-flex items-center rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.05] p-1 shadow-lg shadow-black/20">
       {modes.map(({ value, label, icon }) => (
         <button
           key={value}
@@ -539,7 +539,7 @@ export function ViewModeToggle({
           className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
             mode === value
               ? "bg-emerald-500/20 text-emerald-400 shadow-sm shadow-emerald-500/10"
-              : "text-slate-500 hover:bg-white/[0.06] hover:text-slate-300"
+              : "text-[#565061] hover:bg-[#1e1a24] hover:text-[#f0edf2]"
           }`}
           aria-label={`${label} view`}
         >

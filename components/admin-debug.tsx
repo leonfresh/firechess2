@@ -110,23 +110,23 @@ export function AdminDebug() {
     <div className="fixed bottom-4 left-4 z-[9990] flex select-none flex-col items-start gap-2">
       {/* Toast */}
       {toast && (
-        <div className="animate-fade-in rounded-xl border border-white/[0.10] bg-slate-900/95 px-4 py-2 text-xs font-medium text-slate-200 shadow-xl backdrop-blur-sm">
+        <div className="animate-fade-in rounded-xl border border-[#1e1a24] bg-slate-900/95 px-4 py-2 text-xs font-medium text-white shadow-xl backdrop-blur-sm">
           {toast}
         </div>
       )}
 
       {/* Collapsible panel */}
       {open && (
-        <div className="animate-fade-in w-60 overflow-hidden rounded-2xl border border-white/[0.10] bg-slate-900/95 shadow-2xl backdrop-blur-md">
+        <div className="animate-fade-in w-60 overflow-hidden rounded-2xl border border-[#1e1a24] bg-slate-900/95 shadow-2xl backdrop-blur-md">
           {/* Header */}
-          <div className="flex items-center gap-2 border-b border-white/[0.07] px-4 py-3">
+          <div className="flex items-center gap-2 border-b border-[#1e1a24] px-4 py-3">
             <span className="text-base">🔧</span>
-            <span className="flex-1 text-xs font-bold uppercase tracking-wider text-slate-400">
+            <span className="flex-1 text-xs font-bold uppercase tracking-wider text-[#8d8696]">
               Admin Debug
             </span>
             <button
               onClick={() => setOpen(false)}
-              className="text-slate-600 transition-colors hover:text-slate-300"
+              className="text-[#565061] transition-colors hover:text-[#f0edf2]"
               aria-label="Close debug panel"
             >
               <svg
@@ -148,7 +148,7 @@ export function AdminDebug() {
               <button
                 key={btn.label}
                 onClick={btn.action}
-                className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-xs font-medium text-slate-400 transition-all ${btn.color}`}
+                className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-xs font-medium text-[#8d8696] transition-all ${btn.color}`}
               >
                 <span className="text-base leading-none">{btn.icon}</span>
                 {btn.label}
@@ -157,8 +157,8 @@ export function AdminDebug() {
           </div>
 
           {/* Footer hint */}
-          <div className="border-t border-white/[0.06] px-4 py-2.5">
-            <p className="text-[10px] text-slate-600">Only visible to admins</p>
+          <div className="border-t border-[#1e1a24] px-4 py-2.5">
+            <p className="text-[10px] text-[#565061]">Only visible to admins</p>
           </div>
         </div>
       )}
@@ -169,8 +169,8 @@ export function AdminDebug() {
         aria-label="Toggle admin debug panel"
         className={`flex h-10 w-10 items-center justify-center rounded-full border shadow-lg transition-all ${
           open
-            ? "border-white/[0.15] bg-slate-700 text-white shadow-slate-900/50"
-            : "border-white/[0.08] bg-slate-800/90 text-slate-500 shadow-slate-900/50 hover:border-white/[0.15] hover:text-slate-300"
+            ? "border-[#ff5a1f]/25 bg-slate-700 text-white shadow-slate-900/50"
+            : "border-[#1e1a24] bg-slate-800/90 text-[#565061] shadow-slate-900/50 hover:border-[#ff5a1f]/25 hover:text-[#f0edf2]"
         }`}
       >
         <span className="text-sm leading-none">{open ? "✕" : "🔧"}</span>

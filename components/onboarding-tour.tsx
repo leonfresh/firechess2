@@ -204,15 +204,15 @@ export function OnboardingTour() {
           onClick={finish}
         />
         {/* Card */}
-        <div className="relative animate-fade-in-up rounded-2xl border border-white/10 bg-slate-900/98 p-7 shadow-2xl"
+        <div className="relative animate-fade-in-up rounded-2xl border border-[#1e1a24] bg-slate-900/98 p-7 shadow-2xl"
           style={{ width: Math.min(380, (typeof window !== "undefined" ? window.innerWidth : 400) - 32) }}
         >
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600/30 to-cyan-500/20 text-2xl">
             👋
           </div>
           <h2 className="text-lg font-bold text-white">Welcome to FireChess!</h2>
-          <p className="mt-2 text-sm leading-relaxed text-slate-400">
-            Take a quick <span className="font-medium text-slate-200">2-minute tour</span> to learn what every section of your dashboard does — or dive straight in.
+          <p className="mt-2 text-sm leading-relaxed text-[#8d8696]">
+            Take a quick <span className="font-medium text-white">2-minute tour</span> to learn what every section of your dashboard does — or dive straight in.
           </p>
           <div className="mt-6 flex items-center gap-3">
             <button
@@ -225,12 +225,12 @@ export function OnboardingTour() {
             <button
               type="button"
               onClick={finish}
-              className="flex-1 rounded-xl border border-white/10 py-2.5 text-sm font-medium text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-slate-200"
+              className="flex-1 rounded-xl border border-[#1e1a24] py-2.5 text-sm font-medium text-[#8d8696] transition-colors hover:bg-[#ff5a1f]/[0.05] hover:text-white"
             >
               Skip for now
             </button>
           </div>
-          <p className="mt-3 text-center text-[10px] text-slate-600">You can always find help in the support page.</p>
+          <p className="mt-3 text-center text-[10px] text-[#565061]">You can always find help in the support page.</p>
         </div>
       </div>
     );
@@ -290,7 +290,7 @@ export function OnboardingTour() {
       {/* Tooltip — permanently fixed at bottom-center; never moves between steps */}
       <div
         ref={tooltipRef}
-        className="fixed z-[10000] rounded-2xl border border-white/10 bg-slate-900/97 p-5 shadow-2xl backdrop-blur-md"
+        className="fixed z-[10000] rounded-2xl border border-[#1e1a24] bg-slate-900/97 p-5 shadow-2xl backdrop-blur-md"
         style={{
           bottom: 24,
           left: "50%",
@@ -303,7 +303,7 @@ export function OnboardingTour() {
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-violet-500/15 text-sm text-violet-400">
             {isAboveCenter ? "↑" : "↓"}
           </span>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-[11px] text-[#565061]">
             {isAboveCenter ? "Highlighted above" : "Highlighted below"} · step {step + 1} of {STEPS.length}
           </p>
           {/* Progress dots */}
@@ -316,7 +316,7 @@ export function OnboardingTour() {
                     ? "w-5 bg-violet-500"
                     : i < step
                     ? "w-1.5 bg-violet-500/40"
-                    : "w-1.5 bg-white/10"
+                    : "w-1.5 bg-[#ff5a1f]/10"
                 }`}
               />
             ))}
@@ -324,14 +324,14 @@ export function OnboardingTour() {
         </div>
 
         <h3 className="text-sm font-bold text-white">{current.title}</h3>
-        <p className="mt-1.5 text-xs leading-relaxed text-slate-400">{current.body}</p>
+        <p className="mt-1.5 text-xs leading-relaxed text-[#8d8696]">{current.body}</p>
 
         {/* Nav — always the same layout so buttons never jump */}
         <div className="mt-4 flex items-center justify-between gap-2">
           <button
             type="button"
             onClick={finish}
-            className="shrink-0 text-xs text-slate-500 transition-colors hover:text-slate-300"
+            className="shrink-0 text-xs text-[#565061] transition-colors hover:text-[#f0edf2]"
           >
             End tour
           </button>
@@ -340,7 +340,7 @@ export function OnboardingTour() {
               type="button"
               onClick={prev}
               disabled={step === 0}
-              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-white/[0.06] disabled:opacity-30"
+              className="rounded-lg border border-[#1e1a24] px-3 py-1.5 text-xs font-medium text-[#f0edf2] transition-colors hover:bg-[#1e1a24] disabled:opacity-30"
             >
               Back
             </button>

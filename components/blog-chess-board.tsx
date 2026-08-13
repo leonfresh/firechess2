@@ -223,7 +223,7 @@ export function BlogChessBoard({
 
   return (
     <div className="my-8 flex flex-col items-center gap-3">
-      <div className="relative overflow-hidden rounded-xl border border-white/[0.08] shadow-lg" style={{ maxWidth: 420, width: "100%" }}>
+      <div className="relative overflow-hidden rounded-xl border border-[#1e1a24] shadow-lg" style={{ maxWidth: 420, width: "100%" }}>
         <Chessboard
           id={`blog-board-${fen.slice(0, 20)}`}
           position={displayFen}
@@ -242,11 +242,11 @@ export function BlogChessBoard({
       {hasSequence && (
         <div className="flex items-center gap-2">
           <button onClick={reset}
-            className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-2.5 py-1.5 text-xs text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white"
+            className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-2.5 py-1.5 text-xs text-[#8d8696] transition-colors hover:bg-[#1e1a24] hover:text-white"
             title="Reset">⏮</button>
           <button onClick={() => { pause(); goTo(currentIdx - 1); }}
             disabled={currentIdx <= -1}
-            className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-2.5 py-1.5 text-xs text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+            className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-2.5 py-1.5 text-xs text-[#8d8696] transition-colors hover:bg-[#1e1a24] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
             title="Previous">◀</button>
           <button onClick={isPlaying ? pause : play}
             className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-sm font-semibold text-emerald-400 transition-all hover:bg-emerald-500/20 hover:text-emerald-300">
@@ -254,7 +254,7 @@ export function BlogChessBoard({
           </button>
           <button onClick={() => { pause(); goTo(currentIdx + 1); }}
             disabled={currentIdx >= fensRef.current.length - 2}
-            className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-2.5 py-1.5 text-xs text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+            className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-2.5 py-1.5 text-xs text-[#8d8696] transition-colors hover:bg-[#1e1a24] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
             title="Next">▶</button>
         </div>
       )}
@@ -262,7 +262,7 @@ export function BlogChessBoard({
       {/* Move list with badges (like /analyze page) */}
       {hasAllBadges && (
         <div className="w-full max-w-[420px]">
-          <div className="flex flex-wrap gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] p-2 max-h-[200px] overflow-y-auto">
+          <div className="flex flex-wrap gap-1.5 rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-2 max-h-[200px] overflow-y-auto">
             {moveList.map((move, i) => {
               const cls = classifications[i];
               const isCurrent = i === currentIdx;
@@ -273,12 +273,12 @@ export function BlogChessBoard({
                   key={i}
                   onClick={() => { pause(); goTo(i); }}
                   className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-mono transition-colors ${
-                    isCurrent ? "ring-1 ring-white/30 bg-white/[0.08]" : "hover:bg-white/[0.04]"
+                    isCurrent ? "ring-1 ring-white/30 bg-[#1e1a24]" : "hover:bg-[#ff5a1f]/[0.05]"
                   }`}
                   style={{ background: isCurrent ? (cls ? BADGE_STYLES[cls].bg : undefined) : undefined }}
                 >
-                  <span className="text-slate-600 text-[10px]">{pairNum}{isWhite ? "." : "..."}</span>
-                  <span className="text-slate-300">{move}</span>
+                  <span className="text-[#565061] text-[10px]">{pairNum}{isWhite ? "." : "..."}</span>
+                  <span className="text-[#f0edf2]">{move}</span>
                   {cls && (
                     <span
                       className="inline-flex items-center justify-center rounded px-1 py-0 text-[9px] font-bold leading-none"
@@ -310,16 +310,16 @@ export function BlogChessBoard({
               {MOVE_CLASSIFICATION_SHORT_LABELS[currentBadge]}
             </span>
           )}
-          <span className="text-slate-500">{currentMoveNum} {currentMoveLabel} ({currentIdx + 1}/{moveList.length})</span>
+          <span className="text-[#565061]">{currentMoveNum} {currentMoveLabel} ({currentIdx + 1}/{moveList.length})</span>
           {showAnalysis && classifications.length === 0 && !analysisError && (
-            <span className="text-slate-600 text-[10px]">♟ analyzing...</span>
+            <span className="text-[#565061] text-[10px]">♟ analyzing...</span>
           )}
           {analysisError && <span className="text-red-400 text-[10px]">analysis error</span>}
         </div>
       )}
 
       {caption && (
-        <p className="max-w-[420px] text-center text-sm text-slate-400 italic">{caption}</p>
+        <p className="max-w-[420px] text-center text-sm text-[#8d8696] italic">{caption}</p>
       )}
     </div>
   );

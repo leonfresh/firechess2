@@ -31,7 +31,7 @@ export function DiscordCta() {
             <br className="hidden sm:block" /> and sharing feedback
           </h2>
 
-          <p className="max-w-md text-base leading-relaxed text-slate-400">
+          <p className="max-w-md text-base leading-relaxed text-[#8d8696]">
             Get help, request features, and swap leaks with other players
             sharpening their game with FireChess.
           </p>
@@ -40,9 +40,9 @@ export function DiscordCta() {
             href={DISCORD_INVITE}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex w-full max-w-md items-center justify-between gap-3 rounded-full border border-white/10 bg-white/[0.04] py-2 pl-5 pr-2 transition-colors hover:border-indigo-400/30 hover:bg-white/[0.06]"
+            className="group flex w-full max-w-md items-center justify-between gap-3 rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] py-2 pl-5 pr-2 transition-colors hover:border-indigo-400/30 hover:bg-[#1e1a24]"
           >
-            <span className="flex items-center gap-2.5 text-sm font-semibold text-slate-200">
+            <span className="flex items-center gap-2.5 text-sm font-semibold text-white">
               <DiscordIcon className="h-4 w-4 text-indigo-300" />
               discord.gg/y9NCXcdvs8
             </span>

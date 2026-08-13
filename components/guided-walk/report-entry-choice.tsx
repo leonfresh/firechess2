@@ -67,14 +67,14 @@ export function ReportEntryChoice({
         onClick={() => onChoose("full")}
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
       />
-      <div className="relative w-full max-w-lg animate-fade-in-up rounded-[1.5rem] border border-white/[0.1] bg-slate-950/95 p-6 shadow-2xl shadow-black/50 sm:p-7">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+      <div className="relative w-full max-w-lg animate-fade-in-up rounded-[1.5rem] border border-[#1e1a24] bg-slate-950/95 p-6 shadow-lg shadow-black/40 sm:p-7">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#565061]">
           Your report is ready
         </p>
         <h2 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-[1.75rem]">
           How do you want to read it?
         </h2>
-        <p className="mt-2 text-sm leading-relaxed text-slate-400">
+        <p className="mt-2 text-sm leading-relaxed text-[#8d8696]">
           You can switch between these any time from the bar at the top.
         </p>
 
@@ -95,11 +95,11 @@ export function ReportEntryChoice({
                 <span className="block text-sm font-bold text-white">
                   {option.label}
                 </span>
-                <span className="mt-1 block text-xs leading-relaxed text-slate-400">
+                <span className="mt-1 block text-xs leading-relaxed text-[#8d8696]">
                   {option.blurb}
                 </span>
               </span>
-              <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-slate-500 transition-transform group-hover:translate-x-0.5 group-hover:text-white" />
+              <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-[#565061] transition-transform group-hover:translate-x-0.5 group-hover:text-white" />
             </button>
           ))}
         </div>

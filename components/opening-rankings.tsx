@@ -142,7 +142,7 @@ export function OpeningRankings({ openingSummaries }: Props) {
                 {rankings.length} opening{rankings.length !== 1 ? "s" : ""}
               </span>
             </h2>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-[#8d8696]">
               {rankings.length >= 2 ? (
                 <>
                   Lowest:{" "}
@@ -155,7 +155,7 @@ export function OpeningRankings({ openingSummaries }: Props) {
                     {best.name} ({best.winRate}%)
                   </span>
                   {" · "}
-                  <span className="text-slate-500">{totalGames} games total</span>
+                  <span className="text-[#565061]">{totalGames} games total</span>
                 </>
               ) : (
                 <>All your openings ranked by win rate — lowest to highest.</>
@@ -170,7 +170,7 @@ export function OpeningRankings({ openingSummaries }: Props) {
         {rankings.map((entry, idx) => (
           <div
             key={entry.key}
-            className="group rounded-xl border border-white/[0.06] bg-gradient-to-r from-white/[0.02] to-transparent p-3 transition-all duration-200 hover:border-white/[0.1] hover:bg-white/[0.03]"
+            className="group rounded-xl border border-[#1e1a24] bg-gradient-to-r from-white/[0.02] to-transparent p-3 transition-all duration-200 hover:border-[#1e1a24] hover:bg-[#ff5a1f]/[0.04]"
           >
             {/* Top row: rank badge + name + color + win-rate label */}
             <div className="mb-2 flex items-center gap-2">
@@ -183,8 +183,8 @@ export function OpeningRankings({ openingSummaries }: Props) {
               <span
                 className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                   entry.userColor === "white"
-                    ? "bg-white/10 text-white"
-                    : "bg-slate-600/30 text-slate-300"
+                    ? "bg-[#ff5a1f]/10 text-white"
+                    : "bg-slate-600/30 text-[#f0edf2]"
                 }`}
               >
                 {entry.userColor === "white" ? "♔" : "♚"}{" "}
@@ -197,7 +197,7 @@ export function OpeningRankings({ openingSummaries }: Props) {
 
             <div className="flex items-center gap-3">
               {/* Board — larger */}
-              <div className="w-[120px] h-[120px] shrink-0 overflow-hidden border border-white/[0.08]">
+              <div className="w-[120px] h-[120px] shrink-0 overflow-hidden border border-[#1e1a24]">
                 <Chessboard
                   id={`opening-rank-${idx}`}
                   position={entry.fen}
@@ -215,7 +215,7 @@ export function OpeningRankings({ openingSummaries }: Props) {
               <div className="min-w-0 flex-1">
                 {/* Win rate bar */}
                 <div className="flex items-center gap-3">
-                  <div className="h-2 flex-1 rounded-full bg-white/[0.06]">
+                  <div className="h-2 flex-1 rounded-full bg-[#1e1a24]">
                     <div
                       className={`h-2 rounded-full ${winRateBarBg(entry.winRate)} transition-all duration-700`}
                       style={{ width: `${Math.max(entry.winRate, 2)}%` }}
@@ -227,12 +227,12 @@ export function OpeningRankings({ openingSummaries }: Props) {
                 </div>
 
                 {/* W / D / L stats */}
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
-                  <span className="font-medium text-slate-400">
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-[#565061]">
+                  <span className="font-medium text-[#8d8696]">
                     {entry.games} game{entry.games !== 1 ? "s" : ""}
                   </span>
                   <span className="text-emerald-400/70">+{entry.wins}W</span>
-                  <span className="text-slate-400/70">={entry.draws}D</span>
+                  <span className="text-[#8d8696]/70">={entry.draws}D</span>
                   <span className="text-red-400/70">&minus;{entry.losses}L</span>
                 </div>
 

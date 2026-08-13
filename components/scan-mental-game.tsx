@@ -5,10 +5,10 @@ import type { MentalStats } from "@/lib/types";
 function HelpTip({ text }: { text: string }) {
   return (
     <span className="group relative ml-1 inline-flex">
-      <span className="flex h-[15px] w-[15px] cursor-help items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-[9px] font-bold leading-none text-slate-500 transition-colors group-hover:border-emerald-500/30 group-hover:bg-emerald-500/10 group-hover:text-emerald-400">
+      <span className="flex h-[15px] w-[15px] cursor-help items-center justify-center rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] text-[9px] font-bold leading-none text-[#565061] transition-colors group-hover:border-emerald-500/30 group-hover:bg-emerald-500/10 group-hover:text-emerald-400">
         ?
       </span>
-      <span className="pointer-events-none absolute bottom-full left-1/2 z-[9999] mb-2 w-48 -translate-x-1/2 rounded-lg border border-white/[0.08] bg-slate-900/95 px-3 py-2 text-[11px] font-normal normal-case leading-snug tracking-normal text-slate-300 opacity-0 shadow-xl backdrop-blur-sm transition-opacity group-hover:opacity-100">
+      <span className="pointer-events-none absolute bottom-full left-1/2 z-[9999] mb-2 w-48 -translate-x-1/2 rounded-lg border border-[#1e1a24] bg-slate-900/95 px-3 py-2 text-[11px] font-normal normal-case leading-snug tracking-normal text-[#f0edf2] opacity-0 shadow-xl backdrop-blur-sm transition-opacity group-hover:opacity-100">
         {text}
         <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-slate-900/95" />
       </span>
@@ -18,30 +18,30 @@ function HelpTip({ text }: { text: string }) {
 
 export function MentalGameLoading() {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] p-6 md:p-8">
+    <div className="relative overflow-hidden rounded-2xl border border-[#1e1a24] p-6 md:p-8">
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.06] via-amber-500/[0.04] to-rose-500/[0.06]" />
       <div className="relative">
         <h2 className="text-xl font-bold text-white">Mental Game</h2>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-[#565061]">
           Analysing result patterns across your games...
         </p>
         <div className="space-y-4 animate-pulse py-2">
           {[1, 2, 3].map((index) => (
             <div
               key={index}
-              className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4"
+              className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4"
             >
               <div className="flex gap-4">
-                <div className="h-16 w-16 shrink-0 rounded-xl bg-white/[0.08]" />
+                <div className="h-16 w-16 shrink-0 rounded-xl bg-[#1e1a24]" />
                 <div className="flex-1 space-y-2 pt-1">
-                  <div className="h-3.5 w-3/4 rounded bg-white/[0.08]" />
-                  <div className="h-3 w-1/2 rounded bg-white/[0.06]" />
-                  <div className="h-3 w-2/3 rounded bg-white/[0.06]" />
+                  <div className="h-3.5 w-3/4 rounded bg-[#1e1a24]" />
+                  <div className="h-3 w-1/2 rounded bg-[#1e1a24]" />
+                  <div className="h-3 w-2/3 rounded bg-[#1e1a24]" />
                 </div>
               </div>
             </div>
           ))}
-          <p className="text-center text-xs text-slate-500">
+          <p className="text-center text-xs text-[#565061]">
             Calculating stability, tilt rate, streaks and more...
           </p>
         </div>
@@ -58,7 +58,7 @@ export function ScanMentalGame({
   hasProAccess: boolean;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] p-6 md:p-8">
+    <div className="relative overflow-hidden rounded-2xl border border-[#1e1a24] p-6 md:p-8">
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.08] via-amber-500/[0.05] to-rose-500/[0.08]" />
       <div className="pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full bg-violet-500/10 blur-[60px]" />
       <div className="pointer-events-none absolute -bottom-20 -left-20 h-40 w-40 rounded-full bg-amber-500/10 blur-[60px]" />
@@ -70,7 +70,7 @@ export function ScanMentalGame({
             <span className="inline-flex items-center gap-1 rounded-full border border-violet-500/20 bg-violet-500/[0.08] px-3 py-1 text-xs font-medium text-violet-400">
               🧠 Psychology
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-slate-500/20 bg-slate-500/[0.08] px-3 py-1 text-xs font-medium text-slate-400">
+            <span className="inline-flex items-center gap-1 rounded-full border border-slate-500/20 bg-slate-500/[0.08] px-3 py-1 text-xs font-medium text-[#8d8696]">
               {mentalStats.totalGames} games · {mentalStats.wins}W{" "}
               {mentalStats.losses}L {mentalStats.draws}D
             </span>
@@ -137,7 +137,7 @@ export function ScanMentalGame({
             <div key={stat.label} className="stat-card">
               <div className="flex items-center gap-2">
                 <span className="text-base">{stat.icon}</span>
-                <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                <p className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                   {stat.label}
                   <HelpTip text={stat.help} />
                 </p>
@@ -210,7 +210,7 @@ export function ScanMentalGame({
             <div key={stat.label} className="stat-card">
               <div className="flex items-center gap-2">
                 <span className="text-base">{stat.icon}</span>
-                <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                <p className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                   {stat.label}
                   <HelpTip text={stat.help} />
                 </p>
@@ -235,7 +235,7 @@ export function ScanMentalGame({
               ) : null}
               {mentalStats.recentForm && mentalStats.recentForm.length > 0 ? (
                 <div className="flex items-center gap-1">
-                  <span className="mr-1 text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                  <span className="mr-1 text-[10px] font-medium uppercase tracking-wider text-[#565061]">
                     Last {mentalStats.recentForm.length}
                   </span>
                   {mentalStats.recentForm.map((result, index) => (
@@ -246,7 +246,7 @@ export function ScanMentalGame({
                           ? "bg-emerald-500/20 text-emerald-400"
                           : result === "L"
                             ? "bg-red-500/20 text-red-400"
-                            : "bg-slate-500/20 text-slate-400"
+                            : "bg-slate-500/20 text-[#8d8696]"
                       }`}
                     >
                       {result}
@@ -257,17 +257,17 @@ export function ScanMentalGame({
             </div>
 
             <div className="mt-4">
-              <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-slate-500">
+              <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-[#565061]">
                 Color Performance
               </p>
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-sm">
+                <div className="flex items-center gap-3 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-3.5 py-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#ff5a1f]/10 text-sm">
                     ♔
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-[#8d8696]">
                         White · {mentalStats.whiteGames ?? 0} games
                       </span>
                       <span
@@ -276,22 +276,22 @@ export function ScanMentalGame({
                         {mentalStats.whiteWinRate ?? 0}%
                       </span>
                     </div>
-                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[#1e1a24]">
                       <div
-                        className="h-full rounded-full bg-white/60 transition-all"
+                        className="h-full rounded-full bg-[#ff5a1f]/60 transition-all"
                         style={{ width: `${mentalStats.whiteWinRate ?? 0}%` }}
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-3">
+                <div className="flex items-center gap-3 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-3.5 py-3">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-700/50 text-sm">
                     ♚
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-[#8d8696]">
                         Black · {mentalStats.blackGames ?? 0} games
                       </span>
                       <span
@@ -300,7 +300,7 @@ export function ScanMentalGame({
                         {mentalStats.blackWinRate ?? 0}%
                       </span>
                     </div>
-                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[#1e1a24]">
                       <div
                         className="h-full rounded-full bg-slate-400/60 transition-all"
                         style={{ width: `${mentalStats.blackWinRate ?? 0}%` }}
@@ -312,7 +312,7 @@ export function ScanMentalGame({
             </div>
 
             <div className="mt-4">
-              <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-slate-500">
+              <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-[#565061]">
                 Deep Breakdown
               </p>
               <div className="grid gap-3 sm:grid-cols-4">
@@ -386,14 +386,14 @@ export function ScanMentalGame({
                         ? "text-emerald-400"
                         : (mentalStats.mateFinishRate ?? 0) >= 20
                           ? "text-cyan-400"
-                          : "text-slate-400",
+                          : "text-[#8d8696]",
                     help: "Percentage of wins that ended in checkmate instead of resignation or flagging.",
                   },
                 ].map((stat) => (
                   <div key={stat.label} className="stat-card">
                     <div className="flex items-center gap-2">
                       <span className="text-base">{stat.icon}</span>
-                      <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                         {stat.label}
                         <HelpTip text={stat.help} />
                       </p>
@@ -462,7 +462,7 @@ export function ScanMentalGame({
                 <div key={stat.label} className="stat-card">
                   <div className="flex items-center gap-2">
                     <span className="text-base">{stat.icon}</span>
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                       {stat.label}
                       <HelpTip text={stat.help} />
                     </p>
@@ -481,7 +481,7 @@ export function ScanMentalGame({
               <div className="stat-card">
                 <div className="flex items-center gap-2">
                   <span className="text-base">⚔️</span>
-                  <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                     Decisiveness
                     <HelpTip text="Percentage of games that ended decisively. High means aggressive play and playing for the win." />
                   </p>
@@ -505,15 +505,15 @@ export function ScanMentalGame({
               <div className="stat-card">
                 <div className="flex items-center gap-2">
                   <span className="text-base">🤝</span>
-                  <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                     Draw Rate
                     <HelpTip text="Percentage of games ending in a draw. Compare it against your pool and time control." />
                   </p>
                 </div>
-                <p className="mt-1 text-2xl font-bold text-slate-300">
+                <p className="mt-1 text-2xl font-bold text-[#f0edf2]">
                   {mentalStats.drawRate ?? 0}%
                 </p>
-                <p className="mt-0.5 text-xs text-slate-400 opacity-70">
+                <p className="mt-0.5 text-xs text-[#8d8696] opacity-70">
                   {(mentalStats.drawRate ?? 0) >= 20
                     ? "Frequent Draws"
                     : (mentalStats.drawRate ?? 0) >= 8
@@ -531,7 +531,7 @@ export function ScanMentalGame({
                   🧊 Ice Veins
                 </span>
                 <div className="flex items-center gap-1">
-                  <span className="mr-1 text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                  <span className="mr-1 text-[10px] font-medium uppercase tracking-wider text-[#565061]">
                     Last 10
                   </span>
                   {["W", "L", "W", "W", "D", "L", "W", "W", "L", "W"].map(
@@ -543,7 +543,7 @@ export function ScanMentalGame({
                             ? "bg-emerald-500/20 text-emerald-400"
                             : result === "L"
                               ? "bg-red-500/20 text-red-400"
-                              : "bg-slate-500/20 text-slate-400"
+                              : "bg-slate-500/20 text-[#8d8696]"
                         }`}
                       >
                         {result}
@@ -554,38 +554,38 @@ export function ScanMentalGame({
               </div>
 
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-sm">
+                <div className="flex items-center gap-3 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-3.5 py-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#ff5a1f]/10 text-sm">
                     ♔
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-[#8d8696]">
                         White · 42 games
                       </span>
                       <span className="text-sm font-bold text-emerald-400">
                         58.3%
                       </span>
                     </div>
-                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
-                      <div className="h-full w-[58%] rounded-full bg-white/60" />
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[#1e1a24]">
+                      <div className="h-full w-[58%] rounded-full bg-[#ff5a1f]/60" />
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-3">
+                <div className="flex items-center gap-3 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-3.5 py-3">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-700/50 text-sm">
                     ♚
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-[#8d8696]">
                         Black · 38 games
                       </span>
                       <span className="text-sm font-bold text-amber-400">
                         47.2%
                       </span>
                     </div>
-                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[#1e1a24]">
                       <div className="h-full w-[47%] rounded-full bg-slate-400/60" />
                     </div>
                   </div>
@@ -596,7 +596,7 @@ export function ScanMentalGame({
                 {["Momentum", "Early Losses", "Comebacks", "Mate Finish"].map(
                   (label) => (
                     <div key={label} className="stat-card">
-                      <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                         {label}
                       </p>
                       <p className="mt-1 text-2xl font-bold text-emerald-400">
@@ -614,7 +614,7 @@ export function ScanMentalGame({
                 {["Avg Win Len", "Avg Loss Len", "Best Run", "Worst Run"].map(
                   (label) => (
                     <div key={label} className="stat-card">
-                      <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                         {label}
                       </p>
                       <p className="mt-1 text-2xl font-bold text-cyan-400">
@@ -634,7 +634,7 @@ export function ScanMentalGame({
                 <p className="text-lg font-bold text-white">
                   🔒 Pro Mental Breakdown
                 </p>
-                <p className="mt-1.5 max-w-xs text-xs text-slate-400">
+                <p className="mt-1.5 max-w-xs text-xs text-[#8d8696]">
                   Unlock your emotional archetype, color win rates, momentum
                   analysis, comeback rate, game length trends, and streak
                   details.
@@ -652,7 +652,7 @@ export function ScanMentalGame({
 
         <div className="section-divider mt-6" />
         <div className="mt-4">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[#565061]">
             Based on {mentalStats.totalGames} game outcomes · Psychology
             estimates
           </p>

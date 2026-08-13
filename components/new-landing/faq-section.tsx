@@ -47,13 +47,13 @@ export function FaqSection({ onScanClick }: { onScanClick?: () => void }) {
       <div className="relative mx-auto max-w-4xl">
         {/* Section header */}
         <div className="mb-12 text-center">
-          <span className="mb-4 inline-block rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-slate-400">
+          <span className="mb-4 inline-block rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-[#8d8696]">
             FAQ
           </span>
           <h2 className="mb-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
             Common questions
           </h2>
-          <p className="text-lg text-slate-400">
+          <p className="text-lg text-[#8d8696]">
             Everything you need to know about FireChess.
           </p>
         </div>
@@ -68,7 +68,7 @@ export function FaqSection({ onScanClick }: { onScanClick?: () => void }) {
                 className={`overflow-hidden rounded-xl border transition-all duration-300 ${
                   isOpen
                     ? "border-orange-500/20 bg-orange-500/[0.03]"
-                    : "border-white/[0.06] bg-[#0c0f15] hover:border-white/[0.12]"
+                    : "border-[#1e1a24] bg-[#0c0f15] hover:border-[#ff5a1f]/25"
                 }`}
               >
                 <button
@@ -83,7 +83,7 @@ export function FaqSection({ onScanClick }: { onScanClick?: () => void }) {
                     {faq.question}
                   </span>
                   <ChevronDown
-                    className={`h-5 w-5 text-slate-400 transition-transform duration-300 ${
+                    className={`h-5 w-5 text-[#8d8696] transition-transform duration-300 ${
                       isOpen ? "rotate-180" : ""
                     }`}
                   />
@@ -93,7 +93,7 @@ export function FaqSection({ onScanClick }: { onScanClick?: () => void }) {
                     isOpen ? "max-h-96" : "max-h-0"
                   }`}
                 >
-                  <p className="px-6 pb-6 leading-relaxed text-slate-400">
+                  <p className="px-6 pb-6 leading-relaxed text-[#8d8696]">
                     {faq.answer}
                   </p>
                 </div>
@@ -104,7 +104,7 @@ export function FaqSection({ onScanClick }: { onScanClick?: () => void }) {
 
         {/* Final CTA */}
         <div className="mt-16 text-center">
-          <p className="mb-6 text-lg text-slate-400">
+          <p className="mb-6 text-lg text-[#8d8696]">
             Ready to find your patterns?
           </p>
           <button
@@ -114,7 +114,7 @@ export function FaqSection({ onScanClick }: { onScanClick?: () => void }) {
             Scan my games — free
             <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
           </button>
-          <p className="mt-4 text-sm text-slate-500">
+          <p className="mt-4 text-sm text-[#565061]">
             No credit card required · Free forever
           </p>
         </div>

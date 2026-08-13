@@ -187,21 +187,21 @@ export function VRMCoach({ classification, commentary, bestMoveSan, cpLoss, isVi
   if (!isVisible) return null;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#0c0f15] to-[#08090d]">
+    <div className="relative overflow-hidden rounded-2xl border border-[#1e1a24] bg-gradient-to-b from-[#0c0f15] to-[#08090d]">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2.5">
+      <div className="flex items-center justify-between border-b border-[#1e1a24] px-4 py-2.5">
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-xs font-semibold text-slate-300">Coach Cherry</span>
+          <span className="text-xs font-semibold text-[#f0edf2]">Coach Cherry</span>
         </div>
-        <span className="text-[10px] text-slate-500">VRM Live</span>
+        <span className="text-[10px] text-[#565061]">VRM Live</span>
       </div>
 
       {/* 3D Canvas */}
       <div className="relative h-[280px] w-full">
         {!vrm && !error && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-            <span className="text-slate-500 text-xs animate-pulse">Loading coach…</span>
+            <span className="text-[#565061] text-xs animate-pulse">Loading coach…</span>
           </div>
         )}
         {error && (
@@ -223,17 +223,17 @@ export function VRMCoach({ classification, commentary, bestMoveSan, cpLoss, isVi
       </div>
 
       {/* Speech bubble */}
-      <div className="border-t border-white/[0.06] px-4 py-3">
+      <div className="border-t border-[#1e1a24] px-4 py-3">
         <div className="min-h-[48px]">
           {displayText ? (
-            <p className="text-xs leading-relaxed text-slate-300">
+            <p className="text-xs leading-relaxed text-[#f0edf2]">
               <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse" />
               {displayText}
             </p>
           ) : commentary ? (
-            <p className="text-xs leading-relaxed text-slate-300">{commentary}</p>
+            <p className="text-xs leading-relaxed text-[#f0edf2]">{commentary}</p>
           ) : (
-            <p className="text-xs text-slate-500 italic">
+            <p className="text-xs text-[#565061] italic">
               {classification === "blunder" || classification === "mistake"
                 ? "That was a critical moment. Let's look at what went wrong..."
                 : classification === "brilliant"
@@ -246,7 +246,7 @@ export function VRMCoach({ classification, commentary, bestMoveSan, cpLoss, isVi
           <p className="mt-2 text-[10px] text-emerald-400">
             Best was: <span className="font-semibold">{bestMoveSan}</span>
             {cpLoss !== undefined && cpLoss > 0 && (
-              <span className="ml-2 text-slate-500">({(cpLoss / 100).toFixed(1)} pawns lost)</span>
+              <span className="ml-2 text-[#565061]">({(cpLoss / 100).toFixed(1)} pawns lost)</span>
             )}
           </p>
         )}

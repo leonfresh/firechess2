@@ -84,7 +84,7 @@ export function FeaturesSection() {
       <div className="relative mx-auto max-w-7xl">
         {/* Section header */}
         <div className="mb-16 text-center">
-          <span className="mb-4 inline-block rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-slate-400">
+          <span className="mb-4 inline-block rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-[#8d8696]">
             Features
           </span>
           <h2 className="mb-4 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
@@ -94,7 +94,7 @@ export function FeaturesSection() {
             </span>{" "}
             mistakes
           </h2>
-          <p className="mx-auto max-w-2xl text-lg text-slate-400">
+          <p className="mx-auto max-w-2xl text-lg text-[#8d8696]">
             One scan reveals the patterns holding your rating back. Then we
             turn each leak into a drill you can actually fix.
           </p>
@@ -108,7 +108,7 @@ export function FeaturesSection() {
             return (
               <div
                 key={feature.title}
-                className={`group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0c0f15] p-6 transition-all duration-500 hover:border-white/[0.12] ${feature.span} ${
+                className={`group relative overflow-hidden rounded-2xl border border-[#1e1a24] bg-[#0c0f15] p-6 transition-all duration-500 hover:border-[#ff5a1f]/25 ${feature.span} ${
                   isHovered ? "z-10 scale-[1.02] shadow-2xl" : ""
                 }`}
                 onMouseEnter={() => setHoveredIndex(index)}
@@ -132,7 +132,7 @@ export function FeaturesSection() {
                   <h3 className="mb-2 text-lg font-semibold text-white">
                     {feature.title}
                   </h3>
-                  <p className="text-sm leading-relaxed text-slate-400">
+                  <p className="text-sm leading-relaxed text-[#8d8696]">
                     {feature.description}
                   </p>
                 </div>

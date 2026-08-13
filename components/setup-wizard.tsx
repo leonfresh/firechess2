@@ -181,7 +181,7 @@ export function SetupWizard({ show }: { show: boolean }) {
 
       {/* Card */}
       <div className="relative w-full max-w-lg animate-in fade-in slide-in-from-bottom-4 duration-300">
-        <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0e0a07] shadow-2xl shadow-black/60">
+        <div className="relative overflow-hidden rounded-2xl border border-[#1e1a24] bg-[#0e0a07] shadow-2xl shadow-black/60">
           {/* Top gradient strip */}
           <div className="h-1 w-full bg-gradient-to-r from-orange-500 via-amber-500 to-red-500" />
 
@@ -212,7 +212,7 @@ export function SetupWizard({ show }: { show: boolean }) {
               <button
                 type="button"
                 onClick={handleSkip}
-                className="flex-shrink-0 rounded-lg p-1.5 text-stone-600 transition-colors hover:bg-white/[0.05] hover:text-stone-400"
+                className="flex-shrink-0 rounded-lg p-1.5 text-stone-600 transition-colors hover:bg-[#ff5a1f]/[0.05] hover:text-stone-400"
                 aria-label="Skip setup"
               >
                 <svg
@@ -277,7 +277,7 @@ export function SetupWizard({ show }: { show: boolean }) {
                         className={`flex items-center gap-3 rounded-xl border px-4 py-3.5 text-left text-sm font-semibold transition-all ${
                           platform === p.id
                             ? "border-orange-500/40 bg-orange-500/10 text-orange-300"
-                            : "border-white/[0.07] bg-white/[0.03] text-stone-300 hover:border-white/[0.12] hover:bg-white/[0.06]"
+                            : "border-[#1e1a24] bg-[#ff5a1f]/[0.04] text-stone-300 hover:border-[#ff5a1f]/25 hover:bg-[#1e1a24]"
                         }`}
                       >
                         <span
@@ -323,10 +323,10 @@ export function SetupWizard({ show }: { show: boolean }) {
                     onKeyDown={(e) =>
                       e.key === "Enter" && handleStep1Continue()
                     }
-                    className={`w-full rounded-xl border bg-white/[0.03] px-4 py-3 text-sm text-white placeholder-stone-600 outline-none transition-colors focus:bg-white/[0.05] ${
+                    className={`w-full rounded-xl border bg-[#ff5a1f]/[0.04] px-4 py-3 text-sm text-white placeholder-stone-600 outline-none transition-colors focus:bg-[#ff5a1f]/[0.05] ${
                       usernameError
                         ? "border-red-500/40 focus:border-red-500/60"
-                        : "border-white/[0.08] focus:border-orange-500/40"
+                        : "border-[#1e1a24] focus:border-orange-500/40"
                     }`}
                   />
                   {usernameError && (
@@ -368,7 +368,7 @@ export function SetupWizard({ show }: { show: boolean }) {
                       className={`flex flex-col rounded-xl border px-3.5 py-3 text-left transition-all ${
                         rating === r.id
                           ? "border-emerald-500/40 bg-emerald-500/10"
-                          : "border-white/[0.07] bg-white/[0.03] hover:border-white/[0.12] hover:bg-white/[0.06]"
+                          : "border-[#1e1a24] bg-[#ff5a1f]/[0.04] hover:border-[#ff5a1f]/25 hover:bg-[#1e1a24]"
                       }`}
                     >
                       <span
@@ -415,7 +415,7 @@ export function SetupWizard({ show }: { show: boolean }) {
                       className={`flex items-center gap-3.5 rounded-xl border px-4 py-3 text-left transition-all ${
                         focus === f.id
                           ? "border-emerald-500/40 bg-emerald-500/10"
-                          : "border-white/[0.07] bg-white/[0.03] hover:border-white/[0.12] hover:bg-white/[0.06]"
+                          : "border-[#1e1a24] bg-[#ff5a1f]/[0.04] hover:border-[#ff5a1f]/25 hover:bg-[#1e1a24]"
                       }`}
                     >
                       <span className="text-xl">{f.emoji}</span>
@@ -463,7 +463,7 @@ export function SetupWizard({ show }: { show: boolean }) {
                       ? "w-6 bg-orange-500"
                       : s < step
                         ? "w-3 bg-orange-500/40"
-                        : "w-3 bg-white/[0.08]"
+                        : "w-3 bg-[#1e1a24]"
                   }`}
                 />
               ))}

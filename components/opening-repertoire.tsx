@@ -150,7 +150,7 @@ export function SaveToRepertoireButton({
       className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-medium transition-all ${
         saved
           ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10"
-          : "bg-white/[0.04] text-white/40 hover:bg-white/[0.08] hover:text-white/60"
+          : "bg-[#ff5a1f]/[0.05] text-white/40 hover:bg-[#1e1a24] hover:text-white/60"
       }`}
     >
       {saved ? (
@@ -278,12 +278,12 @@ function RepertoireRow({
   );
 
   return (
-    <div className="overflow-hidden rounded-xl border border-white/5 bg-white/[0.02]">
+    <div className="overflow-hidden rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03]">
       <button
         onClick={onToggle}
-        className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-white/[0.02]"
+        className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-[#ff5a1f]/[0.03]"
       >
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.05] text-xs font-bold text-white/50">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#ff5a1f]/[0.05] text-xs font-bold text-white/50">
           {entry.userColor === "white" ? "♔" : "♚"}
         </div>
         <div className="min-w-0 flex-1">
@@ -304,7 +304,7 @@ function RepertoireRow({
             {entry.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-white/30"
+                className="rounded-full bg-[#ff5a1f]/[0.05] px-1.5 py-0.5 text-[9px] text-white/30"
               >
                 {tag}
               </span>
@@ -326,7 +326,7 @@ function RepertoireRow({
       </button>
 
       {expanded && (
-        <div className="border-t border-white/5 p-4">
+        <div className="border-t border-[#1e1a24] p-4">
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
             <div ref={boardRef} className="w-full max-w-[200px] flex-shrink-0">
               <Chessboard

@@ -65,7 +65,7 @@ export function PricingTeaser() {
           <h2 className="text-3xl font-extrabold text-white md:text-4xl">
             Simple pricing — start free
           </h2>
-          <p className="mt-4 text-base text-slate-400">
+          <p className="mt-4 text-base text-[#8d8696]">
             Scanning your games is free, no card required. Upgrade only when you
             want bigger limits and deeper analysis.
           </p>
@@ -79,7 +79,7 @@ export function PricingTeaser() {
                 "relative flex h-full flex-col rounded-2xl border p-6 " +
                 (tier.highlight
                   ? "border-orange-500/40 bg-orange-500/[0.05]"
-                  : "border-white/[0.08] bg-white/[0.02]")
+                  : "border-[#1e1a24] bg-[#ff5a1f]/[0.03]")
               }
             >
               {tier.badge && (
@@ -94,21 +94,21 @@ export function PricingTeaser() {
                   {tier.price}
                 </span>
                 {tier.suffix && (
-                  <span className="text-sm text-slate-400">{tier.suffix}</span>
+                  <span className="text-sm text-[#8d8696]">{tier.suffix}</span>
                 )}
                 {tier.was && (
-                  <span className="text-sm text-slate-400 line-through">
+                  <span className="text-sm text-[#8d8696] line-through">
                     {tier.was}
                   </span>
                 )}
               </div>
-              <p className="mt-2 text-sm text-slate-400">{tier.blurb}</p>
+              <p className="mt-2 text-sm text-[#8d8696]">{tier.blurb}</p>
 
               <ul className="mt-5 flex-1 space-y-2.5">
                 {tier.features.map((f) => (
                   <li key={f} className="flex items-start gap-2.5 text-sm">
                     <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
-                    <span className="text-slate-300">{f}</span>
+                    <span className="text-[#f0edf2]">{f}</span>
                   </li>
                 ))}
               </ul>
@@ -119,7 +119,7 @@ export function PricingTeaser() {
                   "mt-6 inline-flex h-11 items-center justify-center rounded-xl px-5 text-sm font-semibold transition-colors " +
                   (tier.highlight
                     ? "btn-cta-fire text-white"
-                    : "border border-white/15 text-slate-100 hover:border-white/25 hover:bg-white/[0.05]")
+                    : "border border-[#1e1a24] text-slate-100 hover:border-[#1e1a24] hover:bg-[#ff5a1f]/[0.05]")
                 }
               >
                 {tier.cta}
@@ -128,10 +128,10 @@ export function PricingTeaser() {
           ))}
         </div>
 
-        <p className="mt-8 text-center text-sm text-slate-400">
+        <p className="mt-8 text-center text-sm text-[#8d8696]">
           <Link
             href="/pricing"
-            className="underline-offset-2 hover:text-slate-300 hover:underline"
+            className="underline-offset-2 hover:text-[#f0edf2] hover:underline"
           >
             See the full feature comparison →
           </Link>

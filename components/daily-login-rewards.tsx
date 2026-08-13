@@ -69,7 +69,7 @@ function LoginCalendar({
       )}
 
       {/* Header */}
-      <div className="border-b border-white/[0.06] px-5 py-4">
+      <div className="border-b border-[#1e1a24] px-5 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/15 text-xl">
@@ -77,7 +77,7 @@ function LoginCalendar({
             </span>
             <div>
               <h3 className="text-base font-bold text-white">Daily Login Rewards</h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#565061]">
                 {loginState.totalDaysLogged > 0
                   ? `${loginState.totalDaysLogged} total day${loginState.totalDaysLogged !== 1 ? "s" : ""} logged`
                   : "Claim your first reward!"}
@@ -126,7 +126,7 @@ function LoginCalendar({
                     ? "border-emerald-500/30 bg-emerald-500/[0.08]"
                     : isDay7
                     ? "border-amber-500/15 bg-amber-500/[0.04]"
-                    : "border-white/[0.06] bg-white/[0.02]"
+                    : "border-[#1e1a24] bg-[#ff5a1f]/[0.03]"
                 }`}
               >
                 <p
@@ -135,7 +135,7 @@ function LoginCalendar({
                       ? "text-emerald-400"
                       : isCurrent
                       ? "text-violet-400"
-                      : "text-slate-500"
+                      : "text-[#565061]"
                   }`}
                 >
                   Day {reward.day}
@@ -159,7 +159,7 @@ function LoginCalendar({
                         ? "text-violet-300"
                         : isDay7
                         ? "text-amber-400"
-                        : "text-slate-400"
+                        : "text-[#8d8696]"
                     }`}
                   >
                     {reward.coins}
@@ -178,7 +178,7 @@ function LoginCalendar({
       </div>
 
       {/* Claim button or status */}
-      <div className="border-t border-white/[0.06] px-5 py-4">
+      <div className="border-t border-[#1e1a24] px-5 py-4">
         {canClaim ? (
           <button
             type="button"
@@ -214,7 +214,7 @@ function LoginCalendar({
                 <p className="text-sm font-semibold text-emerald-400">
                   Day {loginState.currentDay} claimed!
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-[#565061]">
                   {loginState.currentDay < 7
                     ? `Come back tomorrow for Day ${loginState.currentDay + 1} — ${LOGIN_REWARDS[loginState.currentDay].coins} coins`
                     : "Cycle complete! Come back tomorrow to start a new streak."}
@@ -223,7 +223,7 @@ function LoginCalendar({
             </div>
             {loginState.currentDay < 7 && (
               <div className="flex items-center gap-1">
-                <span className="text-xs text-slate-500">Next:</span>
+                <span className="text-xs text-[#565061]">Next:</span>
                 <span className="text-sm">{LOGIN_REWARDS[loginState.currentDay].icon}</span>
               </div>
             )}
@@ -233,13 +233,13 @@ function LoginCalendar({
 
       {/* Day 7 teaser */}
       {displayDay < 7 && canClaim && (
-        <div className="border-t border-white/[0.04] px-5 py-3">
+        <div className="border-t border-[#1e1a24] px-5 py-3">
           <div className="flex items-center gap-2">
             <span className="text-sm">🏆</span>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[#565061]">
               <span className="text-amber-400 font-semibold">Day 7 reward:</span>{" "}
               30 bonus coins!{" "}
-              <span className="text-slate-600">{7 - displayDay + 1} day{7 - displayDay + 1 !== 1 ? "s" : ""} to go!</span>
+              <span className="text-[#565061]">{7 - displayDay + 1} day{7 - displayDay + 1 !== 1 ? "s" : ""} to go!</span>
             </p>
           </div>
         </div>
@@ -377,7 +377,7 @@ export function DailyLoginPopup() {
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="absolute -right-2 -top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-slate-800 text-slate-400 shadow-lg transition-colors hover:bg-slate-700 hover:text-white"
+          className="absolute -right-2 -top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-[#1e1a24] bg-slate-800 text-[#8d8696] shadow-lg transition-colors hover:bg-slate-700 hover:text-white"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="18" y1="6" x2="6" y2="18" />

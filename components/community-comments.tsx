@@ -109,17 +109,17 @@ export function CommunityComments({
   };
 
   return (
-    <section className="rounded-3xl border border-white/[0.08] bg-white/[0.03] p-5">
+    <section className="rounded-3xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5">
       <div className="mb-5 flex items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-white">Discussion</h2>
-          <p className="text-sm text-slate-400">{countLabel}</p>
+          <p className="text-sm text-[#8d8696]">{countLabel}</p>
         </div>
       </div>
 
       <div className="space-y-4">
         {comments.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-white/[0.08] bg-black/10 px-4 py-6 text-sm text-slate-500">
+          <div className="rounded-2xl border border-dashed border-[#1e1a24] bg-black/10 px-4 py-6 text-sm text-[#565061]">
             No comments yet. Be the first to explain the idea, ask a follow-up,
             or post the line you would play.
           </div>
@@ -128,7 +128,7 @@ export function CommunityComments({
         {comments.map((comment) => (
           <article
             key={comment.id}
-            className="rounded-2xl border border-white/[0.06] bg-black/10 p-4"
+            className="rounded-2xl border border-[#1e1a24] bg-black/10 p-4"
           >
             <div className="mb-2 flex items-center gap-3">
               {comment.authorId ? (
@@ -152,7 +152,7 @@ export function CommunityComments({
                     <p className="truncate text-sm font-semibold text-white transition-colors group-hover:text-cyan-300">
                       {comment.authorDisplayName}
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-[#565061]">
                       {formatCommentTimestamp(
                         comment.createdAt,
                         useLocalTimezone,
@@ -178,7 +178,7 @@ export function CommunityComments({
                     <p className="text-sm font-semibold text-white">
                       {comment.authorDisplayName}
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-[#565061]">
                       {formatCommentTimestamp(
                         comment.createdAt,
                         useLocalTimezone,
@@ -188,7 +188,7 @@ export function CommunityComments({
                 </>
               )}
             </div>
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-300">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#f0edf2]">
               {comment.body}
             </p>
           </article>
@@ -201,13 +201,13 @@ export function CommunityComments({
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           placeholder="Add your line, your plan, or why you disagree with the move..."
-          className="w-full resize-none rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-orange-500/40 focus:outline-none"
+          className="w-full resize-none rounded-2xl border border-[#1e1a24] bg-black/20 px-4 py-3 text-sm text-white placeholder:text-[#565061] focus:border-orange-500/40 focus:outline-none"
         />
         <div className="flex flex-wrap items-center justify-between gap-3">
           {error ? (
             <p className="text-sm text-red-400">{error}</p>
           ) : (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[#565061]">
               Signed-in users can comment and build the discussion under this
               post.
             </p>

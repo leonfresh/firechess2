@@ -147,7 +147,7 @@ function OverviewPanel() {
           {
             label: "Games",
             value: "147",
-            color: "text-slate-300",
+            color: "text-[#f0edf2]",
             dot: "#94a3b8",
           },
           {
@@ -171,7 +171,7 @@ function OverviewPanel() {
         ].map(({ label, value, color, dot }) => (
           <div
             key={label}
-            className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2 text-center"
+            className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-2 text-center"
           >
             <svg viewBox="0 0 10 10" className="mx-auto mb-1 h-4 w-4">
               <circle
@@ -187,13 +187,13 @@ function OverviewPanel() {
             <p className={`text-sm font-black tabular-nums ${color}`}>
               {value}
             </p>
-            <p className="text-[8px] font-medium text-slate-600">{label}</p>
+            <p className="text-[8px] font-medium text-[#565061]">{label}</p>
           </div>
         ))}
       </div>
 
       <div className="grid items-start gap-3 md:grid-cols-[minmax(0,1.45fr)_minmax(0,0.95fr)]">
-        <div className="self-start rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+        <div className="self-start rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-3">
           <div className="mb-2 flex items-center justify-between">
             <p className="text-[10px] font-bold text-white">
               Rating trend &mdash; last 147 games
@@ -237,7 +237,7 @@ function OverviewPanel() {
               <circle cx="100" cy="7" r="2.5" fill="#7dd3fc" />
             </svg>
           </div>
-          <div className="mt-2 flex items-center justify-between text-[9px] font-medium text-slate-500">
+          <div className="mt-2 flex items-center justify-between text-[9px] font-medium text-[#565061]">
             <span>Rating picture from your own archive</span>
             <span className="text-sky-300">Updated after every scan</span>
           </div>
@@ -249,7 +249,7 @@ function OverviewPanel() {
               <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-fuchsia-200/85">
                 Preview Of The Locked List
               </p>
-              <p className="mt-1 text-[9px] leading-relaxed text-slate-400">
+              <p className="mt-1 text-[9px] leading-relaxed text-[#8d8696]">
                 Concrete sample labels from the full report.
               </p>
             </div>
@@ -262,7 +262,7 @@ function OverviewPanel() {
             {HERO_INSIGHTS.map(({ title, value, accent, note }) => (
               <div
                 key={title}
-                className="rounded-xl border border-white/[0.08] bg-slate-950/35 px-3 py-2"
+                className="rounded-xl border border-[#1e1a24] bg-slate-950/35 px-3 py-2"
               >
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-[9px] font-semibold text-white">{title}</p>
@@ -272,7 +272,7 @@ function OverviewPanel() {
                     {value}
                   </span>
                 </div>
-                <p className="mt-0.5 text-[8px] leading-relaxed text-slate-500">
+                <p className="mt-0.5 text-[8px] leading-relaxed text-[#565061]">
                   {note}
                 </p>
               </div>
@@ -298,10 +298,10 @@ function OverviewPanel() {
         ].map(({ title, note }) => (
           <div
             key={title}
-            className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-2"
+            className="rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-2.5 py-2"
           >
             <p className="text-[10px] font-semibold text-white">{title}</p>
-            <p className="mt-1 text-[9px] leading-relaxed text-slate-500">
+            <p className="mt-1 text-[9px] leading-relaxed text-[#565061]">
               {note}
             </p>
           </div>
@@ -362,7 +362,7 @@ function StrengthsPanel() {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-[11px] font-bold text-white">Your Chess Profile</p>
-          <p className="text-[9px] text-slate-500">Based on 147 games</p>
+          <p className="text-[9px] text-[#565061]">Based on 147 games</p>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-bold text-emerald-400">
@@ -441,7 +441,7 @@ function StrengthsPanel() {
                       : "bg-fuchsia-400"
                 }`}
               />
-              <span className="w-14 truncate text-[8px] text-slate-400">
+              <span className="w-14 truncate text-[8px] text-[#8d8696]">
                 {d.label}
               </span>
               <span
@@ -449,7 +449,7 @@ function StrengthsPanel() {
                   d.value >= 70
                     ? "text-emerald-400"
                     : d.value >= 55
-                      ? "text-slate-300"
+                      ? "text-[#f0edf2]"
                       : "text-fuchsia-300"
                 }`}
               >
@@ -485,20 +485,20 @@ function StrengthsPanel() {
           ].map(({ label, value, note }) => (
             <div key={label}>
               <div className="mb-0.5 flex items-center justify-between">
-                <span className="text-[9px] font-semibold text-slate-200">
+                <span className="text-[9px] font-semibold text-white">
                   {label}
                 </span>
                 <span className="text-[9px] font-bold text-emerald-400">
                   {value}%
                 </span>
               </div>
-              <div className="h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
+              <div className="h-1 w-full overflow-hidden rounded-full bg-[#1e1a24]">
                 <div
                   className="h-full rounded-full bg-emerald-500/60"
                   style={{ width: `${value}%` }}
                 />
               </div>
-              <p className="mt-0.5 text-[8px] text-slate-600">{note}</p>
+              <p className="mt-0.5 text-[8px] text-[#565061]">{note}</p>
             </div>
           ))}
         </div>
@@ -509,24 +509,24 @@ function StrengthsPanel() {
         <p className="text-[9px] font-bold text-fuchsia-200">
           Main weakness: Opening preparation (34%)
         </p>
-        <p className="mt-0.5 text-[8px] leading-relaxed text-slate-500">
+        <p className="mt-0.5 text-[8px] leading-relaxed text-[#565061]">
           Ruy Lopez and Sicilian handling costs you 1.1+ pawns per game. Fix
           this first.
         </p>
         <div className="mt-2.5">
           <div className="mb-0.5 flex items-center justify-between">
-            <span className="text-[9px] font-semibold text-slate-200">
+            <span className="text-[9px] font-semibold text-white">
               Opening prep
             </span>
             <span className="text-[9px] font-bold text-fuchsia-200">34%</span>
           </div>
-          <div className="h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
+          <div className="h-1 w-full overflow-hidden rounded-full bg-[#1e1a24]">
             <div
               className="h-full rounded-full bg-fuchsia-400/80"
               style={{ width: "34%" }}
             />
           </div>
-          <p className="mt-0.5 text-[8px] text-slate-600">
+          <p className="mt-0.5 text-[8px] text-[#565061]">
             Most losses start with known Ruy Lopez and Sicilian structures.
           </p>
         </div>
@@ -585,9 +585,9 @@ export function HeroProductScreenshot({ paused }: { paused?: boolean }) {
   return (
     <div className="relative w-full select-none">
       <div className="pointer-events-none absolute -inset-px rounded-[20px] bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.24),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(232,121,249,0.22),transparent_42%)] opacity-90" />
-      <div className="relative overflow-hidden rounded-[18px] border border-white/[0.08] bg-[linear-gradient(160deg,rgba(3,7,18,0.96),rgba(11,15,32,0.94)_52%,rgba(27,20,44,0.96))] shadow-[0_30px_90px_-40px_rgba(14,165,233,0.4)]">
+      <div className="relative overflow-hidden rounded-[18px] border border-[#1e1a24] bg-[linear-gradient(160deg,rgba(3,7,18,0.96),rgba(11,15,32,0.94)_52%,rgba(27,20,44,0.96))] shadow-[0_30px_90px_-40px_rgba(14,165,233,0.4)]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/[0.06] bg-white/[0.03] px-4 py-2.5">
+        <div className="flex items-center justify-between border-b border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-2.5">
           <div className="flex items-center gap-2">
             <span className="flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br from-sky-400/30 to-fuchsia-500/30 text-[10px] font-black text-sky-100">
               M
@@ -606,13 +606,13 @@ export function HeroProductScreenshot({ paused }: { paused?: boolean }) {
         </div>
 
         {/* Tab bar */}
-        <div className="flex items-center gap-0.5 border-b border-white/[0.06] px-3 pt-2">
+        <div className="flex items-center gap-0.5 border-b border-[#1e1a24] px-3 pt-2">
           {TABS.map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`relative px-3 py-1.5 text-[11px] font-semibold transition-colors ${
-                t === tab ? "text-white" : "text-slate-500 hover:text-slate-300"
+                t === tab ? "text-white" : "text-[#565061] hover:text-[#f0edf2]"
               }`}
             >
               {t === "Strengths"
