@@ -8,6 +8,7 @@ import { Nl3Features } from "@/components/new-landing-3/features-section";
 import { Nl3SampleReports } from "@/components/new-landing-3/sample-reports-section";
 import { Nl3AppLauncher } from "@/components/new-landing-3/app-launcher-section";
 import { Nl3Testimonials } from "@/components/new-landing-3/testimonials-section";
+import { OpponentScan } from "@/components/new-landing-3/opponent-scan";
 import { PricingTeaser } from "@/components/home/pricing-teaser";
 import { Nl3Faq } from "@/components/new-landing-3/faq-section";
 import { Nl3FinalCta } from "@/components/new-landing-3/final-cta";
@@ -67,6 +68,7 @@ export default function HomePage() {
         <Nl3Features />
       </div>
       <Nl3SampleReports />
+      <OpponentScan />
       <Nl3AppLauncher />
       <Nl3Testimonials />
       <div id="pricing">
