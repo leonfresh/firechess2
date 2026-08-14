@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import {
   CommunityPostComposerModal,
   type CommunityPostComposerSeed,
@@ -25,7 +24,6 @@ import {
   type PublicScanSessionPayload,
 } from "@/lib/scan-session";
 import type { AnalyzeResponse } from "@/lib/types";
-import { OpponentReport } from "@/components/opponent-report";
 
 const REPORT_CACHE_KEY_PREFIX = "fc-last-report";
 
@@ -116,11 +114,7 @@ export function ScanSessionPage({
   initialScan: PublicScanSessionPayload;
 }) {
   const { authenticated, plan, user, isAdmin } = useSession();
-  const searchParams = useSearchParams();
-  const isOpponentMode = searchParams.get("mode") === "opponent";
-  const [opponentDismissed, setOpponentDismissed] = useState(false);
   const [scan, setScan] = useState(initialScan);
-  const showOpponentCard = isOpponentMode && !opponentDismissed && scan.status === "ready" && scan.result;
   const [ownerToken, setOwnerToken] = useState<string | null>(null);
   const [copyLabel, setCopyLabel] = useState("Copy Link");
   const [saveState, setSaveState] = useState<
@@ -750,14 +744,6 @@ export function ScanSessionPage({
   };
 
   return (
-    <>
-      {showOpponentCard && (
-        <OpponentReport
-          username={scan.chessUsername ?? "Unknown"}
-          result={scan.result!}
-          onDismiss={() => setOpponentDismissed(true)}
-        />
-      )}
     <div className="min-h-screen bg-[#0A0A0B] text-[#F4F1EA]">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <nav className="mb-5 flex items-center gap-2 text-xs text-[#8A8578]">
@@ -1324,6 +1310,5 @@ export function ScanSessionPage({
         ) : null}
       </div>
     </div>
-    </>
   );
 }

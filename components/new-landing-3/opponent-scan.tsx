@@ -35,12 +35,12 @@ export function OpponentScan() {
         body: JSON.stringify({
           chessUsername: trimmed,
           config: {
-            maxGames: 300,
-            maxMoves: 30,
-            engineDepth: 12,
+            maxGames: 50,
+            maxMoves: 15,
+            engineDepth: 8,
             cpThreshold: 50,
             source,
-            scanMode: "both",
+            scanMode: "openings",
             speed: ["all"],
           },
         }),
@@ -52,7 +52,7 @@ export function OpponentScan() {
       };
       if (!res.ok || !json.id)
         throw new Error(json.error || "Could not create report.");
-      router.push(`/report/${json.id}?mode=opponent`);
+      router.push(`/opponent/${json.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setState("error");
