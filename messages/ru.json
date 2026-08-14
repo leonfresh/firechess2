@@ -1,21 +1,77 @@
 {
   "meta": {
-    "title": "FireChess — Бесплатный шахматный анализ и сканер дебютов",
-    "description": "Сканируйте свои шахматные партии бесплатно. Находите дебютные ошибки, упущенные тактики, ошибки в эндшпиле и проблемы с управлением временем. Работает с Lichess и Chess.com."
+    "title": "FireChess - Besplatnyj shahmatnyj analiz",
+    "description": "Skanirujte svoi partii besplatno. Najdite debjutnye oshibki, upushchennye taktiki."
   },
   "nav": {
-    "scan": "Сканировать",
-    "pricing": "Цены",
-    "learn": "Учиться",
-    "train": "Тренировка",
-    "dashboard": "Панель",
-    "login": "Войти",
-    "start": "Начать"
+    "scan": "Skan",
+    "pricing": "Ceny",
+    "learn": "Ucheba",
+    "train": "Trenirovka",
+    "dashboard": "Panel",
+    "login": "Vojti",
+    "start": "Nachat"
   },
   "home": {
-    "hero": "Узнайте, почему вы проигрываете",
-    "subhero": "Сканируйте свои партии против Stockfish 18. Дебютные ошибки, упущенные тактики, ошибки в эндшпиле — всё в одном отчёте.",
-    "cta": "Сканируйте свои партии бесплатно",
-    "usernamePlaceholder": "Ваше имя пользователя Lichess или Chess.com"
+    "hero": "Uznaj, pochemy ty proigryvajesh",
+    "subhero": "Skaniruj partii protiv Stockfish 18.",
+    "cta": "Skaniruj partii besplatno",
+    "usernamePlaceholder": "Tvoj polzovatel Lichess ili Chess.com"
+  },
+  "scan": {
+    "title": "Skaniruj svoi partii",
+    "subtitle": "Najdi oshibki, kotorye ty povtoryajesh",
+    "usernamePlaceholder": "Tvoj polzovatel",
+    "platformLichess": "Lichess",
+    "platformChesscom": "Chess.com",
+    "platformPgn": "PGN",
+    "gamesLabel": "Partii dlya skanirovaniya",
+    "depthLabel": "Glubina motora",
+    "startButton": "Skanirovat partii",
+    "scanning": "Skaniruyu...",
+    "errorEmpty": "Vvedi polzovatelya",
+    "errorGeneric": "Chto-to poshlo ne tak."
+  },
+  "report": {
+    "title": "Otchyot dlya {username}",
+    "gamesScanned": "Partii oskanirovany",
+    "openingLeaks": "Debjutnye oshibki",
+    "missedTactics": "Upushchennye taktiki",
+    "endgameMistakes": "Endshpilnye oshibki",
+    "accuracy": "Tochnost",
+    "acpl": "Srednyaya poterya peshek",
+    "scanAgain": "Skanirovat znova",
+    "shareReport": "Podelitjsya",
+    "viewFull": "Polnyj otchyot",
+    "biggestTakeaway": "Glavnyj vyvod",
+    "aiCoach": "Analiz AI-trenera"
+  },
+  "pricing": {
+    "title": "Prostye ceny",
+    "free": "Besplatno",
+    "pro": "Pro",
+    "lifetime": "Navsegda",
+    "perMonth": "/mes",
+    "forever": "navsegda",
+    "startFree": "Nachat besplatno",
+    "goPro": "Stat Pro",
+    "buyLifetime": "Kupit navsegda",
+    "mostPopular": "Samoe populyarnoe"
+  },
+  "features": {
+    "title": "Chto ty poluchaesh",
+    "subtitle": "Eto ne analiz. Eto diagnoz.",
+    "openingLeaks": "Debjutnye oshibki",
+    "openingLeaksDesc": "Otslezhivajem kazhduyu pozitsiyu.",
+    "tactics": "Upushchennye taktiki",
+    "tacticsDesc": "Obychno eto 3 motiva.",
+    "endgames": "Konversiya endshpilej",
+    "endgamesDesc": "Bolshinstvo oshibayutsya na 40%.",
+    "timeManagement": "Profil vremeni",
+    "timeManagementDesc": "Kogda khody ukhudshayutsya.",
+    "aiCoach": "Rezyume AI-trenera",
+    "aiCoachDesc": "Yasnoe opisanie otchyota.",
+    "drills": "Uroki iz partij",
+    "drillsDesc": "Kazhdaya oshibka stanovitsya urokom."
   }
 }

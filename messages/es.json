@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "FireChess — Análisis de Ajedrez Gratis y Escáner de Aperturas",
-    "description": "Escanea tus partidas de ajedrez gratis. Encuentra errores de apertura, tácticas perdidas, fallos en finales y problemas de gestión de tiempo. Compatible con Lichess y Chess.com."
+    "title": "FireChess — Analisis de Ajedrez Gratis",
+    "description": "Escanea tus partidas de ajedrez gratis. Encuentra errores de apertura, tacticas perdidas, fallos en finales."
   },
   "nav": {
     "scan": "Escanear",
@@ -9,13 +9,69 @@
     "learn": "Aprender",
     "train": "Entrenar",
     "dashboard": "Panel",
-    "login": "Iniciar sesión",
+    "login": "Iniciar sesion",
     "start": "Comenzar"
   },
   "home": {
-    "hero": "Descubre por qué estás perdiendo",
-    "subhero": "Escanea tus partidas contra Stockfish 18. Errores de apertura, tácticas perdidas, fallos en finales — todo en un informe.",
+    "hero": "Descubre por que estas perdiendo",
+    "subhero": "Escanea tus partidas contra Stockfish 18. Errores de apertura, tacticas perdidas, fallos en finales — todo en un informe.",
     "cta": "Escanea tus partidas gratis",
     "usernamePlaceholder": "Tu usuario de Lichess o Chess.com"
+  },
+  "scan": {
+    "title": "Escanea tus partidas",
+    "subtitle": "Encuentra los errores que repites",
+    "usernamePlaceholder": "Tu usuario de Lichess o Chess.com",
+    "platformLichess": "Lichess",
+    "platformChesscom": "Chess.com",
+    "platformPgn": "PGN",
+    "gamesLabel": "Partidas a escanear",
+    "depthLabel": "Profundidad del motor",
+    "startButton": "Escanea mis partidas — gratis",
+    "scanning": "Escaneando...",
+    "errorEmpty": "Ingresa un usuario para escanear",
+    "errorGeneric": "Algo salio mal. Intentalo de nuevo."
+  },
+  "report": {
+    "title": "Informe de {username}",
+    "gamesScanned": "Partidas escaneadas",
+    "openingLeaks": "Errores de apertura",
+    "missedTactics": "Tacticas perdidas",
+    "endgameMistakes": "Errores en finales",
+    "accuracy": "Precision",
+    "acpl": "Perdida promedio de centipeones",
+    "scanAgain": "Escanear de nuevo",
+    "shareReport": "Compartir informe",
+    "viewFull": "Ver informe completo",
+    "biggestTakeaway": "Tu mayor hallazgo",
+    "aiCoach": "Analisis del entrenador IA"
+  },
+  "pricing": {
+    "title": "Precios simples — empieza gratis",
+    "free": "Gratis",
+    "pro": "Pro",
+    "lifetime": "De por vida",
+    "perMonth": "/mes",
+    "forever": "para siempre",
+    "startFree": "Empezar gratis",
+    "goPro": "Ir a Pro",
+    "buyLifetime": "Comprar de por vida",
+    "mostPopular": "Mas popular"
+  },
+  "features": {
+    "title": "Lo que obtienes",
+    "subtitle": "No es otra revision de partidas. Es un diagnostico.",
+    "openingLeaks": "Deteccion de errores de apertura",
+    "openingLeaksDesc": "Rastreamos cada posicion de apertura que alcanzas mas de dos veces y evaluamos las jugadas que realmente haces.",
+    "tactics": "Tacticas perdidas, agrupadas",
+    "tacticsDesc": "Tus tacticas perdidas no son aleatorias — suelen ser 3 motivos que no puedes ver.",
+    "endgames": "Conversion en finales",
+    "endgamesDesc": "Cuantos finales ganados realmente conviertes? La mayoria de jugadores se equivocan en un 40%.",
+    "timeManagement": "Perfil de problemas de tiempo",
+    "timeManagementDesc": "Mira exactamente cuando se degradan tus jugadas — por reloj, no solo por numero de jugada.",
+    "aiCoach": "Resumen del entrenador IA",
+    "aiCoachDesc": "Lectura en espanol sencillo de todo tu informe. Que corregir primero, por impacto en tu rating.",
+    "drills": "Lecciones de tus propias partidas",
+    "drillsDesc": "Cada error se convierte en una leccion interactiva con posiciones que realmente alcanzaste."
   }
 }

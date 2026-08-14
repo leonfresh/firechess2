@@ -1,21 +1,77 @@
 {
   "meta": {
-    "title": "FireChess — Análise de Xadrez Grátis e Scanner de Aberturas",
-    "description": "Escaneie suas partidas de xadrez gratuitamente. Encontre falhas de abertura, táticas perdidas, erros de final e problemas de gestão de tempo. Funciona com Lichess e Chess.com."
+    "title": "FireChess — Analise de Xadrez Gratis",
+    "description": "Escaneie suas partidas de xadrez gratis. Encontre erros de abertura, taticas perdidas, erros em finais."
   },
   "nav": {
     "scan": "Escanear",
-    "pricing": "Preços",
+    "pricing": "Precos",
     "learn": "Aprender",
     "train": "Treinar",
     "dashboard": "Painel",
     "login": "Entrar",
-    "start": "Começar"
+    "start": "Comecar"
   },
   "home": {
-    "hero": "Descubra por que você está perdendo",
-    "subhero": "Escaneie suas partidas contra o Stockfish 18. Falhas de abertura, táticas perdidas, erros de final — tudo em um relatório.",
-    "cta": "Escaneie suas partidas grátis",
-    "usernamePlaceholder": "Seu nome de usuário no Lichess ou Chess.com"
+    "hero": "Descubra por que voce esta perdendo",
+    "subhero": "Escaneie suas partidas contra Stockfish 18.",
+    "cta": "Escaneie suas partidas gratis",
+    "usernamePlaceholder": "Seu usuario do Lichess ou Chess.com"
+  },
+  "scan": {
+    "title": "Escaneie suas partidas",
+    "subtitle": "Encontre os erros que voce repete",
+    "usernamePlaceholder": "Seu usuario do Lichess ou Chess.com",
+    "platformLichess": "Lichess",
+    "platformChesscom": "Chess.com",
+    "platformPgn": "PGN",
+    "gamesLabel": "Partidas para escanear",
+    "depthLabel": "Profundidade do motor",
+    "startButton": "Escaneie minhas partidas",
+    "scanning": "Escaneando...",
+    "errorEmpty": "Digite um usuario",
+    "errorGeneric": "Algo deu errado."
+  },
+  "report": {
+    "title": "Relatorio de {username}",
+    "gamesScanned": "Partidas escaneadas",
+    "openingLeaks": "Erros de abertura",
+    "missedTactics": "Taticas perdidas",
+    "endgameMistakes": "Erros em finais",
+    "accuracy": "Acuracia",
+    "acpl": "Perda media de centopeoes",
+    "scanAgain": "Escanear novamente",
+    "shareReport": "Compartilhar",
+    "viewFull": "Ver relatorio completo",
+    "biggestTakeaway": "Seu maior achado",
+    "aiCoach": "Analise do treinador IA"
+  },
+  "pricing": {
+    "title": "Precos simples",
+    "free": "Gratis",
+    "pro": "Pro",
+    "lifetime": "Vitalicio",
+    "perMonth": "/mes",
+    "forever": "para sempre",
+    "startFree": "Comecar gratis",
+    "goPro": "Ir para Pro",
+    "buyLifetime": "Comprar vitalicio",
+    "mostPopular": "Mais popular"
+  },
+  "features": {
+    "title": "O que voce ganha",
+    "subtitle": "Nao e outra revisao. E um diagnostico.",
+    "openingLeaks": "Deteccao de erros de abertura",
+    "openingLeaksDesc": "Rastreamos cada posicao de abertura.",
+    "tactics": "Taticas perdidas",
+    "tacticsDesc": "Geralmente sao 3 motivos.",
+    "endgames": "Conversao em finais",
+    "endgamesDesc": "A maioria erra em 40%.",
+    "timeManagement": "Perfil de tempo",
+    "timeManagementDesc": "Veja quando suas jogadas degradam.",
+    "aiCoach": "Resumo do treinador IA",
+    "aiCoachDesc": "Leitura clara do seu relatorio.",
+    "drills": "Licoes das proprias partidas",
+    "drillsDesc": "Cada erro se torna uma licao interativa."
   }
 }

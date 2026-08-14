@@ -1,21 +1,77 @@
 {
   "meta": {
-    "title": "FireChess — Kostenlose Schachanalyse & Eröffnungsscanner",
-    "description": "Scanne deine Schachpartien kostenlos. Finde Eröffnungsfehler, verpasste Taktiken, Endspielfehler und Zeitmanagement-Probleme. Funktioniert mit Lichess und Chess.com."
+    "title": "FireChess - Kostenlose Schachanalyse",
+    "description": "Scanne deine Schachpartien kostenlos. Finde Eroffnungsfehler, verpasste Taktiken, Endspiel-Fehler."
   },
   "nav": {
     "scan": "Scannen",
     "pricing": "Preise",
     "learn": "Lernen",
-    "train": "Trainieren",
+    "train": "Training",
     "dashboard": "Dashboard",
     "login": "Anmelden",
     "start": "Loslegen"
   },
   "home": {
     "hero": "Finde heraus, warum du verlierst",
-    "subhero": "Scanne deine Partien gegen Stockfish 18. Eröffnungsfehler, verpasste Taktiken, Endspielpatzer — alles in einem Bericht.",
+    "subhero": "Scanne deine Partien gegen Stockfish 18.",
     "cta": "Scanne deine Partien kostenlos",
     "usernamePlaceholder": "Dein Lichess- oder Chess.com-Benutzername"
+  },
+  "scan": {
+    "title": "Scanne deine Partien",
+    "subtitle": "Finde die Fehler, die du wiederholst",
+    "usernamePlaceholder": "Dein Benutzername",
+    "platformLichess": "Lichess",
+    "platformChesscom": "Chess.com",
+    "platformPgn": "PGN",
+    "gamesLabel": "Partien zum Scannen",
+    "depthLabel": "Motortiefe",
+    "startButton": "Meine Partien scannen",
+    "scanning": "Scanne...",
+    "errorEmpty": "Gib einen Benutzernamen ein",
+    "errorGeneric": "Etwas ist schiefgelaufen."
+  },
+  "report": {
+    "title": "Bericht fur {username}",
+    "gamesScanned": "Gescannte Partien",
+    "openingLeaks": "Eroffnungsfehler",
+    "missedTactics": "Verpasste Taktiken",
+    "endgameMistakes": "Endspiel-Fehler",
+    "accuracy": "Genauigkeit",
+    "acpl": "Durchschnittlicher Bauernverlust",
+    "scanAgain": "Erneut scannen",
+    "shareReport": "Bericht teilen",
+    "viewFull": "Vollstandigen Bericht anzeigen",
+    "biggestTakeaway": "Deine wichtigste Erkenntnis",
+    "aiCoach": "KI-Trainer Analyse"
+  },
+  "pricing": {
+    "title": "Einfache Preise",
+    "free": "Kostenlos",
+    "pro": "Pro",
+    "lifetime": "Lebenslang",
+    "perMonth": "/Monat",
+    "forever": "fur immer",
+    "startFree": "Kostenlos starten",
+    "goPro": "Pro werden",
+    "buyLifetime": "Lebenslang kaufen",
+    "mostPopular": "Am beliebtesten"
+  },
+  "features": {
+    "title": "Was du bekommst",
+    "subtitle": "Nicht noch eine Analyse. Eine Diagnose.",
+    "openingLeaks": "Eroffnungsfehler-Erkennung",
+    "openingLeaksDesc": "Wir verfolgen jede Eroffnungsposition.",
+    "tactics": "Verpasste Taktiken",
+    "tacticsDesc": "Es sind meist 3 Muster.",
+    "endgames": "Endspiel-Konversion",
+    "endgamesDesc": "Die meisten Spieler schatzen 40% falsch ein.",
+    "timeManagement": "Zeitnot-Profil",
+    "timeManagementDesc": "Sieh wann deine Zuge schlechter werden.",
+    "aiCoach": "KI-Trainer Zusammenfassung",
+    "aiCoachDesc": "Klare Zusammenfassung deines Berichts.",
+    "drills": "Lektionen aus eigenen Partien",
+    "drillsDesc": "Jeder Fehler wird zu einer interaktiven Lektion."
   }
 }

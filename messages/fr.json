@@ -1,21 +1,77 @@
 {
   "meta": {
-    "title": "FireChess — Analyse d'échecs gratuite et scanner d'ouvertures",
-    "description": "Scannez vos parties d'échecs gratuitement. Trouvez les fuites d'ouverture, les tactiques manquées, les erreurs de finale et les problèmes de gestion du temps. Compatible avec Lichess et Chess.com."
+    "title": "FireChess - Analyse d'echecs gratuite",
+    "description": "Scannez vos parties d'echecs gratuitement. Trouvez les erreurs d'ouverture, les tactiques manquees, les erreurs de finale."
   },
   "nav": {
     "scan": "Scanner",
     "pricing": "Tarifs",
     "learn": "Apprendre",
-    "train": "S'entraîner",
+    "train": "Entrainement",
     "dashboard": "Tableau de bord",
-    "login": "Connexion",
+    "login": "Se connecter",
     "start": "Commencer"
   },
   "home": {
-    "hero": "Découvrez pourquoi vous perdez",
-    "subhero": "Scannez vos parties contre Stockfish 18. Fuites d'ouverture, tactiques manquées, erreurs de finale — tout dans un seul rapport.",
+    "hero": "Decouvrez pourquoi vous perdez",
+    "subhero": "Scannez vos parties contre Stockfish 18.",
     "cta": "Scannez vos parties gratuitement",
-    "usernamePlaceholder": "Votre pseudo Lichess ou Chess.com"
+    "usernamePlaceholder": "Votre nom d'utilisateur Lichess ou Chess.com"
+  },
+  "scan": {
+    "title": "Scannez vos parties",
+    "subtitle": "Trouvez les erreurs que vous repetez",
+    "usernamePlaceholder": "Votre nom d'utilisateur",
+    "platformLichess": "Lichess",
+    "platformChesscom": "Chess.com",
+    "platformPgn": "PGN",
+    "gamesLabel": "Parties a scanner",
+    "depthLabel": "Profondeur du moteur",
+    "startButton": "Scanner mes parties",
+    "scanning": "Scan en cours...",
+    "errorEmpty": "Entrez un nom d'utilisateur",
+    "errorGeneric": "Quelque chose s'est mal passe."
+  },
+  "report": {
+    "title": "Rapport pour {username}",
+    "gamesScanned": "Parties scannees",
+    "openingLeaks": "Erreurs d'ouverture",
+    "missedTactics": "Tactiques manquees",
+    "endgameMistakes": "Erreurs de finale",
+    "accuracy": "Precision",
+    "acpl": "Perte moyenne de centipions",
+    "scanAgain": "Scanner a nouveau",
+    "shareReport": "Partager",
+    "viewFull": "Voir le rapport complet",
+    "biggestTakeaway": "Votre decouverte principale",
+    "aiCoach": "Analyse du coach IA"
+  },
+  "pricing": {
+    "title": "Tarifs simples",
+    "free": "Gratuit",
+    "pro": "Pro",
+    "lifetime": "A vie",
+    "perMonth": "/mois",
+    "forever": "a jamais",
+    "startFree": "Commencer gratuitement",
+    "goPro": "Passer a Pro",
+    "buyLifetime": "Acheter a vie",
+    "mostPopular": "Le plus populaire"
+  },
+  "features": {
+    "title": "Ce que vous obtenez",
+    "subtitle": "Pas une autre analyse. Un diagnostic.",
+    "openingLeaks": "Detection d'erreurs d'ouverture",
+    "openingLeaksDesc": "Nous suivons chaque position d'ouverture atteinte plus de deux fois.",
+    "tactics": "Tactiques manquees",
+    "tacticsDesc": "Ce sont generalement 3 motifs.",
+    "endgames": "Conversion en finale",
+    "endgamesDesc": "La plupart se trompent de 40%.",
+    "timeManagement": "Profil temporel",
+    "timeManagementDesc": "Quand vos coups se degradent.",
+    "aiCoach": "Resume du coach IA",
+    "aiCoachDesc": "Resume clair de votre rapport.",
+    "drills": "Lecons de vos parties",
+    "drillsDesc": "Chaque erreur devient une lecon interactive."
   }
 }

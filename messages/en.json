@@ -17,5 +17,61 @@
     "subhero": "Scan your games against Stockfish 18. Opening leaks, missed tactics, endgame blunders — all in one report.",
     "cta": "Scan your games free",
     "usernamePlaceholder": "Your Lichess or Chess.com username"
+  },
+  "scan": {
+    "title": "Scan your games",
+    "subtitle": "Find the mistakes you keep repeating",
+    "usernamePlaceholder": "Your Lichess or Chess.com username",
+    "platformLichess": "Lichess",
+    "platformChesscom": "Chess.com",
+    "platformPgn": "PGN",
+    "gamesLabel": "Games to scan",
+    "depthLabel": "Engine depth",
+    "startButton": "Scan my games — free",
+    "scanning": "Scanning...",
+    "errorEmpty": "Enter a username to scan",
+    "errorGeneric": "Something went wrong. Please try again."
+  },
+  "report": {
+    "title": "Report for {username}",
+    "gamesScanned": "Games scanned",
+    "openingLeaks": "Opening leaks",
+    "missedTactics": "Missed tactics",
+    "endgameMistakes": "Endgame mistakes",
+    "accuracy": "Accuracy",
+    "acpl": "Avg centipawn loss",
+    "scanAgain": "Scan again",
+    "shareReport": "Share report",
+    "viewFull": "View full report",
+    "biggestTakeaway": "Your biggest takeaway",
+    "aiCoach": "AI Coach Analysis"
+  },
+  "pricing": {
+    "title": "Simple pricing — start free",
+    "free": "Free",
+    "pro": "Pro",
+    "lifetime": "Lifetime",
+    "perMonth": "/mo",
+    "forever": "forever",
+    "startFree": "Start free",
+    "goPro": "Go Pro",
+    "buyLifetime": "Buy lifetime",
+    "mostPopular": "Most popular"
+  },
+  "features": {
+    "title": "What you get",
+    "subtitle": "Not another game review. A diagnosis.",
+    "openingLeaks": "Opening leak detection",
+    "openingLeaksDesc": "We track every opening position you reach more than twice and grade the moves you actually play.",
+    "tactics": "Missed tactics, clustered",
+    "tacticsDesc": "Your missed tactics are not random — they are usually 3 motifs you cannot see.",
+    "endgames": "Endgame conversion",
+    "endgamesDesc": "How many winning endgames do you actually convert? Most players guess wrong by 40%.",
+    "timeManagement": "Time trouble profiling",
+    "timeManagementDesc": "See exactly when your moves degrade — by clock position, not just move number.",
+    "aiCoach": "AI coach summary",
+    "aiCoachDesc": "Plain-English read of your entire report. What to fix first, in order of rating impact.",
+    "drills": "Lessons from your own games",
+    "drillsDesc": "Every leak becomes an interactive lesson built from positions you actually reached."
   }
 }
