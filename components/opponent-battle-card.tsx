@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Chessboard } from "@/components/chessboard-compat";
 import {
@@ -29,66 +28,28 @@ import {
  * full report page infrastructure.
  */
 
+import type { AnalyzeResponse } from "@/lib/types";
+
 type ScanData = {
   id: string;
   chessUsername: string;
   status: string;
-  result: {
-    gamesAnalyzed?: number;
-    leaks?: Array<{
-      openingName?: string;
-      reachCount: number;
-      cpLoss: number;
-      userWins?: number;
-      userDraws?: number;
-      userLosses?: number;
-      fenBefore?: string;
-      bestMove?: string;
-    }>;
-    missedTactics?: Array<{ tags: string[]; cpLoss: number }>;
-    endgameMistakes?: Array<{ endgameType?: string }>;
-    playerRating?: number | null;
-  } | null;
+  result: AnalyzeResponse | null;
 };
 
 export default function OpponentBattleCardPage({
-  id,
+  data,
 }: {
-  id: string;
+  data: ScanData;
 }) {
-  const [data, setData] = useState<ScanData | null>(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const result = data.result;
 
-  useEffect(() => {
-    fetch(`/api/scans/${id}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (d) setData(d);
-        else setError("Report not found.");
-      })
-      .catch(() => setError("Failed to load report."))
-      .finally(() => setLoading(false));
-  }, [id]);
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#070608]">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-[#ff5a1f] border-t-transparent" />
-          <p className="text-sm text-[#8d8696]">Scanning their games...</p>
-          <p className="mt-1 text-xs text-[#565061]">50 games · depth 8 · openings only</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !data?.result) {
+  if (!result) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#070608]">
         <div className="text-center">
           <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-amber-400" />
-          <p className="text-sm text-[#8d8696]">{error || "No data available."}</p>
+          <p className="text-sm text-[#8d8696]">No data available — scan may still be processing.</p>
           <Link href="/opponent" className="mt-3 inline-block text-sm text-[#ff5a1f] hover:underline">
             Try another username
           </Link>
@@ -97,7 +58,6 @@ export default function OpponentBattleCardPage({
     );
   }
 
-  const result = data.result;
   const username = data.chessUsername;
   const totalGames = result.gamesAnalyzed ?? 0;
 
@@ -320,7 +280,7 @@ export default function OpponentBattleCardPage({
         {/* CTA row */}
         <div className="flex gap-3">
           <Link
-            href={`/report/${id}`}
+            href={`/report/${data.id}`}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#1e1a24] bg-[#121015] py-3 text-sm font-semibold text-[#8d8696] transition-colors hover:border-[#ff5a1f]/20 hover:text-white"
           >
             Full report

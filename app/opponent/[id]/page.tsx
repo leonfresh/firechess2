@@ -2,10 +2,8 @@ import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { scanSessions } from "@/lib/schema";
+import { isExpiredScanSession } from "@/lib/scan-session";
 import OpponentBattleCard from "@/components/opponent-battle-card";
-
-export const dynamic = "force-static";
-export const revalidate = false;
 
 export default async function OpponentPage({
   params,
@@ -20,7 +18,14 @@ export default async function OpponentPage({
     .where(eq(scanSessions.id, id))
     .limit(1);
 
-  if (!scan) notFound();
+  if (!scan || isExpiredScanSession(scan)) notFound();
 
-  return <OpponentBattleCard id={id} />;
+  const data = {
+    id: scan.id,
+    chessUsername: scan.chessUsername,
+    status: scan.status,
+    result: scan.result,
+  };
+
+  return <OpponentBattleCard data={data} />;
 }
