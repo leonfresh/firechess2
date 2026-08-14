@@ -339,7 +339,7 @@ export function Navbar() {
                 </svg>
               </button>
               <div className={dropdownCn("analyze")} {...dropdownProps("analyze")}>
-                <div className="min-w-[200px] rounded-xl border border-[#1e1a24] bg-[#0d0b0e]/97 p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
+                <div className="min-w-[200px] rounded-xl border border-[#1e1a24] bg-[#0d0b0e] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${pathname === "/" ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
@@ -397,7 +397,7 @@ export function Navbar() {
                 </svg>
               </button>
               <div className={dropdownCn("play")} {...dropdownProps("play")}>
-                <div className="min-w-[220px] rounded-xl border border-[#1e1a24] bg-[#0d0b0e]/97 p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
+                <div className="min-w-[220px] rounded-xl border border-[#1e1a24] bg-[#0d0b0e] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/daily"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/daily") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
@@ -475,7 +475,7 @@ export function Navbar() {
                 </svg>
               </button>
               <div className={dropdownCn("learn")} {...dropdownProps("learn")}>
-                <div className="min-w-[200px] rounded-xl border border-[#1e1a24] bg-[#0d0b0e]/97 p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
+                <div className="min-w-[200px] rounded-xl border border-[#1e1a24] bg-[#0d0b0e] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/openings"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/openings") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
@@ -564,7 +564,7 @@ export function Navbar() {
                 </svg>
               </button>
               <div className={dropdownCn("explore")} {...dropdownProps("explore")}>
-                <div className="min-w-[180px] rounded-xl border border-[#1e1a24] bg-[#0d0b0e]/97 p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
+                <div className="min-w-[180px] rounded-xl border border-[#1e1a24] bg-[#0d0b0e] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/blog"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/blog") ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05] hover:text-white"}`}
