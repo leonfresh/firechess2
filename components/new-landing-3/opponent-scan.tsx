@@ -52,7 +52,7 @@ export function OpponentScan() {
       };
       if (!res.ok || !json.id)
         throw new Error(json.error || "Could not create report.");
-      router.push(`/opponent/${json.id}`);
+      router.push(`/report/${json.id}?mode=opponent`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setState("error");
