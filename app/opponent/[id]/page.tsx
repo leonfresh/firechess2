@@ -20,12 +20,13 @@ export default async function OpponentPage({
 
   if (!scan || isExpiredScanSession(scan)) notFound();
 
-  const data = {
-    id: scan.id,
-    chessUsername: scan.chessUsername,
-    status: scan.status,
-    result: scan.result,
-  };
-
-  return <OpponentBattleCard data={data} />;
+  return (
+    <OpponentBattleCard
+      id={scan.id}
+      username={scan.chessUsername}
+      status={scan.status}
+      result={scan.result}
+      guestToken={scan.guestToken}
+    />
+  );
 }

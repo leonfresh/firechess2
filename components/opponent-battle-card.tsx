@@ -1,67 +1,116 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Chessboard } from "@/components/chessboard-compat";
+import { scanOwnerStorageKey } from "@/lib/scan-session";
+import type { AnalyzeResponse } from "@/lib/types";
 import {
   Swords,
-  ArrowRight,
   ExternalLink,
-  Clock,
   Target,
   Trophy,
   AlertTriangle,
   Share2,
   ChevronRight,
+  ArrowRight,
 } from "lucide-react";
 
 /**
- * OpponentBattleCard — minimal pre-match intel.
+ * OpponentBattleCard — minimal pre-match intel card.
  *
- * Completely different visual from the full report:
- * - Dark card layout, not a scrollable page
- * - Reads in 10 seconds
- * - Shows only: top leaks, tactical blind spots, endgame signal, prep advice
- * - "View full report" link for deeper analysis
- * - Share button for viral loop
- *
- * Fetches its own data from /api/scans/{id} — no dependency on the
- * full report page infrastructure.
+ * Receives initial data from the server component. If the scan is still
+ * processing (result is null), polls /api/scans/{id} every 3 seconds
+ * until status=ready, then renders the battle card.
  */
 
-import type { AnalyzeResponse } from "@/lib/types";
-
-type ScanData = {
+type Props = {
   id: string;
-  chessUsername: string;
+  username: string;
   status: string;
   result: AnalyzeResponse | null;
+  guestToken?: string | null;
 };
 
-export default function OpponentBattleCardPage({
-  data,
-}: {
-  data: ScanData;
-}) {
-  const result = data.result;
+export default function OpponentBattleCard({
+  id,
+  username: initialUsername,
+  status: initialStatus,
+  result: initialResult,
+  guestToken,
+}: Props) {
+  const [result, setResult] = useState<AnalyzeResponse | null>(initialResult);
+  const [status, setStatus] = useState(initialStatus);
+  const [username] = useState(initialUsername);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  if (!result) {
+  // Poll for result if scan is still processing
+  useEffect(() => {
+    if (status === "ready" && result) return;
+
+    const headers: Record<string, string> = {};
+    if (guestToken) headers["x-scan-owner-token"] = guestToken;
+    else {
+      try {
+        const stored = window.localStorage.getItem(scanOwnerStorageKey(id));
+        if (stored) headers["x-scan-owner-token"] = stored;
+      } catch {}
+    }
+
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/scans/${id}`, { headers });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.status === "ready" && data.result) {
+          setResult(data.result);
+          setStatus("ready");
+          if (pollRef.current) clearInterval(pollRef.current);
+        } else if (data.status === "failed") {
+          setStatus("failed");
+          if (pollRef.current) clearInterval(pollRef.current);
+        }
+      } catch {}
+    }, 3000);
+
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [id, status, result, guestToken]);
+
+  // ── Processing state ──
+  if (status !== "ready" || !result) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#070608]">
         <div className="text-center">
-          <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-amber-400" />
-          <p className="text-sm text-[#8d8696]">No data available — scan may still be processing.</p>
-          <Link href="/opponent" className="mt-3 inline-block text-sm text-[#ff5a1f] hover:underline">
-            Try another username
-          </Link>
+          <div className="relative mx-auto mb-5 h-16 w-16">
+            <div className="absolute inset-0 animate-spin rounded-full border-2 border-[#1e1a24] border-t-[#ff5a1f]" />
+            <div className="absolute inset-2 animate-spin rounded-full border-2 border-[#1e1a24] border-b-[#ff5a1f]" style={{ animationDirection: "reverse", animationDuration: "1.5s" }} />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Swords className="h-5 w-5 text-[#ff5a1f]" />
+            </div>
+          </div>
+          <p className="text-base font-semibold text-white">
+            {status === "failed" ? "Scan failed" : `Scanning ${username}...`}
+          </p>
+          <p className="mt-1.5 text-sm text-[#8d8696]">
+            {status === "failed"
+              ? "Something went wrong. Try again."
+              : "50 games · depth 8 · openings only · ~15 seconds"}
+          </p>
+          {status === "failed" && (
+            <Link href="/opponent" className="mt-4 inline-block text-sm text-[#ff5a1f] hover:underline">
+              Try another username
+            </Link>
+          )}
         </div>
       </div>
     );
   }
 
-  const username = data.chessUsername;
+  // ── Battle card ──
   const totalGames = result.gamesAnalyzed ?? 0;
 
-  // Sort leaks by loss rate
   const leaks = (result.leaks ?? [])
     .slice()
     .sort((a, b) => {
@@ -73,10 +122,8 @@ export default function OpponentBattleCardPage({
     })
     .slice(0, 5);
 
-  // Tactical motif clusters
   const motifs = getMotifClusters(result.missedTactics ?? []).slice(0, 4);
 
-  // Endgame signal
   const egCount = result.endgameMistakes?.length ?? 0;
   const egSignal =
     egCount > 10
@@ -85,9 +132,7 @@ export default function OpponentBattleCardPage({
         ? { label: "AVG", color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", advice: "Endgame is neutral — focus on middlegame." }
         : { label: "SOLID", color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20", advice: "Avoid endgames — they convert well." };
 
-  // Featured position (first leak's FEN)
   const featuredFen = leaks[0]?.fenBefore;
-
   const shareText = `Scanned ${username} on FireChess — ${leaks.length} opening leaks found. ${leaks[0]?.openingName ? `Their weakest: ${leaks[0].openingName}.` : ""} Prep time. 🔥`;
 
   return (
@@ -200,12 +245,14 @@ export default function OpponentBattleCardPage({
                 </div>
               );
             })}
+            {leaks.length === 0 && (
+              <p className="text-sm text-[#565061]">No repeated opening patterns found in {totalGames} games.</p>
+            )}
           </div>
         </div>
 
         {/* Tactical + Endgame — side by side */}
         <div className="mb-5 grid gap-3 sm:grid-cols-2">
-          {/* Tactical blind spots */}
           <div className="rounded-xl border border-[#1e1a24] bg-[#121015] p-4">
             <h3 className="mb-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white">
               ⚡ Tactical blind spots
@@ -225,7 +272,6 @@ export default function OpponentBattleCardPage({
             </div>
           </div>
 
-          {/* Endgame signal */}
           <div className="rounded-xl border border-[#1e1a24] bg-[#121015] p-4">
             <h3 className="mb-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white">
               🏁 Endgame signal
@@ -270,7 +316,7 @@ export default function OpponentBattleCardPage({
             <li className="flex items-start gap-2">
               <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#ff5a1f]/10 text-[10px] font-bold text-[#ff5a1f]">3</span>
               <span>
-                <strong className="text-white">{egSignal.label === "WEAK" ? "Trade into endgames" : egSignal.label === "SOLID" ? "Fight in the middlegame" : "Play normally"}</strong> —
+                <strong className="text-white">{egSignal.label === "WEAK" ? "Trade into endgames" : egSignal.label === "SOLID" ? "Fight in the middlegame" : "Play normally"}</strong> —{" "}
                 {egSignal.advice.toLowerCase()}
               </span>
             </li>
@@ -280,7 +326,7 @@ export default function OpponentBattleCardPage({
         {/* CTA row */}
         <div className="flex gap-3">
           <Link
-            href={`/report/${data.id}`}
+            href={`/report/${id}`}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#1e1a24] bg-[#121015] py-3 text-sm font-semibold text-[#8d8696] transition-colors hover:border-[#ff5a1f]/20 hover:text-white"
           >
             Full report
