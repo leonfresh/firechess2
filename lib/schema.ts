@@ -37,6 +37,10 @@ export const users = pgTable("user", {
   launcherConfig: jsonb("launcher_config"),
   /** Optional Chaos Chess display name (unique, 3–20 chars) */
   chaosUsername: text("chaos_username").unique(),
+  /** Onboarding email drip: 0=none sent, 1=welcome, 2=leaks, 3=upgrade */
+  onboardEmailStep: integer("onboardEmailStep").notNull().default(0),
+  /** When the last onboarding email was sent */
+  onboardEmailLastSentAt: timestamp("onboardEmailLastSentAt", { mode: "date" }),
 });
 
 export const accounts = pgTable(
