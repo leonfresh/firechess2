@@ -14,21 +14,16 @@ const plans = [
     originalPrice: null as string | null,
     price: "$0",
     period: "forever",
-    subtitle: "Everything you need to find your leaks.",
+    subtitle: "Find the leaks. All of them.",
     badge: null as string | null,
     features: [
-      "Up to 300 recent games per scan",
-      "Engine depth up to 12",
-      "Full opening leak detection + drill mode",
-      "Up to 10 missed tactics per scan",
-      "Up to 10 endgame mistakes per scan",
-      "All scan modes (Openings / Tactics / Endgames / Time)",
-      "Strengths & Weaknesses radar + insight scores",
-      "Basic mental game stats (stability, tilt, post-loss)",
-      "Opening Explorer on every card",
-      "Move explanations (Best / Played / DB move)",
-      "Save reports to dashboard & track progress",
-      "Lichess + Chess.com support",
+      "300 games per scan — your last month of chess, read cover to cover",
+      "Every opening you keep bleeding in, ranked by damage",
+      "The 10 tactics + 10 endgames costing you the most points",
+      "Your strengths radar — see your game the way an engine does",
+      "Tilt, stability, and post-loss stats (yes, it shows)",
+      "Lessons built from positions you actually reached",
+      "Lichess + Chess.com — username in, report out",
     ],
     cta: "Start scanning — free",
     highlight: false,
@@ -43,17 +38,15 @@ const plans = [
     badge: "Launch pricing — 37% off",
     features: [
       "Everything in Free, plus —",
-      "Unlimited games per scan",
-      "Higher engine depth (13–24)",
-      "Unlimited missed tactics scanner",
-      "Unlimited endgame mistake scanner",
-      "Motif pattern analysis — find recurring weaknesses",
-      "Time pressure detection on missed tactics",
-      "Dedicated tactics & endgame drill modes",
-      "Full Mental Game breakdown — archetype, color stats, momentum, streaks",
-      "Deep Analysis — full study plans & coaching tips per dimension",
-      "Brilliant Move Detection — real sacrifice moments from your games",
-      "Chaos Chess: 4 Opening Anomaly choices + all 22 Tarot anomalies",
+      "Unlimited games. Scan your entire history, not just last month",
+      "Depth 24 engine — sees what depth 12 can't",
+      "Every missed tactic and endgame slip. No cap",
+      "Motif analysis — your 91 blunders are really 3 blind spots",
+      "Time-pressure detection — find out where your clock kills you",
+      "Full mental game: archetype, color stats, momentum, streaks",
+      "Study plans that tell you what to fix first, in rating order",
+      "Brilliant Move Detection — your real sacrifices, engine-verified",
+      "Chaos Chess: all 22 Tarot anomalies unlocked",
     ],
     cta: "Go Pro",
     highlight: true,
@@ -64,13 +57,13 @@ const plans = [
     originalPrice: "$99",
     price: "$59",
     period: "one-time",
-    subtitle: "Pay once, keep Pro forever.",
+    subtitle: "Pay once. Never think about it again.",
     badge: "Founding member pricing",
     features: [
       "Everything in Pro — forever",
-      "One-time payment, no recurring fees",
-      "Lock in before price increases",
-      "Support an indie dev building for chess players",
+      "One payment. No subscription, no renewal emails",
+      "Locked at the founding price — it only goes up from here",
+      "Fund a solo dev who ships fixes in hours, not quarters",
     ],
     cta: "Get Lifetime access",
     highlight: false,
@@ -161,8 +154,9 @@ export default function PricingPage() {
             </span>
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-[#8d8696] sm:text-lg">
-            Scanning your games is free, no card required. Upgrade only when
-            you want bigger limits and deeper analysis.
+            One scan tells you more about your chess than a year of game
+            review. Free tier, no card. Upgrade when you want the engine to go
+            deeper.
           </p>
 
           {/* Launch pricing banner */}
@@ -173,22 +167,23 @@ export default function PricingPage() {
               </span>
               <div>
                 <h3 className="text-[15px] font-semibold text-white">
-                  Launch pricing — 37% off
+                  Launch pricing — locked for life
                 </h3>
                 <p className="mt-1 text-sm leading-relaxed text-[#8d8696]">
-                  Subscribe now at{" "}
+                  Pro is{" "}
                   <span className="font-semibold text-[#ff8c42]">
                     $5/mo instead of $8/mo
                   </span>{" "}
-                  and keep that rate forever. Or grab{" "}
+                  right now, and early adopters keep that rate forever. Or skip
+                  the subscription entirely —{" "}
                   <span className="font-semibold text-[#ff8c42]">
-                    Lifetime access for a one-time $59
+                    Lifetime is $59, once
                   </span>
                   .
                 </p>
                 <p className="mt-2 text-xs font-medium text-[#565061]">
-                  Early adopters keep this rate forever — lock it in while you
-                  can.
+                  When launch ends, new subscribers pay full price. You
+                  won&apos;t.
                 </p>
               </div>
             </div>
@@ -197,10 +192,10 @@ export default function PricingPage() {
           {/* Quick feature pills */}
           <div className="mx-auto mt-8 grid max-w-2xl grid-cols-2 gap-2.5 sm:grid-cols-4">
             {[
-              "Opening leak detection",
-              "Missed tactics scanner",
-              "Endgame mistake finder",
-              "Mental game analysis",
+              "Opening leaks",
+              "Missed tactics",
+              "Endgame slips",
+              "Mental game",
             ].map((text) => (
               <div
                 key={text}
@@ -379,25 +374,25 @@ export default function PricingPage() {
                 </span>
               </div>
               <p className="text-sm leading-relaxed text-[#8d8696]">
-                FireChess scans your real games for genuine piece sacrifices —
-                moves where you actually gave up material for a positional or
-                tactical edge, and the engine confirms it was objectively
-                correct. Unlike Chess.com&apos;s move badges, this cross-game
-                scanner surfaces your <em className="text-[#f0edf2]">best</em>{" "}
-                moments across hundreds of games in one place.
+                Chess.com badges a move &quot;brilliant&quot; one game at a
+                time. FireChess reads your entire history and surfaces every
+                real sacrifice — the moves where you gave up material on
+                purpose and the engine agrees it was correct. Your{" "}
+                <em className="text-[#f0edf2]">best</em> moments, collected in
+                one place.
               </p>
               <div className="flex flex-wrap gap-x-5 gap-y-2 pt-1 text-xs text-[#565061]">
                 <span className="flex items-center gap-1.5">
                   <span className="h-1 w-1 rounded-full bg-[#ff5a1f]" />
-                  Real material sacrifices only — no false positives
+                  Real sacrifices only — no false positives
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="h-1 w-1 rounded-full bg-[#ff5a1f]" />
-                  Verified by Stockfish at higher depths
+                  Engine-verified at depth
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="h-1 w-1 rounded-full bg-[#ff5a1f]" />
-                  Replay the exact position with the PV line
+                  Replay the moment with the full PV
                 </span>
               </div>
             </div>
@@ -500,9 +495,9 @@ export default function PricingPage() {
               Why not just use Aimchess?
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-[#8d8696]">
-              Aimchess is one of the most well-known chess analysis tools. But
-              take a close look at what their free tier actually gives you —
-              and what&apos;s locked behind their paywall.
+              Their free tier scans 40 games and locks the sections that
+              matter. Our free tier scans 300 and locks almost nothing. Look
+              for yourself:
             </p>
           </div>
 
@@ -563,10 +558,10 @@ export default function PricingPage() {
                 )}
                 <div className="mt-4 rounded-xl border border-[#1e1a24] bg-[#0d0b0e] px-4 py-3 text-center">
                   <p className="text-xs font-medium text-[#8d8696]">
-                    Register to get extended report for free
+                    &quot;Register to unlock the full report&quot;
                   </p>
                   <p className="mt-0.5 text-[10px] text-[#565061]">
-                    Still missing most features after signup
+                    Still locked after signup
                   </p>
                 </div>
               </div>
@@ -617,10 +612,10 @@ export default function PricingPage() {
                 ))}
                 <div className="mt-4 rounded-xl border border-[#ff5a1f]/20 bg-[#ff5a1f]/[0.05] px-4 py-3 text-center">
                   <p className="text-xs font-semibold text-[#ff8c42]">
-                    No account needed to start
+                    No account. No card. Just your username.
                   </p>
                   <p className="mt-0.5 text-[10px] text-[#565061]">
-                    Everything above is free immediately
+                    All of it free, right now
                   </p>
                 </div>
               </div>
@@ -695,11 +690,11 @@ export default function PricingPage() {
           />
           <div className="relative space-y-5">
             <h3 className="text-xl font-bold tracking-[-0.01em] text-white">
-              Built solo, with love for chess
+              One dev. No investors. Just chess.
             </h3>
             <div className="max-w-3xl space-y-3 text-sm leading-relaxed text-[#8d8696]">
               <p>
-                FireChess is built and maintained by one person — a{" "}
+                FireChess is built by one person — a{" "}
                 <a
                   href="https://lichess.org/@/LeonFresh"
                   target="_blank"
@@ -708,25 +703,24 @@ export default function PricingPage() {
                 >
                   ~2200 rapid player on Lichess
                 </a>{" "}
-                and developer who got frustrated with the lack of good
-                multi-game analysis tools. There&apos;s no VC funding, no team
-                of 20, no enterprise sales pipeline. Just me, Stockfish, and a
-                lot of late nights.
+                who got tired of tools that grade one game at a time and never
+                tell you what to actually fix. No VC, no growth team, no
+                roadmap committee. Just me, Stockfish, and a lot of late
+                nights.
               </p>
               <p>
-                Your $5/month (or $59 lifetime) directly funds server costs,
-                Stockfish engine improvements, and lets me keep building
-                features like the ones you see here. Every Pro subscriber means
-                I can spend more time making FireChess better instead of
-                worrying about keeping the lights on.
+                Your $5 (or $59, once) pays for servers and engine time — and
+                buys me more hours to build. When something&apos;s broken, I
+                usually ship the fix the same day. That&apos;s the whole
+                business model.
               </p>
             </div>
             <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-4">
               {[
                 "Solo developer",
-                "Ship fixes in hours",
-                "Direct feedback loop",
-                "Made by a chess player",
+                "Fixes ship in hours",
+                "You talk to the dev directly",
+                "Made by a club player",
               ].map((text) => (
                 <div
                   key={text}
@@ -858,8 +852,8 @@ export default function PricingPage() {
             </span>
           </div>
           <p className="mt-2 text-sm text-[#8d8696]">
-            Realistic next milestones — what I&apos;m actively working on and
-            what&apos;s coming soon.
+            What&apos;s actively being built — no vaporware, no
+            &quot;coming soon™&quot; from two years ago.
           </p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {[
