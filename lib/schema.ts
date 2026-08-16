@@ -958,3 +958,16 @@ export const flashcards = pgTable("flashcard", {
   reviewCount: integer("reviewCount").notNull().default(0),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
 });
+
+/* ------------------------------------------------------------------ */
+/*  Blog post view counts                                              */
+/* ------------------------------------------------------------------ */
+
+export const blogPostViews = pgTable("blog_post_view", {
+  /** Blog post slug (matches content/blog/{slug}.md) */
+  slug: text("slug").primaryKey(),
+  /** Total page views */
+  views: integer("views").notNull().default(0),
+  /** Last view timestamp */
+  lastViewedAt: timestamp("lastViewedAt", { mode: "date" }).defaultNow(),
+});

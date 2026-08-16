@@ -1,5 +1,6 @@
 import { getAllPosts } from "@/lib/blog";
 import { BlogFeaturedImage } from "@/components/blog-featured-images";
+import { BlogViewCount } from "@/components/blog-view-count";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { BreadcrumbJsonLd } from "@/components/json-ld";
@@ -120,6 +121,8 @@ export default function BlogPage() {
                         </time>
                         <span>·</span>
                         <span>{post.readingTime} min read</span>
+                        <span>·</span>
+                        <BlogViewCount slug={post.slug} mode="readonly" />
                       </div>
                     </div>
                   </Link>

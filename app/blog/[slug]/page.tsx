@@ -11,6 +11,7 @@ import type { Metadata } from "next";
 import { MarkdownRenderer } from "./markdown";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/json-ld";
 import { BlogFeaturedImage } from "@/components/blog-featured-images";
+import { BlogViewCount } from "@/components/blog-view-count";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -146,6 +147,8 @@ export default async function BlogPostPage({ params }: Props) {
             </time>
             <span>·</span>
             <span>{post.readingTime} min read</span>
+            <span>·</span>
+            <BlogViewCount slug={slug} mode="increment" />
           </div>
         </header>
 
