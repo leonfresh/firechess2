@@ -177,15 +177,92 @@ function getMovePieceDetails(
 }
 
 /**
+ * Count attackers on a square using pseudo-legal geometry (including pinned
+ * pieces and kings). chess.js `.moves()` only returns legal moves, which
+ * misses attackers that can't actually capture — pinned pieces, and kings
+ * that would move into check. For sacrifice detection we need "can this
+ * piece theoretically take?" not "is this capture legal right now?"
+ */
+
+/** Check if a piece geometrically attacks a square (ignoring pins/checks). */
+function pieceAttacksSquare(
+  pieceType: PieceSymbol,
+  fromSquare: string,
+  toSquare: string,
+  board: ({ type: PieceSymbol; color: "w" | "b"; square: string } | null)[][],
+): boolean {
+  const fromFile = fromSquare.charCodeAt(0) - 97;
+  const fromRank = 8 - parseInt(fromSquare[1]);
+  const toFile = toSquare.charCodeAt(0) - 97;
+  const toRank = 8 - parseInt(toSquare[1]);
+  const df = Math.abs(toFile - fromFile);
+  const dr = Math.abs(toRank - fromRank);
+
+  switch (pieceType) {
+    case "p": {
+      // Pawns attack diagonally
+      return df === 1 && dr === 1;
+    }
+    case "n": {
+      return (df === 2 && dr === 1) || (df === 1 && dr === 2);
+    }
+    case "b": {
+      if (df !== dr || df === 0) return false;
+      return isPathClear(fromFile, fromRank, toFile, toRank, board);
+    }
+    case "r": {
+      if ((df !== 0 && dr !== 0) || (df === 0 && dr === 0)) return false;
+      return isPathClear(fromFile, fromRank, toFile, toRank, board);
+    }
+    case "q": {
+      if (df !== dr && df !== 0 && dr !== 0) return false;
+      if (df === 0 && dr === 0) return false;
+      return isPathClear(fromFile, fromRank, toFile, toRank, board);
+    }
+    case "k": {
+      return df <= 1 && dr <= 1 && (df + dr) > 0;
+    }
+    default:
+      return false;
+  }
+}
+
+/** Check if the path between two squares is clear of other pieces. */
+function isPathClear(
+  fromFile: number,
+  fromRank: number,
+  toFile: number,
+  toRank: number,
+  board: ({ type: PieceSymbol; color: "w" | "b"; square: string } | null)[][],
+): boolean {
+  const stepF = Math.sign(toFile - fromFile);
+  const stepR = Math.sign(toRank - fromRank);
+  let f = fromFile + stepF;
+  let r = fromRank + stepR;
+  while (f !== toFile || r !== toRank) {
+    if (board[r]?.[f]) return false;
+    f += stepF;
+    r += stepR;
+  }
+  return true;
+}
+
+/**
  * A sacrifice is detected when:
- * 1. A non-pawn piece moves to a square worth less than itself (net material loss)
- * 2. The opponent has at least one CHEAPER piece that can immediately recapture
- * 3. 1-ply lookahead: each cheap recapture is not itself a trap (original mover
- *    can't immediately recover more material than was sacrificed)
+ * 1. A non-pawn piece moves to a square where it gives up more material than it captures
+ * 2. The opponent has at least one CHEAPER piece that geometrically attacks that square
+ *    (including pinned pieces and king-adjacent squares that chess.js considers illegal)
+ * 3. 1-ply lookahead: the recapture is not a hidden trap where the original mover
+ *    immediately wins back more material
  *
  * This avoids false positives like Qc8+ (queen to empty square giving check where
  * nobody can actually take it), and "relative pin" traps where appearing to give
  * a piece away actually wins material back immediately.
+ *
+ * Key difference from naive approach: we count pseudo-legal attackers (pinned pieces,
+ * kings that would be in check) because a sacrifice is about the MATERIAL OFFER, not
+ * about whether the opponent can legally accept it right now. The Greek Gift Bxh7+
+ * is a sacrifice even when Kxh7 is illegal due to Ng5 covering h7.
  */
 function isSacrificialMove(fenBefore: string, moveUci: string | null): boolean {
   const parsed = normalizeUci(moveUci);
@@ -215,26 +292,78 @@ function isSacrificialMove(fenBefore: string, moveUci: string | null): boolean {
     } as any);
     if (!result) return false;
 
-    // Opponent must be able to immediately recapture with a CHEAPER piece
-    const cheapCaptures = g.moves({ verbose: true }).filter((m) => {
-      if (m.to !== parsed.to) return false;
-      const attackerValue = PIECE_VALUES[m.piece] ?? 0;
-      return attackerValue < movedValue;
-    });
-    if (cheapCaptures.length === 0) return false;
+    // A mating move is not a sacrifice — it's just mate. Chess.com classifies
+    // these as Best, not Brilliant.
+    if (g.isCheckmate()) return false;
 
-    // 1-ply lookahead: the cheap recapture must NOT be a trap where the original
-    // mover immediately wins back more than the opponent gained from recapturing
-    return cheapCaptures.some((cap) => {
+    const opponentColor = piece.color === "w" ? "b" : "w";
+    const targetSquare = parsed.to;
+    const board = g.board();
+
+    // Count ALL geometric attackers on the target square (pseudo-legal:
+    // includes pinned pieces that can't legally capture). chess.js legal-move
+    // generation hides pinned attackers, so we use pure geometry instead —
+    // a sacrifice is about the material OFFER, not about whether the opponent
+    // can legally accept it right now.
+    let attackerCount = 0;
+    let hasCheaperAttacker = false;
+    let kingAttacks = false;
+
+    for (const row of board) {
+      for (const sq of row) {
+        if (!sq || sq.color !== opponentColor) continue;
+        if (!pieceAttacksSquare(sq.type, sq.square, targetSquare, board))
+          continue;
+        if (sq.type === "k") {
+          kingAttacks = true;
+          continue;
+        }
+        attackerCount++;
+        if ((PIECE_VALUES[sq.type] ?? 0) < movedValue) {
+          hasCheaperAttacker = true;
+        }
+      }
+    }
+
+    // A bare king adjacency (no other attackers) is not a real offer — a king
+    // next to the sacrificed piece usually means mate or stalemate geometry,
+    // not a genuine material investment. BUT: if the king CAN'T legally take
+    // (e.g. Greek Gift where Ng5 covers h7), the material IS genuinely offered
+    // — accepting loses on the spot.
+    if (attackerCount === 0 && !kingAttacks) return false;
+    if (!hasCheaperAttacker && attackerCount > 0) return false;
+
+    // 1-ply lookahead: check if the recapture is a hidden trap.
+    // If the opponent recaptures, can the original mover immediately win back
+    // more material than was sacrificed? If so, it's not a real sacrifice —
+    // it's a tactical sequence.
+    const legalCaptures = g
+      .moves({ verbose: true })
+      .filter((m) => m.to === targetSquare);
+
+    // King-only attacker cases:
+    if (attackerCount === 0 && kingAttacks) {
+      if (legalCaptures.length === 0) {
+        // King can't take (Greek Gift pattern) — genuine sacrifice
+        return true;
+      }
+      // King CAN take — let the 1-ply lookahead below decide if it's a trap
+    }
+
+    // If there are legal captures, check each one
+    for (const cap of legalCaptures) {
       const capValue = PIECE_VALUES[cap.piece] ?? 0;
       const netGainForOpponent = movedValue - capValue;
+
       const g2 = new Chess(g.fen());
       const capResult = g2.move({
         from: cap.from,
         to: cap.to,
         promotion: "q",
       } as any);
-      if (!capResult) return false;
+      if (!capResult) continue;
+
+      // Can the original mover immediately win back more than the opponent gained?
       const opponentIsActuallyLosing = g2
         .moves({ verbose: true })
         .some((m2) => {
@@ -243,8 +372,24 @@ function isSacrificialMove(fenBefore: string, moveUci: string | null): boolean {
           const costVal = PIECE_VALUES[m2.piece] ?? 0;
           return winVal - costVal > netGainForOpponent;
         });
-      return !opponentIsActuallyLosing;
-    });
+
+      if (!opponentIsActuallyLosing) {
+        // Found a recapture where the opponent doesn't lose material back —
+        // this IS a genuine sacrifice
+        return true;
+      }
+    }
+
+    // No legal captures (all attackers are pinned or king can't take).
+    // This is the Greek Gift / pinned-sac case: the material is offered but
+    // accepting is impossible or catastrophic. This IS a genuine sacrifice.
+    if (legalCaptures.length === 0 && attackerCount > 0) {
+      return true;
+    }
+
+    // All legal recaptures lead to the opponent losing material back —
+    // it's a trap, not a sacrifice
+    return false;
   } catch {
     return false;
   }

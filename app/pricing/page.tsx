@@ -370,7 +370,7 @@ export default function PricingPage() {
                   Pro exclusive
                 </span>
                 <span className="rounded-full border border-[#1e1a24] bg-[#181520] px-2.5 py-0.5 text-[11px] font-medium text-[#8d8696]">
-                  Not on AimChess
+                  Cross-game scan
                 </span>
               </div>
               <p className="text-sm leading-relaxed text-[#8d8696]">
