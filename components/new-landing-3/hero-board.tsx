@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "@/components/chessboard-compat";
 
@@ -84,6 +84,22 @@ export function HeroBoard() {
   const [fen, setFen] = useState(() => new Chess().fen());
   const [ply, setPly] = useState(0);
   const [leaks, setLeaks] = useState<Step["leak"][]>([]);
+  // Measure the board container so the board never overflows on mobile —
+  // the container is `min(300px,72vw)`, so a fixed boardWidth clips on phones.
+  const boardBoxRef = useRef<HTMLDivElement>(null);
+  const [boardSize, setBoardSize] = useState(300);
+  useEffect(() => {
+    const el = boardBoxRef.current;
+    if (!el) return;
+    const measure = () => {
+      const w = Math.round(el.getBoundingClientRect().width);
+      if (w > 0) setBoardSize(Math.min(w, 300));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // Scan phase: play the tactic move-by-move, then advance the phase.
   useEffect(() => {
@@ -135,10 +151,13 @@ export function HeroBoard() {
       {/* ── Scan phase ── */}
       {phase === "scan" && (
         <>
-          <div className="relative z-[1] w-[min(300px,72vw)] shrink-0 overflow-hidden rounded-lg shadow-[0_20px_60px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.05)]">
+          <div
+            ref={boardBoxRef}
+            className="relative z-[1] w-[min(300px,72vw)] shrink-0 overflow-hidden rounded-lg shadow-[0_20px_60px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.05)]"
+          >
             <Chessboard
               position={fen}
-              boardWidth={300}
+              boardWidth={boardSize}
               arePiecesDraggable={false}
               animationDuration={300}
               customDarkSquareStyle={{ backgroundColor: "#779952" }}
