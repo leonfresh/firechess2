@@ -438,6 +438,10 @@ Remember: these vary significantly by time control and opening complexity.
 Some platforms (like Chess.com) clamp accuracy to 0–100. Others (like Lichess) allow it to go slightly above 100% in theory if every move was better than the engine's top suggestion (which happens in rare cases where the engine changes its mind across iterations). In practice, values above 100% are essentially never shown. Ceiling values like 99.9% appear in very short, forced games. On the low end, a game with multiple queen-sized blunders can approach 0%, though most platforms display nothing below 1–5%.
 
 ### Q: How is accuracy different from centipawn loss?
+Accuracy is a percentage (0–100%) that measures how often you pick moves close to the engine's top choice. Centipawn loss (ACPL) measures the raw evaluation difference per move. A player can have 85% accuracy with 45 ACPL — both numbers describe move quality from different angles. [Learn what ACPL means](/blog/what-is-centipawn-loss) for a deeper comparison.
+
+### Q: What does ACPL mean and how does it relate to accuracy?
+ACPL (Average Centipawn Loss) measures how many centipawns you lose per move on average. Accuracy measures the percentage of moves that match the engine's top choices. They're correlated but not identical — you can have low ACPL with moderate accuracy (many good moves, few best) or high accuracy with moderate ACPL (many best moves, one big blunder). [See ACPL benchmarks by rating](/blog/average-centipawn-loss-by-rating).
 
 This is the most common question, and the answer is **accuracy % is a compressed, non-linear transformation of centipawn loss**:
 

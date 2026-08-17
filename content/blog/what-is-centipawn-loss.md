@@ -1,7 +1,7 @@
 ---
 title: "Average Centipawn Loss Explained: What ACPL Means & How to Improve"
 description: "Average centipawn loss (ACPL) measures move quality in chess. Learn what it means, see board examples, and use FireChess to lower yours."
-date: "2026-08-14"
+date: "2026-08-18"
 author: "FireChess Team"
 tags: ["analysis", "fundamentals", "improvement", "centipawn-loss"]
 canonical: https://firechess.com/blog/what-is-centipawn-loss
@@ -468,6 +468,13 @@ Partially. Opening centipawn loss tends to be very low because there's establish
 The summary panel shows you: accuracy percentage, badge counts by type, and ACPL. For example: "White 78.7% accuracy · Best 11 · Book 8 · Good 3 · Blunder 2 · ACPL 43.2". This means White played 11 perfect moves, 8 book moves, 3 good moves, and 2 blunders. The average loss was 43.2 centipawns per move. More Best (!) moves than Blunders (??) is always a good sign. Upload a game to [FireChess at /analyze](/analyze) to see your own badge breakdown.
 
 ### Q: Is the Brilliant (!!) badge the same as a Best (!) move?
+Both badges indicate strong moves, but the Brilliant (!!) badge appears only when the best move is counter-intuitive — a sacrifice or quiet move that the engine loves but most humans would miss. The Best (!) badge goes to straightforward top-engine choices. In terms of centipawn loss, both fall in the 0–10 cp range, so your ACPL doesn't distinguish between them. [See the full badge breakdown](/blog/chess-brilliant-move-explained).
+
+### Q: What does ACPL mean in chess?
+ACPL stands for Average Centipawn Loss — it measures how many centipawns of evaluation you lose per move on average compared to the engine's best move. An ACPL of 20 means you're playing near-engine strength; 80+ means you're leaving significant value on the table every game. [Calculate your ACPL](/analyze) by uploading a PGN to FireChess.
+
+### Q: What is a good ACPL for club players?
+For players rated 1200–1600, an ACPL under 60 is solid. Under 40 is excellent for that range. Above 100 suggests you're making at least one blunder per game. The key isn't chasing a perfect number — it's watching your ACPL trend downward over 20+ games. [Track your ACPL over time](/blog/average-centipawn-loss-by-rating) to see real improvement patterns.
 
 No. A Brilliant move (!!) is a specific type of Best move — it's a piece sacrifice where the engine confirms the sacrifice actually works (the evaluation improves after the sacrifice). Not every best move is brilliant. In practice, Brilliant moves are rare — you might see 1-2 per 20 games. A Best (!) move simply means you matched the engine's top choice.
 
