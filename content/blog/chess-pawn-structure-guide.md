@@ -34,7 +34,7 @@ In our analysis of over 14,000 games on [FireChess's /analyze page](/analyze), p
 
 The Isolated Queen's Pawn is the most double-edged pawn structure in chess. One side has a pawn on d4 (or d5) with no friendly pawns on the c- or e-files to support it. That pawn is "isolated" — it can never be defended by another pawn.
 
-<chess-position fen="rnbqk2r/pp2bppp/5n2/3p4/3P4/2N2N2/PP3PPP/R1BQKB1R w KQkq - 0 8" caption="The classic IQP position after the Panov-Botvinnik variation of the [Caro-Kann Defense guide](/blog/caro-kann-defense-guide). White has a pawn on d4 with no c- or e-pawn to support it. The d4 pawn is both a strength (space, central control) and a weakness (can be blockaded)." orientation="white"></chess-position>
+<chess-position fen="rnbqk2r/pp2bppp/5n2/3p4/3P4/2N2N2/PP3PPP/R1BQKB1R w KQkq - 0 8" caption="The classic IQP position after the Panov-Botvinnik variation of the [Caro-Kann Defense guide](/blog/caro-kann-defense-guide). White has a pawn on d4 with no c- or e-pawn to support it. The d4 pawn is both a strength (space, central control) and a weakness (can be blockaded)." orientation="white" arrows="h2h3:green" badge="best"></chess-position>
 
 ### What makes the IQP special
 
@@ -67,7 +67,7 @@ Scan your games on [FireChess's analysis tool](/analyze) and look at positions w
 
 Doubled pawns occur when you have two pawns on the same file — typically after a piece capture forces a pawn recapture. They're usually considered a weakness, but the truth is more nuanced.
 
-<chess-position fen="r1bqkbnr/1pp2ppp/p1p5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 5" caption="After 1.e4 e5 2.Nf3 Nc6 3.Bb5 a6 4.Bxc6 dxc6 in the Ruy Lopez Exchange Variation. Black has doubled c-pawns (c6 and c7), but gains the bishop pair and an open d-file for the rook." orientation="white"></chess-position>
+<chess-position fen="r1bqkbnr/1pp2ppp/p1p5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 5" caption="After 1.e4 e5 2.Nf3 Nc6 3.Bb5 a6 4.Bxc6 dxc6 in the Ruy Lopez Exchange Variation. Black has doubled c-pawns (c6 and c7), but gains the bishop pair and an open d-file for the rook." orientation="white" arrows="e1g1:green" badge="best"></chess-position>
 
 ### Q: When doubled pawns are a weakness
 
@@ -101,7 +101,7 @@ Many players avoid doubled pawns at all costs, even when accepting them leads to
 
 A pawn chain is a diagonal line of pawns, each one defending the one behind it. The most famous pawn chain in chess is the French Defense chain: White pawns on d4 and e5, Black pawns on d5 and e6.
 
-<chess-position fen="r1bqkbnr/pp3ppp/2n1p3/2ppP3/3P4/2P2N2/PP3PPP/RNBQKB1R b KQkq - 2 5" caption="The classic French Defense pawn chain. White's chain (d4-e5) points toward the kingside; Black's chain (c5-d5) points toward the queenside. Attack at the BASE of the chain — that's where it's weakest." orientation="white"></chess-position>
+<chess-position fen="r1bqkbnr/pp3ppp/2n1p3/2ppP3/3P4/2P2N2/PP3PPP/RNBQKB1R b KQkq - 2 5" caption="The classic French Defense pawn chain. White's chain (d4-e5) points toward the kingside; Black's chain (c5-d5) points toward the queenside. Attack at the BASE of the chain — that's where it's weakest." orientation="white" arrows="c5d4:green" badge="best"></chess-position>
 
 ### The chain's direction determines your plan
 
@@ -133,7 +133,7 @@ Players often push pawns on the wrong side. If you have a chain pointing kingsid
 
 Hanging pawns are two adjacent pawns on the fourth rank (typically c4 and d4, or c5 and d5) with no friendly pawns on the adjacent files to support them. They look similar to the IQP, but the dynamics are different because there are TWO of them.
 
-<chess-position fen="rnbq1rk1/pp3ppp/4pn2/2bp4/2P2B2/2N1PN2/PP3PPP/R2QKB1R w KQ - 0 8" caption="Hanging pawns on c4 and d4. White controls space but the pawns can't be defended by other pawns. If they advance (c5 or d5), they leave weaknesses behind. If they stay, they can be attacked." orientation="white"></chess-position>
+<chess-position fen="rnbq1rk1/pp3ppp/4pn2/2bp4/2P2B2/2N1PN2/PP3PPP/R2QKB1R w KQ - 0 8" caption="Hanging pawns on c4 and d4. White controls space but the pawns can't be defended by other pawns. If they advance (c5 or d5), they leave weaknesses behind. If they stay, they can be attacked." orientation="white" arrows="d1c2:green" badge="best"></chess-position>
 
 ### The hanging pawns dilemma
 
@@ -172,7 +172,7 @@ Check your own games on [FireChess's scanner](/analyze) — if you regularly get
 
 A passed pawn is a pawn with no enemy pawns blocking its path to promotion — no pawns on the same file in front of it, and no pawns on adjacent files that could capture it. Passed pawns are the most powerful force in chess endgames.
 
-<chess-position fen="8/4k3/5p2/3P4/4K3/8/8/8 w - - 0 1" caption="White has a passed pawn on d5. With no enemy pawns on the c-, d-, or e-files to block it, this pawn is one step from being a decisive advantage. The key principle: a passed pawn wants to RUN." orientation="white"></chess-position>
+<chess-position fen="8/4k3/5p2/3P4/4K3/8/8/8 w - - 0 1" caption="White has a passed pawn on d5. With no enemy pawns on the c-, d-, or e-files to block it, this pawn is one step from being a decisive advantage. The key principle: a passed pawn wants to RUN." orientation="white" arrows="e4f5:green" badge="best"></chess-position>
 
 ### "A passed pawn is a criminal that must be kept under lock and key"
 
@@ -205,7 +205,7 @@ A pawn majority means you have more pawns than your opponent on one side of the 
 
 In endgames, a majority's primary purpose is to create a passed pawn. The further from the opponent's majority, the better — this creates an "outside passed pawn" that the enemy king must chase, giving your king time to gobble up pawns on the other side.
 
-<chess-position fen="8/1p2k1p1/p4p1p/8/8/P4P1P/1P2K1P1/8 w - - 0 1" caption="Kingside vs queenside pawn majorities. White has a 3-vs-2 majority on the kingside (f2, g2, h3 vs f7, g7, h6). White can create a passed pawn by pushing g4 and eventually g5. Black has a 3-vs-2 majority on the queenside (a6, b7, p6 vs a3, b2). The race is on." orientation="white"></chess-position>
+<chess-position fen="8/1p2k1p1/p4p1p/8/8/P4P1P/1P2K1P1/8 w - - 0 1" caption="Kingside vs queenside pawn majorities. White has a 3-vs-2 majority on the kingside (f2, g2, h3 vs f7, g7, h6). White can create a passed pawn by pushing g4 and eventually g5. Black has a 3-vs-2 majority on the queenside (a6, b7, p6 vs a3, b2). The race is on." orientation="white" arrows="e2d3:green" badge="best"></chess-position>
 
 ### Majority strategy
 
