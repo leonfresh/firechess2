@@ -53,7 +53,7 @@ export function AnalysisBoardModal({
       >
         <div className="flex items-center justify-between border-b border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-3 sm:px-5">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-200/65">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#ff8c42]">
               Report analysis
             </p>
             <p className="mt-1 text-sm font-semibold text-white">

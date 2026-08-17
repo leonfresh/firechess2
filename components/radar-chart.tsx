@@ -262,7 +262,7 @@ export function StrengthsRadar(props: RadarProps) {
           {!compact && (
             <Tooltip
               contentStyle={{
-                background: "rgba(15,23,42,0.95)",
+                background: "rgba(18,16,21,0.6)",
                 border: "1px solid rgba(255,255,255,0.1)",
                 borderRadius: "8px",
                 color: "#fff",
@@ -336,41 +336,41 @@ export function InsightCards({
     v >= 75
       ? "border-emerald-500/20"
       : v >= 50
-        ? "border-cyan-500/20"
+        ? "border-[#ff5a1f]/25"
         : v >= 30
-          ? "border-amber-500/20"
+          ? "border-[#ff5a1f]/25"
           : "border-red-500/20";
   const bgGrad = (v: number) =>
     v >= 75
-      ? "from-emerald-500/[0.06] to-transparent"
+      ? "to-[#ff8c42]/[0.06] to-transparent"
       : v >= 50
-        ? "from-cyan-500/[0.06] to-transparent"
+        ? "from-[#ff5a1f]/[0.06] to-transparent"
         : v >= 30
-          ? "from-amber-500/[0.06] to-transparent"
+          ? "from-[#ff5a1f]/[0.06] to-transparent"
           : "from-red-500/[0.06] to-transparent";
   const scoreColor = (v: number) =>
     v >= 75
       ? "text-emerald-400"
       : v >= 50
-        ? "text-cyan-400"
+        ? "text-[#ff8c42]"
         : v >= 30
-          ? "text-amber-400"
+          ? "text-[#ff8c42]"
           : "text-red-400";
   const scoreBg = (v: number) =>
     v >= 75
       ? "bg-emerald-500/15"
       : v >= 50
-        ? "bg-cyan-500/15"
+        ? "bg-[#ff5a1f]/[0.08]"
         : v >= 30
-          ? "bg-amber-500/15"
+          ? "bg-[#ff5a1f]/[0.08]"
           : "bg-red-500/15";
   const barBg = (v: number) =>
     v >= 75
       ? "bg-emerald-400"
       : v >= 50
-        ? "bg-cyan-400"
+        ? "bg-[#ff5a1f]"
         : v >= 30
-          ? "bg-amber-400"
+          ? "bg-[#ff5a1f]"
           : "bg-red-400";
   const ringColor = (v: number) =>
     v >= 75
@@ -384,9 +384,9 @@ export function InsightCards({
     v >= 75
       ? "bg-emerald-500"
       : v >= 50
-        ? "bg-cyan-500"
+        ? "bg-[#ff5a1f]"
         : v >= 30
-          ? "bg-amber-500"
+          ? "bg-[#ff5a1f]"
           : "bg-red-500";
 
   // Modal data
@@ -404,9 +404,9 @@ export function InsightCards({
   return (
     <div className="space-y-6">
       {/* Section header */}
-      <div className="glass-card border-[#1e1a24] bg-gradient-to-r from-fuchsia-500/[0.04] to-transparent p-6">
+      <div className="glass-card border-[#1e1a24] bg-gradient-to-r from-[#ff5a1f]/[0.04] to-transparent p-6">
         <div className="flex items-center gap-4">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-fuchsia-500/15 text-3xl shadow-lg shadow-fuchsia-500/10">
+          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#ff5a1f]/[0.08] text-3xl shadow-lg shadow-fuchsia-500/10">
             📊
           </span>
           <div className="flex-1">
@@ -426,7 +426,7 @@ export function InsightCards({
                     {strongest.dimension}
                   </span>{" "}
                   — maintain it while shoring up{" "}
-                  <span className="text-amber-400">{weakest.dimension}</span>.
+                  <span className="text-[#ff8c42]">{weakest.dimension}</span>.
                 </>
               ) : avg >= 50 ? (
                 <>
@@ -435,7 +435,7 @@ export function InsightCards({
                     {strongest.dimension}
                   </span>{" "}
                   leads your profile;{" "}
-                  <span className="font-semibold text-amber-400">
+                  <span className="font-semibold text-[#ff8c42]">
                     {weakest.dimension}
                   </span>{" "}
                   ({weakest.value}) has the most upside.
@@ -443,7 +443,7 @@ export function InsightCards({
               ) : avg >= 30 ? (
                 <>
                   Room to grow. Prioritize{" "}
-                  <span className="font-semibold text-amber-400">
+                  <span className="font-semibold text-[#ff8c42]">
                     {weakest.dimension}
                   </span>{" "}
                   ({weakest.value}) — it&apos;s your biggest bottleneck.
@@ -491,7 +491,7 @@ export function InsightCards({
                   </div>
                   <div className="text-right">
                     <span
-                      className={`text-2xl font-black ${scoreColor(d.value)}`}
+                      className={`text-2xl font-extrabold ${scoreColor(d.value)}`}
                     >
                       {d.value}
                     </span>
@@ -539,7 +539,7 @@ export function InsightCards({
                 ) : (
                   <a
                     href="/pricing"
-                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-violet-500/20 bg-violet-500/10 px-4 py-2.5 text-xs font-bold text-violet-400 transition-all hover:bg-violet-500/20 hover:border-violet-500/30"
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-4 py-2.5 text-xs font-bold text-[#ff8c42] transition-all hover:bg-[#ff5a1f]/[0.08] hover:border-[#ff5a1f]/25"
                   >
                     <svg
                       className="h-3.5 w-3.5"
@@ -611,7 +611,7 @@ export function InsightCards({
                 </div>
                 <div className="text-right">
                   <div
-                    className={`text-4xl font-black ${scoreColor(modalData.value)}`}
+                    className={`text-4xl font-extrabold ${scoreColor(modalData.value)}`}
                   >
                     {modalData.value}
                   </div>
@@ -1512,7 +1512,7 @@ export function RadarLegend({
               {strongest.dimension}
             </span>{" "}
             is your strength;{" "}
-            <span className="font-semibold text-amber-400">
+            <span className="font-semibold text-[#ff8c42]">
               {weakest.dimension}
             </span>{" "}
             ({weakest.value}) is holding you back the most.
@@ -1520,11 +1520,11 @@ export function RadarLegend({
         ) : avg >= 30 ? (
           <>
             Room to grow ({avg}/100). Focus on{" "}
-            <span className="font-semibold text-amber-400">
+            <span className="font-semibold text-[#ff8c42]">
               {weakest.dimension}
             </span>{" "}
             ({weakest.value}) first — it&apos;s your biggest bottleneck.{" "}
-            <span className="font-semibold text-cyan-400">
+            <span className="font-semibold text-[#ff8c42]">
               {strongest.dimension}
             </span>{" "}
             ({strongest.value}) shows promise.
@@ -1550,25 +1550,25 @@ export function RadarLegend({
             d.value >= 75
               ? "text-emerald-400"
               : d.value >= 50
-                ? "text-cyan-400"
+                ? "text-[#ff8c42]"
                 : d.value >= 30
-                  ? "text-amber-400"
+                  ? "text-[#ff8c42]"
                   : "text-red-400";
           const bg =
             d.value >= 75
               ? "bg-emerald-400"
               : d.value >= 50
-                ? "bg-cyan-400"
+                ? "bg-[#ff5a1f]"
                 : d.value >= 30
-                  ? "bg-amber-400"
+                  ? "bg-[#ff5a1f]"
                   : "bg-red-400";
           const verdictColor =
             d.value >= 75
               ? "text-emerald-400/90"
               : d.value >= 50
-                ? "text-cyan-400/90"
+                ? "text-[#ff8c42]"
                 : d.value >= 30
-                  ? "text-amber-400/90"
+                  ? "text-[#ff8c42]"
                   : "text-red-400/90";
 
           return (

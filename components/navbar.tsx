@@ -496,7 +496,7 @@ export function Navbar() {
                   </Link>
                   <Link
                     href="/games"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/games") ? "bg-amber-500/[0.08] text-amber-400" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/games") ? "bg-[#ff5a1f]/[0.06] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
                   >
                     ♛ Famous Games
                   </Link>
@@ -508,20 +508,20 @@ export function Navbar() {
                   </Link>
                   <Link
                     href="/glossary"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/glossary") ? "bg-cyan-500/[0.08] text-cyan-400" : "text-[#8d8696] hover:bg-cyan-500/[0.06] hover:text-cyan-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/glossary") ? "bg-[#ff5a1f]/[0.06] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.06] hover:text-[#ff8c42]"}`}
                   >
                     📚 Glossary
                   </Link>
                   <div className="my-1 h-px bg-[#ff5a1f]/[0.08]" />
                   <Link
                     href="/positions"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/positions") ? "bg-cyan-500/[0.08] text-cyan-400" : "text-[#8d8696] hover:bg-cyan-500/[0.06] hover:text-cyan-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/positions") ? "bg-[#ff5a1f]/[0.06] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.06] hover:text-[#ff8c42]"}`}
                   >
                     🧠 Positions
                   </Link>
                   <Link
                     href="/time-controls"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/time-controls") ? "bg-amber-500/[0.08] text-amber-400" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/time-controls") ? "bg-[#ff5a1f]/[0.06] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
                   >
                     ⏱ Time Controls
                   </Link>
@@ -573,7 +573,7 @@ export function Navbar() {
                   </Link>
                   <Link
                     href="/leaderboard"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/leaderboard") ? "bg-amber-500/[0.08] text-amber-400" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/leaderboard") ? "bg-[#ff5a1f]/[0.06] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
                   >
                     🏆 Leaderboard
                   </Link>
@@ -585,7 +585,7 @@ export function Navbar() {
                   </Link>
                   <Link
                     href="/youtubers"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/youtubers") ? "bg-amber-500/[0.08] text-amber-400" : "text-stone-400 hover:bg-amber-500/[0.06] hover:text-amber-400"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/youtubers") ? "bg-[#ff5a1f]/[0.06] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.06] hover:text-[#ff8c42]"}`}
                   >
                     🎬 For Creators
                   </Link>
@@ -598,7 +598,7 @@ export function Navbar() {
                   <div className="my-1 h-px bg-[#ff5a1f]/[0.08]" />
                   <Link
                     href="/shop"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/shop") ? "bg-amber-500/[0.08] text-amber-400" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/shop") ? "bg-[#ff5a1f]/[0.06] text-[#ff8c42]" : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.04] hover:text-[#ff8c42]"}`}
                   >
                     🪙 Coin Shop
                   </Link>
@@ -621,7 +621,7 @@ export function Navbar() {
             {/* Pro CTA */}
             <Link
               href="/pricing"
-              className={`inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-sky-500 via-violet-500 to-fuchsia-500 px-3.5 py-1.5 text-sm font-semibold text-white shadow-[0_14px_36px_-20px_rgba(168,85,247,0.7)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-18px_rgba(168,85,247,0.78)] ${isActive("/pricing") ? "ring-1 ring-white/15" : ""}`}
+              className={`inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#ff5a1f] via-[#ff8c42] to-[#ff8c42] px-3.5 py-1.5 text-sm font-semibold text-white shadow-[0_14px_36px_-20px_rgba(168,85,247,0.7)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-18px_rgba(168,85,247,0.78)] ${isActive("/pricing") ? "ring-1 ring-white/15" : ""}`}
             >
               <svg
                 className="h-3.5 w-3.5"
@@ -649,7 +649,7 @@ export function Navbar() {
                   <button
                     type="button"
                     onClick={() => setCoinShopOpen(true)}
-                    className="flex items-center gap-1 rounded-lg bg-amber-500/10 px-2.5 py-1.5 text-xs font-bold text-amber-400 transition-colors hover:bg-amber-500/15"
+                    className="flex items-center gap-1 rounded-lg bg-[#ff5a1f]/[0.08] px-2.5 py-1.5 text-xs font-bold text-[#ff8c42] transition-colors hover:bg-[#ff5a1f]/[0.08]"
                     title="Open coin shop"
                   >
                     <span>🪙</span>
@@ -723,7 +723,7 @@ export function Navbar() {
                       />
                     ) : null}
                     <div
-                      className={`${user?.image ? "hidden" : "flex"} h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-sky-500/20 to-fuchsia-500/20 text-xs font-bold text-sky-100 ${avatarFrame.frameClass}`}
+                      className={`${user?.image ? "hidden" : "flex"} h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[#ff5a1f] to-[#ff8c42] text-xs font-bold text-[#ff8c42] ${avatarFrame.frameClass}`}
                       style={avatarFrame.frameStyle}
                     >
                       {(
@@ -736,7 +736,7 @@ export function Navbar() {
                       {user?.name ?? user?.email ?? "Account"}
                     </span>
                     {(plan === "pro" || plan === "lifetime") && (
-                      <span className="rounded bg-gradient-to-r from-sky-500/20 to-fuchsia-500/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-100">
+                      <span className="rounded bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#ff8c42]">
                         {plan === "lifetime" ? "∞" : "Pro"}
                       </span>
                     )}
@@ -771,7 +771,7 @@ export function Navbar() {
                           <span
                             className={
                               plan === "pro" || plan === "lifetime"
-                                ? "font-semibold text-amber-400"
+                                ? "font-semibold text-[#ff8c42]"
                                 : "text-[#565061]"
                             }
                           >
@@ -1123,7 +1123,7 @@ export function Navbar() {
                     />
                   ) : null}
                   <div
-                    className={`${user.image ? "hidden" : "flex"} h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-sky-500/20 to-fuchsia-500/20 text-sm font-bold text-sky-100 ${avatarFrame.frameClass}`}
+                    className={`${user.image ? "hidden" : "flex"} h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#ff5a1f] to-[#ff8c42] text-sm font-bold text-[#ff8c42] ${avatarFrame.frameClass}`}
                     style={avatarFrame.frameStyle}
                   >
                     {(user.name?.[0] ?? user.email?.[0] ?? "?").toUpperCase()}
@@ -1133,7 +1133,7 @@ export function Navbar() {
                       {user.name ?? "User"}
                     </p>
                     {(plan === "pro" || plan === "lifetime") && (
-                      <p className="text-[9px] font-bold uppercase tracking-wider text-amber-400">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-[#ff8c42]">
                         {plan === "lifetime" ? "Lifetime" : "Pro"}
                       </p>
                     )}

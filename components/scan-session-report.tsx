@@ -247,7 +247,7 @@ function CompactCardFooter({
       <div className="flex items-center gap-2">
         <div className="h-1.5 w-28 overflow-hidden rounded-full bg-[#1e1a24]">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-orange-400 to-amber-300 transition-all duration-500"
+            className="h-full rounded-full bg-gradient-to-r from-orange-400 to-[#ff8c42] transition-all duration-500"
             style={{ width: `${Math.min(100, (shown / total) * 100)}%` }}
           />
         </div>
@@ -338,30 +338,30 @@ function ProSectionLimitNotice({
   const hidden = total - shown;
   return (
     <div
-      className="relative overflow-hidden rounded-[1.5rem] border border-amber-500/25 p-5 sm:p-6"
+      className="relative overflow-hidden rounded-[1.5rem] border border-[#ff5a1f]/25 p-5 sm:p-6"
       style={{
         background:
           "linear-gradient(135deg, rgba(30,16,4,0.97) 0%, rgba(44,22,6,0.97) 52%, rgba(56,22,8,0.96) 100%)",
       }}
     >
       {/* top shimmer line */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-400/50 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff8c42] to-transparent" />
       {/* ambient glow */}
-      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-amber-500/[0.07] blur-3xl" />
+      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#ff5a1f]/[0.06] blur-3xl" />
 
       <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-4">
           {/* lock icon */}
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/[0.12] text-xl">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#ff5a1f]/[0.12] text-xl">
             🔒
           </div>
           <div>
             <p className="font-bold text-white">
               {hidden} more {label} locked
             </p>
-            <p className="mt-0.5 text-sm leading-relaxed text-amber-100/70">
+            <p className="mt-0.5 text-sm leading-relaxed text-[#ff8c42]">
               You're seeing{" "}
-              <span className="font-semibold text-amber-200">{shown}</span> of{" "}
+              <span className="font-semibold text-[#ff8c42]">{shown}</span> of{" "}
               <span className="font-semibold text-white">{total}</span> {label}.
               Pro unlocks the complete list and every future scan.
             </p>
@@ -414,13 +414,13 @@ function SectionLoadingProgress({
     hasCount && safeTotal ? (safeCurrent / safeTotal) * 100 : percent;
 
   return (
-    <div className="rounded-[1.5rem] border border-cyan-500/20 bg-cyan-500/[0.06] p-5 sm:p-6">
+    <div className="rounded-[1.5rem] border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] p-5 sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-white">{message}</p>
           <p className="mt-1 text-sm text-[#f0edf2]">{detail}</p>
         </div>
-        <p className="text-lg font-black text-cyan-200">
+        <p className="text-lg font-extrabold text-[#ff8c42]">
           {hasCount && safeTotal
             ? `${safeCurrent}/${safeTotal}${countLabel ? ` ${countLabel}` : ""}`
             : `${Math.round(percent)}%`}
@@ -428,7 +428,7 @@ function SectionLoadingProgress({
       </div>
       <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-[#1e1a24]">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400 transition-[width] duration-300"
+          className="h-full rounded-full bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] transition-[width] duration-300"
           style={{ width: `${Math.max(6, progressPercent)}%` }}
         />
       </div>
@@ -479,7 +479,7 @@ function RadarLoadingState({
             {detail}
           </p>
         </div>
-        <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-sm font-semibold text-cyan-200">
+        <span className="rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-3 py-1 text-sm font-semibold text-[#ff8c42]">
           {progressLabel}
         </span>
       </div>
@@ -487,7 +487,7 @@ function RadarLoadingState({
       {isProcessing ? (
         <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-[#1e1a24]">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-sky-400 to-emerald-400 transition-[width] duration-300"
+            className="h-full rounded-full bg-gradient-to-r from-[#ff5a1f] via-[#ff8c42] to-[#ff8c42] transition-[width] duration-300"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -498,7 +498,7 @@ function RadarLoadingState({
       )}
 
       <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-        <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.12),_rgba(15,23,42,0.82)_38%,_rgba(2,6,23,0.96)_100%)] p-6 sm:p-7">
+        <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[radial-gradient(circle_at_top_right,_rgba(255,90,31,0.3),_rgba(15,23,42,0.82)_38%,_rgba(2,6,23,0.96)_100%)] p-6 sm:p-7">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#565061]">
             Good news first
           </p>
@@ -538,7 +538,7 @@ function RadarLoadingState({
         <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-5">
           <div className="mx-auto flex aspect-square w-full max-w-[22rem] items-center justify-center rounded-full border border-[#1e1a24] bg-[radial-gradient(circle,_rgba(34,211,238,0.08),_rgba(15,23,42,0.18)_52%,_rgba(2,6,23,0.08)_100%)]">
             <div className="flex flex-col items-center gap-3 text-center">
-              <div className="grid h-24 w-24 place-items-center rounded-full border border-cyan-500/20 bg-cyan-500/[0.08] text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-200">
+              <div className="grid h-24 w-24 place-items-center rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] text-[11px] font-semibold uppercase tracking-[0.24em] text-[#ff8c42]">
                 Radar
               </div>
               <p className="max-w-[15rem] text-xs leading-relaxed text-[#565061]">
@@ -605,9 +605,9 @@ function FollowUpStatusRow({
 }) {
   const toneClasses = {
     cyan: {
-      border: "border-cyan-500/20 bg-cyan-500/[0.06]",
-      badge: "border-cyan-500/20 bg-cyan-500/10 text-cyan-200",
-      dot: "bg-cyan-400",
+      border: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06]",
+      badge: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
+      dot: "bg-[#ff5a1f]",
     },
     emerald: {
       border: "border-emerald-500/20 bg-emerald-500/[0.06]",
@@ -615,9 +615,9 @@ function FollowUpStatusRow({
       dot: "bg-emerald-400",
     },
     amber: {
-      border: "border-amber-500/20 bg-amber-500/[0.06]",
-      badge: "border-amber-500/20 bg-amber-500/10 text-amber-100",
-      dot: "bg-amber-400",
+      border: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06]",
+      badge: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
+      dot: "bg-[#ff5a1f]",
     },
   }[tone];
 
@@ -657,13 +657,13 @@ function ReportFollowUpCta({
       : "Standby";
 
   return (
-    <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.12),_rgba(15,23,42,0.82)_38%,_rgba(2,6,23,0.96)_100%)] p-6 sm:p-7">
+    <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[radial-gradient(circle_at_top_right,_rgba(255,90,31,0.3),_rgba(15,23,42,0.82)_38%,_rgba(2,6,23,0.96)_100%)] p-6 sm:p-7">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="max-w-2xl">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#565061]">
             Follow-up queue
           </p>
-          <h3 className="mt-2 text-2xl font-black tracking-tight text-white">
+          <h3 className="mt-2 text-2xl font-extrabold tracking-tight text-white">
             Keep the report moving
           </h3>
           <p className="mt-2 text-sm leading-relaxed text-[#f0edf2]">
@@ -709,7 +709,7 @@ function ReportFollowUpCta({
         {drillsReady ? (
           <Link
             href="/train"
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.12] px-5 py-2.5 text-sm font-semibold text-emerald-100 shadow-[0_8px_24px_-12px_rgba(16,185,129,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-400/50 hover:bg-emerald-500/[0.2] hover:text-white hover:shadow-[0_12px_32px_-12px_rgba(16,185,129,0.45)]"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.12] px-5 py-2.5 text-sm font-semibold text-emerald-100 shadow-[0_8px_24px_-12px_rgba(255,90,31,0.3)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-400/50 hover:bg-emerald-500/[0.2] hover:text-white hover:shadow-[0_12px_32px_-12px_rgba(255,90,31,0.3)]"
           >
             <svg
               className="h-4 w-4"
@@ -757,7 +757,7 @@ function ReportFollowUpCta({
 
         <Link
           href="/dashboard"
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/[0.10] px-5 py-2.5 text-sm font-semibold text-violet-100 shadow-[0_8px_24px_-12px_rgba(139,92,246,0.3)] transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-400/50 hover:bg-violet-500/[0.18] hover:text-white"
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.10] px-5 py-2.5 text-sm font-semibold text-[#ff8c42] shadow-[0_8px_24px_-12px_rgba(255,90,31,0.25)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.18] hover:text-white"
         >
           <svg
             className="h-4 w-4"
@@ -776,7 +776,7 @@ function ReportFollowUpCta({
         </Link>
         <Link
           href="/daily"
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/[0.10] px-5 py-2.5 text-sm font-semibold text-cyan-100 shadow-[0_8px_24px_-12px_rgba(6,182,212,0.25)] transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-400/50 hover:bg-cyan-500/[0.18] hover:text-white"
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.10] px-5 py-2.5 text-sm font-semibold text-[#ff8c42] shadow-[0_8px_24px_-12px_rgba(255,90,31,0.25)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.18] hover:text-white"
         >
           <svg
             className="h-4 w-4"
@@ -842,9 +842,9 @@ function StrengthSpotlightCard({
           icon: "bg-emerald-500/15 text-emerald-200",
         }
       : {
-          border: "border-cyan-500/20 bg-cyan-500/[0.06]",
-          badge: "border-cyan-500/20 bg-cyan-500/12 text-cyan-100",
-          icon: "bg-cyan-500/15 text-cyan-200",
+          border: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06]",
+          badge: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
+          icon: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
         };
 
   return (
@@ -906,7 +906,7 @@ function SectionHeader({
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#565061]">
             {eyebrow}
           </p>
-          <h2 className="mt-2 text-2xl font-black tracking-tight text-white">
+          <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white">
             {title}
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-[#8d8696]">
@@ -921,10 +921,10 @@ function SectionHeader({
             </span>
           ) : null}
           {live ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/25 bg-cyan-500/[0.1] px-3 py-1 text-cyan-200">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.1] px-3 py-1 text-[#ff8c42]">
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-400" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#ff5a1f] opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#ff5a1f]" />
               </span>
               Live
             </span>
@@ -991,10 +991,10 @@ function MetricCard({
   const toneClasses = {
     slate: "border-[#1e1a24] bg-[#ff5a1f]/[0.04] text-white",
     emerald: "border-emerald-500/20 bg-emerald-500/[0.08] text-white",
-    cyan: "border-cyan-500/20 bg-cyan-500/[0.08] text-white",
-    amber: "border-amber-500/20 bg-amber-500/[0.08] text-white",
-    sky: "border-sky-500/20 bg-sky-500/[0.08] text-white",
-    fuchsia: "border-fuchsia-500/20 bg-fuchsia-500/[0.08] text-white",
+    cyan: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] text-white",
+    amber: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] text-white",
+    sky: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] text-white",
+    fuchsia: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] text-white",
   }[tone];
 
   return (
@@ -1002,7 +1002,7 @@ function MetricCard({
       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8d8696]">
         {label}
       </p>
-      <p className="mt-2 text-2xl font-black tracking-tight">{value}</p>
+      <p className="mt-2 text-2xl font-extrabold tracking-tight">{value}</p>
       {hint ? <p className="mt-1 text-xs text-[#565061]">{hint}</p> : null}
     </div>
   );
@@ -1095,7 +1095,7 @@ function CoachInsightPanel({
       className={`rounded-[1.5rem] border p-5 sm:p-6 ${borderClass} ${backgroundClass}`}
     >
       <p
-        className={`text-lg font-black tracking-tight sm:text-xl ${headlineClass}`}
+        className={`text-lg font-extrabold tracking-tight sm:text-xl ${headlineClass}`}
       >
         {headline}
       </p>
@@ -1143,7 +1143,7 @@ function TacticsCoachInsight({
   const totalMissed = missedTactics.length;
 
   let headline = "A few tactical gaps to patch.";
-  let headlineClass = "text-amber-100";
+  let headlineClass = "text-[#ff8c42]";
   const lines: CoachInsightLine[] = [];
 
   if (totalMissed <= 2 && matesMissed === 0) {
@@ -1206,7 +1206,7 @@ function TacticsCoachInsight({
     <>
       {matesMissed > 0 ? (
         <div className="mb-3 flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/[0.06] px-4 py-3">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-red-600 text-base font-black text-white shadow-lg">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-red-600 text-base font-extrabold text-white shadow-lg">
             ♛
           </span>
           <div>
@@ -1224,8 +1224,8 @@ function TacticsCoachInsight({
         headline={headline}
         headlineClass={headlineClass}
         lines={lines.slice(0, 3)}
-        borderClass="border-amber-500/15"
-        backgroundClass="bg-[radial-gradient(circle_at_top_right,_rgba(245,158,11,0.10),_rgba(15,23,42,0.82)_40%,_rgba(2,6,23,0.96)_100%)]"
+        borderClass="border-[#ff5a1f]/25"
+        backgroundClass="bg-[radial-gradient(circle_at_top_right,_rgba(255,90,31,0.25),_rgba(15,23,42,0.82)_40%,_rgba(2,6,23,0.96)_100%)]"
       />
     </>
   );
@@ -1261,7 +1261,7 @@ function TacticalPatternAnalysis({ motifs }: { motifs: DerivedMotif[] }) {
             ratio >= 0.7
               ? "text-emerald-400"
               : ratio >= 0.3
-                ? "text-amber-400"
+                ? "text-[#ff8c42]"
                 : "text-red-400";
           const borderClass = isWorst
             ? "border-red-500/20 bg-red-500/[0.06]"
@@ -1280,7 +1280,7 @@ function TacticalPatternAnalysis({ motifs }: { motifs: DerivedMotif[] }) {
               className={`flex items-center gap-3 rounded-xl border p-3 transition-all hover:border-[#ff5a1f]/25 ${borderClass}`}
             >
               <div
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-black ${badgeBg} ${rankColor}`}
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-extrabold ${badgeBg} ${rankColor}`}
               >
                 #{index + 1}
               </div>
@@ -1349,7 +1349,7 @@ function EndgameCoachInsight({
   const mistakeRate = totalPositions > 0 ? mistakeCount / totalPositions : 0;
 
   let headline = "Decent endgame play with room to grow.";
-  let headlineClass = "text-sky-100";
+  let headlineClass = "text-[#ff8c42]";
   const lines: CoachInsightLine[] = [];
 
   if (avgCpLoss <= 20 && mistakeRate <= 0.1) {
@@ -1419,8 +1419,8 @@ function EndgameCoachInsight({
       headline={headline}
       headlineClass={headlineClass}
       lines={lines.slice(0, 3)}
-      borderClass="border-sky-500/15"
-      backgroundClass="bg-[radial-gradient(circle_at_top_right,_rgba(14,165,233,0.10),_rgba(15,23,42,0.82)_40%,_rgba(2,6,23,0.96)_100%)]"
+      borderClass="border-[#ff5a1f]/25"
+      backgroundClass="bg-[radial-gradient(circle_at_top_right,_rgba(255,90,31,0.25),_rgba(15,23,42,0.82)_40%,_rgba(2,6,23,0.96)_100%)]"
     />
   );
 }
@@ -1480,7 +1480,7 @@ function EndgameTypeBreakdown({
                 ratio >= 0.7
                   ? "text-emerald-400"
                   : ratio >= 0.3
-                    ? "text-amber-400"
+                    ? "text-[#ff8c42]"
                     : "text-red-400";
               const borderClass = isWeakest
                 ? "border-red-500/20 bg-red-500/[0.06]"
@@ -1499,7 +1499,7 @@ function EndgameTypeBreakdown({
                   className={`flex items-center gap-3 rounded-xl border p-3 transition-all hover:border-[#ff5a1f]/25 ${borderClass}`}
                 >
                   <div
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-black ${badgeBg} ${rankColor}`}
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-extrabold ${badgeBg} ${rankColor}`}
                   >
                     #{index + 1}
                   </div>
@@ -1588,7 +1588,7 @@ function TimeManagementCoachInsight({
   const wasteRatio = total > 0 ? wastedThinks / total : 0;
 
   let headline = "Room to sharpen your clock sense.";
-  let headlineClass = "text-fuchsia-100";
+  let headlineClass = "text-[#ff8c42]";
   const lines: CoachInsightLine[] = [];
 
   if (score >= 75) {
@@ -1670,7 +1670,7 @@ function TimeManagementCoachInsight({
       headline={headline}
       headlineClass={headlineClass}
       lines={lines.slice(0, 3)}
-      borderClass="border-fuchsia-500/15"
+      borderClass="border-[#ff5a1f]/25"
       backgroundClass="bg-[radial-gradient(circle_at_top_right,_rgba(168,85,247,0.10),_rgba(15,23,42,0.82)_40%,_rgba(2,6,23,0.96)_100%)]"
     />
   );
@@ -2192,7 +2192,7 @@ export function ScanSessionReport({
       label: "Brilliant",
       icon: "💎",
       count: brilliantMoves.length || undefined,
-      countColor: "bg-cyan-500/20 text-cyan-300",
+      countColor: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
     },
     showStructural && {
       id: "section-structural",
@@ -2205,42 +2205,42 @@ export function ScanSessionReport({
       label: "Openings",
       icon: "📚",
       count: leaks.length || undefined,
-      countColor: "bg-cyan-500/20 text-cyan-300",
+      countColor: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
     },
     showTactics && {
       id: "section-tactics",
       label: "Tactics",
       icon: "⚔️",
       count: missedTactics.length || undefined,
-      countColor: "bg-amber-500/20 text-amber-300",
+      countColor: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
     },
     showEndgames && {
       id: "section-endgames",
       label: "Endgames",
       icon: "♟",
       count: endgameMistakes.length || undefined,
-      countColor: "bg-sky-500/20 text-sky-300",
+      countColor: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
     },
     showTimeManagement && {
       id: "section-time",
       label: "Time",
       icon: "⏱️",
       count: timeMoments.length || undefined,
-      countColor: "bg-fuchsia-500/20 text-fuchsia-300",
+      countColor: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
     },
     timePositionalReport.insights.length > 0 && {
       id: "section-time-positional",
       label: "Cross-Ref",
       icon: "🔗",
       count: timePositionalReport.insights.length || undefined,
-      countColor: "bg-violet-500/20 text-violet-300",
+      countColor: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
     },
     positionalMotifs.length > 0 && {
       id: "section-positional",
       label: "Positional",
       icon: "🏛️",
       count: positionalMotifs.length || undefined,
-      countColor: "bg-violet-500/20 text-violet-300",
+      countColor: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
     },
     !!result && {
       id: "section-training",
@@ -2328,7 +2328,7 @@ export function ScanSessionReport({
               >
                 💎 Brilliant
                 {brilliantMoves.length > 0 ? (
-                  <span className="rounded-full bg-cyan-500/20 px-1.5 text-[10px] font-bold text-cyan-300">
+                  <span className="rounded-full bg-[#ff5a1f]/[0.08] px-1.5 text-[10px] font-bold text-[#ff8c42]">
                     {brilliantMoves.length}
                   </span>
                 ) : null}
@@ -2346,7 +2346,7 @@ export function ScanSessionReport({
               >
                 📚 Openings
                 {leaks.length > 0 ? (
-                  <span className="rounded-full bg-cyan-500/20 px-1.5 text-[10px] font-bold text-cyan-300">
+                  <span className="rounded-full bg-[#ff5a1f]/[0.08] px-1.5 text-[10px] font-bold text-[#ff8c42]">
                     {leaks.length}
                   </span>
                 ) : null}
@@ -2364,7 +2364,7 @@ export function ScanSessionReport({
               >
                 ⚔️ Tactics
                 {missedTactics.length > 0 ? (
-                  <span className="rounded-full bg-amber-500/20 px-1.5 text-[10px] font-bold text-amber-300">
+                  <span className="rounded-full bg-[#ff5a1f]/[0.08] px-1.5 text-[10px] font-bold text-[#ff8c42]">
                     {missedTactics.length}
                   </span>
                 ) : null}
@@ -2382,7 +2382,7 @@ export function ScanSessionReport({
               >
                 ♟ Endgames
                 {endgameMistakes.length > 0 ? (
-                  <span className="rounded-full bg-sky-500/20 px-1.5 text-[10px] font-bold text-sky-300">
+                  <span className="rounded-full bg-[#ff5a1f]/[0.08] px-1.5 text-[10px] font-bold text-[#ff8c42]">
                     {endgameMistakes.length}
                   </span>
                 ) : null}
@@ -2400,7 +2400,7 @@ export function ScanSessionReport({
               >
                 ⏱️ Time
                 {timeMoments.length > 0 ? (
-                  <span className="rounded-full bg-fuchsia-500/20 px-1.5 text-[10px] font-bold text-fuchsia-300">
+                  <span className="rounded-full bg-[#ff5a1f]/[0.08] px-1.5 text-[10px] font-bold text-[#ff8c42]">
                     {timeMoments.length}
                   </span>
                 ) : null}
@@ -2414,10 +2414,10 @@ export function ScanSessionReport({
                     .getElementById("section-time-positional")
                     ?.scrollIntoView({ behavior: "smooth", block: "start" })
                 }
-                className="flex shrink-0 items-center gap-1.5 rounded-full border border-violet-500/20 bg-violet-500/[0.06] px-3 py-1 text-xs font-semibold text-violet-300 transition hover:border-violet-400/30 hover:bg-violet-500/[0.10] hover:text-violet-200"
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-3 py-1 text-xs font-semibold text-[#ff8c42] transition hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.10] hover:text-[#ff8c42]"
               >
                 🔗 Cross-Ref
-                <span className="rounded-full bg-violet-500/20 px-1.5 text-[10px] font-bold text-violet-300">
+                <span className="rounded-full bg-[#ff5a1f]/[0.08] px-1.5 text-[10px] font-bold text-[#ff8c42]">
                   {timePositionalReport.insights.length}
                 </span>
               </button>
@@ -2434,12 +2434,12 @@ export function ScanSessionReport({
           {!isProcessing && result.games && result.games.length > 0 ? (
             <Link
               href={`/best-game/${scan.id}`}
-              className="group relative overflow-hidden rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.07] to-orange-500/[0.03] p-4 transition hover:border-amber-500/30 hover:from-amber-500/[0.10] hover:to-orange-500/[0.06]"
+              className="group relative overflow-hidden rounded-2xl border border-[#ff5a1f]/25 bg-gradient-to-br from-[#ff5a1f]/[0.07] to-orange-500/[0.03] p-4 transition hover:border-[#ff5a1f]/25 hover:from-[#ff5a1f]/[0.10] hover:to-orange-500/[0.06]"
             >
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-400/80">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#ff8c42]">
                 Best Game
               </p>
-              <p className="mt-1 text-sm font-bold text-amber-200 group-hover:text-amber-100">
+              <p className="mt-1 text-sm font-bold text-[#ff8c42] group-hover:text-[#ff8c42]">
                 View your best performance →
               </p>
               <div className="absolute -bottom-2 -right-2 text-3xl opacity-10">🏆</div>
@@ -2500,7 +2500,7 @@ export function ScanSessionReport({
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8d8696]">
                 {isProcessing ? "Live report preview" : "Report summary"}
               </p>
-              <h2 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-[2.2rem]">
+              <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-[2.2rem]">
                 {reportMeta.vibeTitle}
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#f0edf2] sm:text-base">
@@ -2558,11 +2558,11 @@ export function ScanSessionReport({
               />
 
               <div className="grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-                <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.12),_rgba(15,23,42,0.82)_38%,_rgba(2,6,23,0.96)_100%)] p-6 sm:p-7">
+                <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[radial-gradient(circle_at_top_right,_rgba(255,90,31,0.3),_rgba(15,23,42,0.82)_38%,_rgba(2,6,23,0.96)_100%)] p-6 sm:p-7">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#565061]">
                     Good news first
                   </p>
-                  <h3 className="mt-3 text-2xl font-black tracking-tight text-white">
+                  <h3 className="mt-3 text-2xl font-extrabold tracking-tight text-white">
                     {radarNarrative.confidenceLead}
                   </h3>
                   <p className="mt-3 text-sm leading-relaxed text-[#f0edf2]">
@@ -3504,14 +3504,14 @@ function LessonBuilderSection({
 
   return (
     <>
-      <div className="rounded-[1.5rem] border border-violet-500/20 bg-gradient-to-r from-violet-500/[0.06] to-fuchsia-500/[0.03] p-6">
+      <div className="rounded-[1.5rem] border border-[#ff5a1f]/25 bg-gradient-to-r from-[#ff5a1f]/[0.06] to-[#ff8c42]/[0.03] p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-500/15 text-2xl">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#ff5a1f]/[0.08] text-2xl">
               📖
             </span>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-400/70">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ff8c42]">
                 Interactive Lesson
               </p>
               <h3 className="mt-1 text-lg font-bold text-white">
@@ -3528,7 +3528,7 @@ function LessonBuilderSection({
           <button
             type="button"
             onClick={buildLesson}
-            className="shrink-0 inline-flex items-center gap-2 rounded-xl border border-violet-500/25 bg-violet-500/[0.12] px-5 py-2.5 text-sm font-bold text-violet-200 hover:border-violet-400/40 hover:bg-violet-500/[0.2] transition-all"
+            className="shrink-0 inline-flex items-center gap-2 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.12] px-5 py-2.5 text-sm font-bold text-[#ff8c42] hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.2] transition-all"
           >
             📖 Generate lesson
           </button>

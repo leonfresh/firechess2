@@ -13,9 +13,9 @@ const VERDICT_COLORS = {
     accent: "amber",
     label: "Rushed",
     icon: "💨",
-    cardBg: "border-amber-500/20 bg-amber-500/[0.04]",
-    bar: "bg-amber-400",
-    chip: "bg-amber-500/15 text-amber-400",
+    cardBg: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06]",
+    bar: "bg-[#ff5a1f]",
+    chip: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
   },
   wasted: {
     accent: "red",
@@ -80,7 +80,7 @@ function InsightCard({ insight, onLearn }: { insight: TimePositionalInsight; onL
             <button
               type="button"
               onClick={onLearn}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/25 bg-violet-500/[0.08] px-3 py-1.5 text-[11px] font-semibold text-violet-300 transition hover:border-violet-400/40 hover:bg-violet-500/[0.14] hover:text-violet-200"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-3 py-1.5 text-[11px] font-semibold text-[#ff8c42] transition hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.14] hover:text-[#ff8c42]"
             >
               📖 Learn this pattern
             </button>
@@ -162,10 +162,10 @@ export function TimePositionalCrossRef({
   return (
     <div className="space-y-4">
       {/* Summary banner */}
-      <div className="rounded-2xl border border-transparent bg-gradient-to-r from-violet-500/[0.06] via-fuchsia-500/[0.04] to-amber-500/[0.04] px-5 py-4">
+      <div className="rounded-2xl border border-transparent bg-gradient-to-r from-[#ff5a1f]/[0.06] via-[#ff8c42]/[0.04] to-[#ff8c42]/[0.04] px-5 py-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-fuchsia-400/70">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#ff8c42]">
               Time x Positional
             </p>
             <p className="mt-1 text-sm leading-relaxed text-[#f0edf2]">
@@ -186,7 +186,7 @@ export function TimePositionalCrossRef({
         {rushedInsights.length > 0 && (
           <div>
             <div className="mb-3 flex items-center gap-2">
-              <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-[10px] font-bold text-amber-400">
+              <span className="rounded-full bg-[#ff5a1f]/[0.08] px-2.5 py-1 text-[10px] font-bold text-[#ff8c42]">
                 💨 Rushed moves &amp; positional habits
               </span>
               <span className="text-[10px] text-[#565061]">
@@ -229,8 +229,8 @@ export function TimePositionalCrossRef({
       </div>
 
       {/* Coaching takeaway */}
-      <div className="rounded-[1.25rem] border border-fuchsia-500/15 bg-fuchsia-500/[0.04] p-4 sm:p-5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-fuchsia-400/70">
+      <div className="rounded-[1.25rem] border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] p-4 sm:p-5">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#ff8c42]">
           Coach takeaway
         </p>
         <p className="mt-2 text-sm leading-relaxed text-[#f0edf2]">

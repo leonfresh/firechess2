@@ -40,19 +40,19 @@ type Props = {
 
 function winRateColor(wr: number) {
   if (wr >= 55) return "text-emerald-400";
-  if (wr >= 45) return "text-amber-400";
+  if (wr >= 45) return "text-[#ff8c42]";
   return "text-red-400";
 }
 
 function winRateBarBg(wr: number) {
   if (wr >= 55) return "bg-emerald-400";
-  if (wr >= 45) return "bg-amber-400";
+  if (wr >= 45) return "bg-[#ff5a1f]";
   return "bg-red-400";
 }
 
 function winRateBadgeBg(wr: number) {
   if (wr >= 55) return "bg-emerald-500/15";
-  if (wr >= 45) return "bg-amber-500/15";
+  if (wr >= 45) return "bg-[#ff5a1f]/[0.08]";
   return "bg-red-500/15";
 }
 
@@ -175,7 +175,7 @@ export function OpeningRankings({ openingSummaries }: Props) {
             {/* Top row: rank badge + name + color + win-rate label */}
             <div className="mb-2 flex items-center gap-2">
               <div
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[10px] font-black ${winRateBadgeBg(entry.winRate)} ${winRateColor(entry.winRate)}`}
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[10px] font-extrabold ${winRateBadgeBg(entry.winRate)} ${winRateColor(entry.winRate)}`}
               >
                 #{idx + 1}
               </div>

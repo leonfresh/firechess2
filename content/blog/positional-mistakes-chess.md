@@ -27,7 +27,7 @@ Here's a classic example from the Kasparov-Karpov World Championship rivalry. In
 
 Look at Black's pawn structure. Two pawns on the e-file, both fixed targets. The e6 pawn blocks the light-squared bishop from developing actively. The e7 pawn can't advance without creating further holes. These pawns will be targets for the rest of the game.
 
-### Why Club Players Create Doubled Pawns
+### Q: Why Club Players Create Doubled Pawns
 
 The psychological trap is simple: recapturing feels automatic. "He took my bishop, I take back with the f-pawn." But the recapture decision is one of the most consequential positional choices in chess. Before you recapture, ask three questions:
 
@@ -41,7 +41,7 @@ FireChess analysis data from club games shows the real impact. When a player cre
 
 The key insight: doubled pawns don't lose immediately. They lose *slowly*. That's why they don't show up as a single blunder badge. Instead, you'll see a trail of **Good ✓** and **Inaccuracy ?!** marks as your position gradually deteriorates.
 
-### How to Fix It
+### Q: How to Fix It
 
 The fix is mechanical: **always consider which pawn recaptures before you make an exchange.** In your next game, every time you have a recapture decision, pause for 10 seconds and check the pawn structure. If you practice this habit for 10 games, it becomes automatic.
 
@@ -67,7 +67,7 @@ White has space on the queenside, but look at the pawn structure: the a4 pawn is
 
 **Type 3: The pawn chain advance gone wrong.** Pushing the head of a pawn chain (like e4-e5 in a French Defense structure) without considering whether it releases the tension prematurely and gives your opponent an easy game.
 
-### How to Recognize Overextension in Your Games
+### Q: How to Recognize Overextension in Your Games
 
 The telltale sign: you have more space but your opponent's pieces are more active. If you scan your games on [FireChess](/analyze) and notice positions where you controlled more squares but your [accuracy score](/blog/chess-accuracy-score-explained) dropped during the middlegame, overextension is likely the cause. You were spending moves maintaining advanced pawns instead of improving your pieces.
 
@@ -92,7 +92,7 @@ Here's a textbook example. In a typical Carlsbad structure, Black has played ...
 
 Count Black's light-squared bishop moves: zero. The bishop is completely locked in behind its own pawn chain. It contributes nothing to the game — Black is essentially playing with one fewer piece. Meanwhile, White's bishops and knights coordinate freely across the open and semi-open files.
 
-### Why Bad Bishops Lose Games
+### Q: Why Bad Bishops Lose Games
 
 The math is brutal. A bad bishop in a closed position might only generate 1-2 useful moves per turn. A well-placed knight controls 4-8 squares from a central outpost. Over 20 moves, the side with the bad bishop accumulates 20-40 centipawns of disadvantage just from piece activity imbalance. That's why, in FireChess scans, positions with a trapped bishop show an average [accuracy score](/blog/chess-accuracy-score-explained) drop of 12-18% compared to positions where both bishops are active.
 
@@ -104,7 +104,7 @@ The math is brutal. A bad bishop in a closed position might only generate 1-2 us
 
 **Option 3: Don't create it in the first place.** Before pushing a pawn that blocks your bishop, ask: "Is this bishop going to be useful after this pawn move?" In the Carlsbad structure above, Black could have played ...dxc4 instead of ...d5, keeping the diagonal open for the light-squared bishop.
 
-### How to Spot Bad Bishops in Your Games
+### Q: How to Spot Bad Bishops in Your Games
 
 Scan your games on [FireChess's analysis tool](/analyze) and look for positions where your bishop has fewer than 3 legal moves for multiple consecutive turns. That's a bad bishop. Check what pawn move created the problem — it was usually an early commitment like ...e6 in a d5 structure, or ...f5 in a King's Indian that sealed the bishop's fate.
 
@@ -126,7 +126,7 @@ The strongest heuristic for pawn attacks: **don't start a pawn storm until all y
 
 The logic is simple: pawn moves create permanent weaknesses. If the attack fails (and without full development, it usually does), you're left with an exposed king and no pieces to defend it. The [average centipawn loss](/blog/average-centipawn-loss-guide) after a failed pawn storm is 85-120 cp over the next 10 moves — enough to swing the evaluation from equal to losing.
 
-### When Pawn Storms Work
+### Q: When Pawn Storms Work
 
 Pawn storms aren't always wrong. They work when:
 

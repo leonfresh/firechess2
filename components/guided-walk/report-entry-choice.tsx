@@ -54,8 +54,8 @@ export function ReportEntryChoice({
         "See every opening leak, tactic, endgame, and clock detail in one scrollable breakdown.",
       icon: <LayoutGrid className="h-5 w-5" />,
       accent:
-        "border-cyan-400/40 bg-cyan-500/[0.08] hover:border-cyan-400/70 hover:bg-cyan-500/[0.14]",
-      iconWrap: "bg-cyan-500/15 text-cyan-300",
+        "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.14]",
+      iconWrap: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
     },
   ];
 
@@ -71,7 +71,7 @@ export function ReportEntryChoice({
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#565061]">
           Your report is ready
         </p>
-        <h2 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-[1.75rem]">
+        <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-[1.75rem]">
           How do you want to read it?
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-[#8d8696]">

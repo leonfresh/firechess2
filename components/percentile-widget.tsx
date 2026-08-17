@@ -47,7 +47,7 @@ export function PercentileWidget({ accuracy, rating }: PercentileWidgetProps) {
   return (
     <div className="glass-card space-y-4 p-6">
       <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 text-xl">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#ff5a1f] to-blue-500/20 text-xl">
           🏆
         </span>
         <div>
@@ -107,17 +107,17 @@ function PercentileBar({
   const bgColor =
     color === "emerald"
       ? "bg-emerald-500"
-      : "bg-cyan-500";
+      : "bg-[#ff5a1f]";
 
   const textColor =
     color === "emerald"
       ? "text-emerald-400"
-      : "text-cyan-400";
+      : "text-[#ff8c42]";
 
   const trackColor =
     color === "emerald"
       ? "bg-emerald-500/10"
-      : "bg-cyan-500/10";
+      : "bg-[#ff5a1f]/[0.08]";
 
   return (
     <div className="space-y-2 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4">

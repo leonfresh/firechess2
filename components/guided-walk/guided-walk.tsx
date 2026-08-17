@@ -507,10 +507,10 @@ function HeadlineStep({
         <Gauge className="h-3 w-3" />
         Scan complete · {gamesAnalyzed} games
       </span>
-      <h2 className="mt-5 text-4xl font-black leading-tight text-white sm:text-5xl">
+      <h2 className="mt-5 text-4xl font-extrabold leading-tight text-white sm:text-5xl">
         Here&apos;s the one thing
         <br />
-        <span className="bg-gradient-to-r from-amber-200 via-orange-300 to-red-400 bg-clip-text text-transparent">
+        <span className="bg-gradient-to-r from-[#ff5a1f] via-orange-300 to-red-400 bg-clip-text text-transparent">
           costing you the most rating
         </span>
       </h2>
@@ -530,12 +530,12 @@ function HeadlineStep({
           value={
             report.estimatedRating ? report.estimatedRating.toString() : "—"
           }
-          color="text-cyan-400"
+          color="text-[#ff8c42]"
         />
         <Stat
           label="Avg eval loss"
           value={((report.weightedCpLoss ?? 0) / 100).toFixed(2)}
-          color="text-amber-400"
+          color="text-[#ff8c42]"
         />
         <Stat
           label="Leak rate"
@@ -599,20 +599,20 @@ function RadarStep({
               <span className="text-emerald-400">{strongest?.value}</span>
             </p>
           </div>
-          <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.05] p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-300/80">
+          <div className="rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#ff8c42]">
               Biggest opportunity
             </p>
             <p className="mt-1 text-lg font-bold text-white">
               {weakest?.dimension}{" "}
-              <span className="text-amber-400">{weakest?.value}</span>
+              <span className="text-[#ff8c42]">{weakest?.value}</span>
             </p>
           </div>
           <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-4 text-center">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-[#565061]">
               Overall
             </p>
-            <p className="mt-1 text-3xl font-black text-white">{avg}<span className="text-base text-[#565061]">/100</span></p>
+            <p className="mt-1 text-3xl font-extrabold text-white">{avg}<span className="text-base text-[#565061]">/100</span></p>
           </div>
         </div>
       </div>
@@ -804,9 +804,9 @@ function TacticStep({
             Drag the best move onto the board — instant feedback. This is the kind
             of pattern that, once you see it, you stop losing to.
           </p>
-          <div className="rounded-xl border border-cyan-500/15 bg-cyan-500/[0.04] p-4">
+          <div className="rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] p-4">
             <p className="text-xs leading-relaxed text-[#8d8696]">
-              <span className="font-semibold text-cyan-300">Tip:</span>{" "}
+              <span className="font-semibold text-[#ff8c42]">Tip:</span>{" "}
               {tactic.mateIn
                 ? `Forced mate in ${tactic.mateIn} — look for forcing checks and captures that narrow the king's escape squares.`
                 : "Tactics like this come from undefended pieces, overloaded defenders, or a sudden attack on the king. Train the pattern, not the position."}
@@ -851,7 +851,7 @@ function MotifStep({ motif }: { motif: DerivedMotif }) {
               You made <span className="font-bold text-white">{motif.count}</span>{" "}
               {motif.count === 1 ? "mistake" : "mistakes"} fitting this pattern,
               averaging{" "}
-              <span className="font-bold text-amber-400">
+              <span className="font-bold text-[#ff8c42]">
                 {motif.avgCpLoss.toFixed(0)}cp
               </span>{" "}
               per slip.
@@ -868,9 +868,9 @@ function MotifStep({ motif }: { motif: DerivedMotif }) {
               />
             </div>
           </div>
-          <div className="rounded-xl border border-cyan-500/15 bg-cyan-500/[0.04] p-4">
+          <div className="rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] p-4">
             <p className="text-xs leading-relaxed text-[#8d8696]">
-              <span className="font-semibold text-cyan-300">Pattern training:</span>{" "}
+              <span className="font-semibold text-[#ff8c42]">Pattern training:</span>{" "}
               Recognizing <em>{motif.name.toLowerCase()}</em> when it appears
               on the board lets you find the right continuation instead of an
               ordinary move. Drill this motif in the full report below.
@@ -999,9 +999,9 @@ function EndgameStep({ endgame }: { endgame: EndgameMistake }) {
               />
             </div>
           </div>
-          <div className="rounded-xl border border-sky-500/15 bg-sky-500/[0.04] p-4">
+          <div className="rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] p-4">
             <p className="text-xs leading-relaxed text-[#8d8696]">
-              <span className="font-semibold text-sky-300">Why endgames matter:</span>{" "}
+              <span className="font-semibold text-[#ff8c42]">Why endgames matter:</span>{" "}
               Endgames are where points are banked or thrown away. Fewer pieces
               means fewer calculations — the right technique here is pure
               knowledge, and it converts results.
@@ -1071,7 +1071,7 @@ function ProfileSpotlightCard({
   const accentClass =
     accent === "emerald"
       ? "border-emerald-500/20 bg-emerald-500/[0.05] text-emerald-400"
-      : "border-cyan-500/20 bg-cyan-500/[0.05] text-cyan-400";
+      : "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] text-[#ff8c42]";
   return (
     <div className={`rounded-xl border ${accentClass} p-4`}>
       <p className="text-[10px] font-semibold uppercase tracking-wider opacity-80">
@@ -1090,9 +1090,9 @@ function ProfileBar({ dimension, value }: { dimension: string; value: number }) 
     value >= 75
       ? "bg-emerald-400"
       : value >= 50
-        ? "bg-cyan-400"
+        ? "bg-[#ff5a1f]"
         : value >= 30
-          ? "bg-amber-400"
+          ? "bg-[#ff5a1f]"
           : "bg-red-400";
   return (
     <div className="flex items-center gap-3">
@@ -1175,9 +1175,9 @@ function PlanStep({
       </div>
 
       {mentalStats && (
-        <div className="mt-4 rounded-xl border border-cyan-500/15 bg-cyan-500/[0.04] p-4">
+        <div className="mt-4 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] p-4">
           <p className="text-xs leading-relaxed text-[#8d8696]">
-            <span className="font-semibold text-cyan-300">Clock check:</span>{" "}
+            <span className="font-semibold text-[#ff8c42]">Clock check:</span>{" "}
             {tiltInsight(mentalStats, username)}
           </p>
         </div>
@@ -1192,9 +1192,9 @@ function PlanStep({
       )}
 
       {/* ── Share card ── */}
-      <div className="mt-5 rounded-2xl border border-[#1e1a24] bg-gradient-to-br from-sky-500/[0.06] to-violet-500/[0.04] p-5">
+      <div className="mt-5 rounded-2xl border border-[#1e1a24] bg-gradient-to-br from-[#ff5a1f]/[0.06] to-[#ff8c42]/[0.04] p-5">
         <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/15 text-sky-300">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#ff5a1f]/[0.08] text-[#ff8c42]">
             <Share2 className="h-5 w-5" />
           </span>
           <div className="flex-1">
@@ -1317,7 +1317,7 @@ function SavePrompt({
   const isError = saveStatus === "error";
 
   return (
-    <div className="mt-5 rounded-2xl border border-[#1e1a24] bg-gradient-to-br from-cyan-500/[0.06] to-emerald-500/[0.04] p-5">
+    <div className="mt-5 rounded-2xl border border-[#1e1a24] bg-gradient-to-br from-[#ff5a1f]/[0.06] to-[#ff8c42]/[0.04] p-5">
       <div className="flex items-start gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-300">
           <Bookmark className="h-5 w-5" />
@@ -1441,7 +1441,7 @@ function MiniStat({
 }) {
   const color =
     tone === "warn"
-      ? "text-amber-400"
+      ? "text-[#ff8c42]"
       : tone === "bad"
         ? "text-red-400"
         : tone === "good"
@@ -1488,13 +1488,13 @@ function CrossRefStep({ insight }: { insight: TimePositionalInsight }) {
 
   return (
     <div className="flex flex-col items-center text-center">
-      <span className="inline-flex items-center gap-2 rounded-full bg-violet-400/[0.08] px-3 py-1 font-mono text-[11px] uppercase tracking-[0.28em] text-violet-200/70">
+      <span className="inline-flex items-center gap-2 rounded-full bg-[#ff5a1f]/[0.06] px-3 py-1 font-mono text-[11px] uppercase tracking-[0.28em] text-[#ff8c42]">
         <Crosshair className="h-3 w-3" />
         Time x Positional
       </span>
-      <h2 className="mt-5 text-3xl font-black leading-tight text-white sm:text-4xl">
+      <h2 className="mt-5 text-3xl font-extrabold leading-tight text-white sm:text-4xl">
         Your clock and your habits<br />
-        <span className="bg-gradient-to-r from-violet-300 via-fuchsia-400 to-pink-500 bg-clip-text text-transparent">
+        <span className="bg-gradient-to-r from-[#ff5a1f] via-[#ff8c42] to-pink-500 bg-clip-text text-transparent">
           are connected
         </span>
       </h2>
@@ -1502,7 +1502,7 @@ function CrossRefStep({ insight }: { insight: TimePositionalInsight }) {
         {pct}% of your {verdictLabel} moves involved <strong className="text-white">{insight.motifName.toLowerCase()}</strong>.
         Each one cost ~{cpCost} pawns. This isn't a coincidence — it's a habit you can break.
       </p>
-      <div className="mt-6 rounded-2xl border border-violet-500/15 bg-violet-500/[0.04] px-6 py-4">
+      <div className="mt-6 rounded-2xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-6 py-4">
         <p className="text-sm leading-relaxed text-[#f0edf2]">{insight.insight}</p>
       </div>
       <div className="mt-4 flex items-center gap-4 text-[11px] text-[#565061]">
@@ -1527,13 +1527,13 @@ function LessonStep({
 }) {
   return (
     <div className="flex flex-col items-center text-center">
-      <span className="inline-flex items-center gap-2 rounded-full bg-amber-400/[0.08] px-3 py-1 font-mono text-[11px] uppercase tracking-[0.28em] text-amber-200/70">
+      <span className="inline-flex items-center gap-2 rounded-full bg-[#ff5a1f]/[0.06] px-3 py-1 font-mono text-[11px] uppercase tracking-[0.28em] text-[#ff8c42]">
         <Sparkles className="h-3 w-3" />
         Interactive Lesson
       </span>
-      <h2 className="mt-5 text-3xl font-black leading-tight text-white sm:text-4xl">
+      <h2 className="mt-5 text-3xl font-extrabold leading-tight text-white sm:text-4xl">
         Turn this pattern<br />
-        <span className="bg-gradient-to-r from-amber-200 via-orange-400 to-red-500 bg-clip-text text-transparent">
+        <span className="bg-gradient-to-r from-[#ff5a1f] via-orange-400 to-red-500 bg-clip-text text-transparent">
           into a 2-minute lesson
         </span>
       </h2>

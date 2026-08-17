@@ -43,7 +43,7 @@ export const MOVE_CLASSIFICATION_EMOJI: Record<MoveClassification, string> = {
 };
 
 export const MOVE_CLASSIFICATION_COLORS: Record<MoveClassification, string> = {
-  brilliant: "text-cyan-300",
+  brilliant: "text-[#ff8c42]",
   best: "text-emerald-300",
   good: "text-emerald-200/90",
   book: "text-slate-300",
@@ -53,7 +53,7 @@ export const MOVE_CLASSIFICATION_COLORS: Record<MoveClassification, string> = {
 };
 
 export const MOVE_CLASSIFICATION_BG: Record<MoveClassification, string> = {
-  brilliant: "bg-cyan-500/15",
+  brilliant: "bg-[#ff5a1f]/[0.15]",
   best: "bg-emerald-500/15",
   good: "bg-emerald-500/10",
   book: "bg-white/[0.05]",
@@ -63,7 +63,7 @@ export const MOVE_CLASSIFICATION_BG: Record<MoveClassification, string> = {
 };
 
 export const MOVE_CLASSIFICATION_BORDER: Record<MoveClassification, string> = {
-  brilliant: "border-cyan-500/30",
+  brilliant: "border-[#ff5a1f]/30",
   best: "border-emerald-500/25",
   good: "border-emerald-500/15",
   book: "border-white/[0.08]",

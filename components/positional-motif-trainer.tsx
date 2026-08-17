@@ -324,13 +324,13 @@ export function PositionalMotifTrainer({
   /* ---- Collapsed CTA ---- */
   if (!expanded) {
     return (
-      <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 p-8 md:p-10">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-amber-500/[0.08] via-orange-500/[0.04] to-transparent" />
-        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-500/10 blur-[80px]" />
+      <div className="relative overflow-hidden rounded-2xl border border-[#ff5a1f]/25 p-8 md:p-10">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#ff5a1f]/[0.08] via-orange-500/[0.04] to-transparent" />
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#ff5a1f]/[0.08] blur-[80px]" />
         <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-orange-500/10 blur-[80px]" />
 
         <div className="relative flex flex-col items-center text-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">
+          <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#ff5a1f]/[0.08] text-3xl shadow-lg shadow-amber-500/10">
             🧠
           </span>
           <h3 className="mt-5 text-2xl font-extrabold text-white md:text-3xl">
@@ -347,7 +347,7 @@ export function PositionalMotifTrainer({
             {topMotifs.map((m) => (
               <span
                 key={m.name}
-                className="flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/[0.06] px-3 py-1.5 text-[11px] font-medium text-amber-400"
+                className="flex items-center gap-1.5 rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-3 py-1.5 text-[11px] font-medium text-[#ff8c42]"
               >
                 <span>{m.icon}</span>
                 {m.name} ×{m.count}
@@ -362,7 +362,7 @@ export function PositionalMotifTrainer({
 
           {/* Feature cards */}
           <div className="mt-6 grid w-full max-w-lg gap-3 sm:grid-cols-3">
-            <div className="flex flex-col items-center gap-2 rounded-xl border border-amber-500/15 bg-amber-500/[0.04] px-4 py-3">
+            <div className="flex flex-col items-center gap-2 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-4 py-3">
               <span className="text-lg">♟️</span>
               <p className="text-xs font-bold text-white">Your Own Positions</p>
               <p className="text-[10px] text-[#565061]">
@@ -374,7 +374,7 @@ export function PositionalMotifTrainer({
               <p className="text-xs font-bold text-white">Find the Best Move</p>
               <p className="text-[10px] text-[#565061]">Interactive solving</p>
             </div>
-            <div className="flex flex-col items-center gap-2 rounded-xl border border-amber-500/15 bg-amber-500/[0.04] px-4 py-3">
+            <div className="flex flex-col items-center gap-2 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-4 py-3">
               <span className="text-lg">📈</span>
               <p className="text-xs font-bold text-white">Break the Pattern</p>
               <p className="text-[10px] text-[#565061]">
@@ -387,7 +387,7 @@ export function PositionalMotifTrainer({
             <button
               type="button"
               onClick={() => setExpanded(true)}
-              className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-amber-500/20 transition-all hover:shadow-xl hover:shadow-amber-500/30 hover:brightness-110"
+              className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-[#ff5a1f] to-orange-500 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-amber-500/20 transition-all hover:shadow-xl hover:shadow-amber-500/30 hover:brightness-110"
             >
               <svg
                 width="18"
@@ -419,7 +419,7 @@ export function PositionalMotifTrainer({
       {/* Header */}
       <div className="mb-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/15 text-xl">
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#ff5a1f]/[0.08] text-xl">
             🧠
           </span>
           <div>
@@ -468,7 +468,7 @@ export function PositionalMotifTrainer({
               solvePct >= 70
                 ? "text-emerald-400"
                 : solvePct >= 40
-                  ? "text-amber-400"
+                  ? "text-[#ff8c42]"
                   : "text-red-400"
             }`}
           >
@@ -478,7 +478,7 @@ export function PositionalMotifTrainer({
         {current && (
           <div className="ml-auto flex items-center gap-1.5">
             <span className="text-lg">{current.motifIcon}</span>
-            <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-semibold text-amber-300">
+            <span className="rounded-full bg-[#ff5a1f]/[0.08] px-2.5 py-0.5 text-xs font-semibold text-[#ff8c42]">
               {current.motifName}
             </span>
           </div>
@@ -531,7 +531,7 @@ export function PositionalMotifTrainer({
                       ? "bg-red-500/15 text-red-400"
                       : trainState === "revealed"
                         ? "bg-blue-500/15 text-blue-400"
-                        : "bg-violet-500/15 text-violet-400"
+                        : "bg-[#ff5a1f]/[0.08] text-[#ff8c42]"
                 }`}
               >
                 {trainState === "correct"
@@ -562,7 +562,7 @@ export function PositionalMotifTrainer({
                   <span className="text-emerald-400">Well done!</span>{" "}
                   That&apos;s the best move here. Understanding <em>why</em>{" "}
                   this works will help break the{" "}
-                  <span className="font-semibold text-amber-300">
+                  <span className="font-semibold text-[#ff8c42]">
                     {current?.motifName}
                   </span>{" "}
                   habit.
@@ -593,7 +593,7 @@ export function PositionalMotifTrainer({
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-[#1e1a24]">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-500"
+                className="h-full rounded-full bg-gradient-to-r from-[#ff5a1f] to-orange-500 transition-all duration-500"
                 style={{
                   width: `${Math.max(4, Math.round(((currentIdx + 1) / queue.length) * 100))}%`,
                 }}
@@ -609,7 +609,7 @@ export function PositionalMotifTrainer({
                   type="button"
                   onClick={() => setHintShown(true)}
                   disabled={hintShown}
-                  className="flex items-center gap-1.5 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-4 py-2.5 text-xs font-medium text-amber-400 transition-colors hover:bg-amber-500/[0.12] hover:text-amber-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1.5 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-4 py-2.5 text-xs font-medium text-[#ff8c42] transition-colors hover:bg-[#ff5a1f]/[0.12] hover:text-[#ff8c42] disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <svg
                     width="14"
@@ -636,7 +636,7 @@ export function PositionalMotifTrainer({
               <button
                 type="button"
                 onClick={goNext}
-                className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-amber-500/20 transition-all hover:brightness-110"
+                className="flex-1 rounded-xl bg-gradient-to-r from-[#ff5a1f] to-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-amber-500/20 transition-all hover:brightness-110"
               >
                 Next Position →
               </button>

@@ -7,10 +7,10 @@ const AXIS_META: Record<string, { label: string; icon: string; bar: string; bg: 
   fianchetto: { label: "Fianchetto", icon: "🏰", bar: "bg-emerald-400", bg: "bg-emerald-500/10" },
   doubleFianchetto: { label: "Double Fianchetto", icon: "🏯", bar: "bg-emerald-300", bg: "bg-emerald-500/8" },
   centerType: { label: "Center Type", icon: "🎯", bar: "bg-blue-400", bg: "bg-blue-500/10" },
-  castling: { label: "Castling", icon: "🏁", bar: "bg-violet-400", bg: "bg-violet-500/10" },
-  iqp: { label: "IQP", icon: "💎", bar: "bg-amber-400", bg: "bg-amber-500/10" },
+  castling: { label: "Castling", icon: "🏁", bar: "bg-[#ff5a1f]", bg: "bg-[#ff5a1f]/[0.08]" },
+  iqp: { label: "IQP", icon: "💎", bar: "bg-[#ff5a1f]", bg: "bg-[#ff5a1f]/[0.08]" },
   pawnStructure: { label: "Pawn Structure", icon: "🧱", bar: "bg-rose-400", bg: "bg-rose-500/10" },
-  kingSafety: { label: "King Safety", icon: "👑", bar: "bg-cyan-400", bg: "bg-cyan-500/10" },
+  kingSafety: { label: "King Safety", icon: "👑", bar: "bg-[#ff5a1f]", bg: "bg-[#ff5a1f]/[0.08]" },
   pawnChain: { label: "Pawn Chains", icon: "⛓️", bar: "bg-orange-400", bg: "bg-orange-500/10" },
 };
 
@@ -46,13 +46,13 @@ function patternLabel(axis: string, pattern: string): string {
 
 function winRateColor(wr: number): string {
   if (wr >= 55) return "text-emerald-400";
-  if (wr >= 45) return "text-amber-400";
+  if (wr >= 45) return "text-[#ff8c42]";
   return "text-red-400";
 }
 
 function winRateBarColor(wr: number): string {
   if (wr >= 55) return "bg-emerald-400";
-  if (wr >= 45) return "bg-amber-400";
+  if (wr >= 45) return "bg-[#ff5a1f]";
   return "bg-red-400";
 }
 
@@ -79,7 +79,7 @@ export function ScanStructuralStats({ report }: Props) {
           {topInsights.slice(0, 3).map((insight, i) => (
             <div
               key={i}
-              className="rounded-xl border border-cyan-500/20 bg-cyan-500/[0.04] px-4 py-3 text-sm text-cyan-300"
+              className="rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-4 py-3 text-sm text-[#ff8c42]"
             >
               <span className="font-semibold">💡 {insight.text}</span>
               <span className="ml-2 text-xs text-[#565061]">
@@ -136,7 +136,7 @@ export function ScanStructuralStats({ report }: Props) {
                         )}
                         {entry.draws > 0 && (
                           <div
-                            className="bg-amber-400 transition-all"
+                            className="bg-[#ff5a1f] transition-all"
                             style={{ width: `${(entry.draws / entry.games) * 100}%` }}
                           />
                         )}
@@ -149,7 +149,7 @@ export function ScanStructuralStats({ report }: Props) {
                       </div>
                       <div className="flex items-center gap-2 text-[10px] text-[#565061]">
                         <span className="text-emerald-400 font-medium">{entry.wins}W</span>
-                        <span className="text-amber-400 font-medium">{entry.draws}D</span>
+                        <span className="text-[#ff8c42] font-medium">{entry.draws}D</span>
                         <span className="text-red-400 font-medium">{entry.losses}L</span>
                         <span className="ml-auto">{entry.games} game{entry.games !== 1 ? "s" : ""}</span>
                       </div>

@@ -1645,7 +1645,7 @@ export function MistakeCard({
                 {/* Reset */}
                 <button
                   type="button"
-                  className="flex h-7 w-7 items-center justify-center rounded-lg text-[#8d8696] transition-colors hover:bg-amber-500/[0.15] hover:text-amber-400 disabled:opacity-30"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-[#8d8696] transition-colors hover:bg-[#ff5a1f]/[0.15] hover:text-[#ff8c42] disabled:opacity-30"
                   onClick={resetFreeplay}
                   disabled={freeplayHistory.length <= 1}
                   title="Reset to starting position"
@@ -1723,7 +1723,7 @@ export function MistakeCard({
                   {moveBadge.label}
                 </span>
                 {leak.reachCount > 1 && leak.moveCount > 1 && (
-                  <span className="flex items-center gap-1 rounded-lg bg-fuchsia-500/15 px-2 py-1 text-[10px] font-bold text-fuchsia-400">
+                  <span className="flex items-center gap-1 rounded-lg bg-[#ff5a1f]/[0.08] px-2 py-1 text-[10px] font-bold text-[#ff8c42]">
                     <svg
                       width="10"
                       height="10"
@@ -1765,7 +1765,7 @@ export function MistakeCard({
                   onClick={onCreateCommunityPost}
                   aria-label="Create community post"
                   title="Create community post"
-                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-2.5 text-[11px] font-semibold text-cyan-200 transition hover:bg-cyan-500/20 hover:text-white"
+                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-2.5 text-[11px] font-semibold text-[#ff8c42] transition hover:bg-[#ff5a1f]/[0.08] hover:text-white"
                 >
                   <svg
                     width="12"
@@ -1797,14 +1797,14 @@ export function MistakeCard({
             </p>
             <p className="mt-2 text-[13px] leading-relaxed text-white">
               You reached this position{" "}
-              <span className="rounded-md bg-amber-500/15 px-1.5 py-0.5 font-bold text-amber-400">
+              <span className="rounded-md bg-[#ff5a1f]/[0.08] px-1.5 py-0.5 font-bold text-[#ff8c42]">
                 {leak.reachCount}×
               </span>{" "}
               and played{" "}
               <span className="rounded-md bg-red-500/15 px-1.5 py-0.5 font-mono font-bold text-red-400">
                 {badMove?.san ?? leak.userMove}
               </span>{" "}
-              <span className="rounded-md bg-amber-500/15 px-1.5 py-0.5 font-bold text-amber-400">
+              <span className="rounded-md bg-[#ff5a1f]/[0.08] px-1.5 py-0.5 font-bold text-[#ff8c42]">
                 {leak.moveCount}×
               </span>
             </p>
@@ -1935,7 +1935,7 @@ export function MistakeCard({
               pctNum >= 55
                 ? "text-emerald-400"
                 : pctNum >= 45
-                  ? "text-amber-400"
+                  ? "text-[#ff8c42]"
                   : "text-red-400";
             return (
               <div className="stat-card px-3.5 py-3">
@@ -2362,7 +2362,7 @@ export function MistakeCard({
               <button
                 type="button"
                 onClick={onCreateCommunityPost}
-                className="flex h-10 items-center gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-4 text-sm font-semibold text-cyan-200 transition-all hover:bg-cyan-500/20 hover:text-white"
+                className="flex h-10 items-center gap-2 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-4 text-sm font-semibold text-[#ff8c42] transition-all hover:bg-[#ff5a1f]/[0.08] hover:text-white"
               >
                 <svg
                   width="14"

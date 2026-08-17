@@ -19,7 +19,7 @@ function HelpTip({ text }: { text: string }) {
 export function MentalGameLoading() {
   return (
     <div className="relative overflow-hidden rounded-2xl border border-[#1e1a24] p-6 md:p-8">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.06] via-amber-500/[0.04] to-rose-500/[0.06]" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#ff5a1f]/[0.06] via-[#ff8c42]/[0.04] to-rose-500/[0.06]" />
       <div className="relative">
         <h2 className="text-xl font-bold text-white">Mental Game</h2>
         <p className="mt-1 text-xs text-[#565061]">
@@ -59,15 +59,15 @@ export function ScanMentalGame({
 }) {
   return (
     <div className="relative overflow-hidden rounded-2xl border border-[#1e1a24] p-6 md:p-8">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.08] via-amber-500/[0.05] to-rose-500/[0.08]" />
-      <div className="pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full bg-violet-500/10 blur-[60px]" />
-      <div className="pointer-events-none absolute -bottom-20 -left-20 h-40 w-40 rounded-full bg-amber-500/10 blur-[60px]" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#ff5a1f]/[0.08] via-[#ff8c42]/[0.05] to-rose-500/[0.08]" />
+      <div className="pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full bg-[#ff5a1f]/[0.08] blur-[60px]" />
+      <div className="pointer-events-none absolute -bottom-20 -left-20 h-40 w-40 rounded-full bg-[#ff5a1f]/[0.08] blur-[60px]" />
 
       <div className="relative">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-bold text-white">Mental Game</h2>
           <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full border border-violet-500/20 bg-violet-500/[0.08] px-3 py-1 text-xs font-medium text-violet-400">
+            <span className="inline-flex items-center gap-1 rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-3 py-1 text-xs font-medium text-[#ff8c42]">
               🧠 Psychology
             </span>
             <span className="inline-flex items-center gap-1 rounded-full border border-slate-500/20 bg-slate-500/[0.08] px-3 py-1 text-xs font-medium text-[#8d8696]">
@@ -93,7 +93,7 @@ export function ScanMentalGame({
                 mentalStats.stability >= 70
                   ? "text-emerald-400"
                   : mentalStats.stability >= 40
-                    ? "text-amber-400"
+                    ? "text-[#ff8c42]"
                     : "text-red-400",
               help: "Mental consistency between games. High means predictable performance, low means performance swings between sessions.",
             },
@@ -111,7 +111,7 @@ export function ScanMentalGame({
                 mentalStats.tiltRate <= 30
                   ? "text-emerald-400"
                   : mentalStats.tiltRate <= 50
-                    ? "text-amber-400"
+                    ? "text-[#ff8c42]"
                     : "text-red-400",
               help: "How often a loss is immediately followed by another loss. Lower is better and means you recover well.",
             },
@@ -129,7 +129,7 @@ export function ScanMentalGame({
                 mentalStats.postLossWinRate >= 40
                   ? "text-emerald-400"
                   : mentalStats.postLossWinRate >= 25
-                    ? "text-amber-400"
+                    ? "text-[#ff8c42]"
                     : "text-red-400",
               help: "Win rate in the game immediately after a loss. High means strong bounce-back ability.",
             },
@@ -166,9 +166,9 @@ export function ScanMentalGame({
                     : "Frequent",
               color:
                 mentalStats.timeoutRate <= 5
-                  ? "text-cyan-400"
+                  ? "text-[#ff8c42]"
                   : mentalStats.timeoutRate <= 15
-                    ? "text-amber-400"
+                    ? "text-[#ff8c42]"
                     : "text-red-400",
               help: "Percentage of games lost on time. High can indicate a time management issue.",
             },
@@ -200,9 +200,9 @@ export function ScanMentalGame({
                     : "Quick Quitter",
               color:
                 mentalStats.resignRate <= 50
-                  ? "text-cyan-400"
+                  ? "text-[#ff8c42]"
                   : mentalStats.resignRate <= 75
-                    ? "text-amber-400"
+                    ? "text-[#ff8c42]"
                     : "text-red-400",
               help: "Percentage of losses that ended in resignation. Very high may indicate giving up too early.",
             },
@@ -229,7 +229,7 @@ export function ScanMentalGame({
           <>
             <div className="mt-5 flex flex-wrap items-center gap-3">
               {mentalStats.archetype ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/[0.1] px-4 py-1.5 text-sm font-semibold text-violet-300">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.1] px-4 py-1.5 text-sm font-semibold text-[#ff8c42]">
                   {mentalStats.archetype}
                 </span>
               ) : null}
@@ -271,7 +271,7 @@ export function ScanMentalGame({
                         White · {mentalStats.whiteGames ?? 0} games
                       </span>
                       <span
-                        className={`text-sm font-bold ${(mentalStats.whiteWinRate ?? 0) >= 55 ? "text-emerald-400" : (mentalStats.whiteWinRate ?? 0) >= 45 ? "text-amber-400" : "text-red-400"}`}
+                        className={`text-sm font-bold ${(mentalStats.whiteWinRate ?? 0) >= 55 ? "text-emerald-400" : (mentalStats.whiteWinRate ?? 0) >= 45 ? "text-[#ff8c42]" : "text-red-400"}`}
                       >
                         {mentalStats.whiteWinRate ?? 0}%
                       </span>
@@ -295,7 +295,7 @@ export function ScanMentalGame({
                         Black · {mentalStats.blackGames ?? 0} games
                       </span>
                       <span
-                        className={`text-sm font-bold ${(mentalStats.blackWinRate ?? 0) >= 55 ? "text-emerald-400" : (mentalStats.blackWinRate ?? 0) >= 45 ? "text-amber-400" : "text-red-400"}`}
+                        className={`text-sm font-bold ${(mentalStats.blackWinRate ?? 0) >= 55 ? "text-emerald-400" : (mentalStats.blackWinRate ?? 0) >= 45 ? "text-[#ff8c42]" : "text-red-400"}`}
                       >
                         {mentalStats.blackWinRate ?? 0}%
                       </span>
@@ -331,7 +331,7 @@ export function ScanMentalGame({
                       (mentalStats.postWinWinRate ?? 0) >= 55
                         ? "text-emerald-400"
                         : (mentalStats.postWinWinRate ?? 0) >= 40
-                          ? "text-amber-400"
+                          ? "text-[#ff8c42]"
                           : "text-red-400",
                     help: "Win rate in the game after a win. High means you build momentum from victories.",
                   },
@@ -349,7 +349,7 @@ export function ScanMentalGame({
                       (mentalStats.earlyLossRate ?? 0) <= 15
                         ? "text-emerald-400"
                         : (mentalStats.earlyLossRate ?? 0) <= 30
-                          ? "text-amber-400"
+                          ? "text-[#ff8c42]"
                           : "text-red-400",
                     help: "Percentage of losses within the first 20 moves. High means early blunders or mental disengagement.",
                   },
@@ -367,7 +367,7 @@ export function ScanMentalGame({
                       (mentalStats.comebackRate ?? 0) >= 60
                         ? "text-emerald-400"
                         : (mentalStats.comebackRate ?? 0) >= 35
-                          ? "text-amber-400"
+                          ? "text-[#ff8c42]"
                           : "text-red-400",
                     help: "Percentage of wins that required 30+ moves. High suggests you keep fighting from worse positions.",
                   },
@@ -385,7 +385,7 @@ export function ScanMentalGame({
                       (mentalStats.mateFinishRate ?? 0) >= 40
                         ? "text-emerald-400"
                         : (mentalStats.mateFinishRate ?? 0) >= 20
-                          ? "text-cyan-400"
+                          ? "text-[#ff8c42]"
                           : "text-[#8d8696]",
                     help: "Percentage of wins that ended in checkmate instead of resignation or flagging.",
                   },
@@ -454,8 +454,8 @@ export function ScanMentalGame({
                     (mentalStats.maxLossStreak ?? 0) >= 6
                       ? "text-red-400"
                       : (mentalStats.maxLossStreak ?? 0) >= 4
-                        ? "text-amber-400"
-                        : "text-cyan-400",
+                        ? "text-[#ff8c42]"
+                        : "text-[#ff8c42]",
                   help: "Longest consecutive losing streak. Long streaks may indicate tilt.",
                 },
               ].map((stat) => (
@@ -487,12 +487,12 @@ export function ScanMentalGame({
                   </p>
                 </div>
                 <p
-                  className={`mt-1 text-2xl font-bold ${(mentalStats.decisiveness ?? 0) >= 85 ? "text-violet-400" : "text-cyan-400"}`}
+                  className={`mt-1 text-2xl font-bold ${(mentalStats.decisiveness ?? 0) >= 85 ? "text-[#ff8c42]" : "text-[#ff8c42]"}`}
                 >
                   {mentalStats.decisiveness ?? 0}%
                 </p>
                 <p
-                  className={`mt-0.5 text-xs opacity-70 ${(mentalStats.decisiveness ?? 0) >= 85 ? "text-violet-400" : "text-cyan-400"}`}
+                  className={`mt-0.5 text-xs opacity-70 ${(mentalStats.decisiveness ?? 0) >= 85 ? "text-[#ff8c42]" : "text-[#ff8c42]"}`}
                 >
                   {(mentalStats.decisiveness ?? 0) >= 85
                     ? "All or Nothing"
@@ -527,7 +527,7 @@ export function ScanMentalGame({
           <div className="relative mt-5">
             <div className="pointer-events-none select-none blur-[6px]">
               <div className="flex flex-wrap items-center gap-3">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/[0.1] px-4 py-1.5 text-sm font-semibold text-violet-300">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.1] px-4 py-1.5 text-sm font-semibold text-[#ff8c42]">
                   🧊 Ice Veins
                 </span>
                 <div className="flex items-center gap-1">
@@ -581,7 +581,7 @@ export function ScanMentalGame({
                       <span className="text-xs text-[#8d8696]">
                         Black · 38 games
                       </span>
-                      <span className="text-sm font-bold text-amber-400">
+                      <span className="text-sm font-bold text-[#ff8c42]">
                         47.2%
                       </span>
                     </div>
@@ -617,10 +617,10 @@ export function ScanMentalGame({
                       <p className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                         {label}
                       </p>
-                      <p className="mt-1 text-2xl font-bold text-cyan-400">
+                      <p className="mt-1 text-2xl font-bold text-[#ff8c42]">
                         28
                       </p>
-                      <p className="mt-0.5 text-xs text-cyan-400 opacity-70">
+                      <p className="mt-0.5 text-xs text-[#ff8c42] opacity-70">
                         moves
                       </p>
                     </div>
@@ -630,7 +630,7 @@ export function ScanMentalGame({
             </div>
 
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="rounded-2xl border border-violet-500/30 bg-slate-900/90 px-6 py-4 text-center shadow-2xl backdrop-blur-sm">
+              <div className="rounded-2xl border border-[#ff5a1f]/25 bg-slate-900/90 px-6 py-4 text-center shadow-2xl backdrop-blur-sm">
                 <p className="text-lg font-bold text-white">
                   🔒 Pro Mental Breakdown
                 </p>
@@ -641,7 +641,7 @@ export function ScanMentalGame({
                 </p>
                 <a
                   href="/pricing"
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-[#ff5a1f] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#ff5a1f]"
                 >
                   Upgrade to Pro
                 </a>

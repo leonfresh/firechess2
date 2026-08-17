@@ -54,11 +54,11 @@ const FREE_POSITIONAL_SAMPLE = 3;
 
 const COLOR_MAP: Record<string, ColorPalette> = {
   amber: {
-    card: "border-amber-500/20 bg-amber-500/[0.03]",
-    bar: "bg-amber-400",
+    card: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06]",
+    bar: "bg-[#ff5a1f]",
     ring: "ring-amber-500/25",
-    chip: "bg-amber-500/15 text-amber-400",
-    icon: "bg-amber-500/15 shadow-amber-500/10",
+    chip: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
+    icon: "bg-[#ff5a1f]/[0.08] shadow-amber-500/10",
   },
   orange: {
     card: "border-orange-500/20 bg-orange-500/[0.03]",
@@ -89,11 +89,11 @@ const COLOR_MAP: Record<string, ColorPalette> = {
     icon: "bg-slate-500/15 shadow-slate-500/10",
   },
   violet: {
-    card: "border-violet-500/20 bg-violet-500/[0.03]",
-    bar: "bg-violet-400",
+    card: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06]",
+    bar: "bg-[#ff5a1f]",
     ring: "ring-violet-500/25",
-    chip: "bg-violet-500/15 text-violet-400",
-    icon: "bg-violet-500/15 shadow-violet-500/10",
+    chip: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
+    icon: "bg-[#ff5a1f]/[0.08] shadow-violet-500/10",
   },
   yellow: {
     card: "border-yellow-500/20 bg-yellow-500/[0.03]",
@@ -110,11 +110,11 @@ const COLOR_MAP: Record<string, ColorPalette> = {
     icon: "bg-blue-500/15 shadow-blue-500/10",
   },
   cyan: {
-    card: "border-cyan-500/20 bg-cyan-500/[0.03]",
-    bar: "bg-cyan-400",
+    card: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06]",
+    bar: "bg-[#ff5a1f]",
     ring: "ring-cyan-500/25",
-    chip: "bg-cyan-500/15 text-cyan-400",
-    icon: "bg-cyan-500/15 shadow-cyan-500/10",
+    chip: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
+    icon: "bg-[#ff5a1f]/[0.08] shadow-cyan-500/10",
   },
   indigo: {
     card: "border-indigo-500/20 bg-indigo-500/[0.03]",
@@ -421,7 +421,7 @@ export function ScanPositionalMotifs({
                 💀
               </span>
               <div>
-                <p className="text-sm font-black text-red-300">
+                <p className="text-sm font-extrabold text-red-300">
                   Loose pieces are your most expensive habit
                 </p>
                 <p className="mt-1 text-sm leading-relaxed text-[#f0edf2]">
@@ -444,10 +444,10 @@ export function ScanPositionalMotifs({
         </div>
       ) : null}
 
-      <div className="rounded-2xl border border-transparent bg-gradient-to-r from-amber-500/[0.04] to-transparent px-5 py-4">
+      <div className="rounded-2xl border border-transparent bg-gradient-to-r from-[#ff5a1f]/[0.04] to-transparent px-5 py-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-400/70">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#ff8c42]">
               Human-readable habits
             </p>
             <p className="mt-1 text-sm leading-relaxed text-[#f0edf2]">
@@ -463,7 +463,7 @@ export function ScanPositionalMotifs({
               return (
                 <span
                   key={motif.name}
-                  className="inline-flex items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/[0.08] px-2.5 py-1 text-[11px] font-semibold text-amber-300"
+                  className="inline-flex items-center gap-1 rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-2.5 py-1 text-[11px] font-semibold text-[#ff8c42]"
                 >
                   {pattern?.icon ?? motif.icon} {motif.name}
                   <span className="opacity-60">x{motif.count}</span>
@@ -485,7 +485,7 @@ export function ScanPositionalMotifs({
           motif.avgCpLoss >= 15000
             ? "text-red-400"
             : motif.avgCpLoss >= 8000
-              ? "text-amber-400"
+              ? "text-[#ff8c42]"
               : "text-yellow-400";
         const priorityLabel =
           motifIndex === 0
@@ -501,7 +501,7 @@ export function ScanPositionalMotifs({
             : motif.count >= Math.ceil(motifMax * 0.6)
               ? "bg-orange-500/15 text-orange-400 ring-1 ring-orange-500/20"
               : motif.count >= Math.ceil(motifMax * 0.3)
-                ? "bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/20"
+                ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42] ring-1 ring-amber-500/20"
                 : "bg-[#ff5a1f]/[0.05] text-[#8d8696]";
         const isExpanded = expandedMotifs.has(motif.name);
         const hasExamples = motif.examples.length > 0;
@@ -585,8 +585,8 @@ export function ScanPositionalMotifs({
                   }}
                   className={`mt-4 flex w-full items-center justify-between rounded-xl border px-4 py-3 text-sm font-semibold transition-all ${
                     isExpanded
-                      ? "border-amber-500/25 bg-amber-500/[0.08] text-amber-300"
-                      : "border-[#1e1a24] bg-[#ff5a1f]/[0.04] text-[#f0edf2] hover:border-amber-500/20 hover:bg-amber-500/[0.05] hover:text-amber-200"
+                      ? "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] text-[#ff8c42]"
+                      : "border-[#1e1a24] bg-[#ff5a1f]/[0.04] text-[#f0edf2] hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.06] hover:text-[#ff8c42]"
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
@@ -694,7 +694,7 @@ export function ScanPositionalMotifs({
                         ? "bg-red-500/15 text-red-400"
                         : example.cpLoss >= 70
                           ? "bg-orange-500/15 text-orange-400"
-                          : "bg-amber-500/15 text-amber-400";
+                          : "bg-[#ff5a1f]/[0.08] text-[#ff8c42]";
                     const boardId = `scan-pos-${motif.name.replace(/\s+/g, "-").toLowerCase()}-${exampleIndex}`;
 
                     return (
@@ -791,7 +791,7 @@ export function ScanPositionalMotifs({
                               }
                             }}
                             disabled={isExplaining}
-                            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-amber-500/20 bg-amber-500/[0.07] py-2.5 text-xs font-semibold text-amber-400 transition-all hover:border-amber-500/35 hover:bg-amber-500/[0.12] hover:text-amber-300 disabled:cursor-wait disabled:opacity-50"
+                            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] py-2.5 text-xs font-semibold text-[#ff8c42] transition-all hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.12] hover:text-[#ff8c42] disabled:cursor-wait disabled:opacity-50"
                           >
                             {isExplaining ? (
                               <>
@@ -901,7 +901,7 @@ export function ScanPositionalMotifs({
                     <div className="mt-4 text-center">
                       <Link
                         href="/pricing"
-                        className="inline-flex items-center gap-2 rounded-full bg-amber-500/90 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-amber-500/20 transition-opacity hover:opacity-90"
+                        className="inline-flex items-center gap-2 rounded-full bg-[#ff5a1f]/[0.08] px-5 py-2 text-xs font-bold text-white shadow-lg shadow-amber-500/20 transition-opacity hover:opacity-90"
                       >
                         🔓 Unlock{" "}
                         {motif.examples.length - FREE_POSITIONAL_SAMPLE} more
@@ -920,7 +920,7 @@ export function ScanPositionalMotifs({
       })}
 
       {motifs.length >= 2 ? (
-        <div className="rounded-2xl border border-amber-500/10 bg-amber-500/[0.03] p-5">
+        <div className="rounded-2xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] p-5">
           <div className="flex items-start gap-3">
             <span className="mt-0.5 shrink-0 text-lg">💡</span>
             <div>
@@ -932,7 +932,7 @@ export function ScanPositionalMotifs({
                 move has a concrete purpose before committing. Head to the{" "}
                 <Link
                   href="/train"
-                  className="font-semibold text-amber-400 underline underline-offset-2 hover:text-amber-300"
+                  className="font-semibold text-[#ff8c42] underline underline-offset-2 hover:text-[#ff8c42]"
                 >
                   Training Center
                 </Link>{" "}

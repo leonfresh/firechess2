@@ -76,7 +76,7 @@ function variantColors(
         bg: "bg-emerald-500/[0.04]",
         text: "text-emerald-400",
         pill: "bg-emerald-500/15 text-emerald-400",
-        grad: "from-emerald-500/[0.06] to-transparent",
+        grad: "to-[#ff8c42]/[0.06] to-transparent",
       };
     if (activeTab === "db")
       return {
@@ -99,19 +99,19 @@ function variantColors(
   if (variant === "tactic")
     return {
       accent: "amber",
-      border: "border-amber-500/20",
-      bg: "bg-amber-500/[0.04]",
-      text: "text-amber-400",
-      pill: "bg-amber-500/15 text-amber-400",
-      grad: "from-amber-500/[0.06] to-transparent",
+      border: "border-[#ff5a1f]/25",
+      bg: "bg-[#ff5a1f]/[0.06]",
+      text: "text-[#ff8c42]",
+      pill: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
+      grad: "from-[#ff5a1f]/[0.06] to-transparent",
     };
   return {
     accent: "sky",
-    border: "border-sky-500/20",
-    bg: "bg-sky-500/[0.04]",
-    text: "text-sky-400",
-    pill: "bg-sky-500/15 text-sky-400",
-    grad: "from-sky-500/[0.06] to-transparent",
+    border: "border-[#ff5a1f]/25",
+    bg: "bg-[#ff5a1f]/[0.06]",
+    text: "text-[#ff8c42]",
+    pill: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
+    grad: "from-[#ff5a1f]/[0.06] to-transparent",
   };
 }
 
@@ -127,9 +127,9 @@ function severityClasses(
     };
   if (severity === "warning")
     return {
-      border: "border-amber-500/20",
-      bg: "bg-amber-500/[0.04]",
-      text: "text-amber-400",
+      border: "border-[#ff5a1f]/25",
+      bg: "bg-[#ff5a1f]/[0.06]",
+      text: "text-[#ff8c42]",
     };
   const c = variantColors(variant);
   return { border: c.border, bg: c.bg, text: c.text };
@@ -414,7 +414,7 @@ export function ExplanationModal({
             {hasRich && richExplanation.evalShift && (
               <div className="text-right hidden sm:block">
                 <div
-                  className={`text-2xl font-black font-mono tabular-nums ${colors.text}`}
+                  className={`text-2xl font-extrabold font-mono tabular-nums ${colors.text}`}
                 >
                   {richExplanation.evalShift}
                 </div>
@@ -728,14 +728,14 @@ export function ExplanationModal({
                 </div>
 
                 {richExplanation.takeaway && (
-                  <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-4">
+                  <div className="rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] p-4">
                     <div className="mb-1.5 flex items-center gap-2">
                       <span className="text-base">🎯</span>
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400/70">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-[#ff8c42]">
                         Takeaway
                       </h3>
                     </div>
-                    <p className="text-sm font-medium leading-relaxed text-amber-300">
+                    <p className="text-sm font-medium leading-relaxed text-[#ff8c42]">
                       {richExplanation.takeaway.replace(/\*\*/g, "")}
                     </p>
                   </div>
@@ -835,14 +835,14 @@ export function ExplanationModal({
                 </div>
 
                 {simpleExplanation.context && (
-                  <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-4">
+                  <div className="rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] p-4">
                     <div className="mb-1.5 flex items-center gap-2">
                       <span className="text-base">⚠️</span>
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400/70">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-[#ff8c42]">
                         {simpleExplanation.context}
                       </h3>
                     </div>
-                    <p className="text-sm text-amber-300">
+                    <p className="text-sm text-[#ff8c42]">
                       You had a winning position but failed to convert the
                       advantage.
                     </p>

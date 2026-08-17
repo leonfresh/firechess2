@@ -762,82 +762,83 @@ export function ScanSessionPage({
           />
         </div>
       )}
-    <div className="min-h-screen bg-[#0A0A0B] text-[#F4F1EA]">
+    <div className="min-h-screen overflow-x-clip bg-[#070608] text-[#f0edf2]">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-        <nav className="mb-5 flex items-center gap-2 text-xs text-[#8A8578]">
-          <Link href="/" className="transition-colors hover:text-[#C9C4B6]">
+        <nav className="mb-5 flex items-center gap-2 text-xs text-[#565061]">
+          <Link href="/" className="transition-colors hover:text-[#f0edf2]">
             Home
           </Link>
           <span>/</span>
-          <span className="text-[#C9C4B6]">Report</span>
+          <span className="text-[#8d8696]">Report</span>
         </nav>
 
-        <section className="relative overflow-hidden rounded-[2rem] border border-[#1e1a24] bg-[radial-gradient(ellipse_80%_60%_at_70%_-10%,_rgba(255,107,53,0.13),_transparent_60%),linear-gradient(180deg,_#121214_0%,_#0A0A0B_100%)] p-6 sm:p-8">
-          <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#FF6B35]/[0.10] blur-[120px]" />
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FF6B35]/40 to-transparent" />
+        <section className="relative overflow-hidden rounded-[2rem] border border-[#1e1a24] bg-[#121015] p-6 sm:p-8">
+          <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#ff5a1f]/[0.10] blur-[120px]" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.04)_1px,transparent_1.4px)] [background-size:32px_32px] [mask-image:radial-gradient(ellipse_70%_60%_at_60%_0%,black,transparent)]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff5a1f]/40 to-transparent" />
           <div className="relative">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-3xl">
-                <div className="flex flex-wrap items-center gap-2.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8A8578]">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#FF6B35]" />
-                  <span>{formatSource(scan.source)}</span>
-                  <span className="text-[#4A463C]">/</span>
-                  <span>{formatScanMode(scan.scanMode)}</span>
+                <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#ff5a1f]/20 bg-[#ff5a1f]/[0.08] px-4 py-1.5">
+                  <span className="nl3-pulse-dot h-1.5 w-1.5 rounded-full bg-[#ff5a1f] shadow-[0_0_8px_#ff5a1f]" />
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#ff8c42]">
+                    {formatSource(scan.source)} · {formatScanMode(scan.scanMode)}
+                  </span>
                 </div>
-                <h1 className="mt-4 text-4xl font-black tracking-tight text-[#F4F1EA] sm:text-5xl">
+                <h1 className="text-4xl font-extrabold tracking-[-0.02em] text-white sm:text-5xl">
                   Report for{" "}
-                  <span className="bg-gradient-to-r from-[#FF6B35] to-[#FFB25A] bg-clip-text text-transparent">
+                  <span className="font-serif italic tracking-[-0.01em] text-[#ff5a1f] [text-shadow:0_0_40px_rgba(255,90,31,0.3)]">
                     {scan.chessUsername}
                   </span>
                 </h1>
                 <div className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
-                  {/* Key stats */}
+                  {/* Key stats — single ember accent, neutral numbers */}
                   {scan.result?.gamesAnalyzed ? (
-                    <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-4 py-3.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8A8578]">
+                    <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e] px-4 py-3.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                         Games
                       </p>
-                      <p className="mt-1.5 text-2xl font-black tabular-nums text-[#F4F1EA]">
+                      <p className="mt-1.5 text-2xl font-bold tabular-nums tracking-[-0.02em] text-white">
                         {scan.result.gamesAnalyzed.toLocaleString()}
                       </p>
                     </div>
                   ) : null}
                   {liveReportMeta?.estimatedAccuracy ? (
-                    <div className="rounded-xl border border-emerald-500/[0.18] bg-emerald-500/[0.05] px-4 py-3.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-400/70">
+                    <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e] px-4 py-3.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                         Accuracy
                       </p>
-                      <p className="mt-1.5 text-2xl font-black tabular-nums text-emerald-300">
+                      <p className="mt-1.5 text-2xl font-bold tabular-nums tracking-[-0.02em] text-white">
                         {liveReportMeta.estimatedAccuracy.toFixed(1)}%
                       </p>
                     </div>
                   ) : null}
                   {liveReportMeta?.estimatedRating ? (
-                    <div className="rounded-xl border border-[#FF6B35]/[0.22] bg-[#FF6B35]/[0.06] px-4 py-3.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#FF6B35]/80">
+                    <div className="rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-4 py-3.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#ff8c42]/80">
                         Est. Rating
                       </p>
-                      <p className="mt-1.5 text-2xl font-black tabular-nums text-[#FFB25A]">
+                      <p className="mt-1.5 text-2xl font-bold tabular-nums tracking-[-0.02em] text-[#ff8c42]">
                         {liveReportMeta.estimatedRating.toLocaleString()}
                       </p>
                     </div>
                   ) : null}
                   {scan.result && scan.result.leaks.length > 0 ? (
-                    <div className="rounded-xl border border-amber-500/[0.18] bg-amber-500/[0.05] px-4 py-3.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-400/70">
+                    <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e] px-4 py-3.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                         Opening Leaks
                       </p>
-                      <p className="mt-1.5 text-2xl font-black tabular-nums text-amber-300">
+                      <p className="mt-1.5 text-2xl font-bold tabular-nums tracking-[-0.02em] text-[#ff5a1f]">
                         {scan.result.leaks.length}
                       </p>
                     </div>
                   ) : null}
                   {scan.result && scan.result.missedTactics.length > 0 ? (
-                    <div className="rounded-xl border border-red-500/[0.18] bg-red-500/[0.05] px-4 py-3.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-red-400/70">
+                    <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e] px-4 py-3.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                         Missed Tactics
                       </p>
-                      <p className="mt-1.5 text-2xl font-black tabular-nums text-red-300">
+                      <p className="mt-1.5 text-2xl font-bold tabular-nums tracking-[-0.02em] text-[#ff5a1f]">
                         {scan.result.missedTactics.length}
                       </p>
                     </div>
@@ -845,47 +846,47 @@ export function ScanSessionPage({
                   {scan.result &&
                   scan.result.brilliantMoves &&
                   scan.result.brilliantMoves.length > 0 ? (
-                    <div className="rounded-xl border border-cyan-400/[0.18] bg-cyan-400/[0.05] px-4 py-3.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-400/70">
+                    <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e] px-4 py-3.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                         Brilliant Moves
                       </p>
-                      <p className="mt-1.5 text-2xl font-black tabular-nums text-cyan-300">
+                      <p className="mt-1.5 text-2xl font-bold tabular-nums tracking-[-0.02em] text-[#ff5a1f]">
                         {scan.result.brilliantMoves.length}
                       </p>
                     </div>
                   ) : null}
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2 text-xs">
-                  <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1 text-[#f0edf2]">
+                  <span className="rounded-full border border-[#1e1a24] bg-[#0d0b0e] px-3 py-1 text-[#8d8696]">
                     Depth {scan.config.engineDepth}
                   </span>
                   <span
                     className={`rounded-full border px-3 py-1 font-medium ${
                       scan.status === "ready"
-                        ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+                        ? "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] text-[#ff8c42]"
                         : scan.status === "failed"
-                          ? "border-red-500/20 bg-red-500/10 text-red-300"
-                          : "border-amber-500/20 bg-amber-500/10 text-amber-300"
+                          ? "border-red-500/25 bg-red-500/10 text-red-300"
+                          : "border-[#1e1a24] bg-[#0d0b0e] text-[#8d8696]"
                     }`}
                   >
                     {scan.status === "ready"
-                      ? "✓ Complete"
+                      ? "Complete"
                       : scan.status === "failed"
-                        ? "✗ Failed"
-                        : "⏳ Running"}
+                        ? "Failed"
+                        : "Running"}
                   </span>
                   {liveReportMeta ? (
-                    <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 font-semibold text-cyan-300">
+                    <span className="rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-3 py-1 font-semibold text-[#ff8c42]">
                       {liveReportMeta.vibeTitle}
                     </span>
                   ) : null}
                   {expiryLabel && !scan.savedReportId ? (
-                    <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-amber-300">
+                    <span className="rounded-full border border-[#1e1a24] bg-[#0d0b0e] px-3 py-1 text-[#8d8696]">
                       {expiryLabel}
                     </span>
                   ) : null}
                   {scan.savedReportId ? (
-                    <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-emerald-300">
+                    <span className="rounded-full border border-[#1e1a24] bg-[#0d0b0e] px-3 py-1 text-[#8d8696]">
                       Saved to account
                     </span>
                   ) : null}
@@ -896,7 +897,7 @@ export function ScanSessionPage({
                 <button
                   type="button"
                   onClick={handleCopyLink}
-                  className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-4 py-2 text-sm font-semibold text-white transition hover:border-[#ff5a1f]/25 hover:text-white"
+                  className="rounded-full border border-[#1e1a24] bg-[#0d0b0e] px-4 py-2 text-sm font-medium text-[#8d8696] transition hover:border-[#ff5a1f]/30 hover:bg-[#ff5a1f]/[0.08] hover:text-white"
                 >
                   {copyLabel}
                 </button>
@@ -907,7 +908,7 @@ export function ScanSessionPage({
                     type="button"
                     onClick={handleRegenerate}
                     disabled={regenerateState === "resetting"}
-                    className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-4 py-2 text-sm font-semibold text-white transition hover:border-[#ff5a1f]/25 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-full border border-[#1e1a24] bg-[#0d0b0e] px-4 py-2 text-sm font-medium text-[#8d8696] transition hover:border-[#ff5a1f]/30 hover:bg-[#ff5a1f]/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {regenerateState === "resetting"
                       ? "Regenerating..."
@@ -923,7 +924,7 @@ export function ScanSessionPage({
                     type="button"
                     onClick={handleBrilliantBackfill}
                     disabled={brilliantBackfillState === "running"}
-                    className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-full border border-[#1e1a24] bg-[#0d0b0e] px-4 py-2 text-sm font-medium text-[#8d8696] transition hover:border-[#ff5a1f]/30 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {brilliantBackfillState === "running"
                       ? "Regenerating brilliant section..."
@@ -939,7 +940,7 @@ export function ScanSessionPage({
                     type="button"
                     onClick={handleReportMetaRefresh}
                     disabled={reportMetaState === "running"}
-                    className="rounded-full border border-violet-500/20 bg-violet-500/10 px-4 py-2 text-sm font-semibold text-violet-100 transition hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-full border border-[#1e1a24] bg-[#0d0b0e] px-4 py-2 text-sm font-medium text-[#8d8696] transition hover:border-[#ff5a1f]/30 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {reportMetaState === "running"
                       ? "Refreshing title & stats..."
@@ -955,7 +956,7 @@ export function ScanSessionPage({
                     type="button"
                     onClick={handleAdminRerun}
                     disabled={adminRerunState === "resetting"}
-                    className="rounded-full border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-100 transition hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-full border border-[#1e1a24] bg-[#0d0b0e] px-4 py-2 text-sm font-medium text-[#8d8696] transition hover:border-[#ff5a1f]/30 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {adminRerunState === "resetting"
                       ? "Rerunning..."
@@ -965,11 +966,11 @@ export function ScanSessionPage({
                   </button>
                 ) : null}
                 {saveState === "saved" ? (
-                  <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300">
+                  <span className="rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-4 py-2 text-sm font-semibold text-[#ff8c42]">
                     Saved
                   </span>
                 ) : saveState === "duplicate" ? (
-                  <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-300">
+                  <span className="rounded-full border border-[#1e1a24] bg-[#0d0b0e] px-4 py-2 text-sm font-medium text-[#8d8696]">
                     Already saved
                   </span>
                 ) : (
@@ -982,7 +983,7 @@ export function ScanSessionPage({
                       !scan.result ||
                       !scan.reportMeta
                     }
-                    className="rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="nl3-cta rounded-full bg-[#ff5a1f] px-4 py-2 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {saveState === "saving"
                       ? "Saving..."
@@ -1001,18 +1002,18 @@ export function ScanSessionPage({
         ) : null}
 
         {isAdmin && scan.status === "ready" && scan.result ? (
-          <section className="mt-6 rounded-[1.5rem] border border-cyan-500/20 bg-cyan-500/[0.06] p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200/80">
+          <section className="mt-6 rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#565061]">
               Admin — brilliant section
             </p>
             <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="max-w-3xl text-sm leading-relaxed text-white">
+              <p className="max-w-3xl text-sm leading-relaxed text-[#8d8696]">
                 Re-scan all games for brilliant moves and update this report
                 publicly. Useful after tuning the detection algorithm or to
                 refresh an old report that predates this section.
               </p>
               {brilliantBackfillState === "done" ? (
-                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+                <span className="rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-3 py-1 text-xs font-semibold text-[#ff8c42]">
                   Brilliant section refreshed
                 </span>
               ) : null}
@@ -1021,22 +1022,22 @@ export function ScanSessionPage({
         ) : null}
 
         {isAdmin && scan.status === "ready" && scan.result ? (
-          <section className="mt-4 rounded-[1.5rem] border border-violet-500/20 bg-violet-500/[0.05] p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-violet-300/80">
+          <section className="mt-4 rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#565061]">
               Admin — report meta
             </p>
             <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="max-w-3xl text-sm leading-relaxed text-white">
+              <p className="max-w-3xl text-sm leading-relaxed text-[#8d8696]">
                 Recompute the title, full-report summary, and radar scores from
                 the stored result. Use this after tuning the scoring logic to
                 refresh all 9 sample reports without a full rescan.
               </p>
               {reportMetaState === "done" ? (
-                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+                <span className="rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-3 py-1 text-xs font-semibold text-[#ff8c42]">
                   Title & stats refreshed ✓
                 </span>
               ) : reportMetaState === "error" ? (
-                <span className="rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-300">
+                <span className="rounded-full border border-red-500/25 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-300">
                   Error — check console
                 </span>
               ) : null}
@@ -1045,15 +1046,15 @@ export function ScanSessionPage({
         ) : null}
 
         {showExpiryPopup ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-            <div className="w-full max-w-md rounded-[1.75rem] border border-amber-500/20 bg-slate-950 p-6 shadow-lg shadow-black/40">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-300">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] p-6 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#ff8c42]">
                 Temporary scan link
               </p>
-              <h2 className="mt-3 text-2xl font-black text-white">
+              <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-white">
                 This share page expires in 24 hours unless you save it.
               </h2>
-              <p className="mt-3 text-sm leading-relaxed text-[#f0edf2]">
+              <p className="mt-3 text-sm leading-relaxed text-[#8d8696]">
                 Guests get a short-lived share page by default. Save it with an
                 account if you want to keep the link and the report around
                 permanently.
@@ -1062,14 +1063,14 @@ export function ScanSessionPage({
                 <button
                   type="button"
                   onClick={handleSave}
-                  className="rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110"
+                  className="nl3-cta rounded-full bg-[#ff5a1f] px-4 py-2 text-sm font-semibold text-white transition-all hover:-translate-y-0.5"
                 >
                   {authenticated ? "Save now" : "Sign in and save"}
                 </button>
                 <button
                   type="button"
                   onClick={dismissExpiryPopup}
-                  className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-4 py-2 text-sm font-semibold text-[#f0edf2] transition hover:text-white"
+                  className="rounded-full border border-[#1e1a24] bg-[#0d0b0e] px-4 py-2 text-sm font-medium text-[#8d8696] transition hover:border-[#ff5a1f]/30 hover:text-white"
                 >
                   Later
                 </button>
@@ -1079,39 +1080,39 @@ export function ScanSessionPage({
         ) : null}
 
         {showScanComplete && scan.result ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-            <div className="w-full max-w-md rounded-[1.75rem] border border-emerald-500/20 bg-slate-950 p-6 text-center shadow-lg shadow-black/40">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 text-3xl">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] p-6 text-center shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)]">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.1] text-2xl text-[#ff5a1f]">
                 ✓
               </div>
-              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300">
+              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#ff8c42]">
                 Scan complete
               </p>
-              <h2 className="mt-2 text-2xl font-black text-white">
+              <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white">
                 Your scan is ready
               </h2>
-              <p className="mt-2 text-sm text-[#8d8696]">
+              <p className="mt-2 text-sm text-[#565061]">
                 {scan.result.gamesAnalyzed} games analyzed
               </p>
               <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-2 py-3">
-                  <div className="text-lg font-black text-white">
+                <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e] px-2 py-3">
+                  <div className="text-lg font-bold text-[#ff5a1f]">
                     {scan.result.leaks.length}
                   </div>
                   <div className="text-[10px] uppercase tracking-wider text-[#565061]">
                     Leaks
                   </div>
                 </div>
-                <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-2 py-3">
-                  <div className="text-lg font-black text-white">
+                <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e] px-2 py-3">
+                  <div className="text-lg font-bold text-[#ff5a1f]">
                     {scan.result.missedTactics.length}
                   </div>
                   <div className="text-[10px] uppercase tracking-wider text-[#565061]">
                     Tactics
                   </div>
                 </div>
-                <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-2 py-3">
-                  <div className="text-lg font-black text-white">
+                <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e] px-2 py-3">
+                  <div className="text-lg font-bold text-[#ff5a1f]">
                     {scan.result.repeatedPositions}
                   </div>
                   <div className="text-[10px] uppercase tracking-wider text-[#565061]">
@@ -1119,7 +1120,7 @@ export function ScanSessionPage({
                   </div>
                 </div>
               </div>
-              <p className="mt-4 text-sm leading-relaxed text-[#f0edf2]">
+              <p className="mt-4 text-sm leading-relaxed text-[#8d8696]">
                 Walk through your biggest findings step by step, or jump
                 straight to the full breakdown.
               </p>
@@ -1130,14 +1131,14 @@ export function ScanSessionPage({
                     setShowScanComplete(false);
                     setGuidedLaunchSignal((n) => n + 1);
                   }}
-                  className="w-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
+                  className="nl3-cta w-full rounded-full bg-[#ff5a1f] px-4 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5"
                 >
                   Start guided walkthrough →
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowScanComplete(false)}
-                  className="w-full rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-4 py-2 text-sm font-semibold text-[#f0edf2] transition hover:text-white"
+                  className="w-full rounded-full border border-[#1e1a24] bg-[#0d0b0e] px-4 py-2.5 text-sm font-medium text-[#8d8696] transition hover:border-[#ff5a1f]/30 hover:text-white"
                 >
                   View full report
                 </button>
@@ -1156,7 +1157,7 @@ export function ScanSessionPage({
         />
 
         {scan.status === "processing" ? (
-          <section className="mt-6 rounded-[1.75rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-6 sm:p-7">
+          <section className="mt-6 rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] p-6 sm:p-7">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
@@ -1170,7 +1171,7 @@ export function ScanSessionPage({
                       "Crunching your games into a shareable report page.")}
                 </p>
               </div>
-              <p className="text-2xl font-black text-cyan-300">
+              <p className="text-2xl font-extrabold tabular-nums text-[#ff5a1f]">
                 {Math.round(progress.percent)}%
               </p>
             </div>
@@ -1247,15 +1248,15 @@ export function ScanSessionPage({
                         : "Running…"
                       : "Queued";
                   const barColor = done
-                    ? "bg-emerald-500"
+                    ? "bg-[#ff5a1f]"
                     : activePhase
-                      ? "bg-cyan-500"
+                      ? "bg-[#ff8c42]"
                       : "bg-[#1e1a24]";
 
                   return (
                     <div
                       key={s.key}
-                      className="rounded-xl border border-[#1e1a24] bg-black/20 px-4 py-3"
+                      className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e] px-4 py-3"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-sm font-semibold text-white">
@@ -1264,9 +1265,9 @@ export function ScanSessionPage({
                         <span
                           className={`text-xs font-semibold ${
                             done
-                              ? "text-emerald-400"
+                              ? "text-[#ff5a1f]"
                               : activePhase
-                                ? "text-cyan-300"
+                                ? "text-[#ff8c42]"
                                 : "text-[#565061]"
                           }`}
                         >
@@ -1300,7 +1301,7 @@ export function ScanSessionPage({
         {scan.result ? (
           <>
             {scan.result.gamesAnalyzed === 0 && scan.config.source === "pgn" && (
-              <section className="mt-6 rounded-[1.75rem] border border-amber-500/20 bg-amber-500/10 p-6 text-amber-100">
+              <section className="mt-6 rounded-[1.75rem] border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] p-6 text-[#f0edf2]">
                 <h2 className="text-lg font-bold">No games analyzed</h2>
                 <p className="mt-2 text-sm leading-relaxed">
                   The PGN was parsed but no games matched the name{" "}

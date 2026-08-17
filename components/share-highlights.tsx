@@ -27,7 +27,7 @@ function buildUrl(reportId: string, kind: ShareKind) {
 }
 
 const ACCENT: Record<string, { border: string; bg: string; text: string; glow: string; gradient: string }> = {
-  cyan: { border: "border-cyan-500/20", bg: "bg-cyan-500/[0.06]", text: "text-cyan-300", glow: "shadow-cyan-500/15", gradient: "from-cyan-500/[0.08] to-cyan-500/[0.02]" },
+  cyan: { border: "border-[#ff5a1f]/25", bg: "bg-[#ff5a1f]/[0.06]", text: "text-[#ff8c42]", glow: "shadow-cyan-500/15", gradient: "from-[#ff5a1f]/[0.08] to-[#ff8c42]/[0.02]" },
   red: { border: "border-red-500/20", bg: "bg-red-500/[0.06]", text: "text-red-300", glow: "shadow-red-500/15", gradient: "from-red-500/[0.08] to-red-500/[0.02]" },
   purple: { border: "border-purple-500/20", bg: "bg-purple-500/[0.06]", text: "text-purple-300", glow: "shadow-purple-500/15", gradient: "from-purple-500/[0.08] to-purple-500/[0.02]" },
   orange: { border: "border-orange-500/20", bg: "bg-orange-500/[0.06]", text: "text-orange-300", glow: "shadow-orange-500/15", gradient: "from-orange-500/[0.08] to-orange-500/[0.02]" },
@@ -71,11 +71,11 @@ export function ShareHighlights({ reportId, result, reportMeta }: {
   const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
 
   return (
-    <section className="rounded-[1.75rem] border border-[#1e1a24] bg-[radial-gradient(circle_at_top_right,_rgba(249,115,22,0.08),_rgba(15,23,42,0.5)_50%,_rgba(2,6,23,0.9)_100%)] p-6 sm:p-8">
+    <section className="rounded-[1.75rem] border border-[#1e1a24] bg-[radial-gradient(circle_at_top_right,_rgba(249,115,22,0.08),_rgba(18,16,21,0.6)_50%,_rgba(7,6,8,0.9)_100%)] p-6 sm:p-8">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-orange-400/70">Share</p>
-          <h2 className="mt-2 text-2xl font-black tracking-tight text-white">Your highlights</h2>
+          <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white">Your highlights</h2>
           <p className="mt-1 text-sm text-[#8d8696]">Download share cards or post your report — each one generates its own preview image.</p>
         </div>
         <div className="flex items-center gap-2">
@@ -146,7 +146,7 @@ export function ShareHighlights({ reportId, result, reportMeta }: {
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
                 <div className="absolute inset-x-0 bottom-0 p-5">
                   <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#8d8696] mb-1">{c.subtext}</p>
-                  <p className={`text-sm font-black uppercase tracking-wider ${acc.text}`}>{c.emoji} {c.label}</p>
+                  <p className={`text-sm font-extrabold uppercase tracking-wider ${acc.text}`}>{c.emoji} {c.label}</p>
                   <p className="truncate text-base font-bold text-white mt-1">{c.desc}</p>
                 </div>
               </button>

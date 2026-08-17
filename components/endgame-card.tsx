@@ -654,12 +654,12 @@ export function EndgameCard({
   };
 
   return (
-    <article className="glass-card-hover overflow-hidden border-sky-500/10">
+    <article className="glass-card-hover overflow-hidden border-[#ff5a1f]/25">
       <div className="grid gap-0 md:grid-cols-[minmax(0,480px)_1fr]">
         {/* Board side */}
         <div
           ref={boardSizeRef}
-          className="relative overflow-hidden border-b border-sky-500/[0.08] bg-sky-500/[0.02] p-3 sm:p-5 md:border-b-0 md:border-r"
+          className="relative overflow-hidden border-b border-[#ff5a1f]/25/[0.08] bg-[#ff5a1f]/[0.06] p-3 sm:p-5 md:border-b-0 md:border-r"
         >
           <div className="mx-auto flex w-full max-w-[460px] items-start gap-2 sm:gap-3">
             <EvalBar evalCp={displayedEvalCp} height={boardSize} />
@@ -692,7 +692,7 @@ export function EndgameCard({
           {/* Header */}
           <div>
             <div className="flex items-start justify-between gap-3">
-              <h3 className="text-lg font-bold text-sky-300">
+              <h3 className="text-lg font-bold text-[#ff8c42]">
                 {ENDGAME_TYPE_ICON[mistake.endgameType] ?? "♔"}{" "}
                 {mistake.endgameType} Endgame
                 <span className="ml-2 text-sm font-normal text-[#8d8696]">
@@ -706,7 +706,7 @@ export function EndgameCard({
                     onClick={onCreateCommunityPost}
                     aria-label="Create community post"
                     title="Create community post"
-                    className="inline-flex h-8 items-center gap-1 rounded-lg border border-sky-500/20 bg-sky-500/10 px-2.5 text-[11px] font-semibold text-sky-200 transition hover:bg-sky-500/20 hover:text-white"
+                    className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-2.5 text-[11px] font-semibold text-[#ff8c42] transition hover:bg-[#ff5a1f]/[0.08] hover:text-white"
                   >
                     <svg
                       width="12"
@@ -732,7 +732,7 @@ export function EndgameCard({
             </div>
             <p className="mt-2 text-sm text-[#8d8696]">
               You played{" "}
-              <span className="font-mono text-sky-400">
+              <span className="font-mono text-[#ff8c42]">
                 {userMoveDetails?.san ?? mistake.userMove}
               </span>{" "}
               but the best move was{" "}
@@ -740,7 +740,7 @@ export function EndgameCard({
                 {bestMoveDetails?.san ?? mistake.bestMove}
               </span>
               , losing{" "}
-              <span className="font-semibold text-sky-300">
+              <span className="font-semibold text-[#ff8c42]">
                 ~{formatEvalLoss(mistake.cpLoss)}
               </span>{" "}
               eval.
@@ -761,7 +761,7 @@ export function EndgameCard({
               <p className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">
                 Eval After Your Move
               </p>
-              <p className="mt-0.5 text-lg font-bold text-sky-400">
+              <p className="mt-0.5 text-lg font-bold text-[#ff8c42]">
                 {formatEval(mistake.cpAfter, { showPlus: true })}
               </p>
             </div>
@@ -793,8 +793,8 @@ export function EndgameCard({
                     tag === "Failed Conversion"
                       ? "border-red-500/20 bg-red-500/10 text-red-400"
                       : tag === "Stalemate!"
-                        ? "border-amber-500/20 bg-amber-500/10 text-amber-400"
-                        : "border-sky-500/20 bg-sky-500/10 text-sky-400"
+                        ? "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] text-[#ff8c42]"
+                        : "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] text-[#ff8c42]"
                   }`}
                 >
                   {tag}
@@ -805,11 +805,11 @@ export function EndgameCard({
 
           {/* Endgame tip */}
           {ENDGAME_TIPS[mistake.endgameType] && (
-            <div className="rounded-xl border border-sky-500/[0.08] bg-sky-500/[0.02] p-3">
+            <div className="rounded-xl border border-[#ff5a1f]/25/[0.08] bg-[#ff5a1f]/[0.06] p-3">
               <p className="flex items-start gap-2 text-xs leading-relaxed text-[#8d8696]">
-                <span className="mt-0.5 shrink-0 text-sky-400">💡</span>
+                <span className="mt-0.5 shrink-0 text-[#ff8c42]">💡</span>
                 <span>
-                  <span className="font-semibold text-sky-300">
+                  <span className="font-semibold text-[#ff8c42]">
                     {mistake.endgameType} tip:
                   </span>{" "}
                   {ENDGAME_TIPS[mistake.endgameType]}
@@ -822,12 +822,12 @@ export function EndgameCard({
             <span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-400" />
             Green = best move
             <span className="mx-2 text-[#565061]">|</span>
-            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-sky-400" />
+            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-[#ff5a1f]" />
             Blue = your move
           </p>
 
           {/* FEN block */}
-          <div className="rounded-xl border border-sky-500/[0.08] bg-sky-500/[0.02] p-3">
+          <div className="rounded-xl border border-[#ff5a1f]/25/[0.08] bg-[#ff5a1f]/[0.06] p-3">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                 Position FEN
@@ -850,7 +850,7 @@ export function EndgameCard({
             <button
               type="button"
               disabled={explaining || animating}
-              className="flex h-10 items-center gap-2 rounded-xl border border-sky-500/20 bg-sky-500/10 px-4 text-sm font-semibold text-sky-300 transition-all hover:bg-sky-500/20 hover:text-sky-200 disabled:opacity-50"
+              className="flex h-10 items-center gap-2 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-4 text-sm font-semibold text-[#ff8c42] transition-all hover:bg-[#ff5a1f]/[0.08] hover:text-[#ff8c42] disabled:opacity-50"
               onClick={onShowBestLine}
             >
               {explaining ? (
@@ -954,7 +954,7 @@ export function EndgameCard({
               <button
                 type="button"
                 onClick={onCreateCommunityPost}
-                className="flex h-10 items-center gap-2 rounded-xl border border-sky-500/20 bg-sky-500/10 px-4 text-sm font-semibold text-sky-200 transition-all hover:bg-sky-500/20 hover:text-white"
+                className="flex h-10 items-center gap-2 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-4 text-sm font-semibold text-[#ff8c42] transition-all hover:bg-[#ff5a1f]/[0.08] hover:text-white"
               >
                 <svg
                   width="14"
@@ -1051,7 +1051,7 @@ export function EndgameCard({
                   </button>
                 </>
               ) : (
-                <div className="rounded-xl border border-sky-500/[0.08] bg-sky-500/[0.02] p-4 text-sm text-[#f0edf2]">
+                <div className="rounded-xl border border-[#ff5a1f]/25/[0.08] bg-[#ff5a1f]/[0.06] p-4 text-sm text-[#f0edf2]">
                   {explanation}
                 </div>
               )}

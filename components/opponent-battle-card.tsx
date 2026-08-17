@@ -127,10 +127,10 @@ export default function OpponentBattleCard({
   const egCount = result.endgameMistakes?.length ?? 0;
   const egSignal =
     egCount > 10
-      ? { label: "WEAK", color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", advice: "Trade pieces and push to endgames." }
+      ? { label: "WEAK", advice: "Trade pieces and push to endgames." }
       : egCount > 3
-        ? { label: "AVG", color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", advice: "Endgame is neutral — focus on middlegame." }
-        : { label: "SOLID", color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20", advice: "Avoid endgames — they convert well." };
+        ? { label: "AVG", advice: "Endgame is neutral — focus on middlegame." }
+        : { label: "SOLID", advice: "Avoid endgames — they convert well." };
 
   const featuredFen = leaks[0]?.fenBefore;
   const shareText = `Scanned ${username} on FireChess — ${leaks.length} opening leaks found. ${leaks[0]?.openingName ? `Their weakest: ${leaks[0].openingName}.` : ""} Prep time. 🔥`;
@@ -168,24 +168,25 @@ export default function OpponentBattleCard({
       <div className="mx-auto max-w-2xl px-4 py-8">
         {/* Battle card header */}
         <div className="mb-6 text-center">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-red-500/20 bg-red-500/[0.08] px-3 py-1">
-            <Swords className="h-3.5 w-3.5 text-red-400" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-red-300">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#ff5a1f]/20 bg-[#ff5a1f]/[0.08] px-4 py-1.5">
+            <span className="nl3-pulse-dot h-1.5 w-1.5 rounded-full bg-[#ff5a1f] shadow-[0_0_8px_#ff5a1f]" />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#ff8c42]">
               Opponent intel
             </span>
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white">
+          <h1 className="text-4xl font-extrabold tracking-[-0.02em] text-white">
             {username}
           </h1>
-          <p className="mt-1 text-sm text-[#565061]">
+          <p className="mt-1.5 text-sm text-[#565061]">
             {totalGames} games · openings scan · depth 8
           </p>
         </div>
 
         {/* Featured board + first leak */}
         {featuredFen && leaks[0] && (
-          <div className="mb-6 flex items-center gap-4 rounded-xl border border-[#1e1a24] bg-[#121015] p-4">
-            <div className="shrink-0 overflow-hidden rounded-lg">
+          <div className="relative mb-6 flex items-center gap-4 overflow-hidden rounded-xl border border-[#1e1a24] bg-[#121015] p-4">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff5a1f]/40 to-transparent" />
+            <div className="shrink-0 overflow-hidden rounded-lg border border-[#1e1a24]">
               <Chessboard
                 position={featuredFen}
                 boardWidth={140}
@@ -195,7 +196,7 @@ export default function OpponentBattleCard({
               />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold uppercase tracking-wider text-[#ff5a1f]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#ff8c42]">
                 Biggest leak
               </p>
               <p className="mt-1 text-lg font-bold text-white">
@@ -205,8 +206,8 @@ export default function OpponentBattleCard({
                 {leaks[0].reachCount} games · −{(leaks[0].cpLoss / 100).toFixed(1)} avg cp loss
               </p>
               {leaks[0].bestMove && (
-                <p className="mt-1 font-mono text-xs text-emerald-400">
-                  Best response: {leaks[0].bestMove}
+                <p className="mt-1 font-mono text-xs text-[#8d8696]">
+                  Best response: <span className="text-[#ff8c42]">{leaks[0].bestMove}</span>
                 </p>
               )}
             </div>
@@ -227,9 +228,9 @@ export default function OpponentBattleCard({
               return (
                 <div
                   key={leak.openingName ?? i}
-                  className="flex items-center gap-3 rounded-lg border border-[#1e1a24] bg-[#121015] px-3 py-2.5"
+                  className="flex items-center gap-3 rounded-lg border border-[#1e1a24] bg-[#121015] px-3 py-2.5 transition-colors hover:border-[#ff5a1f]/25"
                 >
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#ff5a1f]/10 text-xs font-bold text-[#ff5a1f]">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#ff5a1f]/[0.12] text-xs font-bold text-[#ff8c42]">
                     {i + 1}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -240,7 +241,7 @@ export default function OpponentBattleCard({
                   <div className="flex shrink-0 items-center gap-3 text-xs">
                     <span className="text-[#565061]">{leak.reachCount}×</span>
                     <span className="font-bold text-red-400">{lossRate}%L</span>
-                    <span className="font-bold text-emerald-400">{winRate}%W</span>
+                    <span className="font-bold text-[#8d8696]">{winRate}%W</span>
                   </div>
                 </div>
               );
@@ -254,14 +255,14 @@ export default function OpponentBattleCard({
         {/* Tactical + Endgame — side by side */}
         <div className="mb-5 grid gap-3 sm:grid-cols-2">
           <div className="rounded-xl border border-[#1e1a24] bg-[#121015] p-4">
-            <h3 className="mb-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white">
-              ⚡ Tactical blind spots
+            <h3 className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
+              Tactical blind spots
             </h3>
             <div className="flex flex-wrap gap-1.5">
               {motifs.map((m) => (
                 <span
                   key={m.name}
-                  className="rounded-full border border-amber-500/20 bg-amber-500/[0.08] px-2.5 py-1 text-[11px] font-semibold text-amber-300"
+                  className="rounded-full border border-[#ff5a1f]/20 bg-[#ff5a1f]/[0.06] px-2.5 py-1 text-[11px] font-semibold text-[#ff8c42]"
                 >
                   {m.name} ×{m.count}
                 </span>
@@ -273,13 +274,11 @@ export default function OpponentBattleCard({
           </div>
 
           <div className="rounded-xl border border-[#1e1a24] bg-[#121015] p-4">
-            <h3 className="mb-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white">
-              🏁 Endgame signal
+            <h3 className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
+              Endgame signal
             </h3>
             <div className="flex items-center gap-3">
-              <span
-                className={`rounded-lg border px-3 py-1.5 text-lg font-extrabold ${egSignal.color} ${egSignal.bg} ${egSignal.border}`}
-              >
+              <span className="rounded-lg border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-3 py-1.5 text-lg font-extrabold text-[#ff8c42]">
                 {egSignal.label}
               </span>
               <p className="text-xs leading-relaxed text-[#8d8696]">
@@ -290,14 +289,15 @@ export default function OpponentBattleCard({
         </div>
 
         {/* Prep summary */}
-        <div className="mb-6 rounded-xl border border-[#ff5a1f]/20 bg-[#ff5a1f]/[0.04] p-4">
-          <h3 className="mb-2.5 text-sm font-bold text-[#ff8c42]">
-            📋 Your prep in 3 moves
+        <div className="relative mb-6 overflow-hidden rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.05] p-4">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff5a1f]/40 to-transparent" />
+          <h3 className="mb-2.5 text-sm font-bold text-white">
+            Your prep in 3 moves
           </h3>
           <ol className="space-y-2 text-sm text-[#8d8696]">
             {leaks.length > 0 && (
               <li className="flex items-start gap-2">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#ff5a1f]/10 text-[10px] font-bold text-[#ff5a1f]">1</span>
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#ff5a1f]/[0.12] text-[10px] font-bold text-[#ff8c42]">1</span>
                 <span>
                   <strong className="text-white">Play {leaks[0].openingName ?? "their weakest opening"}</strong> —
                   they lose from this position repeatedly
@@ -306,7 +306,7 @@ export default function OpponentBattleCard({
             )}
             {motifs.length > 0 && (
               <li className="flex items-start gap-2">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#ff5a1f]/10 text-[10px] font-bold text-[#ff5a1f]">2</span>
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#ff5a1f]/[0.12] text-[10px] font-bold text-[#ff8c42]">2</span>
                 <span>
                   <strong className="text-white">Look for {motifs[0].name.toLowerCase()}</strong> —
                   they miss this pattern regularly
@@ -314,7 +314,7 @@ export default function OpponentBattleCard({
               </li>
             )}
             <li className="flex items-start gap-2">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#ff5a1f]/10 text-[10px] font-bold text-[#ff5a1f]">3</span>
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#ff5a1f]/[0.12] text-[10px] font-bold text-[#ff8c42]">3</span>
               <span>
                 <strong className="text-white">{egSignal.label === "WEAK" ? "Trade into endgames" : egSignal.label === "SOLID" ? "Fight in the middlegame" : "Play normally"}</strong> —{" "}
                 {egSignal.advice.toLowerCase()}

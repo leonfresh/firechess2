@@ -29,20 +29,20 @@ const STYLES: Record<
     dot: "bg-red-400",
   },
   major: {
-    ring: "border-amber-500/30",
-    glow: "bg-amber-500/10",
-    accent: "text-amber-300",
-    chip: "border-amber-500/30 bg-amber-500/10 text-amber-300",
+    ring: "border-[#ff5a1f]/25",
+    glow: "bg-[#ff5a1f]/[0.08]",
+    accent: "text-[#ff8c42]",
+    chip: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
     label: "Major",
-    dot: "bg-amber-400",
+    dot: "bg-[#ff5a1f]",
   },
   moderate: {
-    ring: "border-cyan-500/30",
-    glow: "bg-cyan-500/10",
-    accent: "text-cyan-300",
-    chip: "border-cyan-500/30 bg-cyan-500/10 text-cyan-300",
+    ring: "border-[#ff5a1f]/25",
+    glow: "bg-[#ff5a1f]/[0.08]",
+    accent: "text-[#ff8c42]",
+    chip: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
     label: "Worth fixing",
-    dot: "bg-cyan-400",
+    dot: "bg-[#ff5a1f]",
   },
   good: {
     ring: "border-emerald-500/30",
@@ -84,7 +84,7 @@ export function BiggestTakeawayCard({
           </span>
         </div>
 
-        <h2 className="mt-4 max-w-3xl text-3xl font-black leading-[1.1] tracking-tight text-[#F4F1EA] sm:text-4xl">
+        <h2 className="mt-4 max-w-3xl text-3xl font-extrabold leading-[1.1] tracking-tight text-[#F4F1EA] sm:text-4xl">
           {t.headline}
         </h2>
 

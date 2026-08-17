@@ -155,24 +155,24 @@ const VERDICT_CONFIG = {
   rushed: {
     icon: "💨",
     label: "Rushed Move",
-    color: "text-amber-400",
-    bgColor: "bg-amber-500/10",
-    borderColor: "border-amber-500/20",
-    gradientFrom: "from-amber-500/[0.06]",
-    tagBg: "bg-amber-500/15",
-    tagText: "text-amber-400",
+    color: "text-[#ff8c42]",
+    bgColor: "bg-[#ff5a1f]/[0.08]",
+    borderColor: "border-[#ff5a1f]/25",
+    gradientFrom: "from-[#ff5a1f]/[0.06]",
+    tagBg: "bg-[#ff5a1f]/[0.08]",
+    tagText: "text-[#ff8c42]",
     arrowColor: "rgba(245, 158, 11, 0.9)",
     squareBg: "rgba(245, 158, 11, 0.2)",
   },
   efficient: {
     icon: "⚡",
     label: "Fast and Accurate",
-    color: "text-sky-300",
-    bgColor: "bg-sky-500/10",
-    borderColor: "border-sky-400/20",
-    gradientFrom: "from-sky-500/[0.06]",
-    tagBg: "bg-sky-500/15",
-    tagText: "text-sky-300",
+    color: "text-[#ff8c42]",
+    bgColor: "bg-[#ff5a1f]/[0.08]",
+    borderColor: "border-[#ff5a1f]/25",
+    gradientFrom: "from-[#ff5a1f]/[0.06]",
+    tagBg: "bg-[#ff5a1f]/[0.08]",
+    tagText: "text-[#ff8c42]",
     arrowColor: "rgba(56, 189, 248, 0.9)",
     squareBg: "rgba(56, 189, 248, 0.2)",
   },
@@ -182,7 +182,7 @@ const VERDICT_CONFIG = {
     color: "text-emerald-400",
     bgColor: "bg-emerald-500/10",
     borderColor: "border-emerald-500/20",
-    gradientFrom: "from-emerald-500/[0.06]",
+    gradientFrom: "to-[#ff8c42]/[0.06]",
     tagBg: "bg-emerald-500/15",
     tagText: "text-emerald-400",
     arrowColor: "rgba(34, 197, 94, 0.9)",
@@ -412,9 +412,9 @@ export function TimeCard({
     moment.complexity >= 70
       ? "bg-red-400"
       : moment.complexity >= 50
-        ? "bg-amber-400"
+        ? "bg-[#ff5a1f]"
         : moment.complexity >= 30
-          ? "bg-cyan-400"
+          ? "bg-[#ff5a1f]"
           : "bg-slate-400";
 
   return (
@@ -490,7 +490,7 @@ export function TimeCard({
                   Game {moment.gameIndex}
                 </span>
                 {moment.isTactical && (
-                  <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
+                  <span className="rounded-full bg-[#ff5a1f]/[0.08] px-2 py-0.5 text-[10px] font-semibold text-[#ff8c42]">
                     Tactical
                   </span>
                 )}
@@ -519,7 +519,7 @@ export function TimeCard({
                   onClick={onCreateCommunityPost}
                   aria-label="Create community post"
                   title="Create community post"
-                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-2.5 text-[11px] font-semibold text-cyan-200 transition hover:bg-cyan-500/20 hover:text-white"
+                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-2.5 text-[11px] font-semibold text-[#ff8c42] transition hover:bg-[#ff5a1f]/[0.08] hover:text-white"
                 >
                   <svg
                     width="12"
@@ -563,7 +563,7 @@ export function TimeCard({
             <div className="mt-3 flex items-center gap-2">
               <span className="text-[10px] text-[#565061]">Played:</span>
               <span
-                className={`rounded-md px-2 py-0.5 font-mono text-sm font-bold ${displayVerdict === "justified" ? "bg-emerald-500/15 text-emerald-400" : displayVerdict === "efficient" ? "bg-sky-500/15 text-sky-300" : moment.cpLoss && moment.cpLoss >= 100 ? "bg-red-500/15 text-red-400" : "bg-[#1e1a24] text-white"}`}
+                className={`rounded-md px-2 py-0.5 font-mono text-sm font-bold ${displayVerdict === "justified" ? "bg-emerald-500/15 text-emerald-400" : displayVerdict === "efficient" ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]" : moment.cpLoss && moment.cpLoss >= 100 ? "bg-red-500/15 text-red-400" : "bg-[#1e1a24] text-white"}`}
               >
                 {userSan ?? moment.userMove}
               </span>
@@ -801,7 +801,7 @@ export function TimeCard({
               <button
                 type="button"
                 onClick={onCreateCommunityPost}
-                className="flex items-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-500/20 hover:text-white"
+                className="flex items-center gap-1.5 rounded-lg border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-3 py-1.5 text-xs font-semibold text-[#ff8c42] transition hover:bg-[#ff5a1f]/[0.08] hover:text-white"
               >
                 <svg
                   width="14"

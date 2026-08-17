@@ -185,7 +185,7 @@ export default async function RootLayout({
                         href="https://twitter.com/firechessapp"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[#565061] hover:text-sky-400 transition-colors"
+                        className="text-[#565061] hover:text-[#ff8c42] transition-colors"
                         aria-label="Twitter / X"
                       >
                         <svg

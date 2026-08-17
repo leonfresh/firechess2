@@ -561,13 +561,13 @@ function PuzzleBoard({
       <div
         className="w-full rounded-2xl p-5 md:p-8"
         style={{
-          background: "linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(15,23,42,0.95) 100%)",
+          background: "linear-gradient(135deg, rgba(18,16,21,0.6) 0%, rgba(18,16,21,0.6) 100%)",
         }}
       >
         {/* Header */}
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br to-[#ff8c42] to-[#ff8c42]">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-emerald-400"><path d="M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.979.979 0 0 1-.276.837l-1.61 1.61a2.404 2.404 0 0 1-1.705.707 2.402 2.402 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.402 2.402 0 0 1 1.998 12c0-.617.236-1.234.706-1.704L4.315 8.685a.98.98 0 0 1 .837-.276c.47.07.802.48.968.925a2.501 2.501 0 1 0 3.214-3.214c-.446-.166-.855-.497-.925-.968a.979.979 0 0 1 .276-.837l1.61-1.61a2.404 2.404 0 0 1 1.705-.707c.617 0 1.234.236 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.968a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.967 1.02Z" /></svg>
             </span>
             <div>
@@ -598,7 +598,7 @@ function PuzzleBoard({
           <div className="h-4 w-px bg-[#ff5a1f]/10" />
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-[#565061]">Best</span>
-            <span className="text-sm font-bold text-amber-400">{bestStreak}</span>
+            <span className="text-sm font-bold text-[#ff8c42]">{bestStreak}</span>
           </div>
           <div className="ml-auto flex items-center gap-1.5">
             <span className="text-xs text-[#565061]">Theme</span>
@@ -645,7 +645,7 @@ function PuzzleBoard({
                       : state === "wrong"
                         ? "bg-red-500/15 text-red-400"
                         : state === "solving"
-                          ? "bg-violet-500/15 text-violet-400"
+                          ? "bg-[#ff5a1f]/[0.08] text-[#ff8c42]"
                           : "bg-slate-500/15 text-[#8d8696]"
                   }`}
                 >
@@ -700,7 +700,7 @@ function PuzzleBoard({
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-[#1e1a24]">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-500"
+                  className="h-full rounded-full bg-gradient-to-r to-[#ff8c42] to-[#ff8c42] transition-all duration-500"
                   style={{ width: `${Math.min(progress, 100)}%` }}
                 />
               </div>
@@ -712,7 +712,7 @@ function PuzzleBoard({
                 <button
                   type="button"
                   onClick={handleHint}
-                  className="flex items-center gap-1.5 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-4 py-2.5 text-xs font-medium text-amber-400 transition-colors hover:bg-amber-500/[0.12] hover:text-amber-300"
+                  className="flex items-center gap-1.5 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-4 py-2.5 text-xs font-medium text-[#ff8c42] transition-colors hover:bg-[#ff5a1f]/[0.12] hover:text-[#ff8c42]"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
                   Hint
@@ -723,7 +723,7 @@ function PuzzleBoard({
                   type="button"
                   onClick={goNext}
                   disabled={loadingMore}
-                  className="flex-1 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:brightness-110 disabled:opacity-50"
+                  className="flex-1 rounded-xl bg-gradient-to-r to-[#ff8c42] to-[#ff8c42] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:brightness-110 disabled:opacity-50"
                 >
                   {loadingMore ? "Loading..." : "Next Puzzle →"}
                 </button>
@@ -817,9 +817,9 @@ export function PersonalizedPuzzles({ tactics, endgames, leaks, onExpandedChange
       <div className="relative rounded-2xl border border-emerald-500/20">
         {!expanded || puzzles.length === 0 ? (
           <div className="relative overflow-hidden rounded-2xl p-8 md:p-10">
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-500/[0.08] via-cyan-500/[0.04] to-violet-500/[0.08]" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br to-[#ff8c42]/[0.08] via-[#ff8c42]/[0.04] to-[#ff8c42]/[0.08]" />
             <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-emerald-500/10 blur-[80px]" />
-            <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-cyan-500/10 blur-[80px]" />
+            <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-[#ff5a1f]/[0.08] blur-[80px]" />
 
             <div className="relative flex flex-col items-center text-center">
               <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/15 shadow-lg shadow-emerald-500/10">
@@ -850,12 +850,12 @@ export function PersonalizedPuzzles({ tactics, endgames, leaks, onExpandedChange
                   <p className="text-xs font-bold text-white">Targeted Training</p>
                   <p className="text-[10px] text-[#565061]">Matched to your scan</p>
                 </div>
-                <div className="flex flex-col items-center gap-2 rounded-xl border border-cyan-500/15 bg-cyan-500/[0.04] px-4 py-3">
+                <div className="flex flex-col items-center gap-2 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-4 py-3">
                   <span className="text-lg">{"\u265F\uFE0F"}</span>
                   <p className="text-xs font-bold text-white">Interactive Board</p>
                   <p className="text-[10px] text-[#565061]">Click or drag to solve</p>
                 </div>
-                <div className="flex flex-col items-center gap-2 rounded-xl border border-violet-500/15 bg-violet-500/[0.04] px-4 py-3">
+                <div className="flex flex-col items-center gap-2 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-4 py-3">
                   <span className="text-lg">{"\u267E\uFE0F"}</span>
                   <p className="text-xs font-bold text-white">Unlimited & Free</p>
                   <p className="text-[10px] text-[#565061]">Powered by Lichess</p>
@@ -867,7 +867,7 @@ export function PersonalizedPuzzles({ tactics, endgames, leaks, onExpandedChange
                   type="button"
                   onClick={handleOpen}
                   disabled={loading}
-                  className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-cyan-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:shadow-xl hover:shadow-emerald-500/30 hover:brightness-110 disabled:opacity-50"
+                  className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r to-[#ff8c42] to-[#ff8c42] px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:shadow-xl hover:shadow-emerald-500/30 hover:brightness-110 disabled:opacity-50"
                 >
                   {loading ? (
                     <>

@@ -134,29 +134,29 @@ export function ProgressHighlights({
   if (highlights.length === 0) return null;
 
   const bgMap: Record<string, string> = {
-    emerald: "from-emerald-500/[0.08] to-emerald-500/[0.02]",
-    cyan: "from-cyan-500/[0.08] to-cyan-500/[0.02]",
-    violet: "from-violet-500/[0.08] to-violet-500/[0.02]",
-    amber: "from-amber-500/[0.08] to-amber-500/[0.02]",
-    fuchsia: "from-fuchsia-500/[0.08] to-fuchsia-500/[0.02]",
+    emerald: "to-[#ff8c42]/[0.08] to-[#ff8c42]/[0.02]",
+    cyan: "from-[#ff5a1f]/[0.08] to-[#ff8c42]/[0.02]",
+    violet: "from-[#ff5a1f]/[0.08] to-[#ff8c42]/[0.02]",
+    amber: "from-[#ff5a1f]/[0.08] to-[#ff8c42]/[0.02]",
+    fuchsia: "from-[#ff5a1f]/[0.08] to-[#ff8c42]/[0.02]",
     teal: "from-teal-500/[0.08] to-teal-500/[0.02]",
   };
 
   const borderMap: Record<string, string> = {
     emerald: "border-emerald-500/20",
-    cyan: "border-cyan-500/20",
-    violet: "border-violet-500/20",
-    amber: "border-amber-500/20",
-    fuchsia: "border-fuchsia-500/20",
+    cyan: "border-[#ff5a1f]/25",
+    violet: "border-[#ff5a1f]/25",
+    amber: "border-[#ff5a1f]/25",
+    fuchsia: "border-[#ff5a1f]/25",
     teal: "border-teal-500/20",
   };
 
   const textMap: Record<string, string> = {
     emerald: "text-emerald-400",
-    cyan: "text-cyan-400",
-    violet: "text-violet-400",
-    amber: "text-amber-400",
-    fuchsia: "text-fuchsia-400",
+    cyan: "text-[#ff8c42]",
+    violet: "text-[#ff8c42]",
+    amber: "text-[#ff8c42]",
+    fuchsia: "text-[#ff8c42]",
     teal: "text-teal-400",
   };
 

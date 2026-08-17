@@ -761,7 +761,7 @@ export function TacticCard({
         <div style={props?.style} className="relative h-full w-full">
           {props?.children}
           {showMateFlag ? (
-            <span className="pointer-events-none absolute -right-1 -top-1 z-[40] flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-black text-white shadow-lg drop-shadow-md">
+            <span className="pointer-events-none absolute -right-1 -top-1 z-[40] flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-extrabold text-white shadow-lg drop-shadow-md">
               ♛
             </span>
           ) : null}
@@ -1025,12 +1025,12 @@ export function TacticCard({
   };
 
   return (
-    <article className="glass-card-hover overflow-hidden border-amber-500/10">
+    <article className="glass-card-hover overflow-hidden border-[#ff5a1f]/25">
       <div className="grid gap-0 md:grid-cols-[minmax(0,480px)_1fr]">
         {/* Board side */}
         <div
           ref={boardSizeRef}
-          className="relative overflow-hidden border-b border-amber-500/[0.08] bg-amber-500/[0.02] p-3 sm:p-5 md:border-b-0 md:border-r"
+          className="relative overflow-hidden border-b border-[#ff5a1f]/25/[0.08] bg-[#ff5a1f]/[0.06] p-3 sm:p-5 md:border-b-0 md:border-r"
         >
           <div className="mx-auto flex w-full max-w-[460px] items-start gap-2 sm:gap-3">
             <EvalBar evalCp={displayedEvalCp} height={boardSize} />
@@ -1063,7 +1063,7 @@ export function TacticCard({
           {/* Header */}
           <div>
             <div className="flex items-start justify-between gap-3">
-              <h3 className="text-lg font-bold text-amber-300">
+              <h3 className="text-lg font-bold text-[#ff8c42]">
                 ⚡ Missed Tactic
                 <span className="ml-2 text-sm font-normal text-[#8d8696]">
                   Game #{tactic.gameIndex}, Move {tactic.moveNumber}
@@ -1076,7 +1076,7 @@ export function TacticCard({
                     onClick={onCreateCommunityPost}
                     aria-label="Create community post"
                     title="Create community post"
-                    className="inline-flex h-8 items-center gap-1 rounded-lg border border-fuchsia-500/25 bg-fuchsia-500/10 px-2.5 text-[11px] font-semibold text-fuchsia-100 transition hover:bg-fuchsia-500/20 hover:text-white"
+                    className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-2.5 text-[11px] font-semibold text-[#ff8c42] transition hover:bg-[#ff5a1f]/[0.08] hover:text-white"
                   >
                     <svg
                       width="12"
@@ -1108,7 +1108,7 @@ export function TacticCard({
                     forced mate
                   </span>{" "}
                   but played{" "}
-                  <span className="font-mono text-amber-400">
+                  <span className="font-mono text-[#ff8c42]">
                     {userMoveDetails?.san ?? tactic.userMove}
                   </span>{" "}
                   instead.
@@ -1116,11 +1116,11 @@ export function TacticCard({
               ) : (
                 <>
                   You had a forcing move that wins{" "}
-                  <span className="font-semibold text-amber-300">
+                  <span className="font-semibold text-[#ff8c42]">
                     ~{formatEvalLoss(tactic.cpLoss)}
                   </span>{" "}
                   eval, but you played{" "}
-                  <span className="font-mono text-amber-400">
+                  <span className="font-mono text-[#ff8c42]">
                     {userMoveDetails?.san ?? tactic.userMove}
                   </span>{" "}
                   instead.
@@ -1143,7 +1143,7 @@ export function TacticCard({
               <p className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">
                 Eval After Your Move
               </p>
-              <p className="mt-0.5 text-lg font-bold text-amber-400">
+              <p className="mt-0.5 text-lg font-bold text-[#ff8c42]">
                 {formatEval(tactic.cpAfter, { showPlus: true })}
               </p>
             </div>
@@ -1224,9 +1224,9 @@ export function TacticCard({
           )}
 
           {/* Coaching tip */}
-          <div className="rounded-xl border border-amber-500/[0.08] bg-amber-500/[0.02] p-3">
+          <div className="rounded-xl border border-[#ff5a1f]/25/[0.08] bg-[#ff5a1f]/[0.06] p-3">
             <p className="flex items-start gap-2 text-xs leading-relaxed text-[#8d8696]">
-              <span className="mt-0.5 shrink-0 text-amber-400">💡</span>
+              <span className="mt-0.5 shrink-0 text-[#ff8c42]">💡</span>
               <span>
                 {isMate
                   ? 'Before every move, ask: "Can I give check? Can I checkmate?" Build the habit of scanning for mate patterns first.'
@@ -1252,12 +1252,12 @@ export function TacticCard({
             <span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-400" />
             Green = winning move
             <span className="mx-2 text-[#565061]">|</span>
-            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-amber-400" />
+            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-[#ff5a1f]" />
             Amber = your move
           </p>
 
           {/* FEN block */}
-          <div className="rounded-xl border border-amber-500/[0.08] bg-amber-500/[0.02] p-3">
+          <div className="rounded-xl border border-[#ff5a1f]/25/[0.08] bg-[#ff5a1f]/[0.06] p-3">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                 Position FEN
@@ -1384,7 +1384,7 @@ export function TacticCard({
               <button
                 type="button"
                 onClick={onCreateCommunityPost}
-                className="flex h-10 items-center gap-2 rounded-xl border border-fuchsia-500/25 bg-fuchsia-500/10 px-4 text-sm font-semibold text-fuchsia-100 transition-all hover:bg-fuchsia-500/20 hover:text-white"
+                className="flex h-10 items-center gap-2 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-4 text-sm font-semibold text-[#ff8c42] transition-all hover:bg-[#ff5a1f]/[0.08] hover:text-white"
               >
                 <svg
                   width="14"
@@ -1474,7 +1474,7 @@ export function TacticCard({
                   </button>
                 </>
               ) : (
-                <div className="rounded-xl border border-amber-500/[0.08] bg-amber-500/[0.02] p-4 text-sm text-[#f0edf2]">
+                <div className="rounded-xl border border-[#ff5a1f]/25/[0.08] bg-[#ff5a1f]/[0.06] p-4 text-sm text-[#f0edf2]">
                   {explanation}
                 </div>
               )}

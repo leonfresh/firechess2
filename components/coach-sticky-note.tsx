@@ -5,10 +5,10 @@ import { NotepadText } from "lucide-react";
 /** Section-specific colour pairs */
 const SECTION_COLORS: Record<string, { bg: string; border: string; text: string; accent: string }> = {
   openings: {
-    bg: "bg-amber-500/5",
-    border: "border-amber-400/20",
-    text: "text-amber-200",
-    accent: "bg-amber-400/15",
+    bg: "bg-[#ff5a1f]/[0.08]",
+    border: "border-[#ff5a1f]/25",
+    text: "text-[#ff8c42]",
+    accent: "bg-[#ff5a1f]/[0.08]",
   },
   tactics: {
     bg: "bg-red-500/5",
@@ -17,16 +17,16 @@ const SECTION_COLORS: Record<string, { bg: string; border: string; text: string;
     accent: "bg-red-400/15",
   },
   endgames: {
-    bg: "bg-violet-500/5",
-    border: "border-violet-400/20",
-    text: "text-violet-200",
-    accent: "bg-violet-400/15",
+    bg: "bg-[#ff5a1f]/[0.08]",
+    border: "border-[#ff5a1f]/25",
+    text: "text-[#ff8c42]",
+    accent: "bg-[#ff5a1f]/[0.08]",
   },
   positional: {
-    bg: "bg-cyan-500/5",
-    border: "border-cyan-400/20",
-    text: "text-cyan-200",
-    accent: "bg-cyan-400/15",
+    bg: "bg-[#ff5a1f]/[0.08]",
+    border: "border-[#ff5a1f]/25",
+    text: "text-[#ff8c42]",
+    accent: "bg-[#ff5a1f]/[0.08]",
   },
 };
 
@@ -57,7 +57,7 @@ export function CoachStickyNote({ section, note, label }: CoachStickyNoteProps) 
       style={{ transform: "rotate(-0.5deg)" }}
     >
       {/* Pin dot */}
-      <div className="absolute -top-1.5 left-8 h-3 w-3 rounded-full border border-amber-500/30 bg-gradient-to-b from-amber-400/40 to-amber-600/40 shadow" />
+      <div className="absolute -top-1.5 left-8 h-3 w-3 rounded-full border border-[#ff5a1f]/25 bg-gradient-to-b from-[#ff5a1f] to-[#ff8c42] shadow" />
 
       <div className="flex items-start gap-2">
         <div className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${colors.accent}`}>

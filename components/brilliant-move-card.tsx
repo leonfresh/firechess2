@@ -75,15 +75,15 @@ export function BrilliantMoveCard({
   );
   // Show eval BEFORE the brilliant move (board shows the position you're asked to find it in)
   const whiteEvalBefore = toWhiteEval(move.fenBefore, move.cpBefore);
-  // Arrow showing the brilliant move: from → to in cyan
+  // Arrow showing the brilliant move: from → to in ember
   const moveArrow: [string, string, string] = [
     move.userMove.slice(0, 2),
     move.userMove.slice(2, 4),
-    "rgba(34, 211, 238, 0.85)",
+    "rgba(255, 140, 66, 0.9)",
   ];
 
   return (
-    <article className="overflow-hidden rounded-[1.75rem] border border-cyan-500/15 bg-[radial-gradient(circle_at_top_right,_rgba(34,211,238,0.12),_rgba(15,23,42,0.82)_42%,_rgba(2,6,23,0.96)_100%)] shadow-[0_20px_60px_-38px_rgba(34,211,238,0.55)]">
+    <article className="overflow-hidden rounded-[1.75rem] border border-[#ff5a1f]/25 bg-[radial-gradient(circle_at_top_right,_rgba(255,90,31,0.14),_rgba(18,16,21,0.85)_42%,_rgba(7,6,8,0.96)_100%)] shadow-[0_20px_60px_-38px_rgba(255,90,31,0.55)]">
       <div className="grid gap-0 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
         <div className="border-b border-[#1e1a24] p-4 lg:border-b-0 lg:border-r">
           <div ref={boardRef} className="mx-auto w-full max-w-[430px]">
@@ -135,7 +135,7 @@ export function BrilliantMoveCard({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <MoveBadge classification="brilliant" />
-              <span className="rounded-full border border-cyan-500/15 bg-cyan-500/10 px-2.5 py-1 text-[11px] font-semibold text-cyan-100">
+              <span className="rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-2.5 py-1 text-[11px] font-semibold text-[#ff8c42]">
                 Game {move.gameIndex} · Move {move.moveNumber}
               </span>
             </div>
@@ -148,7 +148,7 @@ export function BrilliantMoveCard({
           </div>
 
           <div>
-            <h3 className="text-xl font-black tracking-tight text-white">
+            <h3 className="text-xl font-extrabold tracking-tight text-white">
               {san}
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-[#f0edf2]">
@@ -186,7 +186,7 @@ export function BrilliantMoveCard({
             <button
               type="button"
               onClick={onOpenAnalysis}
-              className="inline-flex items-center justify-center rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/20"
+              className="inline-flex items-center justify-center rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-4 py-2 text-xs font-semibold text-[#ff8c42] transition hover:bg-[#ff5a1f]/[0.08]"
             >
               Open clean analysis board
             </button>

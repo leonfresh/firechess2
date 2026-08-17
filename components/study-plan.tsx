@@ -45,11 +45,11 @@ type StudyTask = {
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   opening: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/20" },
-  tactic: { bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/20" },
-  endgame: { bg: "bg-sky-500/10", text: "text-sky-400", border: "border-sky-500/20" },
-  habit: { bg: "bg-violet-500/10", text: "text-violet-400", border: "border-violet-500/20" },
+  tactic: { bg: "bg-[#ff5a1f]/[0.08]", text: "text-[#ff8c42]", border: "border-[#ff5a1f]/25" },
+  endgame: { bg: "bg-[#ff5a1f]/[0.08]", text: "text-[#ff8c42]", border: "border-[#ff5a1f]/25" },
+  habit: { bg: "bg-[#ff5a1f]/[0.08]", text: "text-[#ff8c42]", border: "border-[#ff5a1f]/25" },
   puzzle: { bg: "bg-orange-500/10", text: "text-orange-400", border: "border-orange-500/20" },
-  review: { bg: "bg-cyan-500/10", text: "text-cyan-400", border: "border-cyan-500/20" },
+  review: { bg: "bg-[#ff5a1f]/[0.08]", text: "text-[#ff8c42]", border: "border-[#ff5a1f]/25" },
 };
 
 function categoryLabel(cat: string) {
@@ -58,8 +58,8 @@ function categoryLabel(cat: string) {
 
 function progressColor(p: number) {
   if (p >= 80) return "bg-emerald-500";
-  if (p >= 50) return "bg-cyan-500";
-  if (p >= 25) return "bg-amber-500";
+  if (p >= 50) return "bg-[#ff5a1f]";
+  if (p >= 25) return "bg-[#ff5a1f]";
   return "bg-slate-500";
 }
 
@@ -164,13 +164,13 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
   // No plan — show CTA to generate one (Brilliant-style premium card)
   if (!plan) {
     return (
-      <div className="relative overflow-hidden rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/[0.04] via-fuchsia-500/[0.03] to-cyan-500/[0.04]">
-        <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-violet-500/10 blur-[80px]" />
-        <div className="pointer-events-none absolute -bottom-16 -left-16 h-36 w-36 rounded-full bg-cyan-500/10 blur-[60px]" />
+      <div className="relative overflow-hidden rounded-2xl border border-[#ff5a1f]/25 bg-gradient-to-br from-[#ff5a1f]/[0.04] via-[#ff8c42]/[0.03] to-[#ff8c42]/[0.04]">
+        <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-[#ff5a1f]/[0.08] blur-[80px]" />
+        <div className="pointer-events-none absolute -bottom-16 -left-16 h-36 w-36 rounded-full bg-[#ff5a1f]/[0.08] blur-[60px]" />
         <div className="relative flex flex-col items-center px-8 pb-8 pt-10 text-center">
           {/* Chess king illustration */}
-          <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/10 shadow-lg shadow-violet-500/10">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-violet-300">
+          <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ff5a1f] to-[#ff8c42] shadow-lg shadow-violet-500/10">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-[#ff8c42]">
               <path d="M12 2 L13 6 L16 4 L14 8 L18 8 L15 11 L18 14 L14 14 L13 18 L11 18 L10 14 L6 14 L9 11 L6 8 L10 8 L8 4 L11 6 Z" className="fill-violet-300/10" />
               <rect x="7" y="19" width="10" height="3" rx="0.5" className="fill-violet-400/20" />
             </svg>
@@ -181,7 +181,7 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
           </p>
           <Link
             href="/"
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-500/20 transition-all hover:brightness-110"
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-500/20 transition-all hover:brightness-110"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             Run a Scan
@@ -198,17 +198,17 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
   const weeklyTasks = tasks.filter((t) => !t.recurring);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/[0.03] via-fuchsia-500/[0.02] to-cyan-500/[0.03]">
+    <div className="relative overflow-hidden rounded-2xl border border-[#ff5a1f]/25 bg-gradient-to-br from-[#ff5a1f]/[0.03] via-[#ff8c42]/[0.02] to-[#ff8c42]/[0.03]">
       {/* Glow orbs */}
-      <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-violet-500/10 blur-[80px]" />
-      <div className="pointer-events-none absolute -bottom-16 -left-16 h-36 w-36 rounded-full bg-cyan-500/10 blur-[60px]" />
+      <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-[#ff5a1f]/[0.08] blur-[80px]" />
+      <div className="pointer-events-none absolute -bottom-16 -left-16 h-36 w-36 rounded-full bg-[#ff5a1f]/[0.08] blur-[60px]" />
 
       <div className="relative p-6 md:p-8">
         {/* Top row: illustration + title */}
         <div className="flex flex-col items-center text-center md:flex-row md:items-start md:gap-8 md:text-left">
           {/* Chess illustration (like Brilliant's balance scale) */}
-          <div className="mb-4 flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/10 shadow-lg shadow-violet-500/10 md:mb-0">
-            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-violet-300">
+          <div className="mb-4 flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ff5a1f] to-[#ff8c42] shadow-lg shadow-violet-500/10 md:mb-0">
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-[#ff8c42]">
               <rect x="4" y="2" width="16" height="3" rx="0.5" className="fill-violet-400/20" />
               <circle cx="12" cy="10" r="5" className="fill-violet-300/10" />
               <path d="M7 15 L17 15 L12 19 Z" className="fill-violet-300/15" />
@@ -220,11 +220,11 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
 
           <div className="flex-1">
             <div className="flex items-center justify-center gap-3 md:justify-start">
-              <span className="rounded-full bg-violet-500/15 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-violet-400">
+              <span className="rounded-full bg-[#ff5a1f]/[0.08] px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[#ff8c42]">
                 Study Plan
               </span>
               {plan.weaknesses?.topLeakOpenings?.[0] && (
-                <span className="rounded-full bg-amber-500/10 px-3 py-0.5 text-[11px] font-medium text-amber-400/80">
+                <span className="rounded-full bg-[#ff5a1f]/[0.08] px-3 py-0.5 text-[11px] font-medium text-[#ff8c42]">
                   {plan.weaknesses.topLeakOpenings[0]}
                 </span>
               )}
@@ -252,7 +252,7 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <Link
                 href="/daily"
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-500/20 transition-all hover:brightness-110"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-500/20 transition-all hover:brightness-110"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <polygon points="5 3 19 12 5 21 5 3" />
@@ -277,7 +277,7 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
       {recurringTasks.length > 0 && (
         <div className="border-t border-[#1e1a24] px-6 pb-2 pt-4 md:px-8">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-violet-400/70">Daily Habits</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#ff8c42]">Daily Habits</span>
             <span className="h-px flex-1 bg-[#1e1a24]" />
           </div>
           <div className="mt-2 space-y-1.5">
@@ -299,7 +299,7 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
       {weeklyTasks.length > 0 && (
         <div className="border-t border-[#1e1a24] px-6 pb-4 pt-4 md:px-8">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-violet-400/70">This Week</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#ff8c42]">This Week</span>
             <span className="h-px flex-1 bg-[#1e1a24]" />
           </div>
           <div className="mt-2 space-y-1.5">
@@ -320,7 +320,7 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
       {/* 100% celebration */}
       {plan.progress === 100 && (
         <div className="border-t border-[#1e1a24] px-6 py-5 text-center md:px-8">
-          <div className="rounded-xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/[0.06] to-cyan-500/[0.06] p-5">
+          <div className="rounded-xl border border-emerald-500/20 bg-gradient-to-r to-[#ff8c42]/[0.06] to-[#ff8c42]/[0.06] p-5">
             <p className="text-lg font-bold text-emerald-300">🎉 All tasks complete!</p>
             <p className="mt-1 text-sm text-[#8d8696]">
               Run a new scan to generate a fresh study plan and track your improvement.
@@ -391,7 +391,7 @@ function TaskRow({
               {task.title}
             </span>
             {task.recurring && (
-              <span className="rounded-full bg-violet-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase text-violet-400">Daily</span>
+              <span className="rounded-full bg-[#ff5a1f]/[0.08] px-1.5 py-0.5 text-[9px] font-bold uppercase text-[#ff8c42]">Daily</span>
             )}
             {task.dayIndex && !task.recurring && (
               <span className="rounded-full bg-[#1e1a24] px-1.5 py-0.5 text-[9px] text-white/30">Day {task.dayIndex}</span>

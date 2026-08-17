@@ -70,18 +70,18 @@ export function OppositeCastlingCard({ games }: OppositeCastlingCardProps) {
   const winRate = total > 0 ? (stat.userWins / total) * 100 : 0;
 
   return (
-    <div className="rounded-[1.5rem] border border-amber-500/15 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.08),rgba(15,23,42,0.6)_50%,rgba(2,6,23,0.9)_100%)] p-5 sm:p-6">
+    <div className="rounded-[1.5rem] border border-[#ff5a1f]/25 bg-[radial-gradient(circle_at_top_right,rgba(255,90,31,0.25),rgba(18,16,21,0.6)_50%,rgba(7,6,8,0.9)_100%)] p-5 sm:p-6">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/15">
-            <Swords className="h-5 w-5 text-amber-400" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ff5a1f]/[0.08]">
+            <Swords className="h-5 w-5 text-[#ff8c42]" />
           </div>
           <div>
             <p className="text-[11px] font-bold text-white">Opposite-side Castling</p>
             <p className="text-[10px] text-[#565061]">Win rate when both sides castle opposite</p>
           </div>
         </div>
-        <span className="shrink-0 rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-400">
+        <span className="shrink-0 rounded-full bg-[#ff5a1f]/[0.08] px-2.5 py-1 text-[11px] font-bold text-[#ff8c42]">
           {stat.oppositeCastleGames} games
         </span>
       </div>
@@ -92,7 +92,7 @@ export function OppositeCastlingCard({ games }: OppositeCastlingCardProps) {
           <p className="text-[10px] text-[#565061]">Win rate</p>
         </div>
         <div className="rounded-xl bg-black/30 p-3 text-center">
-          <p className="text-lg font-bold text-amber-400">{stat.userWins}</p>
+          <p className="text-lg font-bold text-[#ff8c42]">{stat.userWins}</p>
           <p className="text-[10px] text-[#565061]">Wins</p>
         </div>
         <div className="rounded-xl bg-black/30 p-3 text-center">

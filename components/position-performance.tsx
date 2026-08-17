@@ -166,7 +166,7 @@ function PositionCard({ leak, type }: { leak: RepeatedOpeningLeak; type: "best" 
               ? `${(lossRate * 100).toFixed(0)}% loss rate`
               : `${(wr * 100).toFixed(0)}% win rate`}
           </span>
-          <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-400">
+          <span className="rounded bg-[#ff5a1f]/[0.08] px-1.5 py-0.5 text-[9px] font-bold text-[#ff8c42]">
             {(leak.cpLoss / 100).toFixed(1)} avg cp
           </span>
         </div>
