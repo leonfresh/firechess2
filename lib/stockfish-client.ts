@@ -110,9 +110,15 @@ class StockfishClient {
 
       const onError = (event: ErrorEvent) => {
         cleanup();
-        reject(
-          new Error(`Stockfish worker error: ${event.message || "unknown"}`),
-        );
+        // Worker errors often arrive with an empty message (opaque cross-origin
+        // or WASM-instantiation failures). Surface whatever context exists so we
+        // can distinguish a load failure from a runtime crash.
+        const detail =
+          event.message ||
+          (event.filename
+            ? `${event.filename.split("/").pop()}:${event.lineno ?? "?"}`
+            : "unknown");
+        reject(new Error(`Stockfish worker error: ${detail}`));
       };
 
       const onMessageError = () => {
