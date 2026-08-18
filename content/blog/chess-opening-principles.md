@@ -25,13 +25,13 @@ The four central squares — e4, d4, e5, d5 — are the most important real esta
 
 When you ignore the center, your opponent gets a free hand to build a massive pawn and piece structure that steamrolls your position.
 
-<chess-position fen="r1bqk1nr/ppp1ppbp/2np2p1/8/3PP3/2P2N2/PP3PPP/RNBQKB1R w KQkq - 0 5" caption="The Modern Defense: Black has let White claim the entire center with pawns on d4 and e4, plus a knight on f3. Black's plan is to attack this center later, but it requires precise play — one slip and White's space advantage becomes crushing." orientation="white"></chess-position>
+<chess-position fen="r1bqk1nr/ppp1ppbp/2np2p1/8/3PP3/2P2N2/PP3PPP/RNBQKB1R w KQkq - 0 5" caption="The Modern Defense: Black has let White claim the entire center with pawns on d4 and e4, plus a knight on f3. Stockfish recommends 5.Bd3, preparing to castle and reinforcing the center. White's space advantage is worth about +49 cp. Black's plan is to attack this center later, but one slip and White's edge becomes crushing." orientation="white" badge="best" arrows="f1d3:green"></chess-position>
 
 The Modern Defense (1.e4 g6 2.d4 Bg7 3.Nf3 d6 4.c3) is a perfect example. Black voluntarily gives White a massive center, planning to undermine it later with ...e5 or ...c5. This works at the grandmaster level, but for club players it's dangerous — you're giving your opponent a structural advantage and trusting that you'll find the right moment to strike back.
 
 Compare this to a position where both sides fight for the center from move one:
 
-<chess-position fen="r1bqk2r/pppp1ppp/2n2n2/8/1b1NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 3 6" caption="The Scotch Game: White has a pawn on e4 and a knight on d4, both controlling central squares. Black counters with a knight on c6 and a bishop on b4 pinning the c3-knight. Both sides are actively fighting for influence — this is healthy opening play." orientation="white"></chess-position>
+<chess-position fen="r1bqk2r/pppp1ppp/2n2n2/8/1b1NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 3 6" caption="The Scotch Game: White has a pawn on e4 and a knight on d4, both controlling central squares. Stockfish recommends 6.Nxc6, trading the knight and doubling Black's pawns. Both sides are actively fighting for influence — this is healthy opening play." orientation="white" badge="best" arrows="d4c6:green"></chess-position>
 
 In the Scotch Game, White plays 4.d4 immediately, challenging Black's central pawn. Black responds with active piece play. Neither side has ignored the center — they're both contesting it. This is the kind of balanced central tension you should aim for.
 
@@ -67,7 +67,7 @@ Every time you move a piece, your opponent gets a turn. If you move the same pie
 
 This doesn't mean you can *never* move a piece twice — sometimes a piece gets attacked and must retreat, or a tactic requires a specific sequence. But as a rule, your first 6-8 moves should develop 4-5 different pieces. If you've made 8 moves and only touched 3 pieces, you've been shuffling.
 
-<chess-position fen="r2qkbnr/pppb1ppp/2np4/8/2BNP3/8/PPP2PPP/RNBQK2R w KQkq - 1 6" caption="After 1.e4 e5 2.Nf3 Nc6 3.Bc4 d6 4.d4 exd4 5.Nxd4 Bd7?? — Black has moved the c8-bishop to d7, but it was already developed (in a sense) on c8 where it controlled d7 and b7. Now the bishop blocks the queen's development and does nothing the c8-square wasn't already doing. Meanwhile White has a knight on d4, a bishop on c4, and a pawn on e4 — three pieces actively fighting for the center." orientation="white"></chess-position>
+<chess-position fen="r2qkbnr/pppb1ppp/2np4/8/2BNP3/8/PPP2PPP/RNBQK2R w KQkq - 1 6" caption="After 1.e4 e5 2.Nf3 Nc6 3.Bc4 d6 4.d4 exd4 5.Nxd4 Bd7?? — Black has moved the c8-bishop to d7 where it blocks the queen. White's best is 6.Nxc6, winning time and wrecking Black's pawn structure. White's advantage is +81 cp. Meanwhile White has a knight on d4, a bishop on c4, and a pawn on e4 — three pieces actively fighting for the center." orientation="white" badge="best" arrows="d4c6:green"></chess-position>
 
 In this Italian Game position, Black's 5...Bd7 is a classic "moving a piece twice" error. The bishop on d7 isn't *bad*, but Black has spent a tempo to move it to a square where it doesn't accomplish much. White's knight on d4 is actively posted, White's bishop on c4 eyes f7, and White is ready to castle. Black is a full move behind in development.
 
@@ -86,7 +86,7 @@ Castling does two things: it moves your king to safety and connects your rooks. 
 
 "Early" means by move 10 in most openings. Some openings delay castling (the Sicilian Najdorf, the French Winawer), but these are exceptions where the player has a specific reason and knows how to handle the risk. For club players, the rule is simple: castle by move 10.
 
-<chess-position fen="rn1qkbnr/ppp2p1p/3p2p1/4p3/2B1P1b1/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 5" caption="After 1.e4 e5 2.Nf3 d6 3.Bc4 Bg4 4.Nc3 g6?? — Black has made four moves, none of which involve castling. The king is still on e8, the rooks are disconnected, and White is ready to strike. Black's ...g6 weakens the dark squares around the king without actually moving the king to safety. White can exploit this with d5 or h3 followed by aggressive play." orientation="white"></chess-position>
+<chess-position fen="rn1qkbnr/ppp2p1p/3p2p1/4p3/2B1P1b1/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 5" caption="After 1.e4 e5 2.Nf3 d6 3.Bc4 Bg4 4.Nc3 g6?? — Black has made four moves, none of which involve castling. Stockfish's top choice is 5.Nxe5!, winning a pawn and exploiting Black's lack of development. White's advantage is +177 cp. Black's ...g6 weakens the dark squares around the king without actually moving the king to safety." orientation="white" badge="best" arrows="f3e5:green"></chess-position>
 
 Black's position looks reasonable — pieces are developing, pawns are moving. But the king is still on e8, and the rooks can't coordinate. If White opens the center with d4-d5 or plays h3 to trap the bishop, Black's king becomes a liability.
 
@@ -110,7 +110,7 @@ The classic example is 2.Qh5 in the Italian Game — the queen attacks e5 and th
 
 But the principle applies more broadly. A queen on f3 on move 3, a queen on g4 on move 4, a queen on h5 on move 2 — all of these risk giving your opponent free development while you shuffle your most powerful piece.
 
-<chess-position fen="rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6" caption="After 1.e4 e5 2.Nf3 d6 3.d4 Bg4 4.dxe5 Bxf3 5.Qxf3 dxe5 6.Bc4 — White has a massive development advantage. The queen on f3 is actively placed (not wasted), but more importantly, White has a bishop on c4, a clear lead in development, and can castle next move. Black has only one developed piece (the queen is offside, the king is stuck). This is the kind of position you get when one side develops properly and the other doesn't." orientation="white"></chess-position>
+<chess-position fen="rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6" caption="After 1.e4 e5 2.Nf3 d6 3.d4 Bg4 4.dxe5 Bxf3 5.Qxf3 dxe5 6.Bc4 — White has a massive development advantage. Black's best is 6...Qf6, trying to challenge the queen and develop. White's edge is +170 cp thanks to the bishop on c4 and castling next move. This is the kind of position you get when one side develops properly and the other doesn't." orientation="white" badge="best" arrows="d8f6:green"></chess-position>
 
 This position resembles the famous Opera Game (Morphy vs. Duke of Count Isouard, 1858), where Morphy demonstrated that rapid development beats material. White's queen is on f3 not because White brought it out early — it arrived there through natural captures. The key difference is that White has *three* pieces developed (queen, bishop, knight) while Black has *none*.
 
@@ -131,7 +131,7 @@ This principle is really about *sequencing*. You can't connect your rooks until:
 
 So when you connect your rooks, you've automatically satisfied principles 2, 3, 4, and 5. It's the final check.
 
-<chess-position fen="r1bqk2r/1pppbppp/p1n2n2/4p3/B3P3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 4 6" caption="After 1.e4 e5 2.Nf3 Nc6 3.Bb5 a6 4.Ba4 Nf6 5.O-O Be7 — White has castled and is ready to connect rooks after developing the c1-bishop and possibly playing Re1. Black is developing harmoniously. Both sides have followed the principles: center control, piece development, early castling. The middlegame battle will be decided by who finds better plans, not by who violated opening principles." orientation="white"></chess-position>
+<chess-position fen="r1bqk2r/1pppbppp/p1n2n2/4p3/B3P3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 4 6" caption="After 1.e4 e5 2.Nf3 Nc6 3.Bb5 a6 4.Ba4 Nf6 5.O-O Be7 — White has castled and Stockfish recommends 6.Re1, connecting the rooks and preparing d3 or d4. Both sides have followed the principles: center control, piece development, early castling. White's edge is +54 cp. The middlegame battle will be decided by who finds better plans." orientation="white" badge="best" arrows="f1e1:green"></chess-position>
 
 In this Ruy Lopez position, White has castled and is one move from connecting rooks (after Bc2 or Re1). Black is developing solidly with ...Be7, preparing to castle. Both sides have followed the principles — the game is entering the middlegame on equal footing.
 
