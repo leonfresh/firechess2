@@ -19,7 +19,7 @@ This guide breaks down what chess accuracy and centipawn loss (ACPL) actually lo
 
 **Accuracy** is a percentage (0–100%) measuring how closely your moves match the engine's top choices. FireChess calculates it per-move using centipawn loss, then aggregates across the game. A 95% accuracy game means almost every move matched or nearly matched the engine's recommendation.
 
-**ACPL** (Average Centipawn Loss) is the raw number behind accuracy. Every move you play, the engine compares your choice to the best move. The difference, in centipawns (1/100th of a pawn), is your loss for that move. Average all your move losses across the game and you get ACPL.
+**ACPL** (Average Centipawn Loss) is the raw number behind accuracy. Every move you play, the engine compares your choice to the best move. The difference, in centipawns (1/100th of a pawn), is your loss for that move. Average all your move losses across the game and you get ACPL. (Our [centipawn loss explainer](/blog/what-is-centipawn-loss) covers the calculation in detail.)
 
 Here's how FireChess classifies each move by centipawn loss:
 

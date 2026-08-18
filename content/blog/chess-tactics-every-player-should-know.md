@@ -25,7 +25,7 @@ There's an old chess maxim: "Strategy is what you do when there's a tactic on ev
 
 The reason is simple: your opponent will make a mistake — a hanging piece, an undefended back rank, a loose queen — and if you can't spot it, you're giving away free wins. Tactic training is the highest-return activity for improvement at every level from beginner to advanced.
 
-FireChess offers several tools to help you train tactics systematically. The [puzzles page](/puzzles) lets you practice on curated tactical positions, while [game analysis](/analysis) with centipawn loss detection shows you exactly where you missed tactical shots in your own games. If you want a more gamified experience, the [dungeon mode](/dungeon) presents tactics under time pressure with a roguelike progression system.
+FireChess offers several tools to help you train tactics systematically. The [puzzles page](/puzzles) lets you practice on curated tactical positions, while [game analysis](/analysis) with [centipawn loss](/blog/what-is-centipawn-loss) detection shows you exactly where you missed tactical shots in your own games. If you want a more gamified experience, the [dungeon mode](/dungeon) presents tactics under time pressure with a roguelike progression system.
 
 But before jumping into training, you need to know the patterns. Let's cover every essential tactic type.
 

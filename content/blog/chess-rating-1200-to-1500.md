@@ -16,7 +16,7 @@ Let's fix that.
 
 ## What Changes Between 1200 and 1500?
 
-According to FireChess analysis data (our [average centipawn loss by rating](/blog/average-centipawn-loss-by-rating) research), the typical 1200-rated player makes about 20–30 centipawn-loss blunders per game. A 1500 player makes roughly half that. The gap isn't in raw tactical genius — it's in consistency, pattern recognition, and conversion technique.
+According to FireChess analysis data (our [average centipawn loss by rating](/blog/average-centipawn-loss-by-rating) research), the typical 1200-rated player makes about 20–30 [centipawn-loss](/blog/what-is-centipawn-loss) blunders per game. A 1500 player makes roughly half that. The gap isn't in raw tactical genius — it's in consistency, pattern recognition, and conversion technique.
 
 Here's how the improvement breaks down by sub-rating:
 

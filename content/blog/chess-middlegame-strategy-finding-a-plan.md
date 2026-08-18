@@ -9,7 +9,7 @@ canonical: https://firechess.com/blog/chess-middlegame-strategy-finding-a-plan
 
 The opening is over. You've developed your pieces, castled your king, and now... you have no idea what to do. You shuffle a rook back and forth, move a knight to a random square, and slowly watch your position deteriorate. This is the "what now?" problem, and it's the most common issue for players between 1200 and 1800.
 
-The middlegame is where chess gets hard because there's no book telling you what move to play. But there IS a systematic way to find a plan, and it doesn't require genius-level intuition — just a structured thinking process. Upload your games to [FireChess's scanner at /analyze](/analyze) and you'll notice that the biggest centipawn loss spikes happen right where the opening theory ends and the middlegame begins. That transition is where most club games are decided.
+The middlegame is where chess gets hard because there's no book telling you what move to play. But there IS a systematic way to find a plan, and it doesn't require genius-level intuition — just a structured thinking process. Upload your games to [FireChess's scanner at /analyze](/analyze) and you'll notice that the biggest [centipawn loss](/blog/what-is-centipawn-loss) spikes happen right where the opening theory ends and the middlegame begins. That transition is where most club games are decided.
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
 <svg width="680" height="260" viewBox="0 0 680 260" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -139,7 +139,7 @@ Every position has a piece (or two) that's doing nothing useful. It might be a b
 - **Rooks:** Are they on open files or half-open files? Are they connected (defending each other)? Are they on the 7th rank (very strong)? A rook on the 7th rank cuts off the enemy king and attacks pawns from behind. Two rooks doubled on the 7th rank is often decisive.
 - **Queen:** Is she active but safe, or is she out of play on the wrong side of the board? The queen is the most powerful piece, but she's also the easiest to misplace. A queen stuck on a1 while the action is on the kingside is effectively a spectator.
 
-**Practical example:** Your knight is on a3. It's doing nothing there. Where should it go? Maybe Nc2-e3-d5, reaching a strong central outpost. That's not a flashy plan, but it's a PLAN — and having any plan is better than aimless moves. When you look at your [FireChess game analysis](/analyze), check the "piece activity" scores — you'll often see that the position where you lost the most centipawn loss coincided with your worst piece being stuck.
+**Practical example:** Your knight is on a3. It's doing nothing there. Where should it go? Maybe Nc2-e3-d5, reaching a strong central outpost. That's not a flashy plan, but it's a PLAN — and having any plan is better than aimless moves. When you look at your [FireChess game analysis](/analyze), check the "piece activity" scores — you'll often see that the position where you lost the most [centipawn loss](/blog/what-is-centipawn-loss) coincided with your worst piece being stuck.
 
 <chess-position fen="r1bq1rk1/ppp2ppp/3p1n2/4p3/4P3/N1N5/PP3PPP/R1BQ1RK1 w - - 0 1" moves="Nc2, Be6, Ne3, Nd7, Ned5" orientation="white" caption="Improve your worst piece: the knight on a3 is doing nothing on the rim. Through Nc2→Ne3→Nd5, it reaches a dominant central outpost controlling 8 squares. That's a plan!" arrows="c1g5:green,a3c2:red" badge="best"></chess-position>
 

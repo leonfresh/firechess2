@@ -219,7 +219,7 @@ These two patterns — queenside harassment with Na5 and responding correctly to
 
 ## How to Practice the Sicilian
 
-The best way to learn the Sicilian is to **play it consistently and review your games**. Use [FireChess's game analysis tool](https://firechess.com/analyze) to check where your centipawn loss jumps — that's where you're missing the key ideas.
+The best way to learn the Sicilian is to **play it consistently and review your games**. Use [FireChess's game analysis tool](https://firechess.com/analyze) to check where your [centipawn loss](/blog/what-is-centipawn-loss) jumps — that's where you're missing the key ideas.
 
 Track your [average centipawn loss by rating](/blog/average-centipawn-loss-by-rating) to see how your opening play improves over time. Most 1200-1400 players average 70-90 ACPL in the Sicilian when they're starting out. After 20-30 games with one of these lines, you should see that drop to 55-70.
 

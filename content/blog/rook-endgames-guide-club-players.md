@@ -13,7 +13,7 @@ You've equalized in the opening. You've navigated the middlegame without blunder
 
 Rook endgames are the most common endgame type in chess. Roughly 50% of all games that reach an endgame feature rooks, and the techniques involved are more concrete than most players realize. There's no vague "improve your pieces" advice here — there are exact positions with exact solutions, and knowing them separates players who grind out wins from players who let draws slip away.
 
-If you've been [tracking your game results on FireChess](/analyze), you've probably noticed a pattern: your centipawn loss spikes in endgames. That's normal. Endgames demand precision that middlegames don't, and rook endgames are the worst offenders. One wrong king move can turn a winning position into a draw, or a drawable position into a loss.
+If you've been [tracking your game results on FireChess](/analyze), you've probably noticed a pattern: your [centipawn loss](/blog/what-is-centipawn-loss) spikes in endgames. That's normal. Endgames demand precision that middlegames don't, and rook endgames are the worst offenders. One wrong king move can turn a winning position into a draw, or a drawable position into a loss.
 
 This guide covers the five rook endgame patterns that matter most for club players rated 1000-1800. These aren't obscure theoretical curiosities — they're the positions you'll encounter repeatedly in your own games. Master them, and you'll stop giving away half-points in the endgame.
 

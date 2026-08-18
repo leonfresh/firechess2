@@ -163,7 +163,7 @@ After 5...Nxd5, Black thinks: *"I've equalized — I have a pawn in the center, 
 
 The antidote to the Fried Liver is **5...Na5!** instead of 5...Nxd5. This "Polerio Defense" captures the bishop on c4 and sidesteps the sacrifice entirely. If you play the Two Knights with Black, learning the 5...Na5 line is essential — it's objectively better AND avoids the Fried Liver entirely.
 
-After a game where you've faced the Fried Liver, [scan it on FireChess](/analyze) to see exactly where the evaluation shifted. The centipawn graph will show a massive swing after Nxf7 — that's where you need to focus your study.
+After a game where you've faced the Fried Liver, [scan it on FireChess](/analyze) to see exactly where the evaluation shifted. The [centipawn](/blog/what-is-centipawn-loss) graph will show a massive swing after Nxf7 — that's where you need to focus your study.
 
 ---
 

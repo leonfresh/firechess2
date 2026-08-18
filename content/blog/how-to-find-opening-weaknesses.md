@@ -102,7 +102,7 @@ The key distinction is **repetition**. A single mistake is just a mistake. But w
 
 ## Why Opening Leaks Matter More Than You Think
 
-Consider this: if you play 100 games per month and 15% of them pass through a position where you have a consistent leak losing ~0.5 pawns of evaluation, that's roughly 15 games where you're starting the middlegame with a disadvantage. Even a small centipawn loss compounds over hundreds of games.
+Consider this: if you play 100 games per month and 15% of them pass through a position where you have a consistent leak losing ~0.5 pawns of evaluation, that's roughly 15 games where you're starting the middlegame with a disadvantage. Even a small [centipawn loss](/blog/what-is-centipawn-loss) compounds over hundreds of games.
 
 Let's put real numbers on it. A 0.3-pawn disadvantage at move 10 translates to roughly a 5-10% lower win probability. If you have three such leaks across your repertoire and play 50 games a month, that's potentially 3-4 wins turning into draws and 2-3 draws turning into losses every single month. Over a year, that's 30-80 rating points lost to positions you could have fixed in a single study session.
 
