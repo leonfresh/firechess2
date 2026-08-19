@@ -70,7 +70,7 @@ The reason forks are so effective is that knights move in an L-shape that most p
 
 Here's the classic Fried Liver Attack setup from the Two Knights Defense:
 
-<chess-position fen="r1bqkb1r/ppp2ppp/2n5/3np1N1/2B5/8/PPPP1PPP/RNBQK2R w KQkq - 0 6" caption="The Fried Liver Attack: White to play Nxf7! The knight forks the queen on d8 and rook on h8. This pattern appears in countless openings and middlegames — learn to spot the f7/f2 weakness early." orientation="white" moves="Nxf7" analysis="true"></chess-position>
+<chess-position fen="r1bqkb1r/ppp2ppp/2n5/3np1N1/2B5/8/PPPP1PPP/RNBQK2R w KQkq - 0 6" caption="The Fried Liver Attack: White to play Nxf7! The knight forks the queen on d8 and rook on h8. This pattern appears in countless openings and middlegames — learn to spot the f7/f2 weakness early." orientation="white" moves="Nxf7" arrows="g5f7:green" badge="best" analysis="true"></chess-position>
 
 After **6. Nxf7!**, the knight simultaneously attacks the queen on d8 and the rook on h8. Black loses the exchange at minimum. This isn't just a trick — it's a *pattern*. The f7 square (and its mirror, f2) is the weakest point in the opening because it's only defended by the king. Whenever you see a knight within striking distance of f7 or f2, check for the fork.
 
@@ -84,7 +84,7 @@ The back rank mate is the most common mating pattern in chess. Your opponent's k
 
 This pattern appears in nearly every endgame and many middlegames. The tragedy is that it's also the most *preventable* pattern — a single luft (pawn move creating an escape square) stops it cold. Yet club players fall for it constantly because they don't recognize the pattern until it's too late.
 
-<chess-position fen="6k1/5ppp/8/8/8/8/8/4R1K1 w - - 0 1" caption="Back rank mate in one move. The black king is trapped behind its pawns on f7, g7, and h7. Re8 is checkmate. This pattern decides more club games than any other tactical theme." orientation="white" moves="Re8" analysis="true"></chess-position>
+<chess-position fen="6k1/5ppp/8/8/8/8/8/4R1K1 w - - 0 1" caption="Back rank mate in one move. The black king is trapped behind its pawns on f7, g7, and h7. Re8 is checkmate. This pattern decides more club games than any other tactical theme." orientation="white" moves="Re8" arrows="e1e8:green" badge="brilliant" analysis="true"></chess-position>
 
 **Re8 is checkmate.** The king has no escape squares — f7, g7, and h7 are all blocked by its own pawns. This position looks simple, but the pattern hides inside complex middlegames where both players have multiple pieces on the board.
 
@@ -103,7 +103,7 @@ There are two types:
 - **Absolute pin:** The piece cannot move because it would expose the king (e.g., a knight pinned to the king)
 - **Relative pin:** The piece can legally move but doing so would lose a more valuable piece (e.g., a knight pinned to the queen)
 
-<chess-position fen="r1bqkb1r/pppp1pp1/2n2n1p/4p1B1/2B1P3/3P1N2/PPP2PPP/RN1QK2R b KQkq - 1 5" caption="Bg5 pins the knight on f6 to the queen on d8. The knight cannot move without losing the queen. This pin pattern from the Italian Game appears in thousands of opening systems." orientation="white" analysis="true"></chess-position>
+<chess-position fen="r1bqkb1r/pppp1pp1/2n2n1p/4p1B1/2B1P3/3P1N2/PPP2PPP/RN1QK2R b KQkq - 1 5" caption="Bg5 pins the knight on f6 to the queen on d8. The knight cannot move without losing the queen. This pin pattern from the Italian Game appears in thousands of opening systems." orientation="white" arrows="g5f6:green" analysis="true"></chess-position>
 
 White's bishop on g5 creates a relative pin on the f6 knight. The knight *can* legally move (it's not pinned to the king), but doing so would allow Bxd8, losing the queen. This pin immobilizes a key defender and gives White a lasting positional advantage.
 
@@ -114,7 +114,7 @@ White's bishop on g5 creates a relative pin on the f6 knight. The knight *can* l
 
 **The Ruy Lopez pin** is the most famous example of this pattern in the opening:
 
-<chess-position fen="r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3" caption="The Ruy Lopez: Bb5 pins the knight on c6. This 500-year-old opening system is built entirely on the pin pattern. Understanding why the pin matters is more important than memorizing the moves." orientation="white" analysis="true"></chess-position>
+<chess-position fen="r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3" caption="The Ruy Lopez: Bb5 pins the knight on c6. This 500-year-old opening system is built entirely on the pin pattern. Understanding why the pin matters is more important than memorizing the moves." orientation="white" arrows="b5c6:green" badge="book" analysis="true"></chess-position>
 
 The bishop on b5 doesn't actually threaten to capture the knight immediately — it's creating long-term pressure. If Black ever plays ...a6, Bxc6 dxc6, and the pin is resolved but Black has doubled pawns. This is how pins work strategically: even when they don't win material directly, they create lasting weaknesses.
 
@@ -124,7 +124,7 @@ A skewer is the reverse of a pin: you attack a *more* valuable piece, forcing it
 
 Skewers are less common than pins and forks (appearing in about 52% of club games), but they're often more decisive because they usually involve checks.
 
-<chess-position fen="r5k1/8/8/8/8/8/5PPP/4R1K1 w - - 0 1" caption="Rook skewer: Re8+ forces the king to move (Kf7), then Rxa8 wins the rook. Skewers along files and ranks are the most common type — look for king + rook on the same line." orientation="white" moves="Re8" analysis="true"></chess-position>
+<chess-position fen="r5k1/8/8/8/8/8/5PPP/4R1K1 w - - 0 1" caption="Rook skewer: Re8+ forces the king to move (Kf7), then Rxa8 wins the rook. Skewers along files and ranks are the most common type — look for king + rook on the same line." orientation="white" moves="Re8" arrows="e1e8:green" badge="best" analysis="true"></chess-position>
 
 **Re8+** is check. The king must move off the 8th rank (Kf7 is the only legal move since f8 is controlled by the rook). Then **Rxa8** captures the rook. White wins a full rook — a game-ending advantage.
 
@@ -141,7 +141,7 @@ The four patterns above appear in isolation, but real games combine them. The mo
 
 Here's a Sicilian Najdorf middlegame where several patterns coexist:
 
-<chess-position fen="r1b1k2r/2qnbppp/p2ppn2/1p4B1/3NPPP1/2N2Q2/PPP4P/2KR1B1R w kq - 0 11" caption="A Sicilian Najdorf with multiple tactical themes: the Bg5 pins the f6 knight, the g4 pawn threatens to push, and the Nd4 eyes key squares like e6, b5, and c6. Pattern recognition means seeing all these themes simultaneously." orientation="white" analysis="true"></chess-position>
+<chess-position fen="r1b1k2r/2qnbppp/p2ppn2/1p4B1/3NPPP1/2N2Q2/PPP4P/2KR1B1R w kq - 0 11" caption="A Sicilian Najdorf with multiple tactical themes: the Bg5 pins the f6 knight, the g4 pawn threatens to push, and the Nd4 eyes key squares like e6, b5, and c6. Pattern recognition means seeing all these themes simultaneously." orientation="white" arrows="c3b5:green,d4e6:orange" badge="best" analysis="true"></chess-position>
 
 In this position, strong players instantly see:
 - **The pin:** Bg5 pins Nf6 to the queen on c7 (relative pin)
