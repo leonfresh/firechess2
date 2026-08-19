@@ -63,7 +63,7 @@ If you learn only one thing from this guide, learn this: **the player who doesn'
 
 Two kings are in opposition when they stand on the same file, rank, or diagonal with exactly one square between them. The player whose turn it is to move is at a disadvantage because they must step aside and let the opponent's king advance.
 
-<chess-position fen="3k4/8/8/3K4/3P4/8/8/8 b - - 0 1" caption="Direct Opposition: Black to move is in trouble. After 1...Kc8 2.Kc6! White's king invades. After 1...Ke8 2.Ke6! White reaches the key squares of the d4 pawn. With correct play, White wins." orientation="white"></chess-position>
+<chess-position fen="3k4/8/8/3K4/3P4/8/8/8 b - - 0 1" caption="Direct Opposition: Black to move is in trouble. After 1...Kc8 2.Kc6! White's king invades. After 1...Ke8 2.Ke6! White reaches the key squares of the d4 pawn. With correct play, White wins." orientation="white" arrows="d8c8:red"></chess-position>
 
 In this position, White's king on d5 and Black's king on d8 face each other with d6 and d7 between them. It's Black to move — and that's the problem. Black must give way:
 
@@ -92,7 +92,7 @@ Key squares (also called "critical squares") are the squares your king must reac
 
 If your pawn is on d5, the key squares are c7, d7, and e7. Once your king reaches ANY of these squares, the pawn will promote no matter what the opponent does.
 
-<chess-position fen="3k4/8/3K4/3P4/8/8/8/8 w - - 0 1" caption="Key Squares: White's king is already on d6, a key square for the d5 pawn. No matter whose turn it is, White will promote the pawn by advancing the king to c7 or e7." orientation="white"></chess-position>
+<chess-position fen="3k4/8/3K4/3P4/8/8/8/8 w - - 0 1" caption="Key Squares: White's king is already on d6, a key square for the d5 pawn. No matter whose turn it is, White will promote the pawn by advancing the king to c7 or e7." orientation="white" arrows="d6c6:green" badge="best"></chess-position>
 
 White's king on d6 controls the key squares c7, d7, and e7. Even with Black to move, the pawn promotes:
 
@@ -129,7 +129,7 @@ When you have a passed pawn racing to promote and the opponent's king is chasing
 3. If the opponent's king is **inside** (or can step into) the square, it catches the pawn.
 4. If the king is **outside** the square, the pawn promotes.
 
-<chess-position fen="7k/8/8/4P3/8/8/8/4K3 w - - 0 1" caption="Rule of the Square: The e5 pawn's square runs from e5 to e8 to h8 to h5. Black's king on h8 is OUTSIDE the square — after 1.e6! Kh7 2.e7 Kg7 3.e8=Q, the pawn promotes. If the Black king were on h5 or g6, it would be inside the square and catch the pawn." orientation="white"></chess-position>
+<chess-position fen="7k/8/8/4P3/8/8/8/4K3 w - - 0 1" caption="Rule of the Square: The e5 pawn's square runs from e5 to e8 to h8 to h5. Black's king on h8 is OUTSIDE the square — after 1.e6! Kh7 2.e7 Kg7 3.e8=Q, the pawn promotes. If the Black king were on h5 or g6, it would be inside the square and catch the pawn." orientation="white" arrows="e5e6:green" badge="best"></chess-position>
 
 After **1.e6!** the pawn marches to promotion:
 - 1...Kh7 2.e7 Kg7 3.e8=Q — White queens.
@@ -149,7 +149,7 @@ This is one of the most practical endgame calculations you can make. In a game w
 
 An outside passed pawn is a passed pawn on the opposite side of the board from the remaining pawns. Its power isn't that it promotes — it's that it **forces the opponent's king to chase it**, leaving the rest of the board undefended.
 
-<chess-position fen="8/8/8/k1K5/P1P5/8/8/8 w - - 0 1" caption="Outside Passed Pawn: White's a4 pawn is far from Black's c5 pawn. White plays 1.a5!, and Black faces a dilemma — chase the a-pawn and let White's king capture on c5, or stay and watch the a-pawn promote." orientation="white"></chess-position>
+<chess-position fen="8/8/8/k1K5/P1P5/8/8/8 w - - 0 1" caption="Outside Passed Pawn: White's a4 pawn is far from Black's c5 pawn. White plays 1.a5!, and Black faces a dilemma — chase the a-pawn and let White's king capture on c5, or stay and watch the a-pawn promote." orientation="white" arrows="c5d6:green"></chess-position>
 
 White plays **1.a5!** and the a-pawn becomes a diversion:
 
@@ -170,7 +170,7 @@ This concept is one of the biggest sources of endgame blunders at the club level
 
 A pawn breakthrough occurs when you sacrifice one or more pawns to create a single passed pawn that promotes. It's the endgame equivalent of a tactical combination — and it's one of the most satisfying patterns in chess.
 
-<chess-position fen="k7/p7/8/PPP5/8/8/8/6K1 w - - 0 1" caption="Pawn Breakthrough: White plays 1.b6! If 1...axb6 2.c6! and the c-pawn promotes — Black's king can't stop both pawns. If 1...Kb8 2.c6! and one pawn will queen." orientation="white" moves="b6,axb6,c6"></chess-position>
+<chess-position fen="k7/p7/8/PPP5/8/8/8/6K1 w - - 0 1" caption="Pawn Breakthrough: White plays 1.b6! If 1...axb6 2.c6! and the c-pawn promotes — Black's king can't stop both pawns. If 1...Kb8 2.c6! and one pawn will queen." orientation="white" moves="b6,axb6,c6" arrows="b5b6:green" badge="best"></chess-position>
 
 The breakthrough works because the pawns support each other:
 
@@ -197,7 +197,7 @@ The most common mistake is **pushing the wrong pawn first.** In the position abo
 
 Zugzwang is the nightmare of king and pawn endgames. It means being forced to move when every move makes your position worse. In most chess positions, having the move is an advantage. In zugzwang positions, it's a curse.
 
-<chess-position fen="3k4/8/3KP3/8/8/8/8/8 b - - 0 1" caption="Zugzwang: Black to move loses. 1...Kc8 2.Ke7! and the pawn promotes. 1...Ke8 2.Kc7! and the pawn promotes. But if it were White to move, White would have to step back and the position would be drawn." orientation="white"></chess-position>
+<chess-position fen="3k4/8/3KP3/8/8/8/8/8 b - - 0 1" caption="Zugzwang: Black to move loses. 1...Kc8 2.Ke7! and the pawn promotes. 1...Ke8 2.Kc7! and the pawn promotes. But if it were White to move, White would have to step back and the position would be drawn." orientation="white" arrows="d8c8:red,d6e7:green" badge="best"></chess-position>
 
 Black is in complete zugzwang:
 - **1...Kc8 2.Ke7!** — White's king reaches the key square e7 (for the e6 pawn). The pawn promotes after e7 next move.
