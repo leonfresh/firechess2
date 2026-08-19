@@ -55,7 +55,7 @@ This is called **identifying the critical moment** — the point where the game 
 
 Now turn on the engine. Compare your assessment with Stockfish's evaluation. The gap between what you thought and what the engine says is where the learning happens.
 
-<chess-position fen="r1bqk2r/pppp1ppp/2n5/8/1bBPn3/2N2N2/PP3PPP/R1BQ1RK1 b kq - 1 8" caption="Italian Game after 8.O-O. Black just played Nxe4, grabbing a pawn. This is a critical moment — the engine shows Black is already worse despite being up material. Can you figure out why before looking at the engine?" orientation="black" analysis="true"></chess-position>
+<chess-position fen="r1bqk2r/pppp1ppp/2n5/8/1bBPn3/2N2N2/PP3PPP/R1BQ1RK1 b kq - 1 8" caption="Italian Game after 8.O-O. Black just played Nxe4, grabbing a pawn. This is a critical moment — the engine shows Black is already worse despite being up material. Can you figure out why before looking at the engine?" orientation="black" arrows="c4f7:green"></chess-position>
 
 In this position, many club players would think "I'm up a pawn, I'm fine." But Black's position is actually critical. White has development, central control, and will generate a powerful attack against Black's exposed king. The pawn grab on e4 was the mistake — not immediately, but because of what it allows White to do next.
 
@@ -81,7 +81,7 @@ This isn't bad luck. This is an opening leak. And it's invisible unless you spec
 4. If you forgot the line — that's a memory problem (fix with spaced repetition)
 5. If you intentionally deviated and it didn't work — that's a judgment problem (fix with study)
 
-<chess-position fen="r1bq1rk1/1p1nbppp/p2p1n2/4p3/4P3/2N1BN2/PPP1BPPP/R2Q1RK1 w - - 6 10" caption="Sicilian Najdorf, White to move. This is a typical tabiya — both sides have completed development and must choose a middlegame plan. If you reached this position in your game, what's White's best plan here?" orientation="white" analysis="true"></chess-position>
+<chess-position fen="r1bq1rk1/1p1nbppp/p2p1n2/4p3/4P3/2N1BN2/PPP1BPPP/R2Q1RK1 w - - 6 10" caption="Sicilian Najdorf, White to move. This is a typical tabiya — both sides have completed development and must choose a middlegame plan. If you reached this position in your game, what's White's best plan here?" orientation="white" arrows="c3d5:green" badge="book"></chess-position>
 
 The Sicilian Najdorf middlegame is a perfect example. Both sides have completed development, the pawn structure is clear, and the game will be decided by who has the better plan. If you've been reaching this position and struggling, the problem isn't the opening — it's the middlegame transition. Upload your Najdorf games to [FireChess's scanner](/analyze) and check the evaluation trend after move 10. If your centipawn loss spikes in moves 10-20, you need to study Najdorf middlegame plans, not memorize more opening moves.
 
@@ -102,7 +102,7 @@ If your middlegame analysis consists of "I should have played Nf3 instead of Nd2
 | Ignoring opponent's plan | Building an attack on the queenside while opponent mates on the kingside | Defensive awareness, prophylaxis |
 | No plan at all | Shuffling pieces back and forth | Study classic middlegame themes |
 
-<chess-position fen="r2q1rk1/pb1n1ppp/1p2pn2/2p5/1bBP4/2N1BN2/PPP1BPPP/R2Q1RK1 w - - 2 11" caption="Queen's Gambit Declined, White to move. This is a classic 'what's my plan?' position. White needs to decide between several reasonable-looking moves. The right choice depends on understanding the pawn structure, not calculating variations." orientation="white" analysis="true"></chess-position>
+<chess-position fen="r2q1rk1/pb1n1ppp/1p2pn2/2p5/1bBP4/2N1BN2/PPP1BPPP/R2Q1RK1 w - - 2 11" caption="Queen's Gambit Declined, White to move. This is a classic 'what's my plan?' position. White needs to decide between several reasonable-looking moves. The right choice depends on understanding the pawn structure, not calculating variations." orientation="white" arrows="a2a3:green"></chess-position>
 
 When you study [middlegame strategy and planning](/blog/chess-middlegame-strategy-finding-a-plan), you learn to evaluate positions by pawn structure and piece activity — not just by calculating variations. In the QGD position above, White has multiple reasonable moves: Bb5 (pinning the knight), Qc2 (preparing e4 or connecting rooks), or a4 (attacking the queenside). The correct choice depends on understanding the pawn structure — White should aim for e4 when possible, and every move should serve that goal.
 
@@ -119,7 +119,7 @@ Tactics decide most club-level games. But when you analyze tactical mistakes, do
 3. **Pins and skewers:** You move a piece that was pinned, or don't see a skewer coming. Common in positions with queens and rooks on the same file.
 4. **Overloaded defenders:** You put too much work on one piece and your opponent exploits it. Common in positions where one piece defends two threats.
 
-<chess-position fen="r1bq1rk1/ppp2ppp/2n5/3pp3/2B5/4PN2/PPP2PPP/R1BQ1RK1 w - - 0 8" caption="White to move. This position looks quiet, but there's a tactical shot available. Can you find it? The pattern involves a discovered attack — moving one piece to open a line for another." orientation="white" moves="Nxe5" analysis="true"></chess-position>
+<chess-position fen="r1bq1rk1/ppp2ppp/2n5/3pp3/2B5/4PN2/PPP2PPP/R1BQ1RK1 w - - 0 8" caption="White to move. This position looks quiet, but there's a tactical shot available. Can you find it? The pattern involves a discovered attack — moving one piece to open a line for another." orientation="white" moves="Nxe5" arrows="f3e5:green" badge="best"></chess-position>
 
 In this position, White has the tactical shot Nxe5! — after Nxe5 Nxe5, the e-file is open and White's rook on e1 pins the knight. But more importantly, this type of tactic (sacrifice to open a file for a pin) is one that club players miss constantly.
 
@@ -140,7 +140,7 @@ Most players rated 1000-1600 know these endgames *in theory* but can't execute t
 - Bishop + pawn vs. knight (wrong-colored bishop)
 - Rook vs. pawns (when the rook wins, when the pawns draw)
 
-<chess-position fen="8/5pk1/5p1p/R7/6PP/6K1/8/8 w - - 0 1" caption="White to move in a rook endgame. This looks drawn — both sides have pawns and a rook. But White has a concrete winning plan based on rook activity. Can you find the plan? The key is the rook on the 7th rank." orientation="white" analysis="true"></chess-position>
+<chess-position fen="8/5pk1/5p1p/R7/6PP/6K1/8/8 w - - 0 1" caption="White to move in a rook endgame. This looks drawn — both sides have pawns and a rook. But White has a concrete winning plan based on rook activity. Can you find the plan? The key is the rook on the 7th rank." orientation="white" arrows="a5a7:green" badge="best"></chess-position>
 
 In this rook endgame, White's rook is already on the 7th rank (b7 would be even better). The winning plan involves using the rook's activity to either win Black's f-pawn or promote White's connected passers. The position looks "about equal" to a casual glance, but the activity difference is decisive.
 
@@ -256,7 +256,7 @@ Even with a good process, there are traps that waste your analysis time:
 
 **"Paralysis by engine":** You spend 45 minutes on a single position because the engine shows a complex 12-move variation. For club players, the engine's 12th-best move is usually more instructive than its first — because the first move often requires inhuman precision.
 
-<chess-position fen="8/1R2r1pk/5p1p/4p3/4P3/6KP/6P1/8 w - - 0 1" caption="Rook endgame, White to move. Building [chess pattern recognition](/blog/chess-pattern-recognition) is the antidote to overthinking. The engine might find a precise winning line, but for a club player, the key lesson is simpler: activate your rook, restrict your opponent's king, and push your passed pawn. Don't overthink it — the principles matter more than the exact moves." orientation="white" analysis="true"></chess-position>
+<chess-position fen="8/1R2r1pk/5p1p/4p3/4P3/6KP/6P1/8 w - - 0 1" caption="Rook endgame, White to move. Building [chess pattern recognition](/blog/chess-pattern-recognition) is the antidote to overthinking. The engine might find a precise winning line, but for a club player, the key lesson is simpler: activate your rook, restrict your opponent's king, and push your passed pawn. Don't overthink it — the principles matter more than the exact moves." orientation="white" arrows="b7e7:green" badge="best"></chess-position>
 
 In positions like the one above, the *principle* (active rook + passed pawn + restricted king) is worth more than the exact engine line. When you analyze endgames, focus on understanding the plan, not memorizing the moves. If you understand *why* the rook belongs behind the passed pawn, you'll find the right move in similar positions even when the exact position is different.
 
