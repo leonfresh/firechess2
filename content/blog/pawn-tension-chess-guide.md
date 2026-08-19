@@ -55,7 +55,7 @@ This flexibility principle applies across all [chess openings](/openings/) — t
 
 The French Defense is one of the clearest examples of pawn tension deciding the character of an entire game. After 1.e4 e6 2.d4 d5, the position contains a fundamental standoff: White's e4-pawn faces Black's d5-pawn.
 
-<chess-position fen="rnbqkbnr/ppp2ppp/4p3/3p4/3PP3/8/PPP2PPP/RNBQKBNR w KQkq - 0 3" caption="The French Defense after 1.e4 e6 2.d4 d5 — one of chess's most studied pawn tension positions. White has three choices: 3.exd5 (Exchange), 3.e5 (Advance), or 3.Nc3/Nd2 (maintain tension)." orientation="white" moves="exd5,e5,Nc3"></chess-position>
+<chess-position fen="rnbqkbnr/ppp2ppp/4p3/3p4/3PP3/8/PPP2PPP/RNBQKBNR w KQkq - 0 3" caption="The French Defense after 1.e4 e6 2.d4 d5 — one of chess's most studied pawn tension positions. White has three choices: 3.exd5 (Exchange), 3.e5 (Advance), or 3.Nc3/Nd2 (maintain tension)." orientation="white" moves="exd5,e5,Nc3" arrows="b1c3:green" badge="best"></chess-position>
 
 White's three options map directly to our framework:
 
@@ -79,11 +79,11 @@ A common pattern in club games: White plays 3.exd5 exd5 and then spends the next
 
 The Queen's Gambit Declined is the textbook example of sustained pawn tension. After 1.d4 d5 2.c4 e6 3.Nc3 Nf6, White's c-pawn faces Black's d-pawn, but neither side rushes to capture.
 
-<chess-position fen="rnbqkb1r/ppp2ppp/4pn2/3p4/2PP4/2N5/PP2PPPP/R1BQKBNR w KQkq - 2 4" caption="Queen's Gambit Declined after 3...Nf6. The c4-d5 tension defines the entire opening. White can capture on d5, but smart players develop first and maintain the tension." orientation="white" moves="cxd5,Bg5,Nf3"></chess-position>
+<chess-position fen="rnbqkb1r/ppp2ppp/4pn2/3p4/2PP4/2N5/PP2PPPP/R1BQKBNR w KQkq - 2 4" caption="Queen's Gambit Declined after 3...Nf6. The c4-d5 tension defines the entire opening. White can capture on d5, but smart players develop first and maintain the tension." orientation="white" moves="cxd5,Bg5,Nf3" arrows="g1f3:green" badge="best"></chess-position>
 
 After 4.Nf3 Be7 5.Bg5 O-O 6.e3 Nbd7 7.Rc1 c6, we reach the Orthodox QGD — one of the most deeply analyzed positions in chess history:
 
-<chess-position fen="r1bq1rk1/pp1nbppp/2p1pn2/3p2B1/2PP4/2N1PN2/PP3PPP/2RQKB1R w K - 0 8" caption="The Orthodox QGD. Black's d5-pawn faces White's c4-pawn, but neither side has captured yet after 7 moves. White's Rc1 puts pressure on the c-file, making cxd5 a constant threat." orientation="white" moves="cxd5,Bd3,Qc2"></chess-position>
+<chess-position fen="r1bq1rk1/pp1nbppp/2p1pn2/3p2B1/2PP4/2N1PN2/PP3PPP/2RQKB1R w K - 0 8" caption="The Orthodox QGD. Black's d5-pawn faces White's c4-pawn, but neither side has captured yet after 7 moves. White's Rc1 puts pressure on the c-file, making cxd5 a constant threat." orientation="white" moves="cxd5,Bd3,Qc2" arrows="a2a3:green" badge="best"></chess-position>
 
 Why has neither side captured on c4 or d5? Because both players understand that the tension is an asset, not a liability:
 
@@ -111,7 +111,7 @@ The QGD is one of the [most-played openings by rating](/blog/most-played-opening
 
 The Caro-Kann Defense creates pawn tension that looks similar to the French but plays out differently. After 1.e4 c6 2.d4 d5 3.e5, White advances past the tension rather than maintaining or capturing:
 
-<chess-position fen="2rqkb1r/pp1nnppp/4p3/2ppPb2/3P4/P1P2N2/1P2BPPP/RNBQ1RK1 w k - 0 9" caption="Caro-Kann Advance after 8...c5. Black challenges White's center with the c-pawn. If White captures dxc5, the tension resolves favorably for Black — the d4 square becomes weak." orientation="white" moves="dxc5,c3,Nc3"></chess-position>
+<chess-position fen="2rqkb1r/pp1nnppp/4p3/2ppPb2/3P4/P1P2N2/1P2BPPP/RNBQ1RK1 w k - 0 9" caption="Caro-Kann Advance after 8...c5. Black challenges White's center with the c-pawn. If White captures dxc5, the tension resolves favorably for Black — the d4 square becomes weak." orientation="white" moves="dxc5,c3,Nc3" arrows="d4c5:green" badge="best"></chess-position>
 
 After 3.e5 Bf5 4.Nf3 e6 5.Be2 Nd7 6.O-O Ne7 7.c3 Rc8 8.a3 c5, Black strikes at the center. Now White faces the classic question: capture or maintain?
 
@@ -131,7 +131,7 @@ The antidote is simple: before you capture, ask yourself "What does my opponent 
 
 The King's Indian Defense creates the most dramatic pawn tension in chess. After 1.d4 Nf6 2.c4 g6 3.Nc3 Bg7 4.e4 d6 5.Nf3 O-O 6.Be2 e5 7.O-O Nc6, the center is a powder keg:
 
-<chess-position fen="r1bq1rk1/ppp2pbp/2np1np1/4p3/2PPP3/2N2N2/PP2BPPP/R1BQ1RK1 w - - 2 8" caption="King's Indian main line. The d4-e5 pawn tension defines the position. White controls more space; Black aims for ...f5 followed by a kingside attack. The side that mismanages this tension loses." orientation="white" moves="d5,dxe5,Be3"></chess-position>
+<chess-position fen="r1bq1rk1/ppp2pbp/2np1np1/4p3/2PPP3/2N2N2/PP2BPPP/R1BQ1RK1 w - - 2 8" caption="King's Indian main line. The d4-e5 pawn tension defines the position. White controls more space; Black aims for ...f5 followed by a kingside attack. The side that mismanages this tension loses." orientation="white" moves="d5,dxe5,Be3" arrows="d4d5:green" badge="best"></chess-position>
 
 White has pawns on c4, d4, and e4; Black has pawns on d6 and e5. The d4-pawn and e5-pawn face each other. This central tension will eventually break — the question is when, how, and in whose favor.
 

@@ -1,7 +1,7 @@
 ---
-title: "Centipawn Loss in Chess: What ACPL Means & How to Improve Yours"
+title: "Average Centipawn Loss (ACPL) Explained: What It Means & How to Improve"
 description: "Centipawn loss (ACPL) measures chess move quality. See ACPL benchmarks by rating, real board examples, and how FireChess helps you improve."
-date: "2026-08-19"
+date: "2026-08-20"
 author: "FireChess Team"
 tags: ["analysis", "fundamentals", "improvement", "centipawn-loss"]
 canonical: https://firechess.com/blog/what-is-centipawn-loss
