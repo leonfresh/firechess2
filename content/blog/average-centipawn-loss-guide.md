@@ -25,7 +25,7 @@ Here's the key insight most players miss: **ACPL is not about playing the best m
 
 Take this position from a Ruy Lopez, one of the most analyzed openings in chess:
 
-<chess-position fen="r1bq1rk1/2p1bppp/p1np1n2/1p2p3/4P3/1BP2N1P/PP1P1PP1/RNBQR1K1 b - - 0 9" caption="Black to move in the Ruy Lopez. The engine's top choice is 9...Nb8 (the Breyer variation, repositioning the knight to d7). Playing 9...Na5 instead costs roughly 25-30 centipawns — a Good-to-Inaccuracy borderline move." orientation="black"></chess-position>
+<chess-position fen="r1bq1rk1/2p1bppp/p1np1n2/1p2p3/4P3/1BP2N1P/PP1P1PP1/RNBQR1K1 b - - 0 9" caption="Black to move in the Ruy Lopez. The engine's top choice is 9...Nb8 (the Breyer variation, repositioning the knight to d7). Playing 9...Na5 instead costs roughly 25-30 centipawns — a Good-to-Inaccuracy borderline move." arrows="c6b8:green" badge="best" orientation="black"></chess-position>
 
 Black has several reasonable moves here. The engine prefers **9...Nb8** — the famous Breyer maneuver, where the knight retreats to eventually reroute via d7 to better squares. It looks passive, but it's been a world championship weapon for decades. The move **9...Na5** looks more active (attacking the bishop), but it's slightly less accurate because it weakens Black's control of c5 and doesn't improve coordination.
 
@@ -200,7 +200,7 @@ After scanning thousands of games on FireChess, the same patterns appear again a
 
 The most common ACPL spike happens in the first 15 moves. Players who don't know their opening well enough make "reasonable-looking" moves that subtly weaken their position by30-50 centipawns each. Five such moves and you've donated150+ centipawns before the middlegame even starts.
 
-<chess-position fen="r1bq1rk1/pppnbppp/5n2/3p2B1/3P4/2N1PN2/PP3PPP/R2QKB1R w KQ - 0 8" caption="White to move in the Queen's Gambit Declined. After the natural 8.Bd3, Black has solid equality. But if White plays 8.Ne5?! instead, Black gets easy play with ...dxc4 and ...Nd5. Check your opening ACPL in FireChess's 'Opening Leaks' section." orientation="white"></chess-position>
+<chess-position fen="r1bq1rk1/pppnbppp/5n2/3p2B1/3P4/2N1PN2/PP3PPP/R2QKB1R w KQ - 0 8" caption="White to move in the Queen's Gambit Declined. After the natural 8.Bd3, Black has solid equality. But if White plays 8.Ne5?! instead, Black gets easy play with ...dxc4 and ...Nd5. Check your opening ACPL in FireChess's 'Opening Leaks' section." arrows="f1d3:green" badge="best" orientation="white"></chess-position>
 
 The Queen's Gambit Declined is one of the most theoretically dense openings in chess. If you're a 1500-rated player and you reach this position, you might play **8.Bd3** (the main line, solid) or you might play **8.Ne5?!** (looks active, attacking f7, but actually gives Black easy equality). The engine's evaluation difference is only about 20-30 centipawns, but the resulting positions are dramatically different in practice — after 8.Ne5 Black gets a comfortable game with ...dxc4, ...Nd5, and ...f6, while after 8.Bd3 White maintains a small but persistent edge.
 
@@ -210,7 +210,7 @@ This is what "Opening Leaks" in [FireChess's analysis tool](/analyze) shows you:
 
 The biggest ACPL spikes (200+ centipawns on a single move) happen when you miss a tactical shot — either your opponent's or your own. This is different from the opening problem: opening inaccuracies are small and consistent, while calculation misses are large and sporadic.
 
-<chess-position fen="r1bqkb1r/ppp2Npp/2n5/3np3/2B5/8/PPPP1PPP/RNBQK2R b KQkq - 0 6" caption="Black to move after 6.Nxf7 in the Fried Liver Attack. The engine says Black should play 6...Kxf7, accepting the sacrifice and entering a sharp but defensible position. The move 6...Ke8?? is a blunder — it looks safer but loses to7.Qf3. One wrong king move costs 300+ centipawns." orientation="black"></chess-position>
+<chess-position fen="r1bqkb1r/ppp2Npp/2n5/3np3/2B5/8/PPPP1PPP/RNBQK2R b KQkq - 0 6" caption="Black to move after 6.Nxf7 in the Fried Liver Attack. The engine says Black should play 6...Kxf7, accepting the sacrifice and entering a sharp but defensible position. The move 6...Ke8?? is a blunder — it looks safer but loses to7.Qf3. One wrong king move costs 300+ centipawns." arrows="e8f7:green,d8d7:red" badge="best" orientation="black"></chess-position>
 
 The Fried Liver Attack is a perfect ACPL case study. After **6.Nxf7**, Black faces a critical decision. The engine says **6...Kxf7** is the only real move — it's scary (your king is exposed on f7) but objectively sound. The move **6...Ke8??** looks natural (keep the king safe, don't take the knight) but is actually a catastrophic blunder losing300+ centipawns because White plays7.Qf3 and Black's position collapses.
 
@@ -222,7 +222,7 @@ After scanning your games, look at the "Blunder" section — each one usually ha
 
 The third ACPL killer is less dramatic but equally damaging: playing the endgame poorly. A position that's +2.00 (winning) slowly bleeds to +0.50 (drawn) because you don't know the technique. Each move loses15-30 centipawns — never a blunder, never even a mistake, just a steady stream of inaccuracies.
 
-<chess-position fen="8/5kpp/8/8/8/4R3/r4PPP/6K1 w - - 0 1" caption="White to move in a rook endgame. The active 1.Ra3 is much stronger than the passive 1.Rf3+?! — trading rooks or putting the rook behind the pawn is key technique. Endgame ACPL is where most club players lose the most points relative to masters." orientation="white"></chess-position>
+<chess-position fen="8/5kpp/8/8/8/4R3/r4PPP/6K1 w - - 0 1" caption="White to move in a rook endgame. The active 1.Ra3 is much stronger than the passive 1.Rf3+?! — trading rooks or putting the rook behind the pawn is key technique. Endgame ACPL is where most club players lose the most points relative to masters." arrows="g2g4:green" badge="best" orientation="white"></chess-position>
 
 In this rook endgame, White has a clear advantage (extra pawn, active rook). But the difference between **1.Ra3** (active, targeting the a-file) and **1.Rf3+?!** (passive, checking without a plan) is about 40 centipawns. Over 15 endgame moves, choosing the "safe" but passive option every time can cost 200+ centipawns total — the equivalent of giving back the entire advantage.
 

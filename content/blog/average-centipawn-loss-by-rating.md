@@ -119,7 +119,7 @@ Averages can feel abstract, so here's what different ACPL values mean in practic
 
 Consider this position from the Italian Game, Giuoco Pianissimo:
 
-<chess-position fen="r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R b KQkq - 0 4" caption="Italian Game after 4.d3 — Black's next move determines the character of the game. A 1400 typically plays 4...d6? (passive, ≈40 cp loss), while a 2000 plays 4...Bc5 or 4...Be7 with a clear plan." orientation="white"></chess-position>
+<chess-position fen="r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R b KQkq - 0 4" caption="Italian Game after 4.d3 — Black's next move determines the character of the game. A 1400 typically plays 4...d6? (passive, ≈40 cp loss), while a 2000 plays 4...Bc5 or 4...Be7 with a clear plan." arrows="f8c5:green,d7d6:orange" badge="best" orientation="white"></chess-position>
 
 A 1400-rated player in this position might lose 50–70 cp by choosing the wrong plan over the next few moves. A 2000-rated player evaluates the same position and gains 10–15 cp of advantage through precise play. See our guide on [Italian Game Mistakes Club Players Make](/blog/italian-game-mistakes-club-players-make) for the most common errors from this setup.
 
@@ -271,7 +271,7 @@ Here's what the spread of centipawn loss typically looks like within each rating
 
 To see how this plays out concretely, consider the Sicilian Najdorf — one of the most theoretically demanding openings in chess:
 
-<chess-position fen="r2q1rk1/3nbppp/p2pbn2/1p2p1P1/4P3/1NN1BP2/PPPQ3P/2KR1B1R b - - 0 12" caption="Sicilian Najdorf, English Attack — the kind of position where ACPL diverges wildly by rating. A 1200 player will hang pieces in the tactical chaos. A 1600 plays the position passively and drifts. A 2000 finds the concrete counterplay with 12...h6 or 12...Rc8." orientation="white"></chess-position>
+<chess-position fen="r2q1rk1/3nbppp/p2pbn2/1p2p1P1/4P3/1NN1BP2/PPPQ3P/2KR1B1R b - - 0 12" caption="Sicilian Najdorf, English Attack — the kind of position where ACPL diverges wildly by rating. A 1200 player will hang pieces in the tactical chaos. A 1600 plays the position passively and drifts. A 2000 finds the concrete counterplay with 12...h6 or 12...Rc8." arrows="b5b4:green" badge="best" orientation="white"></chess-position>
 
 At the 1200 level, this position produces ACPL 100+ — players either freeze from the complexity or play random pawn pushes. At 1600, ACPL drops to 55–70, but the moves are still reactive rather than proactive. At 2000+, players find the right plan (counter-attack on the queenside with ...Rc8 and ...h6) and keep ACPL under 35. The position hasn't changed — the player has. Use [FireChess's analysis tools](/analyze) to see how your ACPL shifts across different opening structures.
 
@@ -437,7 +437,7 @@ There's also a psychological factor: ACPL is a "lower is better" metric where im
 
 Consider this Ruy Lopez middlegame — a position that appears in thousands of club games every month:
 
-<chess-position fen="r1bq1rk1/2pnbppp/p2p1n2/1p2p3/3PP3/1BP2N1P/PP3PP1/RNBQR1K1 w - - 1 11" caption="Ruy Lopez, Closed Defense — White's d4 break has been played, and the position is about to open up. A 1400 might miss the timing of d5 and lose 40+ cp in the next 5 moves. A 2000 plays d5 at exactly the right moment, maintaining pressure." orientation="white"></chess-position>
+<chess-position fen="r1bq1rk1/2pnbppp/p2p1n2/1p2p3/3PP3/1BP2N1P/PP3PP1/RNBQR1K1 w - - 1 11" caption="Ruy Lopez, Closed Defense — White's d4 break has been played, and the position is about to open up. A 1400 might miss the timing of d5 and lose 40+ cp in the next 5 moves. A 2000 plays d5 at exactly the right moment, maintaining pressure." arrows="b1d2:green" badge="best" orientation="white"></chess-position>
 
 This is the kind of position where middlegame ACPL spikes for club players. White has a clear plan (d4-d5 break, piece activity on the e-file) but the timing is critical. Play d5 too early and Black equalizes; play it too late and Black gets counterplay on the queenside. A 1400 player will typically waste 2-3 moves deciding, losing 40+ centipawns in indecision. For deeper coverage of this structure, see our [Italian Game Mistakes guide](/blog/italian-game-mistakes-club-players-make) — many of the same middlegame patterns apply.
 
@@ -450,13 +450,13 @@ To get a reliable ACPL reading, follow these guidelines:
 
 Here's an example of a typical middlegame position where rating level dramatically affects ACPL:
 
-<chess-position fen="rnbq1rk1/ppp1bpp1/4pn1p/3p4/2PP3B/2N1PN2/PP3PPP/R2QKB1R b KQ - 1 7" caption="Queen's Gambit Declined after 7.Bh4 — Black must decide how to handle the pin. At 1400, players average 65–85 ACPL from here, often mishandling the pin with passive moves. At 2000, players find 7...b6 or 7...dxc4 with clear plans, averaging 35–45 ACPL." orientation="white"></chess-position>
+<chess-position fen="rnbq1rk1/ppp1bpp1/4pn1p/3p4/2PP3B/2N1PN2/PP3PPP/R2QKB1R b KQ - 1 7" caption="Queen's Gambit Declined after 7.Bh4 — Black must decide how to handle the pin. At 1400, players average 65–85 ACPL from here, often mishandling the pin with passive moves. At 2000, players find 7...b6 or 7...dxc4 with clear plans, averaging 35–45 ACPL." arrows="b7b6:green,d5c4:orange" badge="best" orientation="white"></chess-position>
 
 This position perfectly illustrates the rating-ACPL relationship. A 1400 player facing the Bh4 pin typically panics — playing passive moves like 7...Nh5 that give White a free hand in the center. A 2000 player recognizes the pin is manageable and finds the right moment to break with ...dxc4 or reposition with ...b6. The material is equal, the position is symmetrical, and yet the accuracy gap between these two players can be 30+ centipawns per move. If you want to practice these kinds of middlegame decisions, try [Chess Middlegame Strategy: Finding a Plan](/blog/chess-middlegame-strategy-finding-a-plan).
 
 Centipawn loss in the endgame also reveals a lot about a player's true level:
 
-<chess-position fen="8/8/8/4k3/8/8/4K3/8 w - - 0 1" caption="Bare kings — White to move. At 1200, players lose 80+ cp from random king moves. At 1800, players understand opposition and key squares, losing under 20 cp. This is the purest test of endgame knowledge." orientation="white"></chess-position>
+<chess-position fen="8/8/8/4k3/8/8/4K3/8 w - - 0 1" caption="Bare kings — White to move. At 1200, players lose 80+ cp from random king moves. At 1800, players understand opposition and key squares, losing under 20 cp. This is the purest test of endgame knowledge." arrows="e2e3:green" badge="best" orientation="white"></chess-position>
 
 This bare-king position looks trivial, but it's the purest test of endgame knowledge. A 1200-rated player will walk their king to the side of the board, losing opposition and giving ground with every move. An 1800 knows that with White to move, the key is to **keep the opposition** — moving the king to a square that mirrors Black's king, forcing Black to step aside. For more endgame patterns like this, see our guide on [Endgame Patterns Club Players Miss](/blog/endgame-patterns-club-players-miss).
 
