@@ -814,11 +814,11 @@ export function ScanSessionPage({
                     </div>
                   ) : null}
                   {liveReportMeta?.estimatedRating ? (
-                    <div className="rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-4 py-3.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#ff8c42]/80">
+                    <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e] px-4 py-3.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                         Est. Rating
                       </p>
-                      <p className="mt-1.5 text-2xl font-bold tabular-nums tracking-[-0.02em] text-[#ff8c42]">
+                      <p className="mt-1.5 text-2xl font-bold tabular-nums tracking-[-0.02em] text-[#ff5a1f]">
                         {liveReportMeta.estimatedRating.toLocaleString()}
                       </p>
                     </div>
@@ -876,7 +876,7 @@ export function ScanSessionPage({
                         : "Running"}
                   </span>
                   {liveReportMeta ? (
-                    <span className="rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-3 py-1 font-semibold text-[#ff8c42]">
+                    <span className="rounded-full border border-[#1e1a24] bg-[#1e1a24] px-3 py-1 font-semibold text-[#f0edf2]">
                       {liveReportMeta.vibeTitle}
                     </span>
                   ) : null}
@@ -1013,7 +1013,7 @@ export function ScanSessionPage({
                 refresh an old report that predates this section.
               </p>
               {brilliantBackfillState === "done" ? (
-                <span className="rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-3 py-1 text-xs font-semibold text-[#ff8c42]">
+                <span className="rounded-full border border-[#1e1a24] bg-[#1e1a24] px-3 py-1 text-xs font-semibold text-[#f0edf2]">
                   Brilliant section refreshed
                 </span>
               ) : null}
@@ -1033,7 +1033,7 @@ export function ScanSessionPage({
                 refresh all 9 sample reports without a full rescan.
               </p>
               {reportMetaState === "done" ? (
-                <span className="rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-3 py-1 text-xs font-semibold text-[#ff8c42]">
+                <span className="rounded-full border border-[#1e1a24] bg-[#1e1a24] px-3 py-1 text-xs font-semibold text-[#f0edf2]">
                   Title & stats refreshed ✓
                 </span>
               ) : reportMetaState === "error" ? (
@@ -1301,7 +1301,7 @@ export function ScanSessionPage({
         {scan.result ? (
           <>
             {scan.result.gamesAnalyzed === 0 && scan.config.source === "pgn" && (
-              <section className="mt-6 rounded-[1.75rem] border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] p-6 text-[#f0edf2]">
+              <section className="mt-6 rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] p-6 text-[#f0edf2]">
                 <h2 className="text-lg font-bold">No games analyzed</h2>
                 <p className="mt-2 text-sm leading-relaxed">
                   The PGN was parsed but no games matched the name{" "}

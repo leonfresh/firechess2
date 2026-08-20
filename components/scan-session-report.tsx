@@ -165,7 +165,7 @@ function FloatingSectionNav({ sections }: { sections: FloatingNavSection[] }) {
                 {label}
                 {count ? (
                   <span
-                    className={`ml-1.5 rounded-full px-1.5 text-[9px] font-bold ${countColor ?? "bg-[#ff5a1f]/10 text-[#f0edf2]"}`}
+                    className={`ml-1.5 rounded-full px-1.5 text-[9px] font-bold ${countColor ?? "bg-[#1e1a24] text-[#f0edf2]"}`}
                   >
                     {count}
                   </span>
@@ -243,7 +243,7 @@ function CompactCardFooter({
   const remaining = Math.max(0, total - shown);
 
   return (
-    <div className="mt-4 flex flex-col gap-3 rounded-[1.25rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mt-4 flex flex-col gap-3 rounded-[1.25rem] border border-[#1e1a24] bg-[#121015] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-2">
         <div className="h-1.5 w-28 overflow-hidden rounded-full bg-[#1e1a24]">
           <div
@@ -285,7 +285,7 @@ function CompactCardFooter({
           <button
             type="button"
             onClick={onShowLess}
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-4 py-2 text-xs font-semibold text-[#8d8696] transition-all duration-200 hover:border-[#ff5a1f]/30 hover:bg-[#ff5a1f]/[0.08] hover:text-white active:scale-[0.97]"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[#1e1a24] bg-[#121015] px-4 py-2 text-xs font-semibold text-[#8d8696] transition-all duration-200 hover:border-[#ff5a1f]/30 hover:bg-[#ff5a1f]/[0.08] hover:text-white active:scale-[0.97]"
           >
             Show fewer
           </button>
@@ -338,7 +338,7 @@ function ProSectionLimitNotice({
   const hidden = total - shown;
   return (
     <div
-      className="relative overflow-hidden rounded-[1.5rem] border border-[#ff5a1f]/25 p-5 sm:p-6"
+      className="relative overflow-hidden rounded-[1.5rem] border border-[#1e1a24] p-5 sm:p-6"
       style={{
         background:
           "linear-gradient(135deg, rgba(30,16,4,0.97) 0%, rgba(44,22,6,0.97) 52%, rgba(56,22,8,0.96) 100%)",
@@ -352,16 +352,16 @@ function ProSectionLimitNotice({
       <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-4">
           {/* lock icon */}
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#ff5a1f]/[0.12] text-xl">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#121015] text-xl">
             🔒
           </div>
           <div>
             <p className="font-bold text-white">
               {hidden} more {label} locked
             </p>
-            <p className="mt-0.5 text-sm leading-relaxed text-[#ff8c42]">
+            <p className="mt-0.5 text-sm leading-relaxed text-[#f0edf2]">
               You're seeing{" "}
-              <span className="font-semibold text-[#ff8c42]">{shown}</span> of{" "}
+              <span className="font-semibold text-[#f0edf2]">{shown}</span> of{" "}
               <span className="font-semibold text-white">{total}</span> {label}.
               Pro unlocks the complete list and every future scan.
             </p>
@@ -414,7 +414,7 @@ function SectionLoadingProgress({
     hasCount && safeTotal ? (safeCurrent / safeTotal) * 100 : percent;
 
   return (
-    <div className="rounded-[1.5rem] border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] p-5 sm:p-6">
+    <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-white">{message}</p>
@@ -468,7 +468,7 @@ function RadarLoadingState({
     : "This scan needs more scored positions before the radar chart can lock onto a stable profile.";
 
   return (
-    <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-6">
+    <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-2xl">
           <h2 className="text-lg font-bold text-white">
@@ -492,7 +492,7 @@ function RadarLoadingState({
           />
         </div>
       ) : (
-        <div className="mt-4 rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-4 py-3 text-sm text-[#8d8696]">
+        <div className="mt-4 rounded-2xl border border-[#1e1a24] bg-[#121015] px-4 py-3 text-sm text-[#8d8696]">
           Scores appear once enough positions are evaluated.
         </div>
       )}
@@ -517,7 +517,7 @@ function RadarLoadingState({
           {["Current edge", "Also helping"].map((label) => (
             <div
               key={label}
-              className="rounded-[1.25rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4 animate-pulse"
+              className="rounded-[1.25rem] border border-[#1e1a24] bg-[#121015] p-4 animate-pulse"
             >
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                 {label}
@@ -535,7 +535,7 @@ function RadarLoadingState({
       </div>
 
       <div className="mt-5 grid gap-6 xl:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
-        <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-5">
+        <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5">
           <div className="mx-auto flex aspect-square w-full max-w-[22rem] items-center justify-center rounded-full border border-[#1e1a24] bg-[radial-gradient(circle,_rgba(34,211,238,0.08),_rgba(15,23,42,0.18)_52%,_rgba(2,6,23,0.08)_100%)]">
             <div className="flex flex-col items-center gap-3 text-center">
               <div className="grid h-24 w-24 place-items-center rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] text-[11px] font-semibold uppercase tracking-[0.24em] text-[#ff8c42]">
@@ -550,7 +550,7 @@ function RadarLoadingState({
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5 sm:p-6 animate-pulse">
+          <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6 animate-pulse">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#565061]">
               Coach&apos;s note
             </p>
@@ -559,7 +559,7 @@ function RadarLoadingState({
             <div className="mt-2 h-3 w-4/5 rounded-full bg-[#1e1a24]" />
           </div>
 
-          <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-5 sm:p-6">
+          <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
             <div className="max-w-2xl">
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#565061]">
                 Profile outline
@@ -574,7 +574,7 @@ function RadarLoadingState({
                 (label) => (
                   <div
                     key={label}
-                    className="rounded-[1.25rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-4 animate-pulse"
+                    className="rounded-[1.25rem] border border-[#1e1a24] bg-[#121015] p-4 animate-pulse"
                   >
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                       {label}
@@ -605,8 +605,8 @@ function FollowUpStatusRow({
 }) {
   const toneClasses = {
     cyan: {
-      border: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06]",
-      badge: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
+      border: "border-[#1e1a24] bg-[#121015]",
+      badge: "border-[#1e1a24] bg-[#1e1a24] text-[#f0edf2]",
       dot: "bg-[#ff5a1f]",
     },
     emerald: {
@@ -615,8 +615,8 @@ function FollowUpStatusRow({
       dot: "bg-emerald-400",
     },
     amber: {
-      border: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06]",
-      badge: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
+      border: "border-[#1e1a24] bg-[#121015]",
+      badge: "border-[#1e1a24] bg-[#1e1a24] text-[#f0edf2]",
       dot: "bg-[#ff5a1f]",
     },
   }[tone];
@@ -675,7 +675,7 @@ function ReportFollowUpCta({
           </p>
         </div>
 
-        <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1 text-sm font-semibold text-white">
+        <span className="rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 text-sm font-semibold text-white">
           {statusLabel}
         </span>
       </div>
@@ -730,7 +730,7 @@ function ReportFollowUpCta({
           <button
             type="button"
             disabled
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-5 py-2.5 text-sm font-semibold text-[#8d8696] opacity-60 cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#1e1a24] bg-[#121015] px-5 py-2.5 text-sm font-semibold text-[#8d8696] opacity-60 cursor-not-allowed"
           >
             <svg
               className="h-4 w-4 animate-spin"
@@ -842,8 +842,8 @@ function StrengthSpotlightCard({
           icon: "bg-emerald-500/15 text-emerald-200",
         }
       : {
-          border: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06]",
-          badge: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
+          border: "border-[#1e1a24] bg-[#121015]",
+          badge: "border-[#1e1a24] bg-[#1e1a24] text-[#f0edf2]",
           icon: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
         };
 
@@ -900,7 +900,7 @@ function SectionHeader({
   onToggleView?: () => void;
 }) {
   return (
-    <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5 sm:p-6">
+    <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="max-w-3xl">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#565061]">
@@ -916,7 +916,7 @@ function SectionHeader({
 
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {badge ? (
-            <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1 font-medium text-white">
+            <span className="rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 font-medium text-white">
               {badge}
             </span>
           ) : null}
@@ -933,7 +933,7 @@ function SectionHeader({
             <button
               type="button"
               onClick={onToggleView}
-              className="inline-flex items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1 text-xs font-medium text-[#8d8696] transition hover:bg-[#ff5a1f]/[0.08] hover:text-white"
+              className="inline-flex items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 text-xs font-medium text-[#8d8696] transition hover:bg-[#ff5a1f]/[0.08] hover:text-white"
               aria-label={`Switch to ${viewMode === "list" ? "carousel" : viewMode === "carousel" ? "grid" : "list"} view`}
             >
               {viewMode === "list" ? (
@@ -989,12 +989,12 @@ function MetricCard({
   tone?: "slate" | "emerald" | "cyan" | "amber" | "sky" | "fuchsia";
 }) {
   const toneClasses = {
-    slate: "border-[#1e1a24] bg-[#ff5a1f]/[0.04] text-white",
-    emerald: "border-emerald-500/20 bg-emerald-500/[0.08] text-white",
-    cyan: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] text-white",
-    amber: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] text-white",
-    sky: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] text-white",
-    fuchsia: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] text-white",
+    slate: "border-[#1e1a24] bg-[#121015] text-white",
+    emerald: "border-[#1e1a24] bg-[#121015] text-white",
+    cyan: "border-[#1e1a24] bg-[#121015] text-white",
+    amber: "border-[#1e1a24] bg-[#121015] text-white",
+    sky: "border-[#1e1a24] bg-[#121015] text-white",
+    fuchsia: "border-[#1e1a24] bg-[#121015] text-white",
   }[tone];
 
   return (
@@ -1224,7 +1224,7 @@ function TacticsCoachInsight({
         headline={headline}
         headlineClass={headlineClass}
         lines={lines.slice(0, 3)}
-        borderClass="border-[#ff5a1f]/25"
+        borderClass="border-[#1e1a24]"
         backgroundClass="bg-[radial-gradient(circle_at_top_right,_rgba(255,90,31,0.25),_rgba(15,23,42,0.82)_40%,_rgba(2,6,23,0.96)_100%)]"
       />
     </>
@@ -1235,7 +1235,7 @@ function TacticalPatternAnalysis({ motifs }: { motifs: DerivedMotif[] }) {
   if (motifs.length === 0) return null;
 
   return (
-    <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5 sm:p-6">
+    <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#565061]">
@@ -1267,7 +1267,7 @@ function TacticalPatternAnalysis({ motifs }: { motifs: DerivedMotif[] }) {
             ? "border-red-500/20 bg-red-500/[0.06]"
             : isBest
               ? "border-emerald-500/20 bg-emerald-500/[0.04]"
-              : "border-[#1e1a24] bg-[#ff5a1f]/[0.03]";
+              : "border-[#1e1a24] bg-[#121015]";
           const badgeBg = isWorst
             ? "bg-red-500/15"
             : isBest
@@ -1284,7 +1284,7 @@ function TacticalPatternAnalysis({ motifs }: { motifs: DerivedMotif[] }) {
               >
                 #{index + 1}
               </div>
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#ff5a1f]/[0.05] text-lg">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#121015] text-lg">
                 {motif.icon}
               </span>
               <div className="min-w-0 flex-1">
@@ -1419,7 +1419,7 @@ function EndgameCoachInsight({
       headline={headline}
       headlineClass={headlineClass}
       lines={lines.slice(0, 3)}
-      borderClass="border-[#ff5a1f]/25"
+      borderClass="border-[#1e1a24]"
       backgroundClass="bg-[radial-gradient(circle_at_top_right,_rgba(255,90,31,0.25),_rgba(15,23,42,0.82)_40%,_rgba(2,6,23,0.96)_100%)]"
     />
   );
@@ -1454,7 +1454,7 @@ function EndgameTypeBreakdown({
   return (
     <div className="space-y-4">
       {endgameStats.byType.length > 0 ? (
-        <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5 sm:p-6">
+        <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#565061]">
@@ -1486,7 +1486,7 @@ function EndgameTypeBreakdown({
                 ? "border-red-500/20 bg-red-500/[0.06]"
                 : isBest
                   ? "border-emerald-500/20 bg-emerald-500/[0.04]"
-                  : "border-[#1e1a24] bg-[#ff5a1f]/[0.03]";
+                  : "border-[#1e1a24] bg-[#121015]";
               const badgeBg = isWeakest
                 ? "bg-red-500/15"
                 : isBest
@@ -1503,7 +1503,7 @@ function EndgameTypeBreakdown({
                   >
                     #{index + 1}
                   </div>
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#ff5a1f]/[0.05] text-lg">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#121015] text-lg">
                     {ENDGAME_TYPE_ICONS[entry.type] ?? "♔"}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -1670,7 +1670,7 @@ function TimeManagementCoachInsight({
       headline={headline}
       headlineClass={headlineClass}
       lines={lines.slice(0, 3)}
-      borderClass="border-[#ff5a1f]/25"
+      borderClass="border-[#1e1a24]"
       backgroundClass="bg-[radial-gradient(circle_at_top_right,_rgba(168,85,247,0.10),_rgba(15,23,42,0.82)_40%,_rgba(2,6,23,0.96)_100%)]"
     />
   );
@@ -2192,7 +2192,7 @@ export function ScanSessionReport({
       label: "Brilliant",
       icon: "💎",
       count: brilliantMoves.length || undefined,
-      countColor: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
+      countColor: "bg-[#1e1a24] text-[#f0edf2]",
     },
     showStructural && {
       id: "section-structural",
@@ -2205,42 +2205,42 @@ export function ScanSessionReport({
       label: "Openings",
       icon: "📚",
       count: leaks.length || undefined,
-      countColor: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
+      countColor: "bg-[#1e1a24] text-[#f0edf2]",
     },
     showTactics && {
       id: "section-tactics",
       label: "Tactics",
       icon: "⚔️",
       count: missedTactics.length || undefined,
-      countColor: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
+      countColor: "bg-[#1e1a24] text-[#f0edf2]",
     },
     showEndgames && {
       id: "section-endgames",
       label: "Endgames",
       icon: "♟",
       count: endgameMistakes.length || undefined,
-      countColor: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
+      countColor: "bg-[#1e1a24] text-[#f0edf2]",
     },
     showTimeManagement && {
       id: "section-time",
       label: "Time",
       icon: "⏱️",
       count: timeMoments.length || undefined,
-      countColor: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
+      countColor: "bg-[#1e1a24] text-[#f0edf2]",
     },
     timePositionalReport.insights.length > 0 && {
       id: "section-time-positional",
       label: "Cross-Ref",
       icon: "🔗",
       count: timePositionalReport.insights.length || undefined,
-      countColor: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
+      countColor: "bg-[#1e1a24] text-[#f0edf2]",
     },
     positionalMotifs.length > 0 && {
       id: "section-positional",
       label: "Positional",
       icon: "🏛️",
       count: positionalMotifs.length || undefined,
-      countColor: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
+      countColor: "bg-[#1e1a24] text-[#f0edf2]",
     },
     !!result && {
       id: "section-training",
@@ -2314,7 +2314,7 @@ export function ScanSessionReport({
         showTimeManagement ? (
           <nav
             aria-label="Report sections"
-            className="flex items-center gap-2 overflow-x-auto rounded-2xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] px-3 py-2.5"
+            className="flex items-center gap-2 overflow-x-auto rounded-2xl border border-[#1e1a24] bg-[#121015] px-3 py-2.5"
           >
             {showBrilliants ? (
               <button
@@ -2324,11 +2324,11 @@ export function ScanSessionReport({
                     .getElementById("section-brilliant")
                     ?.scrollIntoView({ behavior: "smooth", block: "start" })
                 }
-                className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1 text-xs font-semibold text-[#f0edf2] transition hover:border-[#ff5a1f]/30 hover:bg-[#ff5a1f]/[0.08] hover:text-white"
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 text-xs font-semibold text-[#f0edf2] transition hover:border-[#ff5a1f]/30 hover:bg-[#ff5a1f]/[0.08] hover:text-white"
               >
                 💎 Brilliant
                 {brilliantMoves.length > 0 ? (
-                  <span className="rounded-full bg-[#ff5a1f]/[0.08] px-1.5 text-[10px] font-bold text-[#ff8c42]">
+                  <span className="rounded-full bg-[#1e1a24] px-1.5 text-[10px] font-bold text-[#f0edf2]">
                     {brilliantMoves.length}
                   </span>
                 ) : null}
@@ -2342,11 +2342,11 @@ export function ScanSessionReport({
                     .getElementById("section-openings")
                     ?.scrollIntoView({ behavior: "smooth", block: "start" })
                 }
-                className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1 text-xs font-semibold text-[#f0edf2] transition hover:border-[#ff5a1f]/30 hover:bg-[#ff5a1f]/[0.08] hover:text-white"
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 text-xs font-semibold text-[#f0edf2] transition hover:border-[#ff5a1f]/30 hover:bg-[#ff5a1f]/[0.08] hover:text-white"
               >
                 📚 Openings
                 {leaks.length > 0 ? (
-                  <span className="rounded-full bg-[#ff5a1f]/[0.08] px-1.5 text-[10px] font-bold text-[#ff8c42]">
+                  <span className="rounded-full bg-[#1e1a24] px-1.5 text-[10px] font-bold text-[#f0edf2]">
                     {leaks.length}
                   </span>
                 ) : null}
@@ -2360,11 +2360,11 @@ export function ScanSessionReport({
                     .getElementById("section-tactics")
                     ?.scrollIntoView({ behavior: "smooth", block: "start" })
                 }
-                className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1 text-xs font-semibold text-[#f0edf2] transition hover:border-[#ff5a1f]/30 hover:bg-[#ff5a1f]/[0.08] hover:text-white"
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 text-xs font-semibold text-[#f0edf2] transition hover:border-[#ff5a1f]/30 hover:bg-[#ff5a1f]/[0.08] hover:text-white"
               >
                 ⚔️ Tactics
                 {missedTactics.length > 0 ? (
-                  <span className="rounded-full bg-[#ff5a1f]/[0.08] px-1.5 text-[10px] font-bold text-[#ff8c42]">
+                  <span className="rounded-full bg-[#1e1a24] px-1.5 text-[10px] font-bold text-[#f0edf2]">
                     {missedTactics.length}
                   </span>
                 ) : null}
@@ -2378,11 +2378,11 @@ export function ScanSessionReport({
                     .getElementById("section-endgames")
                     ?.scrollIntoView({ behavior: "smooth", block: "start" })
                 }
-                className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1 text-xs font-semibold text-[#f0edf2] transition hover:border-[#ff5a1f]/30 hover:bg-[#ff5a1f]/[0.08] hover:text-white"
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 text-xs font-semibold text-[#f0edf2] transition hover:border-[#ff5a1f]/30 hover:bg-[#ff5a1f]/[0.08] hover:text-white"
               >
                 ♟ Endgames
                 {endgameMistakes.length > 0 ? (
-                  <span className="rounded-full bg-[#ff5a1f]/[0.08] px-1.5 text-[10px] font-bold text-[#ff8c42]">
+                  <span className="rounded-full bg-[#1e1a24] px-1.5 text-[10px] font-bold text-[#f0edf2]">
                     {endgameMistakes.length}
                   </span>
                 ) : null}
@@ -2396,11 +2396,11 @@ export function ScanSessionReport({
                     .getElementById("section-time")
                     ?.scrollIntoView({ behavior: "smooth", block: "start" })
                 }
-                className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1 text-xs font-semibold text-[#f0edf2] transition hover:border-[#ff5a1f]/30 hover:bg-[#ff5a1f]/[0.08] hover:text-white"
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 text-xs font-semibold text-[#f0edf2] transition hover:border-[#ff5a1f]/30 hover:bg-[#ff5a1f]/[0.08] hover:text-white"
               >
                 ⏱️ Time
                 {timeMoments.length > 0 ? (
-                  <span className="rounded-full bg-[#ff5a1f]/[0.08] px-1.5 text-[10px] font-bold text-[#ff8c42]">
+                  <span className="rounded-full bg-[#1e1a24] px-1.5 text-[10px] font-bold text-[#f0edf2]">
                     {timeMoments.length}
                   </span>
                 ) : null}
@@ -2414,10 +2414,10 @@ export function ScanSessionReport({
                     .getElementById("section-time-positional")
                     ?.scrollIntoView({ behavior: "smooth", block: "start" })
                 }
-                className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-3 py-1 text-xs font-semibold text-[#ff8c42] transition hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.10] hover:text-[#ff8c42]"
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 text-xs font-semibold text-[#f0edf2] transition hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.10] hover:text-[#ff8c42]"
               >
                 🔗 Cross-Ref
-                <span className="rounded-full bg-[#ff5a1f]/[0.08] px-1.5 text-[10px] font-bold text-[#ff8c42]">
+                <span className="rounded-full bg-[#1e1a24] px-1.5 text-[10px] font-bold text-[#f0edf2]">
                   {timePositionalReport.insights.length}
                 </span>
               </button>
@@ -2434,12 +2434,12 @@ export function ScanSessionReport({
           {!isProcessing && result.games && result.games.length > 0 ? (
             <Link
               href={`/best-game/${scan.id}`}
-              className="group relative overflow-hidden rounded-2xl border border-[#ff5a1f]/25 bg-gradient-to-br from-[#ff5a1f]/[0.07] to-orange-500/[0.03] p-4 transition hover:border-[#ff5a1f]/25 hover:from-[#ff5a1f]/[0.10] hover:to-orange-500/[0.06]"
+              className="group relative overflow-hidden rounded-2xl border border-[#1e1a24] bg-gradient-to-br from-[#ff5a1f]/[0.07] to-orange-500/[0.03] p-4 transition hover:border-[#ff5a1f]/25 hover:from-[#ff5a1f]/[0.10] hover:to-orange-500/[0.06]"
             >
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#ff8c42]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8d8696]">
                 Best Game
               </p>
-              <p className="mt-1 text-sm font-bold text-[#ff8c42] group-hover:text-[#ff8c42]">
+              <p className="mt-1 text-sm font-bold text-[#f0edf2] group-hover:text-[#ff8c42]">
                 View your best performance →
               </p>
               <div className="absolute -bottom-2 -right-2 text-3xl opacity-10">🏆</div>
@@ -2511,13 +2511,13 @@ export function ScanSessionReport({
                     : `Your strongest recurring signal right now is ${reportMeta.topTag}. The sections below update as more detail locks in.`}
               </p>
               <div className="mt-5 flex flex-wrap gap-2 text-xs">
-                <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1 text-white">
+                <span className="rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 text-white">
                   Confidence {reportMeta.confidence}%
                 </span>
-                <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1 text-white">
+                <span className="rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 text-white">
                   {reportMeta.sampleSize} scored positions
                 </span>
-                <span className="rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1 text-white">
+                <span className="rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 text-white">
                   Consistency {reportMeta.consistencyScore}/100
                 </span>
               </div>
@@ -2591,12 +2591,12 @@ export function ScanSessionReport({
               />
 
               <div className="grid gap-4 xl:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
-                <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5 sm:p-6">
+                <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
                   <StrengthsRadar {...radarProps} />
                 </div>
 
                 <div className="space-y-4">
-                  <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5 sm:p-6">
+                  <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#565061]">
                       Coach&apos;s note
                     </p>
@@ -2605,7 +2605,7 @@ export function ScanSessionReport({
                     </p>
                   </div>
 
-                  <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.03] p-5 sm:p-6">
+                  <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
                     <div className="max-w-2xl">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#565061]">
                         Profile outline
@@ -2646,7 +2646,7 @@ export function ScanSessionReport({
             />
             <div className="grid gap-4 sm:grid-cols-2">
               {/* Mistakes by category */}
-              <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5 sm:p-6">
+              <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
                 <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-[#565061]">
                   Mistakes by category
                 </h3>
@@ -2697,7 +2697,7 @@ export function ScanSessionReport({
               </div>
 
               {/* CP loss by game phase */}
-              <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5 sm:p-6">
+              <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
                 <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-[#565061]">
                   CP loss by game phase
                 </h3>
@@ -2867,7 +2867,7 @@ export function ScanSessionReport({
 
             {leaks.length > 0 ? (
               <div className="space-y-4">
-                <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5 sm:p-6">
+                <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="text-lg font-bold text-white">
                       Recurring opening leaks
@@ -2875,7 +2875,7 @@ export function ScanSessionReport({
                     <button
                       type="button"
                       onClick={() => toggleSV("leaks")}
-                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1 text-xs font-medium text-[#8d8696] transition hover:bg-[#ff5a1f]/[0.08] hover:text-white"
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 text-xs font-medium text-[#8d8696] transition hover:bg-[#ff5a1f]/[0.08] hover:text-white"
                     >
                       {getSV("leaks") === "list" ? "Carousel" : getSV("leaks") === "carousel" ? "Grid" : "List"}
                     </button>
@@ -2929,7 +2929,7 @@ export function ScanSessionReport({
 
             {oneOffMistakes.length > 0 ? (
               <div className="space-y-4">
-                <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-5 sm:p-6">
+                <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="text-lg font-bold text-white">
                       Sharp one-off misses
@@ -2937,7 +2937,7 @@ export function ScanSessionReport({
                     <button
                       type="button"
                       onClick={() => toggleSV("one-offs")}
-                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-1 text-xs font-medium text-[#8d8696] transition hover:bg-[#ff5a1f]/[0.08] hover:text-white"
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 text-xs font-medium text-[#8d8696] transition hover:bg-[#ff5a1f]/[0.08] hover:text-white"
                     >
                       {getSV("one-offs") === "list" ? "Carousel" : getSV("one-offs") === "carousel" ? "Grid" : "List"}
                     </button>
@@ -3504,14 +3504,14 @@ function LessonBuilderSection({
 
   return (
     <>
-      <div className="rounded-[1.5rem] border border-[#ff5a1f]/25 bg-gradient-to-r from-[#ff5a1f]/[0.06] to-[#ff8c42]/[0.03] p-6">
+      <div className="rounded-[1.5rem] border border-[#1e1a24] bg-gradient-to-r from-[#ff5a1f]/[0.06] to-[#ff8c42]/[0.03] p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#ff5a1f]/[0.08] text-2xl">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#1e1a24] text-2xl">
               📖
             </span>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ff8c42]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8d8696]">
                 Interactive Lesson
               </p>
               <h3 className="mt-1 text-lg font-bold text-white">
