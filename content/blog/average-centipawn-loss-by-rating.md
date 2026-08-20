@@ -99,7 +99,7 @@ Here are the typical ACPL ranges based on analysis of thousands of rated games a
 | 2400–2600 | 15–25 | 95–97% | Grandmaster |
 | 2600+ | 10–20 | 97–99% | Super Grandmaster / World Class |
 
-These ranges are a starting point. If you're a 1500 rapid player averaging 50 ACPL across 20+ games, you're playing closer to the accuracy of a 1800. The same goes the other way — an 1800 averaging 70 ACPL has work to do.
+These ranges are a starting point. If you're a 1500 rapid player averaging 50 ACPL across 20+ games, you're playing closer to the accuracy of a 1800. You can check your own ACPL breakdown by uploading a game to [FireChess's analysis tool](/analyze). The same goes the other way — an 1800 averaging 70 ACPL has work to do.
 
 > The key takeaway: **for every ~100 rating points, your ACPL typically drops by about 5–10 cp.** There's no magic shortcut, but knowing where you stand tells you what to target.
 
