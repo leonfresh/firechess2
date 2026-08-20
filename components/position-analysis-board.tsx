@@ -1281,7 +1281,7 @@ export function PositionAnalysisBoard({
                   style={{ marginLeft: `${Math.min(row.depth, 6) * 0.9}rem` }}
                   className={`grid grid-cols-[2.5rem_minmax(0,1fr)_minmax(0,1fr)] items-start gap-2 rounded-xl border px-3 py-1.5 ${
                     row.depth > 0
-                      ? "border-[#ff5a1f]/25/[0.14] bg-[#ff5a1f]/[0.06] border-l-2 border-l-cyan-500/30"
+                      ? "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] border-l-2 border-l-cyan-500/30"
                       : "border-[#1e1a24] bg-[#ff5a1f]/[0.03]"
                   }`}
                 >

@@ -659,7 +659,7 @@ export function EndgameCard({
         {/* Board side */}
         <div
           ref={boardSizeRef}
-          className="relative overflow-hidden border-b border-[#ff5a1f]/25/[0.08] bg-[#ff5a1f]/[0.06] p-3 sm:p-5 md:border-b-0 md:border-r"
+          className="relative overflow-hidden border-b border-[#1e1a24] bg-[#ff5a1f]/[0.06] p-3 sm:p-5 md:border-b-0 md:border-r"
         >
           <div className="mx-auto flex w-full max-w-[460px] items-start gap-2 sm:gap-3">
             <EvalBar evalCp={displayedEvalCp} height={boardSize} />
@@ -805,7 +805,7 @@ export function EndgameCard({
 
           {/* Endgame tip */}
           {ENDGAME_TIPS[mistake.endgameType] && (
-            <div className="rounded-xl border border-[#ff5a1f]/25/[0.08] bg-[#ff5a1f]/[0.06] p-3">
+            <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.06] p-3">
               <p className="flex items-start gap-2 text-xs leading-relaxed text-[#8d8696]">
                 <span className="mt-0.5 shrink-0 text-[#ff8c42]">💡</span>
                 <span>
@@ -827,7 +827,7 @@ export function EndgameCard({
           </p>
 
           {/* FEN block */}
-          <div className="rounded-xl border border-[#ff5a1f]/25/[0.08] bg-[#ff5a1f]/[0.06] p-3">
+          <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.06] p-3">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                 Position FEN
@@ -917,7 +917,7 @@ export function EndgameCard({
               <button
                 type="button"
                 onClick={onOpenAnalysis}
-                className="flex h-10 items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 text-sm font-semibold text-emerald-100 transition-all hover:bg-emerald-500/20 hover:text-white"
+                className="flex h-10 items-center gap-2 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-4 text-sm font-semibold text-[#ff8c42] transition-all hover:bg-[#ff5a1f]/[0.14] hover:text-white"
               >
                 Open analysis
               </button>
@@ -1051,7 +1051,7 @@ export function EndgameCard({
                   </button>
                 </>
               ) : (
-                <div className="rounded-xl border border-[#ff5a1f]/25/[0.08] bg-[#ff5a1f]/[0.06] p-4 text-sm text-[#f0edf2]">
+                <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.06] p-4 text-sm text-[#f0edf2]">
                   {explanation}
                 </div>
               )}

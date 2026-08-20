@@ -1546,7 +1546,7 @@ export function MistakeCard({
   };
 
   return (
-    <article className="glass-card-hover overflow-hidden">
+    <article className="glass-card-hover overflow-hidden border-[#1e1a24]">
       <div className="grid gap-0 md:grid-cols-[minmax(0,520px)_1fr]">
         {/* Board side */}
         <div
@@ -1828,12 +1828,12 @@ export function MistakeCard({
                   ? leak.dbGames
                   : userMoveExplorerData?.totalGames;
               return wr != null && gm != null ? (
-                <div className="flex items-center gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/[0.06] px-3.5 py-2.5">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/20 text-lg">
+                <div className="flex items-center gap-3 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-3.5 py-2.5">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#ff5a1f]/[0.12] text-lg">
                     📚
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-indigo-400/70">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-[#ff8c42]/70">
                       Known Opening Line
                     </p>
                     <p className="mt-0.5 text-xs text-[#8d8696]">
@@ -1846,7 +1846,7 @@ export function MistakeCard({
                         {gm.toLocaleString()}
                       </span>{" "}
                       database games with a{" "}
-                      <span className="font-semibold text-indigo-400">
+                      <span className="font-semibold text-[#ff8c42]">
                         {(wr * 100).toFixed(0)}%
                       </span>{" "}
                       win rate. The engine prefers a different approach, but
@@ -1981,15 +1981,15 @@ export function MistakeCard({
             <button
               type="button"
               onClick={() => setShowExplorer((v) => !v)}
-              className="flex w-full items-center gap-2 rounded-xl border border-blue-500/20 bg-blue-500/[0.06] px-3.5 py-2.5 text-left transition-colors hover:bg-blue-500/[0.1]"
+              className="flex w-full items-center gap-2 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-3.5 py-2.5 text-left transition-colors hover:bg-[#ff5a1f]/[0.1]"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/20">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#ff5a1f]/[0.12]">
                 <svg
                   width="16"
                   height="16"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="rgb(59,130,246)"
+                  stroke="rgb(255,90,31)"
                   strokeWidth="2"
                 >
                   <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
@@ -1997,7 +1997,7 @@ export function MistakeCard({
                 </svg>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-blue-400/70">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-[#ff8c42]/70">
                   Opening Explorer
                 </p>
                 <p className="mt-0.5 text-xs text-[#8d8696]">
