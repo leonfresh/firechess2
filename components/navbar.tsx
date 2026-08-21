@@ -117,6 +117,36 @@ export function Navbar() {
     setOpenMenu(null);
   }, [pathname]);
 
+  // Close desktop dropdowns on outside click, Escape, or window resize.
+  // Without these, hover menus can stay stuck open (mouse left sideways,
+  // click without navigation, or a breakpoint resize).
+  const desktopNavRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!openMenu) return;
+    const onPointerDown = (e: MouseEvent | TouchEvent) => {
+      if (
+        desktopNavRef.current &&
+        !desktopNavRef.current.contains(e.target as Node)
+      ) {
+        setOpenMenu(null);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenMenu(null);
+    };
+    const onResize = () => setOpenMenu(null);
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("touchstart", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("resize", onResize);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("touchstart", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [openMenu]);
+
   // Lock body scroll when mobile menu is open
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
@@ -182,6 +212,11 @@ export function Navbar() {
   const openProps = (menu: string): any => ({
     className: "relative",
     onMouseEnter: () => setOpenMenu(menu),
+    // Closing on leave makes the menu dismiss when the cursor moves sideways
+    // (mouseleave only fires when leaving the wrapper AND its panel child).
+    onMouseLeave: () => setOpenMenu(null),
+    // Click toggles too, so touch/click users can open and dismiss menus.
+    onClick: () => setOpenMenu((prev) => (prev === menu ? null : menu)),
   });
   // Separate handlers for the dropdown panel so hover gap doesn't close it
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -315,7 +350,7 @@ export function Navbar() {
           </Link>
 
           {/* ── Desktop nav — grouped dropdowns ── */}
-          <div className="hidden items-center gap-0.5 lg:flex">
+          <div ref={desktopNavRef} className="hidden items-center gap-0.5 lg:flex">
             {/* Analyze */}
             <div {...openProps("analyze")}>
               <button
