@@ -95,6 +95,15 @@ export function Nl3Hero({
                 </span>
               ),
             )}
+            <a
+              href="https://www.youtube.com/watch?v=MpWsW10YE5M"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-[13px] text-[#565061] transition-colors hover:text-[#f0edf2]"
+            >
+              <Play className="h-3 w-3 text-[#ff5a1f]" fill="currentColor" />
+              Watch the 90-sec trailer
+            </a>
           </div>
         </div>
 
