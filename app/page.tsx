@@ -12,6 +12,7 @@ import { OpponentScan } from "@/components/new-landing-3/opponent-scan";
 import { PricingTeaser } from "@/components/home/pricing-teaser";
 import { Nl3Faq } from "@/components/new-landing-3/faq-section";
 import { Nl3FinalCta } from "@/components/new-landing-3/final-cta";
+import { DiscordCta } from "@/components/home/discord-cta";
 import type { SiteStats } from "@/components/new-landing-3/types";
 
 /**
@@ -75,6 +76,7 @@ export default function HomePage() {
         <PricingTeaser />
       </div>
       <Nl3Faq />
+      <DiscordCta />
       <Nl3FinalCta onScanClick={goToScan} />
 
       {/* Ember & Ink footer — replaces global chrome on this route */}

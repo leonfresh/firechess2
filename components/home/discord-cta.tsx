@@ -1,6 +1,6 @@
 import { ArrowRight } from "lucide-react";
 
-const DISCORD_INVITE = "https://discord.gg/y9NCXcdvs8";
+const DISCORD_INVITE = "https://discord.gg/YS8fc4FtEk";
 
 /** Discord brand glyph (lucide has no brand icon for it). */
 function DiscordIcon({ className }: { className?: string }) {
@@ -18,11 +18,11 @@ function DiscordIcon({ className }: { className?: string }) {
 export function DiscordCta() {
   return (
     <section className="scroll-reveal">
-      <div className="relative overflow-hidden rounded-[2.5rem] border border-indigo-400/15 bg-gradient-to-b from-indigo-500/[0.08] via-indigo-500/[0.03] to-transparent px-6 py-12 text-center sm:px-10 sm:py-14">
-        <div className="pointer-events-none absolute left-1/2 top-0 h-56 w-[28rem] -translate-x-1/2 rounded-full bg-indigo-500/15 blur-[110px]" />
+      <div className="relative overflow-hidden rounded-[2.5rem] border border-[#ff5a1f]/20 bg-gradient-to-b from-[#ff5a1f]/[0.06] via-[#ff5a1f]/[0.02] to-transparent px-6 py-12 text-center sm:px-10 sm:py-14">
+        <div className="pointer-events-none absolute left-1/2 top-0 h-56 w-[28rem] -translate-x-1/2 rounded-full bg-[#ff5a1f]/[0.10] blur-[110px]" />
 
         <div className="relative mx-auto flex max-w-xl flex-col items-center gap-6">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/15 text-indigo-300">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#ff5a1f]/[0.10] text-[#ff8c42]">
             <DiscordIcon className="h-6 w-6" />
           </span>
 
@@ -40,13 +40,13 @@ export function DiscordCta() {
             href={DISCORD_INVITE}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex w-full max-w-md items-center justify-between gap-3 rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] py-2 pl-5 pr-2 transition-colors hover:border-indigo-400/30 hover:bg-[#1e1a24]"
+            className="group flex w-full max-w-md items-center justify-between gap-3 rounded-full border border-[#1e1a24] bg-[#ff5a1f]/[0.05] py-2 pl-5 pr-2 transition-colors hover:border-[#ff5a1f]/30 hover:bg-[#1e1a24]"
           >
             <span className="flex items-center gap-2.5 text-sm font-semibold text-white">
-              <DiscordIcon className="h-4 w-4 text-indigo-300" />
-              discord.gg/y9NCXcdvs8
+              <DiscordIcon className="h-4 w-4 text-[#ff8c42]" />
+              discord.gg/YS8fc4FtEk
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors group-hover:bg-indigo-400">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#ff5a1f] px-5 py-2.5 text-sm font-semibold text-white transition-colors group-hover:bg-[#ff8c42]">
               Join
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </span>
