@@ -621,7 +621,7 @@ export function Navbar() {
             {/* Pro CTA */}
             <Link
               href="/pricing"
-              className={`inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#ff5a1f] via-[#ff8c42] to-[#ff8c42] px-3.5 py-1.5 text-sm font-semibold text-white shadow-[0_14px_36px_-20px_rgba(168,85,247,0.7)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-18px_rgba(168,85,247,0.78)] ${isActive("/pricing") ? "ring-1 ring-white/15" : ""}`}
+              className={`inline-flex items-center gap-1.5 rounded-lg border border-[#ff5a1f]/30 bg-[#ff5a1f]/[0.08] px-3.5 py-1.5 text-sm font-semibold text-[#ff8c42] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ff5a1f]/45 hover:bg-[#ff5a1f]/[0.14] ${isActive("/pricing") ? "ring-1 ring-white/15" : ""}`}
             >
               <svg
                 className="h-3.5 w-3.5"
@@ -634,7 +634,7 @@ export function Navbar() {
             </Link>
 
             {loading ? (
-              <div className="h-9 w-20 animate-pulse rounded-lg bg-[#ff5a1f]/[0.08]" />
+              <div className="h-9 w-20 animate-pulse rounded-lg bg-[#1e1a24]" />
             ) : !authenticated ? (
               <button
                 type="button"
@@ -649,7 +649,7 @@ export function Navbar() {
                   <button
                     type="button"
                     onClick={() => setCoinShopOpen(true)}
-                    className="flex items-center gap-1 rounded-lg bg-[#ff5a1f]/[0.08] px-2.5 py-1.5 text-xs font-bold text-[#ff8c42] transition-colors hover:bg-[#ff5a1f]/[0.08]"
+                    className="flex items-center gap-1 rounded-lg bg-[#0d0b0e] px-2.5 py-1.5 text-xs font-bold text-[#f0edf2] transition-colors hover:bg-[#1e1a24]"
                     title="Open coin shop"
                   >
                     <span>🪙</span>
@@ -664,7 +664,7 @@ export function Navbar() {
                 </Link>
                 <Link
                   href={notificationHref}
-                  className={`relative flex h-9 w-9 items-center justify-center rounded-lg border transition-colors ${notificationActive ? "border-[#ff5a1f]/25 bg-[#1e1a24] text-white" : "border-[#1e1a24] bg-[#ff5a1f]/[0.05] text-[#8d8696] hover:border-[#ff5a1f]/25 hover:bg-[#1e1a24] hover:text-white"}`}
+                  className={`relative flex h-9 w-9 items-center justify-center rounded-lg border transition-colors ${notificationActive ? "border-[#ff5a1f]/25 bg-[#1e1a24] text-white" : "border-[#1e1a24] bg-[#0d0b0e] text-[#8d8696] hover:border-[#ff5a1f]/25 hover:bg-[#1e1a24] hover:text-white"}`}
                   title={
                     isAdmin ? "Feedback notifications" : "Support notifications"
                   }
@@ -697,7 +697,7 @@ export function Navbar() {
                   <button
                     type="button"
                     onClick={() => setProfileOpen((p) => !p)}
-                    className="flex items-center gap-2 rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-2.5 py-1.5 text-sm text-white transition-all hover:border-[#ff5a1f]/25 hover:bg-[#1e1a24]"
+                    className="flex items-center gap-2 rounded-lg border border-[#1e1a24] bg-[#0d0b0e] px-2.5 py-1.5 text-sm text-white transition-all hover:border-[#ff5a1f]/25 hover:bg-[#1e1a24]"
                   >
                     {unreadMessages > 0 && (
                       <span className="absolute -right-1 -top-1 z-10 flex h-2.5 w-2.5">
@@ -723,7 +723,7 @@ export function Navbar() {
                       />
                     ) : null}
                     <div
-                      className={`${user?.image ? "hidden" : "flex"} h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[#ff5a1f] to-[#ff8c42] text-xs font-bold text-[#ff8c42] ${avatarFrame.frameClass}`}
+                      className={`${user?.image ? "hidden" : "flex"} h-6 w-6 items-center justify-center rounded-full bg-[#ff5a1f]/[0.12] text-xs font-bold text-[#ff8c42] ${avatarFrame.frameClass}`}
                       style={avatarFrame.frameStyle}
                     >
                       {(
@@ -736,7 +736,7 @@ export function Navbar() {
                       {user?.name ?? user?.email ?? "Account"}
                     </span>
                     {(plan === "pro" || plan === "lifetime") && (
-                      <span className="rounded bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#ff8c42]">
+                      <span className="rounded bg-[#ff5a1f]/[0.12] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#ff8c42]">
                         {plan === "lifetime" ? "∞" : "Pro"}
                       </span>
                     )}
@@ -1123,7 +1123,7 @@ export function Navbar() {
                     />
                   ) : null}
                   <div
-                    className={`${user.image ? "hidden" : "flex"} h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#ff5a1f] to-[#ff8c42] text-sm font-bold text-[#ff8c42] ${avatarFrame.frameClass}`}
+                    className={`${user.image ? "hidden" : "flex"} h-8 w-8 items-center justify-center rounded-full bg-[#ff5a1f]/[0.12] text-sm font-bold text-[#ff8c42] ${avatarFrame.frameClass}`}
                     style={avatarFrame.frameStyle}
                   >
                     {(user.name?.[0] ?? user.email?.[0] ?? "?").toUpperCase()}
