@@ -27,7 +27,7 @@ You need one opening as White and one response to 1.e4 as Black (plus optionally
 
 For White, the Italian Game is an excellent tournament weapon for club players. It's principled, flexible, and leads to middlegames where understanding matters more than memorization:
 
-<chess-position fen="r1bqk2r/ppp2ppp/2np1n2/2b1p3/2B1P3/2PP1N2/PP1N1PPP/R1BQK2R b KQkq - 1 6" caption="The Italian Game after 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.c3 Nf6 5.d3 d6 6.Nbd2 — White has a solid setup with a clear plan: prepare d4, develop the bishop to b2 or e3, and aim for a kingside attack." orientation="white"></chess-position>
+<chess-position fen="r1bqk2r/ppp2ppp/2np1n2/2b1p3/2B1P3/2PP1N2/PP1N1PPP/R1BQK2R b KQkq - 1 6" caption="The Italian Game after 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.c3 Nf6 5.d3 d6 6.Nbd2 — White has a solid setup with a clear plan: prepare d4, develop the bishop to b2 or e3, and aim for a kingside attack. Stockfish recommends a5 for Black here, preventing b4 and preparing queenside play." orientation="white" arrows="a7a5:green"></chess-position>
 
 From this position, White's plan is straightforward: O-O, Bb2 (or Be3), Qe2, and eventually d4 when the timing is right. You don't need to memorize 30 moves of theory — you need to understand the ideas. If your opponent plays something unexpected on move 7, the plan still works because it's based on principles, not specific moves.
 
@@ -44,7 +44,7 @@ Opening preparation without middlegame understanding is like packing for a trip 
 
 Take the Caro-Kann as Black against 1.e4. After the mainline advance variation, you reach a structure where understanding the plans matters more than knowing the exact move order:
 
-<chess-position fen="r2qkbnr/pp1nppp1/2p4p/7P/3P4/3Q1NN1/PPP2PP1/R1B1K2R b KQkq - 0 10" caption="Caro-Kann Advance after 1.e4 c6 2.d4 d5 3.Nc3 dxe4 4.Nxe4 Bf5 5.Ng3 Bg6 6.h4 h6 7.Nf3 Nd7 8.h5 Bh7 9.Bd3 Bxd3 10.Qxd3 — Black has exchanged the light-squared bishop and stands solid. The plan: ...Ngf6, ...e6, ...Be7, ...O-O, and aim for ...c5 or ...e5 pawn breaks." orientation="black"></chess-position>
+<chess-position fen="r2qkbnr/pp1nppp1/2p4p/7P/3P4/3Q1NN1/PPP2PP1/R1B1K2R b KQkq - 0 10" caption="Caro-Kann Advance after 1.e4 c6 2.d4 d5 3.Nc3 dxe4 4.Nxe4 Bf5 5.Ng3 Bg6 6.h4 h6 7.Nf3 Nd7 8.h5 Bh7 9.Bd3 Bxd3 10.Qxd3 — Black has exchanged the light-squared bishop and stands solid. The plan: ...Ngf6, ...e6, ...Be7, ...O-O, and aim for ...c5 or ...e5 pawn breaks. Stockfish agrees: e6 is the top move, closing the center before developing." orientation="black" arrows="e7e6:green"></chess-position>
 
 Black's position looks passive to untrained eyes, but it's strategically sound. The light-squared bishop is gone, the pawn structure is compact, and Black will eventually challenge White's center with ...c5 or ...e5. This is the kind of position where tournament experience beats theoretical knowledge — you need to have played these structures before to feel comfortable in them.
 
@@ -132,7 +132,7 @@ Not all weaknesses are equal. Here's the priority order based on impact-per-hour
 
 The Sicilian Najdorf is a perfect example of where opening knowledge meets middlegame understanding. If you play this as Black, you need to know the first 10 moves AND the typical plans that follow:
 
-<chess-position fen="r2q1rk1/1p1nbppp/p2pbn2/4p3/4P3/1NN1BP2/PPPQ2PP/2KR1B1R w - - 5 11" caption="Sicilian Najdorf with Be3 — a critical tabiya. White will play O-O-O and launch a kingside attack with f4, g4, or Bh6. Black counterattacks on the queenside with ...b5, ...Rc8, and ...Nc5. If you reach this position in a tournament without knowing the plans, you'll burn20 minutes on move 11." orientation="white"></chess-position>
+<chess-position fen="r2q1rk1/1p1nbppp/p2pbn2/4p3/4P3/1NN1BP2/PPPQ2PP/2KR1B1R w - - 5 11" caption="Sicilian Najdorf with Be3 — a critical tabiya. White will play O-O-O and launch a kingside attack with f4, g4, or Bh6. Black counterattacks on the queenside with ...b5, ...Rc8, and ...Nc5. If you reach this position in a tournament without knowing the plans, you'll burn 20 minutes on move 11. Stockfish picks g4 as the sharpest continuation (+0.5)." orientation="white" arrows="g2g4:green"></chess-position>
 
 This is the kind of position where preparation pays off directly. If you've studied the plans before the tournament, you play quickly and confidently. If you haven't, you'll spend 15-20 minutes calculating from scratch while your clock ticks down.
 
@@ -173,7 +173,7 @@ Online chess and tournament chess differ in one critical way: the clock. In a 15
 
 **Endgame (moves 26+):** This is where the increment matters. With 30 seconds per move added, you can play quickly if you know the technique. The problem is that [most club players do not know endgame technique](/blog/rook-endgames-guide-club-players), so they burn time calculating positions that should be automatic:
 
-<chess-position fen="r7/4kppp/8/8/8/8/P4PPP/3RK3 w - - 0 1" caption="A typical rook endgame arising from a tournament game. White should play Rd5 (centralizing the rook) or Ke2 (activating the king). The correct plan is straightforward: activate the rook, support the a-pawn advance, and keep the king active. But without preparation, club players spend 10+ minutes here calculating variations that experienced players handle on intuition." orientation="white"></chess-position>
+<chess-position fen="r7/4kppp/8/8/8/8/P4PPP/3RK3 w - - 0 1" caption="A typical rook endgame arising from a tournament game. White should activate the rook and support the a-pawn. Stockfish prefers Ra1 (targeting the a-pawn directly) over Rd5. The correct plan is straightforward: activate the rook, advance the a-pawn, and keep the king active. But without preparation, club players spend 10+ minutes here calculating variations that experienced players handle on intuition." orientation="white" arrows="d1a1:green"></chess-position>
 
 The difference between a prepared and unprepared player in this endgame is 20+ minutes on the clock. Over a 40-move tournament game, that time saved in the endgame means more time for critical middlegame decisions.
 
@@ -191,7 +191,7 @@ Tournament pressure is real, and it causes a specific type of mistake: the "I kn
 
 This is the [most common blunder pattern](/blog/chess-blunder-patterns-by-rating) at the club level, and it gets worse in tournaments because the stakes feel higher. Here is a position that comes up constantly in club events:
 
-<chess-position fen="4r1k1/p4ppp/3q4/8/8/1Q6/P4PPP/4R1K1 w - - 0 1" caption="White is winning — the queen and rook dominate, and Black pieces are passive. The natural Qb7 (attacking the 7th rank) looks decisive, but it is a catastrophic blunder: after Qb7, Black plays Rxe1# — back-rank mate. The correct move is h3, creating an escape square before attacking. Tournament games at the 1200-1600 level are full of these: winning positions thrown away by rushing." orientation="white"></chess-position>
+<chess-position fen="4r1k1/p4ppp/3q4/8/8/1Q6/P4PPP/4R1K1 w - - 0 1" caption="White is winning — the queen and rook dominate, and Black pieces are passive. The natural Qb7 (attacking the 7th rank) looks decisive, but it is a catastrophic blunder: after Qb7, Black plays Rxe1# — back-rank mate. The correct move is h3, creating an escape square before attacking. Tournament games at the 1200-1600 level are full of these: winning positions thrown away by rushing." orientation="white" arrows="h2h3:green,b3b7:red" badge="blunder"></chess-position>
 
 After Qb7, it is checkmate. The queen left the back rank undefended, and the rook on e8 slides to e1 with devastating effect. This is not a complex tactic — it is a one-move threat that any player can see if they slow down. But in a tournament, with the clock ticking and adrenaline flowing, your hand plays Qb7 before your brain says "wait, what about my back rank?"
 
@@ -237,7 +237,7 @@ The move badges are especially useful for quick tournament reviews. If you see t
 
 The Queen Gambit Declined is one of the most common tournament openings at the club level. After the natural development moves, you reach a middlegame where both sides have clear plans:
 
-<chess-position fen="r2q1rk1/pb1n1ppp/1p2pn2/2p5/1bBP4/2N1PN2/PP2QPPP/R1BR2K1 w - - 2 11" caption="Queen Gambit Declined after natural development. White has completed kingside castling and developed actively. The position is balanced but rich in strategic content — typical of tournament games where preparation meets understanding. Both sides need a plan: White aims for e4 or a minority attack, Black counters with ...c4 or ...d5." orientation="white"></chess-position>
+<chess-position fen="r2q1rk1/pb1n1ppp/1p2pn2/2p5/1bBP4/2N1PN2/PP2QPPP/R1BR2K1 w - - 2 11" caption="Queen Gambit Declined after natural development. White has completed kingside castling and developed actively. The position is balanced but rich in strategic content — typical of tournament games where preparation meets understanding. Both sides need a plan: White aims for e4 or a minority attack, Black counters with ...c4 or ...d5. Stockfish recommends d5, immediately challenging Black's pawn structure." orientation="white" arrows="d4d5:green"></chess-position>
 
 Positions like this are why tournament preparation matters. If you have studied the QGD plans before the event, you play moves 11-20 confidently in 15 minutes. If you have not, you spend 30 minutes trying to find a plan and end up in time trouble. The [guess-the-elo format](/blog/guess-the-elo-chess) makes this difference visible — experienced players navigate these positions fluidly, while unprepared players hesitate at every step.
 
