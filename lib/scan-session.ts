@@ -119,7 +119,11 @@ export function computeEndgameTechniqueScore(
   if (!endgameStats || endgameStats.totalPositions <= 0) return null;
 
   const clampScore = (value: number) => Math.max(0, Math.min(100, value));
-  const lossScore = clampScore(100 * Math.exp(-endgameStats.avgCpLoss / 100));
+  // Winsorize avgCpLoss: the endgame sampler can emit implausible averages
+  // (130-1800cp) that would floor the loss score; cap at 3 pawns.
+  const lossScore = clampScore(
+    100 * Math.exp(-Math.min(endgameStats.avgCpLoss, 300) / 100),
+  );
   const weightedParts = [{ value: lossScore, weight: 0.6 }];
 
   if (typeof endgameStats.conversionRate === "number") {
@@ -146,12 +150,19 @@ export function computeScanReportMeta(
   cpThreshold: number,
 ): ComputedScanReport | null {
   const traces = result?.diagnostics?.positionTraces;
-  if (!traces?.length) return null;
+  const leaks = result?.leaks ?? [];
 
-  const valid = traces.filter((trace) => typeof trace.cpLoss === "number");
-  if (valid.length === 0) return null;
+  // Opening loss sample: full position traces on live scans; stored reports only
+  // persist the flagged leak list (diagnostics aren't saved), so fall back to it.
+  const lossPairs = traces?.length
+    ? traces
+        .filter((trace) => typeof trace.cpLoss === "number")
+        .map((trace) => ({ loss: trace.cpLoss ?? 0, reach: trace.reachCount ?? 1 }))
+    : leaks.map((leak) => ({ loss: leak.cpLoss ?? 0, reach: leak.reachCount ?? 1 }));
 
-  const lossValues = valid.map((trace) => trace.cpLoss ?? 0);
+  if (lossPairs.length === 0) return null;
+
+  const lossValues = lossPairs.map((pair) => pair.loss);
   const sortedLosses = [...lossValues].sort((left, right) => left - right);
   const percentileIndex = Math.floor(sortedLosses.length * 0.75);
   const p75CpLoss =
@@ -165,34 +176,35 @@ export function computeScanReportMeta(
     ) / Math.max(1, lossValues.length);
   const stdDevCpLoss = Math.sqrt(variance);
 
-  const weightedLossNumerator = valid.reduce(
-    (sum, trace) => sum + (trace.cpLoss ?? 0) * trace.reachCount,
-    0,
-  );
-  const totalWeight = valid.reduce((sum, trace) => sum + trace.reachCount, 0);
+  const totalWeight = lossPairs.reduce((sum, pair) => sum + pair.reach, 0);
   const weightedCpLoss =
-    totalWeight > 0 ? weightedLossNumerator / totalWeight : 0;
+    totalWeight > 0
+      ? lossPairs.reduce((sum, pair) => sum + pair.loss * pair.reach, 0) /
+        totalWeight
+      : 0;
   const severeLeakRate =
-    valid.filter((trace) => (trace.cpLoss ?? 0) >= cpThreshold).length /
-    valid.length;
+    lossValues.filter((loss) => loss >= cpThreshold).length / lossValues.length;
 
-  // Blend opening cp loss with endgame avg cp loss for a more holistic accuracy %.
-  // Opening leaks are frequency-weighted; endgame avgCpLoss is a simple average.
-  // When both are available, weight them 55/45 to reflect the full-game picture.
-  const endgameAvgCpLoss =
-    typeof result?.endgameStats?.avgCpLoss === "number" &&
-    result.endgameStats.avgCpLoss > 0
-      ? result.endgameStats.avgCpLoss
+  // Accuracy: opening leak-loss only, frequency-weighted and calibrated to
+  // chess.com-like move accuracy (K=1000: ~50cp weighted loss ≈ 95%, ~150cp ≈ 86%).
+  // The endgame sampler's avgCpLoss is mistakes-biased and unstable (130-1800cp),
+  // so it no longer feeds the accuracy blend; conversion rate adds a light
+  // full-game signal when available.
+  const conversionRate =
+    typeof result?.endgameStats?.conversionRate === "number"
+      ? result.endgameStats.conversionRate
       : null;
-  const blendedCpLoss =
-    endgameAvgCpLoss !== null
-      ? weightedCpLoss * 0.55 + endgameAvgCpLoss * 0.45
-      : weightedCpLoss;
-
-  const estimatedAccuracy = Math.min(
+  const leakAccuracy = Math.min(
     99.5,
-    Math.max(25, 100 * Math.exp(-blendedCpLoss / 180)),
+    Math.max(25, 100 * Math.exp(-weightedCpLoss / 1000)),
   );
+  const estimatedAccuracy =
+    conversionRate !== null
+      ? Math.min(
+          99.5,
+          Math.max(25, leakAccuracy * 0.85 + conversionRate * 0.15),
+        )
+      : leakAccuracy;
 
   const actualRating = result?.playerRating;
   let estimatedRating: number;
@@ -211,7 +223,7 @@ export function computeScanReportMeta(
     const clampedLoss = Math.max(2, weightedCpLoss);
     const baseRating = 1800 - 400 * Math.log10(clampedLoss);
     const leakPenalty = severeLeakRate * 400;
-    const sampleFactor = Math.min(1, valid.length / 50);
+    const sampleFactor = Math.min(1, lossPairs.length / 50);
     const rawRating = baseRating - leakPenalty;
     const adjustedRating = 1200 + (rawRating - 1200) * sampleFactor;
 
@@ -224,7 +236,7 @@ export function computeScanReportMeta(
   );
   const confidence = Math.max(
     10,
-    Math.min(99, Math.round((valid.length / 40) * 100)),
+    Math.min(99, Math.round((lossPairs.length / 40) * 100)),
   );
 
   const topTag = (() => {
@@ -358,13 +370,13 @@ export function computeScanReportMeta(
               : "beginner";
 
   const accuracyLabel =
-    estimatedAccuracy >= 90
+    estimatedAccuracy >= 92
       ? "exceptional"
-      : estimatedAccuracy >= 80
+      : estimatedAccuracy >= 88
         ? "strong"
-        : estimatedAccuracy >= 70
+        : estimatedAccuracy >= 83
           ? "solid"
-          : estimatedAccuracy >= 60
+          : estimatedAccuracy >= 78
             ? "moderate"
             : "developing";
 
@@ -449,7 +461,7 @@ export function computeScanReportMeta(
             : "Every game is adding to the pattern library. Consistent practice on the flagged area will fast-track growth.";
 
   const reportSummary = [
-    `${username} shows ${accuracyLabel} ${ratingLabel} play with ${estimatedAccuracy.toFixed(1)}% move accuracy across ${valid.length} scored positions.`,
+    `${username} shows ${accuracyLabel} ${ratingLabel} play with ${estimatedAccuracy.toFixed(1)}% move accuracy across ${lossPairs.length} scored positions.`,
     strengthsText,
     weaknessText,
     consistencyText,
@@ -470,7 +482,7 @@ export function computeScanReportMeta(
     consistencyScore,
     confidence,
     topTag,
-    sampleSize: valid.length,
+    sampleSize: lossPairs.length,
     vibeTitle,
     reportSummary,
     endgameTechniqueScore,
