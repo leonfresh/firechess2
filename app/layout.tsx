@@ -6,6 +6,7 @@ import "./globals.css";
 import { SessionProvider } from "@/components/session-provider";
 import { Navbar } from "@/components/navbar";
 import { EmbedGuard } from "@/components/embed-guard";
+import { SupportWidget } from "@/components/support-widget";
 import {
   OrganizationJsonLd,
   WebApplicationJsonLd,
@@ -433,25 +434,11 @@ export default async function RootLayout({
               </div>
             </footer>
           </EmbedGuard>
+          <EmbedGuard>
+            <SupportWidget />
+          </EmbedGuard>
         </SessionProvider>
         <Analytics />
-        {process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID && (
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `
-                window.$crisp=[];
-                window.CRISP_WEBSITE_ID="${process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID}";
-                (function(){
-                  var d=document;
-                  var s=d.createElement("script");
-                  s.src="https://client.crisp.chat/l.js";
-                  s.async=1;
-                  d.getElementsByTagName("head")[0].appendChild(s);
-                })();
-              `,
-            }}
-          />
-        )}
         </NextIntlClientProvider>
       </body>
     </html>

@@ -62,14 +62,14 @@ export default function FeedbackPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="min-h-screen bg-[#070608] text-white">
       <div className="mx-auto max-w-2xl px-4 py-16 sm:py-24">
         {/* Header */}
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Feedback &amp; Support
           </h1>
-          <p className="mt-3 text-zinc-400">
+          <p className="mt-3 text-[#8d8696]">
             Found a bug? Have an idea? We&apos;d love to hear from you.
           </p>
         </div>
@@ -81,13 +81,13 @@ export default function FeedbackPage() {
             <h2 className="text-xl font-semibold text-emerald-400">
               Ticket Created!
             </h2>
-            <p className="mt-2 text-zinc-400">
+            <p className="mt-2 text-[#8d8696]">
               We&apos;ll review your submission and follow up if needed.
             </p>
             {authenticated && ticketId && (
               <Link
                 href={`/support/${ticketId}`}
-                className="mt-4 inline-block text-sm text-orange-400 hover:underline"
+                className="mt-4 inline-block text-sm text-[#ff8c42] hover:underline"
               >
                 View your ticket →
               </Link>
@@ -102,13 +102,13 @@ export default function FeedbackPage() {
                   setCategory("feature");
                   setTicketId(null);
                 }}
-                className="rounded-lg border border-zinc-700 px-5 py-2.5 text-sm font-medium text-zinc-300 transition hover:border-zinc-500 hover:text-white"
+                className="rounded-lg border border-[#2a2434] px-5 py-2.5 text-sm font-medium text-[#f0edf2] transition hover:border-[#3a3444] hover:text-white"
               >
                 Submit another
               </button>
               <Link
                 href="/"
-                className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-zinc-200"
+                className="rounded-lg bg-[#ff5a1f] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#ff8c42]"
               >
                 Back to Home
               </Link>
@@ -119,7 +119,7 @@ export default function FeedbackPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Category picker */}
             <fieldset>
-              <legend className="mb-3 text-sm font-medium text-zinc-300">
+              <legend className="mb-3 text-sm font-medium text-[#f0edf2]">
                 Category
               </legend>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -130,8 +130,8 @@ export default function FeedbackPage() {
                     onClick={() => setCategory(cat.value)}
                     className={`rounded-xl border px-4 py-3 text-center text-sm font-medium transition ${
                       category === cat.value
-                        ? "border-orange-500/60 bg-orange-500/10 text-orange-300"
-                        : "border-zinc-700/60 bg-zinc-800/40 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
+                        ? "border-[#ff5a1f]/40 bg-[#ff5a1f]/[0.08] text-[#ff8c42]"
+                        : "border-[#2a2434] bg-[#121015] text-[#8d8696] hover:border-[#3a3444] hover:text-[#f0edf2]"
                     }`}
                   >
                     <span className="mb-1 block text-lg">{cat.icon}</span>
@@ -145,10 +145,10 @@ export default function FeedbackPage() {
             <div>
               <label
                 htmlFor="subject"
-                className="mb-2 block text-sm font-medium text-zinc-300"
+                className="mb-2 block text-sm font-medium text-[#f0edf2]"
               >
                 Subject{" "}
-                <span className="text-zinc-500">(optional)</span>
+                <span className="text-[#565061]">(optional)</span>
               </label>
               <input
                 id="subject"
@@ -156,7 +156,7 @@ export default function FeedbackPage() {
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Brief summary of your issue or idea"
-                className="w-full rounded-xl border border-zinc-700/60 bg-zinc-800/40 px-4 py-3 text-sm text-white placeholder-zinc-500 transition focus:border-orange-500/60 focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+                className="w-full rounded-xl border border-[#2a2434] bg-[#121015] px-4 py-3 text-sm text-white placeholder-[#565061] transition focus:border-[#ff5a1f]/50 focus:outline-none focus:ring-1 focus:ring-[#ff5a1f]/30"
               />
             </div>
 
@@ -164,7 +164,7 @@ export default function FeedbackPage() {
             <div>
               <label
                 htmlFor="message"
-                className="mb-2 block text-sm font-medium text-zinc-300"
+                className="mb-2 block text-sm font-medium text-[#f0edf2]"
               >
                 Your Message
               </label>
@@ -174,7 +174,7 @@ export default function FeedbackPage() {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Describe your issue, idea, or question…"
-                className="w-full rounded-xl border border-zinc-700/60 bg-zinc-800/40 px-4 py-3 text-sm text-white placeholder-zinc-500 transition focus:border-orange-500/60 focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+                className="w-full rounded-xl border border-[#2a2434] bg-[#121015] px-4 py-3 text-sm text-white placeholder-[#565061] transition focus:border-[#ff5a1f]/50 focus:outline-none focus:ring-1 focus:ring-[#ff5a1f]/30"
               />
             </div>
 
@@ -183,10 +183,10 @@ export default function FeedbackPage() {
               <div>
                 <label
                   htmlFor="email"
-                  className="mb-2 block text-sm font-medium text-zinc-300"
+                  className="mb-2 block text-sm font-medium text-[#f0edf2]"
                 >
                   Email{" "}
-                  <span className="text-zinc-500">(optional — for follow-up)</span>
+                  <span className="text-[#565061]">(optional — for follow-up)</span>
                 </label>
                 <input
                   id="email"
@@ -194,16 +194,16 @@ export default function FeedbackPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full rounded-xl border border-zinc-700/60 bg-zinc-800/40 px-4 py-3 text-sm text-white placeholder-zinc-500 transition focus:border-orange-500/60 focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+                  className="w-full rounded-xl border border-[#2a2434] bg-[#121015] px-4 py-3 text-sm text-white placeholder-[#565061] transition focus:border-[#ff5a1f]/50 focus:outline-none focus:ring-1 focus:ring-[#ff5a1f]/30"
                 />
               </div>
             )}
 
             {/* Signed-in indicator */}
             {authenticated && user && (
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-[#565061]">
                 Submitting as{" "}
-                <span className="text-zinc-300">{user.name ?? user.email}</span>
+                <span className="text-[#f0edf2]">{user.name ?? user.email}</span>
               </p>
             )}
 
@@ -218,7 +218,7 @@ export default function FeedbackPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-500/20 transition hover:shadow-orange-500/30 disabled:opacity-50"
+              className="w-full rounded-xl bg-[#ff5a1f] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-black/30 transition hover:-translate-y-0.5 disabled:opacity-50"
             >
               {submitting ? "Sending…" : "Send Feedback"}
             </button>

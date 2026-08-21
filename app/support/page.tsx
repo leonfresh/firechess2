@@ -59,7 +59,7 @@ export default function SupportPage() {
   }, [authenticated]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="min-h-screen bg-[#070608] text-white">
       <div className="mx-auto max-w-2xl px-4 py-16 sm:py-24">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
@@ -67,13 +67,13 @@ export default function SupportPage() {
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
               Support Tickets
             </h1>
-            <p className="mt-1 text-sm text-zinc-400">
+            <p className="mt-1 text-sm text-[#8d8696]">
               Track your feedback and conversations with our team
             </p>
           </div>
           <Link
             href="/feedback"
-            className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-orange-500/20 transition hover:shadow-orange-500/30"
+            className="rounded-xl bg-[#ff5a1f] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-black/30 transition hover:-translate-y-0.5"
           >
             New Ticket
           </Link>
@@ -81,14 +81,14 @@ export default function SupportPage() {
 
         {/* Not signed in */}
         {!loading && !authenticated && (
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-12 text-center">
+          <div className="rounded-2xl border border-[#1e1a24] bg-[#121015] p-12 text-center">
             <span className="mb-3 block text-4xl">🔒</span>
-            <p className="text-zinc-400">
+            <p className="text-[#8d8696]">
               Sign in to view your support tickets.
             </p>
             <Link
               href="/auth/signin"
-              className="mt-4 inline-block rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-zinc-200"
+              className="mt-4 inline-block rounded-lg bg-[#ff5a1f] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#ff8c42]"
             >
               Sign In
             </Link>
@@ -97,17 +97,17 @@ export default function SupportPage() {
 
         {/* Loading */}
         {authenticated && fetching && (
-          <div className="flex items-center justify-center py-20 text-zinc-500">
+          <div className="flex items-center justify-center py-20 text-[#565061]">
             Loading…
           </div>
         )}
 
         {/* Empty */}
         {authenticated && !fetching && tickets.length === 0 && (
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-12 text-center">
+          <div className="rounded-2xl border border-[#1e1a24] bg-[#121015] p-12 text-center">
             <span className="mb-3 block text-4xl">📭</span>
-            <p className="text-zinc-400">No support tickets yet.</p>
-            <p className="mt-1 text-xs text-zinc-600">
+            <p className="text-[#8d8696]">No support tickets yet.</p>
+            <p className="mt-1 text-xs text-[#565061]">
               Submit feedback or a bug report and it will appear here.
             </p>
           </div>
@@ -122,20 +122,20 @@ export default function SupportPage() {
                 <Link
                   key={t.id}
                   href={`/support/${t.id}`}
-                  className="block rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 transition hover:border-zinc-700 hover:bg-zinc-900/80"
+                  className="block rounded-xl border border-[#1e1a24] bg-[#121015] p-4 transition hover:border-[#2a2434] hover:bg-[#181520]"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-lg">
                       {CATEGORY_ICONS[t.category] ?? "💬"}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="flex items-center gap-2 truncate text-sm font-medium text-zinc-200">
+                      <p className="flex items-center gap-2 truncate text-sm font-medium text-[#f0edf2]">
                         {t.hasUnreadReply && (
                           <span className="inline-flex h-2 w-2 shrink-0 rounded-full bg-red-500" />
                         )}
                         {t.subject || t.message.slice(0, 80)}
                       </p>
-                      <div className="mt-1 flex items-center gap-3 text-[11px] text-zinc-500">
+                      <div className="mt-1 flex items-center gap-3 text-[11px] text-[#565061]">
                         <span>
                           {new Date(t.createdAt).toLocaleDateString("en-US", {
                             month: "short",
@@ -157,7 +157,7 @@ export default function SupportPage() {
                       {st.label}
                     </span>
                     <svg
-                      className="h-4 w-4 text-zinc-600"
+                      className="h-4 w-4 text-[#565061]"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
