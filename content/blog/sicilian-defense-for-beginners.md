@@ -1,6 +1,6 @@
 ---
 title: "Sicilian Defense for Beginners: 3 Practical Lines to Start Winning as Black"
-description: "Learn the Sicilian Defense with 3 concrete, playable lines for club players. No theory overload — just the key ideas, moves, and plans you need to start winning as Black against 1.e4."
+description: "Learn the Sicilian Defense with 3 concrete lines for club players. Key ideas, moves, and plans to start winning as Black against 1.e4."
 date: "2026-07-04"
 author: "FireChess Team"
 tags: ["sicilian defense", "chess openings for beginners", "how to play sicilian", "sicilian defense tutorial", "chess improvement"]

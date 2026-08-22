@@ -1,6 +1,6 @@
 ---
 title: "Chess Visualisation Training — How to See 3 Moves Ahead and Build Board Vision"
-description: "Master chess visualisation with 7 proven drills: coordinate training, blindfold progression, mental board technique, and a 4-week plan to see deeper into any position."
+description: "7 proven chess visualisation drills: coordinate training, blindfold progression, and a 4-week plan to see deeper into any position."
 date: "2026-07-11"
 author: "FireChess Team"
 tags:

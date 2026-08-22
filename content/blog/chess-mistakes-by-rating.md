@@ -1,6 +1,6 @@
 ---
 title: "Chess Mistakes by Rating: The Errors That Keep You Stuck at Every Level"
-description: "See the exact blunders, inaccuracies, and habits that trap players from 800 to 1800. Real positions, real data, and a concrete plan to fix your rating's biggest leaks."
+description: "The exact blunders and habits that trap players from 800 to 1800. Real positions, real data, and a plan to fix your rating's biggest leaks."
 date: "2026-07-29"
 author: "FireChess Team"
 tags: ["improvement", "mistakes", "rating", "tactics", "blunders"]

@@ -1,6 +1,6 @@
 ---
 title: "Best Chaos Chess Modifiers Ranked (2026)"
-description: "From Torpedo Pawns to Nuclear Queen and Railgun — we rank all 30 Chaos Chess modifiers by power, fun factor, and how much they change the game. Includes strategy tips, tier breakdowns, and position examples for every rarity level."
+description: "All 30 Chaos Chess modifiers ranked: from Torpedo Pawns to Nuclear Queen. Tier list, synergy combos, and draft strategy for every modifier."
 date: "2026-07-16"
 author: "FireChess Team"
 tags: ["chaos chess", "chess modifiers", "chess strategy", "torpedo pawns", "nuclear queen", "the amazon", "chaos chess ranking", "chess variants", "chaos mode"]

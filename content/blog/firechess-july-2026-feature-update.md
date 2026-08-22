@@ -1,6 +1,6 @@
 ---
 title: "What's New on FireChess: July 2026 — Daily Training, Roast My Elo, Chaos Anomalies & More"
-description: "Daily Training with blunder drills, Roast My Elo with Stockfish roast commentary, Chaos Chess Opening Anomalies, Unified Reports, and a Lifetime plan — the biggest FireChess updates of H1 2026."
+description: "FireChess July 2026 update: Daily Training blunder drills, Roast My Elo commentary, and new analysis features for club players."
 date: 2026-07-06
 author: "FireChess Team"
 tags:

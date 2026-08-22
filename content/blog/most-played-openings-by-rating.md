@@ -1,6 +1,6 @@
 ---
 title: "We Analyzed 1.5 Million Games: The Most-Played Openings at Every Rating"
-description: "A data dive into 1.5 million rated Lichess games from 2026. Which openings are most popular at each rating level, where White's advantage actually kicks in, and the opening that quietly loses for White at every level."
+description: "Data from 1.5M Lichess games: which openings are most popular at each rating level, and which ones actually win. Real stats and trends by Elo."
 date: "2026-08-07"
 author: "FireChess Team"
 tags: ["chess statistics", "chess openings", "most popular chess openings", "chess win rates", "chess data"]

@@ -1,6 +1,6 @@
 ---
 title: "The Immortal Bh3 Sacrifice: Shirov vs Topalov 1998 — The Greatest Endgame Move in Chess History"
-description: "Analyze Alexei Shirov's legendary 47...Bh3!! against Veselin Topalov at Linares 1998 — a bishop sacrifice so deep that computers thought it was losing and even Kasparov was stumped."
+description: "Shirov vs Topalov 1998: the legendary 47...Bh3!! sacrifice explained. Full analysis with board diagrams, engine eval, and why Kasparov was stunned."
 date: 2026-08-21
 author: "FireChess Team"
 tags: ["shirov topalov bh3", "greatest chess moves", "famous chess games", "endgame sacrifice", "chess brilliancy", "zugzwang"]

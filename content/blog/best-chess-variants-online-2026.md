@@ -1,6 +1,6 @@
 ---
 title: "9 Best Chess Variants to Play Online Free in 2026"
-description: "Looking for chess variants to play online? From Chess960 to Chaos Chess and Fog of War, here are the best free chess variants you can play right now — no download required."
+description: "The best chess variants to play online in 2026: Chess960, Chaos Chess, Fog of War, and more. Free platforms, rules, and strategy tips."
 date: "2026-03-22"
 author: "FireChess Team"
 tags: ["chess variants", "chaos chess", "game modes", "chess fun", "Fog of War", "Horde Chess", "online chess"]

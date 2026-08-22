@@ -1,6 +1,6 @@
 ---
 title: "Chess Middlegame Strategy: How to Find a Plan When You're Lost"
-description: "Don't know what to do after the opening? Learn a practical framework for finding plans in the chess middlegame, from pawn structure analysis to piece activity."
+description: "Don't know what to do after the opening? A practical framework for finding plans in the chess middlegame, from pawn structure to piece activity."
 date: "2026-03-01"
 author: "FireChess Team"
 tags: ["strategy", "improvement"]

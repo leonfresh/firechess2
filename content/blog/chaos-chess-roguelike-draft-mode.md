@@ -1,6 +1,6 @@
 ---
 title: "Chaos Chess: We Built a Chess Variant Inspired by Clash Royale's C.H.A.O.S Mode"
-description: "How we took the permanent modifier system from Clash Royale's C.H.A.O.S mode and built Chaos Chess — a chess experience where both players pick permanent piece modifiers every 5 turns, with rarity escalating as the game goes on."
+description: "How Chaos Chess roguelike draft mode works: modifier drafting, synergy combos, and strategy tips for the permanent piece upgrade system."
 date: "2026-03-14"
 author: "FireChess Team"
 tags: ["chaos chess", "game modes", "chess variants", "feature"]

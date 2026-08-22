@@ -1,6 +1,6 @@
 ---
 title: "How to Play Chaos Chess: Rules, Modifiers & Strategy"
-description: "Chaos Chess is a roguelike chess variant where you draft permanent piece modifiers every 5 turns. Here's how it works — the full rules, every rarity tier, the best modifiers, and the strategy that actually wins games."
+description: "How to play Chaos Chess: rules, modifier drafting, synergy combos, and beginner strategy for the roguelike chess variant."
 date: "2026-06-30"
 author: "FireChess Team"
 tags: ["chaos chess", "how to play chaos chess", "chess variants", "roguelike chess", "chaos chess rules", "chaos chess strategy", "chaos chess piece values"]

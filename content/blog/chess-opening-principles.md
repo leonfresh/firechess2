@@ -1,6 +1,6 @@
 ---
 title: "Chess Opening Principles: 7 Rules Every Club Player Breaks"
-description: "Master the 7 chess opening principles that club players violate most. Real positions, common mistakes, and a clear framework to stop losing in the first 10 moves."
+description: "The 7 chess opening principles club players violate most. Real positions, common mistakes, and a framework to stop losing in the first 10 moves."
 date: "2026-07-25"
 author: "FireChess Team"
 tags: ["openings", "fundamentals", "improvement", "principles", "club-players"]

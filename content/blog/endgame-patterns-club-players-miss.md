@@ -1,6 +1,6 @@
 ---
 title: "5 Endgame Patterns Most Club Players Miss"
-description: "The most common endgame mistakes club-level players make repeatedly — and how to stop leaving points on the table."
+description: "The 8 endgame patterns every club player misses: Lucena, Philidor, opposition, and more. Board examples and practice tips."
 date: "2026-02-15"
 author: "FireChess Team"
 tags: ["endgames", "patterns"]
