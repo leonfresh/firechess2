@@ -54,7 +54,7 @@ This is why ACPL is more useful than accuracy for tracking improvement. Accuracy
 
 In over 14,000 FireChess scans, here's what we see at each level:
 
-<chess-position fen="r1bqk2r/pppp1ppp/2n5/8/1bBPn3/2N2N2/PP3PPP/R1BQK2R w KQkq - 0 8" caption="Italian Game after 7...Nxe4?? — a typical 1200-level blunder. Black captures the e-pawn but loses the knight to Qb3 or a4. This single move might cost 200+ centipawns." orientation="white" moves="Qb3,a4"></chess-position>
+<chess-position fen="r1bqk2r/pppp1ppp/2n5/8/1bBPn3/2N2N2/PP3PPP/R1BQK2R w KQkq - 0 8" arrows="e1g1:green" badge="best" caption="Italian Game after 7...Nxe4?? — a typical 1200-level blunder. Black captures the e-pawn but loses the knight to Qb3 or a4. This single move might cost 200+ centipawns." orientation="white" moves="Qb3,a4"></chess-position>
 
 The position above shows what drives high ACPL at the 1200 level. Black played 7...Nxe4, grabbing a pawn that looks free but loses a piece to Qb3 (attacking f7 and b7) or a4 (trapping the bishop). One tactical oversight, 200+ centipawns gone in a single move.
 
@@ -106,7 +106,7 @@ This is why you should track [ACPL](/blog/what-is-centipawn-loss) alongside accu
 | **1800-2000** | 80-90% | Predominantly ! Best, few inaccuracies |
 | **2000+** | 85-95% | Near-perfect, occasional !! Brilliant moves |
 
-<chess-position fen="rnbq1rk1/4bppp/p2p1n2/1p2p3/4P3/1NN1B3/PPP1BPPP/R2Q1RK1 w - - 0 10" caption="Sicilian Najdorf after 9...b5 — a positional inaccuracy that drops White's advantage from +0.8 to +0.3. This kind of move shows up as a ?! Inaccuracy badge on FireChess, costing 25-75 centipawns. Not a blunder, but it adds up." orientation="white"></chess-position>
+<chess-position fen="rnbq1rk1/4bppp/p2p1n2/1p2p3/4P3/1NN1B3/PPP1BPPP/R2Q1RK1 w - - 0 10" arrows="a2a4:green" badge="best" caption="Sicilian Najdorf after 9...b5 — a positional inaccuracy that drops White's advantage from +0.8 to +0.3. This kind of move shows up as a ?! Inaccuracy badge on FireChess, costing 25-75 centipawns. Not a blunder, but it adds up." orientation="white"></chess-position>
 
 The position above illustrates a typical 1400-1600 accuracy leak. Black played 9...b5, which looks natural (expanding on the queenside) but weakens the c6 square and allows White to build pressure with Rc1 and a4. This single move isn't catastrophic — it costs maybe 30-40 centipawns — but over a 40-move game, several such inaccuracies push ACPL from 35 to 55 and accuracy from 78% to 68%.
 
@@ -152,7 +152,7 @@ The gap between your puzzle rating and your game rating tells a story:
 
 The biggest insight from [FireChess scans](/analyze) is that most club players don't miss tactics because they can't calculate — they miss them because they don't *look*. The pattern isn't stored in memory, so the brain doesn't flag the position as tactical.
 
-<chess-position fen="rn2kb1r/pp2pppp/2p2n2/q4b2/2BP4/2N5/PPP1NPPP/R1BQK2R w KQkq - 4 7" caption="Scandinavian Defense after 6...Bf5?? — Black develops naturally but allows 7.Bxf7+! winning a pawn and exposing the king. This pattern (bishop sacrifice on f7 with queen support) appears in dozens of openings. If you solve it in puzzles, you should spot it in games." orientation="white" moves="Bxf7"></chess-position>
+<chess-position fen="rn2kb1r/pp2pppp/2p2n2/q4b2/2BP4/2N5/PPP1NPPP/R1BQK2R w KQkq - 4 7" arrows="c4f7:green" badge="best" caption="Scandinavian Defense after 6...Bf5?? — Black develops naturally but allows 7.Bxf7+! winning a pawn and exposing the king. This pattern (bishop sacrifice on f7 with queen support) appears in dozens of openings. If you solve it in puzzles, you should spot it in games." orientation="white" moves="Bxf7"></chess-position>
 
 The position above shows a pattern that appears in countless games: the bishop sacrifice on f7. After 6...Bf5, White plays 7.Bxf7+! Kxf7 (forced) and then Ng5+ or Qb3+ picks up material with a devastating attack. If you've solved 50 puzzles with this motif, you should find it in 5 seconds over the board.
 
@@ -187,7 +187,7 @@ Use the [FireChess scanner](/analyze) to find your opening leaks:
 
 If you're consistently leaving theory by move 6 in the Sicilian, you don't need to memorize 20 moves of Najdorf theory. You need to learn the *ideas* behind the first 8 moves so you don't drift into bad positions. Our guide on [studying openings without memorizing](/blog/how-to-study-chess-openings-without-memorizing) covers this approach.
 
-<chess-position fen="rnbq1rk1/p1p1bpp1/1p2p2p/3n4/3P3B/2N1PN2/PP3PPP/R2QKB1R w KQ - 0 9" caption="Queen's Gambit Declined after 8...Nxd5 — a critical position where White must know the right continuation. The difference between 9.Bxe7 (best, +0.6) and 9.Nxd5 (inaccuracy, +0.1) is 50 centipawns. That's one move separating a "good" game from a mediocre one." orientation="white" moves="Bxe7,Nxd5"></chess-position>
+<chess-position fen="rnbq1rk1/p1p1bpp1/1p2p2p/3n4/3P3B/2N1PN2/PP3PPP/R2QKB1R w KQ - 0 9" arrows="h4e7:green" badge="best" caption="Queen's Gambit Declined after 8...Nxd5 — a critical position where White must know the right continuation. The difference between 9.Bxe7 (best, +0.6) and 9.Nxd5 (inaccuracy, +0.1) is 50 centipawns. That's one move separating a "good" game from a mediocre one." orientation="white" moves="Bxe7,Nxd5"></chess-position>
 
 The QGD position above is the kind of moment where preparation pays off. After 8...Nxd5, White has several options. 9.Bxe7 is the mainline — it captures the bishop and maintains a small but lasting advantage. 9.Nxd5 exd5 is also playable but equalizes more quickly. A player who knows the ideas plays 9.Bxe7 without hesitation. A player who's improvising might spend 3 minutes here and still pick the wrong move.
 
