@@ -1,5 +1,5 @@
 ---
-title: "The Immortal Bh3 Sacrifice: Shirov vs Topalov 1998 — The Greatest Endgame Move in Chess History"
+title: "Shirov vs Topalov 1998: The Immortal Bh3!! Sacrifice Explained"
 description: "Shirov vs Topalov 1998: the legendary 47...Bh3!! sacrifice explained. Full analysis with board diagrams, engine eval, and why Kasparov was stunned."
 date: 2026-08-21
 author: "FireChess Team"
