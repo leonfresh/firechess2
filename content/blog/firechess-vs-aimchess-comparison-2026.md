@@ -99,7 +99,7 @@ All of that is free. No paywall on any category. No padlocks.
 
 To give you a concrete example of what "endgame mistakes" looks like in practice, consider this king and pawn position — the kind of endgame that decides hundreds of thousands of online games every day:
 
-<chess-position fen="8/8/4k3/3p1p2/3K1P2/8/8/8 w - - 0 1" caption="White to move in a king and pawn endgame. This is a classic opposition position — the side NOT to move has the advantage because the opposing king must step aside. Club players routinely misplay these positions, losing games they should draw or drawing games they should win." orientation="white"></chess-position>
+<chess-position fen="8/8/4k3/3p1p2/3K1P2/8/8/8 w - - 0 1" arrows="d4c5:green" badge="best" caption="White to move in a king and pawn endgame. This is a classic opposition position — the side NOT to move has the advantage because the opposing king must step aside. Club players routinely misplay these positions, losing games they should draw or drawing games they should win." orientation="white"></chess-position>
 
 FireChess scans your endgame positions like this one and flags the exact move where you went wrong — not just "you lost a pawn endgame" but "you played Kd3 here instead of Ke3, losing the opposition and the game." That specificity is what makes improvement possible. For more on these patterns, see our guide to [endgame patterns club players miss](/blog/endgame-patterns-club-players-miss). If you want to understand how the engine grades each move, our explainer on [average centipawn loss](/blog/what-is-centipawn-loss) breaks down the full scoring system.
 
@@ -194,7 +194,7 @@ When a leak is found, FireChess surfaces it as a card showing the exact position
 
 Take this typical Italian Game position that club players reach frequently:
 
-<chess-position fen="r1bqk2r/ppp2ppp/2np1n2/2b1p3/2B1P3/2PP1N2/PP3PPP/RNBQ1RK1 b kq - 0 6" caption="A Giuoco Piano position reached after 1.e4 e5 2.Nf3 Nc6 3.Bc4 Nf6 4.d3 Bc5 5.O-O d6 6.c3. Black has several plans here — O-O, a6, or Bb6 — but club players often waste moves like h6 or a5, losing time in a position where piece coordination matters more than flank pawn moves." orientation="black"></chess-position>
+<chess-position fen="r1bqk2r/ppp2ppp/2np1n2/2b1p3/2B1P3/2PP1N2/PP3PPP/RNBQ1RK1 b kq - 0 6" arrows="a7a6:green" badge="best" caption="A Giuoco Piano position reached after 1.e4 e5 2.Nf3 Nc6 3.Bc4 Nf6 4.d3 Bc5 5.O-O d6 6.c3. Black has several plans here — O-O, a6, or Bb6 — but club players often waste moves like h6 or a5, losing time in a position where piece coordination matters more than flank pawn moves." orientation="black"></chess-position>
 
 FireChess would flag this as an opening leak if you reach it 5+ times and consistently play inaccurate moves. Aimchess would show you a win-rate percentage for the Italian Game and nothing more. The difference between knowing "you play the Italian" and knowing "you waste tempo in this exact position" is the difference between generic advice and targeted improvement. For a deeper look at identifying these patterns yourself, see our guide on [finding opening weaknesses](/blog/how-to-find-opening-weaknesses).
 
@@ -221,7 +221,7 @@ After a scan, every mistake card (tactics, endgame, opening leak) includes a \"D
 
 Consider this middlegame from an Italian Game — a position that appears in thousands of club games every week:
 
-<chess-position fen="r1bq1rk1/bpp2ppp/p1np1n2/4p3/2B1P3/2PP1N1P/PP3PP1/RNBQR1K1 w - - 1 9" caption="White to move in a typical Italian Game middlegame. After 8...Ba7, the bishop has retreated but the position is still complex. Many club players autopilot here with moves like Nbd2 or Bg5, missing that the position demands concrete calculation — not routine development." orientation="white"></chess-position>
+<chess-position fen="r1bq1rk1/bpp2ppp/p1np1n2/4p3/2B1P3/2PP1N1P/PP3PP1/RNBQR1K1 w - - 1 9" arrows="a2a4:green" badge="best" caption="White to move in a typical Italian Game middlegame. After 8...Ba7, the bishop has retreated but the position is still complex. Many club players autopilot here with moves like Nbd2 or Bg5, missing that the position demands concrete calculation — not routine development." orientation="white"></chess-position>
 
 When FireChess flags a tactic you missed in a position like this, Drill Mode puts you right back on the board. You see the exact position, you try to find the move, and the engine shows you the full line whether you get it right or wrong. Aimchess tells you "you missed a tactic" and shows a percentage. There's no way to practice the specific position, no way to test whether you've actually learned the pattern. For players who want to go deeper into calculation training, our [chess calculation guide](/blog/chess-calculation-training-calculate-variations) covers structured approaches to building this skill.
 
