@@ -1945,6 +1945,16 @@ function OpponentDraftReveal({
 }) {
   const [stage, setStage] = useState<"enter" | "reveal" | "done">("enter");
 
+  // The parent passes onDismiss as an inline arrow, so its identity changes on every
+  // parent render. Read it from a ref and run the reveal effect exactly once per mount —
+  // otherwise the timer ticks (100ms per-turn clock, 1s PvP countdown) re-run it
+  // constantly: the reveal sounds replay forever and the auto-dismiss never fires,
+  // stranding the player on a modal they cannot close.
+  const onDismissRef = useRef(onDismiss);
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+  });
+
   useEffect(() => {
     playSound("record-scratch");
     const t1 = setTimeout(() => {
@@ -1952,13 +1962,13 @@ function OpponentDraftReveal({
       playSound("bell-double");
     }, 800);
     const t2 = setTimeout(() => setStage("done"), 1400);
-    const t3 = setTimeout(onDismiss, 4500);
+    const t3 = setTimeout(() => onDismissRef.current(), 4500);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
     };
-  }, [onDismiss]);
+  }, []);
 
   const mod = data.opponentPick;
   const tier = TIER_COLORS[mod.tier];
@@ -2085,10 +2095,17 @@ function OpponentDraftReveal({
 /* ────────────────────────── Floating Pepe Reaction ────────────────────────── */
 
 function FloatingPepe({ src, onDone }: { src: string; onDone: () => void }) {
+  // Same unstable-inline-callback trap as the draft reveal: the parent re-creates onDone
+  // on every render, which would reset this 2.5s timer forever under timer-tick churn.
+  // Read it from a ref so the lifetime runs exactly once per mount.
+  const onDoneRef = useRef(onDone);
   useEffect(() => {
-    const t = setTimeout(onDone, 2500);
+    onDoneRef.current = onDone;
+  });
+  useEffect(() => {
+    const t = setTimeout(() => onDoneRef.current(), 2500);
     return () => clearTimeout(t);
-  }, [onDone]);
+  }, []);
 
   return (
     <div
