@@ -7,9 +7,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { feedback, ticketReplies } from "@/lib/schema";
+import { feedback, ticketReplies, users, subscriptions } from "@/lib/schema";
 import { isAdmin } from "@/lib/admin";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, inArray } from "drizzle-orm";
 
 /* ── Anti-bot: rate limiter ──────────────────────────────────────────
  * In-memory per-IP store. Resets on cold start (acceptable for this scale).
@@ -150,6 +150,35 @@ export async function GET() {
           .from(feedback)
           .where(eq(feedback.userId, session.user.id))
           .orderBy(desc(feedback.createdAt));
+
+    // For admins: attach the linked account (name, email, plan) so tickets
+    // from signed-in users can be identified and granted Pro in one view.
+    let usersById: Record<string, { name: string | null; email: string | null; plan: string }> = {};
+    if (admin) {
+      const userIds = [
+        ...new Set(tickets.map((t) => t.userId).filter((id): id is string => !!id)),
+      ];
+      if (userIds.length > 0) {
+        const [userRows, planRows] = await Promise.all([
+          db
+            .select({ id: users.id, name: users.name, email: users.email })
+            .from(users)
+            .where(inArray(users.id, userIds)),
+          db
+            .select({ userId: subscriptions.userId, plan: subscriptions.plan })
+            .from(subscriptions)
+            .where(inArray(subscriptions.userId, userIds)),
+        ]);
+        const planByUserId = new Map(planRows.map((p) => [p.userId, p.plan]));
+        for (const u of userRows) {
+          usersById[u.id] = {
+            name: u.name,
+            email: u.email,
+            plan: planByUserId.get(u.id) ?? "free",
+          };
+        }
+      }
+    }
 
     // Fetch reply counts for each ticket
     const ticketIds = tickets.map((t) => t.id);

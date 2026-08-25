@@ -19,6 +19,8 @@ type Ticket = {
   status: "new" | "read" | "resolved";
   replyCount: number;
   createdAt: string;
+  /** Linked account (admin view) — set when the ticket came from a signed-in user */
+  user: { name: string | null; email: string | null; plan: string } | null;
 };
 
 type Reply = {
@@ -58,6 +60,7 @@ export default function AdminFeedbackPage() {
   const [threadLoading, setThreadLoading] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [replying, setReplying] = useState(false);
+  const [granting, setGranting] = useState(false);
   const threadEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -112,6 +115,29 @@ export default function AdminFeedbackPage() {
       if (thread && thread.ticket.id === id) {
         setThread({ ...thread, ticket: { ...thread.ticket, status: newStatus as Ticket["status"] } });
       }
+    }
+  };
+
+  // Grant Pro to the ticket's linked account, right from the thread
+  const grantPro = async () => {
+    if (!thread?.ticket.user || !thread.ticket.userId) return;
+    setGranting(true);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: thread.ticket.userId, plan: "pro" }),
+      });
+      if (res.ok) {
+        const updateUser = (t: Ticket) =>
+          t.user ? { ...t, user: { ...t.user, plan: "pro" } } : t;
+        setTickets((prev) => prev.map(updateUser));
+        if (thread) {
+          setThread({ ...thread, ticket: updateUser(thread.ticket) });
+        }
+      }
+    } catch {} finally {
+      setGranting(false);
     }
   };
 
@@ -207,8 +233,19 @@ export default function AdminFeedbackPage() {
                   {t.status}
                 </span>
               </div>
-              <div className="mt-1.5 flex items-center gap-3 text-[11px] text-zinc-500">
-                <span>{t.email || "anonymous"}</span>
+              <div className="mt-1.5 flex items-center gap-2 text-[11px] text-zinc-500">
+                <span className="truncate">{t.user?.name || t.email || "anonymous"}</span>
+                {t.user && (
+                  <span className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${
+                    t.user.plan === "lifetime"
+                      ? "bg-amber-500/15 text-amber-400"
+                      : t.user.plan === "pro"
+                        ? "bg-emerald-500/15 text-emerald-400"
+                        : "bg-zinc-700/40 text-zinc-500"
+                  }`}>
+                    {t.user.plan}
+                  </span>
+                )}
                 {t.replyCount > 0 && <span>💬 {t.replyCount}</span>}
                 <span className="ml-auto">
                   {new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
@@ -244,10 +281,29 @@ export default function AdminFeedbackPage() {
                     {thread.ticket.subject || `Ticket #${thread.ticket.id.slice(0, 8)}`}
                   </h2>
                   <p className="text-xs text-zinc-500">
+                    {thread.ticket.user?.name ? `${thread.ticket.user.name} · ` : ""}
                     {thread.ticket.email || "anonymous"} · {new Date(thread.ticket.createdAt).toLocaleString()}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  {thread.ticket.user && thread.ticket.user.plan === "free" && (
+                    <button
+                      onClick={grantPro}
+                      disabled={granting}
+                      className="rounded-lg border border-orange-500/40 bg-orange-500/10 px-3 py-1.5 text-xs font-semibold text-orange-400 hover:bg-orange-500/20 disabled:opacity-50"
+                    >
+                      {granting ? "Granting…" : "Grant Pro"}
+                    </button>
+                  )}
+                  {thread.ticket.user && thread.ticket.user.plan !== "free" && (
+                    <span className={`rounded-md px-2 py-1 text-[10px] font-bold uppercase ${
+                      thread.ticket.user.plan === "lifetime"
+                        ? "bg-amber-500/15 text-amber-400"
+                        : "bg-emerald-500/15 text-emerald-400"
+                    }`}>
+                      {thread.ticket.user.plan}
+                    </span>
+                  )}
                   {thread.ticket.status !== "resolved" ? (
                     <button
                       onClick={() => updateStatus(thread.ticket.id, "resolved")}

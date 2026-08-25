@@ -8,9 +8,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { feedback, ticketReplies, users } from "@/lib/schema";
+import { feedback, ticketReplies, users, subscriptions } from "@/lib/schema";
 import { isAdmin } from "@/lib/admin";
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, inArray } from "drizzle-orm";
 
 /* ------------------------------------------------------------------ */
 /*  GET — get ticket + thread                                          */
@@ -67,7 +67,25 @@ export async function GET(
       ticket.userLastViewedAt = now;
     }
 
-    return NextResponse.json({ ticket, replies });
+    // Attach the linked account for admins (same shape as the list view)
+    let user: { name: string | null; email: string | null; plan: string } | null = null;
+    if (admin && ticket.userId) {
+      const [u] = await db
+        .select({ name: users.name, email: users.email })
+        .from(users)
+        .where(eq(users.id, ticket.userId))
+        .limit(1);
+      if (u) {
+        const [sub] = await db
+          .select({ plan: subscriptions.plan })
+          .from(subscriptions)
+          .where(inArray(subscriptions.userId, [ticket.userId]))
+          .limit(1);
+        user = { name: u.name, email: u.email, plan: sub?.plan ?? "free" };
+      }
+    }
+
+    return NextResponse.json({ ticket: { ...ticket, user }, replies });
   } catch (err) {
     console.error("[ticket GET]", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
