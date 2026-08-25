@@ -12,12 +12,15 @@ import Link from "next/link";
 
 type Ticket = {
   id: string;
+  userId: string | null;
   subject: string | null;
   category: string;
   message: string;
   status: "new" | "read" | "resolved";
   email: string | null;
   createdAt: string;
+  /** Linked account (admin view) — set when the ticket came from a signed-in user */
+  user: { name: string | null; email: string | null; plan: string } | null;
 };
 
 type Reply = {
@@ -44,7 +47,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 export default function TicketThreadPage() {
-  const { loading, authenticated, user } = useSession();
+  const { loading, authenticated, user, isAdmin } = useSession();
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -57,6 +60,7 @@ export default function TicketThreadPage() {
   const [error, setError] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [replying, setReplying] = useState(false);
+  const [granting, setGranting] = useState(false);
   const threadEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -145,6 +149,32 @@ export default function TicketThreadPage() {
 
   const st = STATUS_LABELS[ticket.status] ?? STATUS_LABELS.new;
 
+  // Admin viewing someone else's ticket: identify the author from the
+  // linked account instead of the session ("You").
+  const authorName = isAdmin && ticket.user ? ticket.user.name ?? "User" : "You";
+  const authorInitial = (
+    isAdmin && ticket.user
+      ? ticket.user.name?.[0] ?? "U"
+      : user?.name?.[0] ?? "U"
+  ).toUpperCase();
+
+  const grantPro = async () => {
+    if (!ticket.user || !ticket.userId) return;
+    setGranting(true);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: ticket.userId, plan: "pro" }),
+      });
+      if (res.ok) {
+        setTicket({ ...ticket, user: { ...ticket.user, plan: "pro" } });
+      }
+    } catch {} finally {
+      setGranting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#070608] text-white">
       <div className="mx-auto max-w-2xl px-4 py-12 sm:py-16">
@@ -172,6 +202,34 @@ export default function TicketThreadPage() {
                 year: "numeric",
               })}
             </p>
+            {isAdmin && ticket.user && (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span className="text-xs font-medium text-[#f0edf2]">
+                  {ticket.user.name ?? "Unknown user"}
+                </span>
+                <span className="text-xs text-[#565061]">
+                  {ticket.user.email ?? "no email"}
+                </span>
+                <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${
+                  ticket.user.plan === "lifetime"
+                    ? "bg-amber-500/15 text-amber-400"
+                    : ticket.user.plan === "pro"
+                      ? "bg-emerald-500/15 text-emerald-400"
+                      : "bg-white/[0.06] text-[#565061]"
+                }`}>
+                  {ticket.user.plan}
+                </span>
+                {ticket.user.plan === "free" && (
+                  <button
+                    onClick={grantPro}
+                    disabled={granting}
+                    className="rounded-md border border-[#ff5a1f]/40 bg-[#ff5a1f]/10 px-2.5 py-1 text-[11px] font-semibold text-[#ff8c42] transition hover:bg-[#ff5a1f]/20 disabled:opacity-50"
+                  >
+                    {granting ? "Granting…" : "Grant Pro"}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
           <span className={`shrink-0 rounded-lg border px-2.5 py-1 text-xs font-medium ${st.color}`}>
             {st.label}
@@ -184,9 +242,9 @@ export default function TicketThreadPage() {
           <div className="rounded-xl border border-[#1e1a24] bg-[#121015] p-4">
             <div className="mb-2 flex items-center gap-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-500/20 text-xs font-bold text-blue-400">
-                {(user?.name?.[0] ?? "U").toUpperCase()}
+                {authorInitial}
               </span>
-              <span className="text-xs font-medium text-[#f0edf2]">You</span>
+              <span className="text-xs font-medium text-[#f0edf2]">{authorName}</span>
               <span className="ml-auto text-[10px] text-[#565061]">
                 {new Date(ticket.createdAt).toLocaleString()}
               </span>
@@ -208,10 +266,10 @@ export default function TicketThreadPage() {
                 <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
                   r.isAdmin ? "bg-[#ff5a1f]/20 text-[#ff8c42]" : "bg-blue-500/20 text-blue-400"
                 }`}>
-                  {r.isAdmin ? "🔥" : (user?.name?.[0] ?? "U").toUpperCase()}
+                  {r.isAdmin ? "🔥" : authorInitial}
                 </span>
                 <span className="text-xs font-medium text-[#f0edf2]">
-                  {r.isAdmin ? "FireChess Team" : "You"}
+                  {r.isAdmin ? "FireChess Team" : authorName}
                 </span>
                 <span className="ml-auto text-[10px] text-[#565061]">
                   {new Date(r.createdAt).toLocaleString()}
