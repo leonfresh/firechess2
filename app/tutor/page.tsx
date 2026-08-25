@@ -24,7 +24,6 @@ interface Puzzle {
   rating: number;
   themes: string;
   game_url: string;
-  opening_tags?: string;
 }
 
 const DIFFICULTY_RANGES = [

@@ -1,38 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { turso } from "@/lib/turso";
+import { sql } from "drizzle-orm";
+import { db } from "@/lib/db";
 
-function buildWhere(
-  ratingMin: number,
-  ratingMax: number,
-  themeList: string[],
-): { clause: string; args: (string | number)[] } {
-  const args: (string | number)[] = [ratingMin, ratingMax];
-  let clause = `AND rating BETWEEN ? AND ?`;
-  if (themeList.length > 0) {
-    clause += ` AND (${themeList.map(() => `themes LIKE ?`).join(" OR ")})`;
-    for (const theme of themeList) {
-      args.push(`%${theme}%`);
-    }
+/**
+ * GET /api/turso-puzzles?ratingMin=1300&ratingMax=1700&limit=5&themes=fork,pin
+ *
+ * Returns random Lichess puzzles filtered by rating band and (optionally)
+ * themes. Backed by the `lichess_puzzles` table in Neon Postgres (rehosted
+ * from Turso Aug 2026 after the Turso DB/credentials were lost).
+ *
+ * Random rowid sampling strategy:
+ * Jump to a random rowid in the table, then scan forward to the first row
+ * that satisfies all filters. O(log N + k) per query — far faster than
+ * ORDER BY random() on a ~500k row table.
+ */
+
+function buildWhere(ratingMin: number, ratingMax: number, themeList: string[]) {
+  const conds = [sql`rating BETWEEN ${ratingMin} AND ${ratingMax}`];
+  for (const theme of themeList) {
+    conds.push(sql`themes LIKE ${`%${theme}%`}`);
   }
-  return { clause, args };
+  return conds.length > 0 ? sql`AND ${sql.join(conds, sql` AND `)}` : sql``;
 }
-
-function rowsToObjects(
-  columns: string[],
-  rows: ArrayLike<unknown>[],
-): Record<string, unknown>[] {
-  return rows.map((row) => {
-    const obj: Record<string, unknown> = {};
-    columns.forEach((col, i) => {
-      obj[col] = (row as any)[i];
-    });
-    return obj;
-  });
-}
-
-// Approximate total rows in the lichess_puzzles table.
-// Used for random rowid sampling — no need to be exact; just needs to cover the full range.
-const APPROX_MAX_ROWID = 3_400_000;
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -48,42 +37,43 @@ export async function GET(req: NextRequest) {
     : [];
   const limit = Math.min(parseInt(searchParams.get("limit") ?? "1", 10), 20);
 
-  const { clause, args } = buildWhere(ratingMin, ratingMax, themeList);
+  const where = buildWhere(ratingMin, ratingMax, themeList);
 
   try {
-    // Random rowid sampling strategy:
-    // Jump to a random rowid in the table, then scan forward to the first
-    // row that satisfies all filters. This is O(log N + k) per query where k
-    // is the average gap between matching rows — dramatically faster than
-    // COUNT(*) + LIMIT/OFFSET for theme-filtered queries where OFFSET forces
-    // a full sequential scan through potentially hundreds of thousands of rows.
-    //
-    // We fire 3× more candidates than needed to compensate for near-end misses
-    // (where rowid >= X returns nothing because X is past the last match)
-    // and the occasional duplicate.
+    // Max rowid from the PK index — O(1), no fragile constant to drift.
+    const maxRowResult = await db.execute(
+      sql`SELECT max(rowid) AS m FROM lichess_puzzles`,
+    );
+    const maxRowid = Number(maxRowResult.rows[0]?.m ?? 0);
+    if (maxRowid === 0) {
+      return NextResponse.json({ puzzles: [], total: 0 });
+    }
+
+    // Fire 3× more candidates than needed to compensate for near-end misses
+    // and occasional duplicates.
     const candidates = limit * 3;
     const startRowids = Array.from(
       { length: candidates },
-      () => Math.floor(Math.random() * APPROX_MAX_ROWID) + 1,
+      () => Math.floor(Math.random() * maxRowid) + 1,
     );
 
     const rawResults = await Promise.all(
       startRowids.map((rowid) =>
-        turso.execute({
-          sql: `SELECT * FROM lichess_puzzles WHERE rowid >= ? ${clause} LIMIT 1`,
-          args: [rowid, ...args],
-        }),
+        db.execute(
+          sql`SELECT id, fen, moves, rating, themes, game_url, opening_tags FROM lichess_puzzles WHERE rowid >= ${rowid} ${where} ORDER BY rowid LIMIT 1`,
+        ),
       ),
     );
 
-    const seen = new Set<unknown>();
+    const seen = new Set<string>();
     const puzzles: Record<string, unknown>[] = [];
 
     for (const r of rawResults) {
       if (r.rows.length === 0) continue;
-      const p = rowsToObjects(r.columns, r.rows as any)[0];
-      if (!seen.has(p.id)) {
-        seen.add(p.id);
+      const p = r.rows[0] as Record<string, unknown>;
+      const pid = String(p.id);
+      if (!seen.has(pid)) {
+        seen.add(pid);
         puzzles.push(p);
         if (puzzles.length >= limit) break;
       }
