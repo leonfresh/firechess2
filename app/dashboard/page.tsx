@@ -225,8 +225,17 @@ export default function DashboardPage() {
       return;
     }
 
+    // Saved selection is stale (that player's reports were deleted) — clear
+    // it so the recovery branches below can actually run. Without this, a
+    // deleted player's value kept in state filters everything to zero.
+    if (saved && saved !== "__all__") {
+      try {
+        localStorage.removeItem("fc-dashboard-player");
+      } catch {}
+    }
+
     // Try to match the signed-in user's name to a chess username
-    if (user?.name && selectedUser === "__all__") {
+    if (user?.name) {
       const match = userOptions.find(
         (u) => u.username.toLowerCase() === user.name!.toLowerCase(),
       );
@@ -236,12 +245,14 @@ export default function DashboardPage() {
       }
     }
 
-    // Fall back: auto-select if only one player
-    if (selectedUser === "__all__" && userOptions.length === 1) {
+    // Fall back: auto-select if only one player, otherwise show all
+    if (userOptions.length === 1) {
       setSelectedUser(`${userOptions[0].username}__${userOptions[0].source}`);
+    } else {
+      setSelectedUser("__all__");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userOptions]);
+  }, [userOptions, user?.name]);
 
   // Filtered reports for stats / charts
   const filtered = useMemo(() => {
