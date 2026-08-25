@@ -22,6 +22,8 @@ import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
 import { EvalBar } from "@/components/eval-bar";
 import { earnCoins } from "@/lib/coins";
+import { stockfishClient, type LocalEngineLine } from "@/lib/stockfish-client";
+import { pvToSan, formatEval, applyPv } from "@/lib/engine-lines";
 import {
   getRepertoire,
   type RepertoireEntry,
@@ -81,6 +83,7 @@ type DrillPosition = {
   bestMove: string;
   label: string;
   cpLoss?: number;
+  gameUrl?: string;
 };
 
 type TimePressurePosition = {
@@ -247,6 +250,7 @@ function buildBlunderPositions(reports: SavedReport[]): DrillPosition[] {
             bestMove: t.bestMove,
             label: (t.tags ?? []).join(", ") || "Tactic",
             cpLoss: t.cpLoss,
+            gameUrl: t.gameUrl,
           });
         }
       }
@@ -268,6 +272,7 @@ function buildBlunderPositions(reports: SavedReport[]): DrillPosition[] {
           bestMove: best,
           label: leak.openingName ?? leak.opening ?? "Opening blunder",
           cpLoss: cp,
+          gameUrl: leak.gameUrl,
         });
       }
     }
@@ -299,6 +304,7 @@ function buildOpeningPositions(reports: SavedReport[]): DrillPosition[] {
           bestMove: best,
           label: leak.openingName ?? leak.opening ?? "Opening",
           cpLoss: leak.avgCpLoss ?? leak.cpLoss,
+          gameUrl: leak.gameUrl,
         });
       }
     }
@@ -869,10 +875,11 @@ function PuzzleBoard({
 type SimpleBoardProps = {
   position: DrillPosition;
   onResult: (correct: boolean) => void;
+  onNext: () => void;
   showHint?: boolean;
 };
 
-function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
+function SimplePuzzleBoard({ position, onResult, onNext, showHint }: SimpleBoardProps) {
   const { ref: boardRef, size: boardSize } = useBoardSize(860);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
@@ -894,8 +901,35 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
     const chess = new Chess(position.fen);
     return chess.turn() === "w" ? "white" : "black";
   });
+  // Engine continuation shown after the result ("why this move works")
+  const [line, setLine] = useState<LocalEngineLine | null>(null);
+  const [lineLoading, setLineLoading] = useState(false);
+  const [pvStep, setPvStep] = useState(0);
 
   const expected = parseUci(position.bestMove);
+  const expectedSan = useMemo(
+    () => pvToSan(position.fen, [position.bestMove])[0] ?? position.bestMove,
+    [position],
+  );
+
+  // Board position while stepping the engine line: base (post-solution)
+  // position plus the first pvStep plies of the continuation.
+  const displayFen =
+    status === "playing" || !line ? game.fen() : applyPv(game.fen(), line.pvMoves, pvStep);
+
+  const runEngineLine = useCallback(async (baseFen: string) => {
+    setLineLoading(true);
+    setLine(null);
+    setPvStep(0);
+    try {
+      const l = await stockfishClient.getPrincipalVariation(baseFen, 18, 12);
+      setLine(l);
+    } catch {
+      setLine(null);
+    } finally {
+      setLineLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     preloadSounds();
@@ -921,6 +955,8 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
         setMoveIndicator({ square: to, type: "correct" });
         setStatus("correct");
         onResult(true);
+        // Explain the point of the move — engine continuation from here
+        void runEngineLine(newGame.fen());
         return true;
       }
 
@@ -947,8 +983,11 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
             setGame(new Chess(g.fen()));
           } catch {}
         }, 600);
-        // Wait for user to see the answer before advancing
-        setTimeout(() => onResult(false), 2500);
+        onResult(false);
+        // Explain what the correct move sets up — engine continuation
+        // from the position after it (the refutation).
+        const correctFen = applyPv(position.fen, [position.bestMove], 1);
+        setTimeout(() => void runEngineLine(correctFen), 700);
       }
 
       return false;
@@ -1018,7 +1057,7 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
       >
         <Chessboard
           id="simple-train-board"
-          position={game.fen()}
+          position={displayFen}
           onPieceDrop={handleDrop}
           onSquareClick={handleSquareClick}
           boardOrientation={orientation}
@@ -1062,13 +1101,79 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
           Out of tries — the correct move is shown above
         </p>
       )}
-      {status === "correct" && (
-        <div className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-5 py-3">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400 text-sm font-bold">✓</span>
-          <div>
-            <p className="text-sm font-semibold text-emerald-300">Puzzle solved!</p>
-            <p className="text-[11px] text-emerald-400/60">+10 coins earned</p>
+      {(status === "correct" || status === "wrong") && (
+        <div className="w-full max-w-[860px] space-y-3">
+          <div
+            className={`flex items-start gap-3 rounded-xl border px-4 py-3 ${
+              status === "correct"
+                ? "border-emerald-500/20 bg-emerald-500/[0.06]"
+                : "border-red-500/20 bg-red-500/[0.06]"
+            }`}
+          >
+            <span
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                status === "correct"
+                  ? "bg-emerald-500/15 text-emerald-400"
+                  : "bg-red-500/15 text-red-400"
+              }`}
+            >
+              {status === "correct" ? "✓" : "✗"}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p
+                className={`text-sm font-semibold ${
+                  status === "correct" ? "text-emerald-300" : "text-red-300"
+                }`}
+              >
+                {status === "correct"
+                  ? "Correct!"
+                  : `Out of tries — best was ${expectedSan}`}
+              </p>
+              {lineLoading ? (
+                <p className="mt-1 text-[11px] text-slate-400">
+                  Analyzing best continuation…
+                </p>
+              ) : line && line.pvMoves.length > 0 ? (
+                <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                  <span className="text-[11px] text-slate-500">From here:</span>
+                  {pvToSan(game.fen(), line.pvMoves).map((san, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setPvStep(i + 1)}
+                      className={`rounded-md border px-1.5 py-0.5 font-mono text-[11px] font-semibold transition-colors ${
+                        i < pvStep
+                          ? "border-amber-500/40 bg-amber-500/15 text-amber-300"
+                          : "border-white/[0.08] bg-white/[0.03] text-slate-300 hover:border-white/[0.2] hover:text-white"
+                      }`}
+                    >
+                      {san}
+                    </button>
+                  ))}
+                  <span className="ml-1 text-[11px] font-semibold text-slate-400">
+                    {formatEval(line)}
+                  </span>
+                </div>
+              ) : null}
+              {position.gameUrl && (
+                <a
+                  href={position.gameUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1.5 inline-block text-[11px] text-cyan-400 transition-colors hover:text-cyan-300 hover:underline"
+                >
+                  View full game ↗
+                </a>
+              )}
+            </div>
           </div>
+          <button
+            type="button"
+            onClick={onNext}
+            className="w-full rounded-xl border border-white/[0.1] bg-white/[0.04] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/[0.08]"
+          >
+            Next Position →
+          </button>
         </div>
       )}
     </div>
@@ -1681,31 +1786,28 @@ export default function TrainPage() {
     setShowHint(false);
   }, [activeMode, speedActive, weakMotifs, fetchPuzzles, puzzles.length]);
 
-  // Handle drill result (blunder/opening)
-  const handleDrillResult = useCallback(
-    (correct: boolean) => {
-      if (correct) {
-        setSolved((s) => s + 1);
-        const coins = earnCoins("study_task");
-        if (coins > 0) setCoinsEarned((c) => c + coins);
-      } else {
-        setFailed((f) => f + 1);
+  // Handle drill result (blunder/opening) — stats only; the board's
+  // "Next Position" button drives advancement (user reads the explanation).
+  const handleDrillResult = useCallback((correct: boolean) => {
+    if (correct) {
+      setSolved((s) => s + 1);
+      const coins = earnCoins("study_task");
+      if (coins > 0) setCoinsEarned((c) => c + coins);
+    } else {
+      setFailed((f) => f + 1);
+    }
+  }, []);
+
+  const handleNextDrill = useCallback(() => {
+    setCurrentDrill((d) => {
+      if (d + 1 >= drillPositions.length) {
+        setSessionDone(true);
+        return d;
       }
-      // Board already waited before calling this for wrong answers
-      const delay = correct ? 1500 : 300;
-      setTimeout(() => {
-        setCurrentDrill((d) => {
-          if (d + 1 >= drillPositions.length) {
-            setSessionDone(true);
-            return d;
-          }
-          return d + 1;
-        });
-        setShowHint(false);
-      }, 1500);
-    },
-    [drillPositions.length],
-  );
+      return d + 1;
+    });
+    setShowHint(false);
+  }, [drillPositions.length]);
 
   // Handle time drill result
   const handleTimeDrillResult = useCallback(
@@ -2380,6 +2482,7 @@ export default function TrainPage() {
                         key={`drill-${currentDrill}`}
                         position={drillPositions[currentDrill]}
                         onResult={handleDrillResult}
+                        onNext={handleNextDrill}
                         showHint={showHint}
                       />
                     </div>
