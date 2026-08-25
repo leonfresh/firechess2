@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { signIn } from "next-auth/react";
 import { useSession } from "@/components/session-provider";
+import { AvatarImg } from "@/components/avatar-image";
 
 type CommentItem = {
   id: string;
@@ -136,18 +137,15 @@ export function CommunityComments({
                   href={`/community/profile/${comment.authorId}`}
                   className="group flex min-w-0 items-center gap-3"
                 >
-                  {comment.authorImage ? (
-                    <img
-                      src={comment.authorImage}
-                      alt=""
-                      className="h-8 w-8 rounded-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500/15 text-xs font-bold text-orange-300">
-                      {(comment.authorDisplayName[0] ?? "F").toUpperCase()}
-                    </span>
-                  )}
+                  <AvatarImg
+                    src={comment.authorImage}
+                    className="h-8 w-8 rounded-full object-cover"
+                    fallback={
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500/15 text-xs font-bold text-orange-300">
+                        {(comment.authorDisplayName[0] ?? "F").toUpperCase()}
+                      </span>
+                    }
+                  />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-white transition-colors group-hover:text-cyan-300">
                       {comment.authorDisplayName}
@@ -162,18 +160,15 @@ export function CommunityComments({
                 </Link>
               ) : (
                 <>
-                  {comment.authorImage ? (
-                    <img
-                      src={comment.authorImage}
-                      alt=""
-                      className="h-8 w-8 rounded-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500/15 text-xs font-bold text-orange-300">
-                      {(comment.authorDisplayName[0] ?? "F").toUpperCase()}
-                    </span>
-                  )}
+                  <AvatarImg
+                    src={comment.authorImage}
+                    className="h-8 w-8 rounded-full object-cover"
+                    fallback={
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500/15 text-xs font-bold text-orange-300">
+                        {(comment.authorDisplayName[0] ?? "F").toUpperCase()}
+                      </span>
+                    }
+                  />
                   <div>
                     <p className="text-sm font-semibold text-white">
                       {comment.authorDisplayName}

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CommunityFlashcards } from "@/components/community-flashcards";
 import { CommunityPostCard } from "@/components/community-post-card";
+import { AvatarImg } from "@/components/avatar-image";
 import { getCommunityProfile } from "@/lib/community";
 import { extractCommunityPuzzleData } from "@/lib/community-shared";
 
@@ -84,18 +85,15 @@ export default async function CommunityProfilePage({
         <header className="rounded-[2rem] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(249,115,22,0.12),transparent_28%),rgba(255,255,255,0.025)] p-6 sm:p-8">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex items-center gap-4">
-              {data.profile.image ? (
-                <img
-                  src={data.profile.image}
-                  alt=""
-                  className="h-16 w-16 rounded-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <span className="flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/15 text-2xl font-bold text-orange-300">
-                  {(data.profile.displayName[0] ?? "F").toUpperCase()}
-                </span>
-              )}
+              <AvatarImg
+                src={data.profile.image}
+                className="h-16 w-16 rounded-full object-cover"
+                fallback={
+                  <span className="flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/15 text-2xl font-bold text-orange-300">
+                    {(data.profile.displayName[0] ?? "F").toUpperCase()}
+                  </span>
+                }
+              />
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300">
                   Community Profile

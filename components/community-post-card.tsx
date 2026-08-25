@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CommunityPostAdminMenu } from "@/components/community-post-admin-menu";
 import { CommunityBoardPreview } from "@/components/community-board-preview";
 import { CommunityPuzzleInlinePlayer } from "@/components/community-puzzle-inline-player";
+import { AvatarImg } from "@/components/avatar-image";
 import type { CommunityPostCard as CommunityPostCardData } from "@/lib/community";
 import {
   COMMUNITY_KIND_LABELS,
@@ -134,18 +135,15 @@ export function CommunityPostCard({ post }: { post: CommunityPostCardData }) {
 
           <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
             <div className="flex min-w-0 items-center gap-3">
-              {post.authorImage ? (
-                <img
-                  src={post.authorImage}
-                  alt=""
-                  className="h-10 w-10 rounded-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500/15 text-sm font-bold text-orange-200">
-                  {getDisplayInitial(post.authorDisplayName)}
-                </span>
-              )}
+              <AvatarImg
+                src={post.authorImage}
+                className="h-10 w-10 rounded-full object-cover"
+                fallback={
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500/15 text-sm font-bold text-orange-200">
+                    {getDisplayInitial(post.authorDisplayName)}
+                  </span>
+                }
+              />
 
               <div className="min-w-0">
                 {post.authorId ? (

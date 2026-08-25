@@ -10,6 +10,7 @@ import {
   formatCommunityLineMove,
 } from "@/lib/community-shared";
 import { CommunityBoardPreview } from "@/components/community-board-preview";
+import { AvatarImg } from "@/components/avatar-image";
 import { CommunityPuzzleInlinePlayer } from "@/components/community-puzzle-inline-player";
 import { CommunityPostAdminMenu } from "@/components/community-post-admin-menu";
 import { CommunityComments } from "@/components/community-comments";
@@ -216,18 +217,15 @@ export default async function CommunityPostPage({
             <section className="rounded-[2rem] border border-white/[0.08] bg-white/[0.03] p-5">
               <h2 className="text-lg font-bold text-white">About the Author</h2>
               <div className="mt-4 flex items-center gap-3">
-                {post.authorImage ? (
-                  <img
-                    src={post.authorImage}
-                    alt=""
-                    className="h-12 w-12 rounded-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-500/15 text-lg font-bold text-orange-300">
-                    {(post.authorDisplayName[0] ?? "F").toUpperCase()}
-                  </span>
-                )}
+                <AvatarImg
+                  src={post.authorImage}
+                  className="h-12 w-12 rounded-full object-cover"
+                  fallback={
+                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-500/15 text-lg font-bold text-orange-300">
+                      {(post.authorDisplayName[0] ?? "F").toUpperCase()}
+                    </span>
+                  }
+                />
                 <div>
                   <p className="font-semibold text-white">
                     {post.authorDisplayName}
