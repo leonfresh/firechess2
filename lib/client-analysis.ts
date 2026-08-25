@@ -15,6 +15,7 @@ import type {
   EndgameType,
   GameOpeningTrace,
   MentalStats,
+  OpeningIdea,
   OpeningSummary,
   MissedTactic,
   MoveSquare,
@@ -2187,6 +2188,168 @@ function deriveLeakTags(args: {
 }
 
 /**
+ * Detection constants for "interesting alternative" suggestions.
+ *
+ * For every recurring position (3+ reaches) where the user keeps playing the
+ * same move, we look at the Lichess Opening Explorer and try to surface a
+ * move the user has NOT been playing that the database scores highly on both
+ * axes: popularity (many games) and score (win rate). Named lines — like
+ * "Scandinavian Defense: Portuguese Gambit" — get a bonus because they are
+ * interesting to discover, not just statistically better.
+ */
+const IDEA_MIN_DB_GAMES = 20_000; // "highly played": at least 20k games in DB
+const IDEA_MIN_WIN_RATE = 0.50; // "high win rate": at least 50% from user's side
+const IDEA_BEAT_USER_RATE = 0.015; // suggestion must beat the user's move by at least 1.5pp
+const IDEA_MIN_POSITION_REACHES = 3; // the position must be a recurring habit
+const IDEA_MAX_IDEAS = 8; // report-wide cap on suggestions
+const IDEA_MAX_POSITIONS_SCANNED = 20; // cap on explorer fetches (rate limits)
+
+/** Bonus for the suggestion having a known opening name / gambit flavor. */
+const IDEA_NAME_BONUS = 0.05;
+const IDEA_GAMBIT_BONUS = 0.08;
+
+type IdeaDetectionInput = {
+  fenBefore: string;
+  data: {
+    totalReachCount: number;
+    moveCounts: Map<string, number>;
+    moveOutcomes: Map<string, { w: number; d: number; l: number }>;
+  };
+  openingName?: string;
+};
+
+/**
+ * Detect interesting alternative moves for a set of recurring positions.
+ *
+ * Runs after the main recurring-position eval pass so it can reuse the
+ * still-warm explorer cache (`fetchExplorerMoves` caches per-FEN for 5 min).
+ * Returns at most `MAX_IDEAS` ideas, at most one per position, ordered by
+ * "interest score": DB win rate × popularity, with a bonus for named lines.
+ *
+ * @param entries Recurring positions (FEN + aggregate move/outcome data).
+ * @param fenOpeningName Position → opening name map (from the source API).
+ * @param onProgress Optional progress callback.
+ */
+export async function detectOpeningIdeas(
+  entries: IdeaDetectionInput[],
+  fenOpeningName: Map<string, string>,
+  onProgress?: (message: string, detail: string) => void,
+): Promise<OpeningIdea[]> {
+  const ideas: OpeningIdea[] = [];
+
+  // Only positions the user has a real habit in: 3+ reaches and a dominant
+  // move (played at least 50% of the time or 2+ times).
+  const qualified = entries
+    .filter((e) => e.data.totalReachCount >= IDEA_MIN_POSITION_REACHES)
+    .map((e) => {
+      let domMove = "";
+      let domCount = 0;
+      for (const [move, count] of e.data.moveCounts.entries()) {
+        if (count > domCount) {
+          domMove = move;
+          domCount = count;
+        }
+      }
+      if (!domMove || domCount < 2) return null;
+      if (domCount / e.data.totalReachCount < 0.5) return null; // no clear habit
+      return { ...e, domMove, domCount };
+    })
+    .filter((e): e is NonNullable<typeof e> => e !== null)
+    .sort((a, b) => b.data.totalReachCount - a.data.totalReachCount)
+    .slice(0, IDEA_MAX_POSITIONS_SCANNED);
+
+  for (let i = 0; i < qualified.length; i += 1) {
+    if (ideas.length >= IDEA_MAX_IDEAS) break;
+
+    const { fenBefore, data, openingName, domMove, domCount } = qualified[i];
+    const sideToMove: PlayerColor = fenBefore.includes(" w ")
+      ? "white"
+      : "black";
+
+    let explorer;
+    try {
+      explorer = await fetchExplorerMoves(fenBefore, sideToMove);
+    } catch {
+      continue;
+    }
+    if (explorer.failed || explorer.moves.length === 0) continue;
+
+    // User's moves as UCI so we can exclude what they already play.
+    const userUcis = new Set<string>();
+    for (const [move] of data.moveCounts.entries()) {
+      const uci = moveToUci(new Chess(fenBefore), move);
+      if (uci) userUcis.add(uci);
+    }
+    const domUci = moveToUci(new Chess(fenBefore), domMove);
+    const domDb = explorer.moves.find(
+      (m) => m.uci === domUci || m.san === domMove,
+    );
+    const domDbWinRate = domDb?.winRate;
+    const domOutcome = data.moveOutcomes.get(domMove);
+
+    // Find candidate alternatives.
+    const candidates = explorer.moves.filter((m) => {
+      if (userUcis.has(m.uci)) return false; // user already plays it
+      if (m.totalGames < IDEA_MIN_DB_GAMES) return false; // not "highly played"
+      if (m.winRate < IDEA_MIN_WIN_RATE) return false; // not "high win rate"
+      // The suggestion should score at least as well as what they play now —
+      // otherwise "interesting" would mean "downgrade".
+      if (domDbWinRate !== undefined && m.winRate < domDbWinRate + IDEA_BEAT_USER_RATE) {
+        return false;
+      }
+      return true;
+    });
+
+    if (candidates.length === 0) continue;
+
+    // Interest score: win rate weighted by popularity, plus flavor bonuses
+    // for named lines and gambits.
+    const scored = candidates
+      .map((c) => {
+        const name = c.opening?.name ?? "";
+        const isGambit = /gambit/i.test(name);
+        const score =
+          c.winRate * Math.log10(c.totalGames) +
+          (name ? IDEA_NAME_BONUS : 0) +
+          (isGambit ? IDEA_GAMBIT_BONUS : 0);
+        return { c, score };
+      })
+      .sort((a, b) => b.score - a.score);
+
+    const best = scored[0];
+    const suggestion = best.c;
+
+    onProgress?.(
+      `✨ Found an idea: ${suggestion.san} (recurring position ${i + 1}/${qualified.length})`,
+      openingName ?? fenBefore.slice(0, 30),
+    );
+
+    ideas.push({
+      fenBefore,
+      sideToMove,
+      openingName: openingName ?? fenOpeningName.get(fenBefore),
+      userMove: domMove,
+      userMoveCount: domCount,
+      reachCount: data.totalReachCount,
+      userWins: domOutcome?.w ?? 0,
+      userDraws: domOutcome?.d ?? 0,
+      userLosses: domOutcome?.l ?? 0,
+      suggestedMove: suggestion.san,
+      suggestedUci: suggestion.uci,
+      suggestedWinRate: suggestion.winRate,
+      suggestedGames: suggestion.totalGames,
+      suggestedOpeningName: suggestion.opening?.name,
+      suggestedEco: suggestion.opening?.eco,
+      userMoveDbWinRate: domDb?.winRate,
+      userMoveDbGames: domDb?.totalGames,
+      averageRating: suggestion.averageRating,
+    });
+  }
+
+  return ideas;
+}
+
+/**
  * Convert a SAN move token to UCI format using chess.js
  */
 function moveToUci(chess: Chess, moveToken: string): string | null {
@@ -3010,6 +3173,7 @@ export async function analyzeOpeningLeaksInBrowser(
 
   const leaks: RepeatedOpeningLeak[] = [];
   const oneOffMistakes: RepeatedOpeningLeak[] = [];
+  const openingIdeas: OpeningIdea[] = [];
   const positionalFindings: {
     fenBefore: string;
     userMove: string;
@@ -3335,6 +3499,37 @@ export async function analyzeOpeningLeaksInBrowser(
           return b.cpLoss - a.cpLoss;
         });
 
+        /* ── Interesting alternatives (Lichess DB picks the user isn't playing) ── */
+        // For recurring positions with a clear habit move, look for DB moves
+        // that are both highly-played AND high-scoring. Runs after the eval
+        // pass so explorer fetches hit the warm cache. Worst case this is a
+        // handful of serialised fetches — the explorer queue rate-limits us.
+        const ideaEntries = repeatedEntries.map(([fenBefore, data]) => ({
+          fenBefore,
+          data,
+          openingName: fenOpeningName.get(fenBefore),
+        }));
+        const detectedIdeas = await detectOpeningIdeas(ideaEntries, fenOpeningName, (message, detail) => {
+          emitProgress(options, {
+            phase: "eval",
+            message,
+            detail,
+            percent: 79,
+          });
+        });
+        for (const idea of detectedIdeas) {
+          if (openingIdeas.length >= IDEA_MAX_IDEAS) break;
+          openingIdeas.push(idea);
+        }
+        if (openingIdeas.length > 0) {
+          emitProgress(options, {
+            phase: "eval",
+            message: `✨ ${openingIdeas.length} interesting alternative${openingIdeas.length !== 1 ? "s" : ""} found`,
+            detail: "High-win-rate database moves you haven't tried from your recurring positions",
+            percent: 79,
+          });
+        }
+
         /* ── One-off opening mistakes (positions reached exactly 2 times with significant cpLoss) ── */
         const ONE_OFF_CP_THRESHOLD = 100; // lowered from 150 — catch more habits
         const MAX_ONE_OFFS = 30;
@@ -3458,6 +3653,11 @@ export async function analyzeOpeningLeaksInBrowser(
             const cpLoss = evalBefore - evalAfter;
 
             if (cpLoss < ONE_OFF_CP_THRESHOLD) return;
+
+            // Skip when the user was already heavily losing (down 300cp+): a bigger
+            // loss on top of a lost position is not a useful lesson. Mirrors the
+            // tactics guard so the guided walk never coaches a dead position.
+            if (evalBefore < -300) return;
 
             const tags = deriveLeakTags({
               fenBefore,
@@ -4235,7 +4435,13 @@ export async function analyzeOpeningLeaksInBrowser(
 
                         // Skip flagging as a mistake if the position was already a forced mate —
                         // slower conversion (M6 → +9.42) is not an endgame mistake.
-                        if (cpLoss >= mistakeThreshold && cpBefore < 99000) {
+                        // Also skip when the user was already heavily losing (down 300cp+):
+                        // advice in a lost position is noise — mirrors the tactics guard.
+                        if (
+                          cpLoss >= mistakeThreshold &&
+                          cpBefore >= -300 &&
+                          cpBefore < 99000
+                        ) {
                           ts.mistakes += 1;
 
                           if (endgameMistakes.length < MAX_ENDGAME_MISTAKES) {
@@ -5198,13 +5404,14 @@ export async function analyzeOpeningLeaksInBrowser(
 
   return {
     username,
-    reportVersion: 2,
+    reportVersion: 3,
     scanSignature,
     gamesAnalyzed,
     gamesDateRange,
     repeatedPositions,
     leaks,
     oneOffMistakes,
+    openingIdeas: openingIdeas.length > 0 ? openingIdeas : undefined,
     positionalFindings:
       positionalFindings.length > 0 ? positionalFindings : undefined,
     brilliantMoves: brilliantMoves.length > 0 ? brilliantMoves : undefined,

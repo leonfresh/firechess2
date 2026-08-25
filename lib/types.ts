@@ -41,6 +41,49 @@ export type RepeatedOpeningLeak = {
   openingName?: string;
 };
 
+/**
+ * An "interesting alternative" suggestion surfaced from the Lichess Opening
+ * Explorer: a move the user rarely/never plays from a recurring position,
+ * but that the database scores well (high win rate AND high play volume).
+ * Example: playing 3...Nxd5 (Scandinavian) every time → suggest 3...Bg4
+ * ("Portuguese Gambit": 54% win rate across 1.8M games).
+ */
+export type OpeningIdea = {
+  /** Recurring position (3+ reaches) the user consistently misplays. */
+  fenBefore: string;
+  /** Side to move — always the user's side in a recurring position. */
+  sideToMove: PlayerColor;
+  /** Opening name of the position itself (from source API). */
+  openingName?: string;
+  /** The move the user actually plays most often (SAN). */
+  userMove: string;
+  /** How many times the user played `userMove` from this position. */
+  userMoveCount: number;
+  /** How many times the position was reached in total. */
+  reachCount: number;
+  /** User's own results with their move (wins/draws/losses). */
+  userWins: number;
+  userDraws: number;
+  userLosses: number;
+  /** Suggested alternative (SAN + UCI). */
+  suggestedMove: string;
+  suggestedUci: string;
+  /** DB win rate of the suggestion, from the user's perspective (0-1). */
+  suggestedWinRate: number;
+  /** DB number of games that reached the suggestion. */
+  suggestedGames: number;
+  /** Opening name of the line after the suggestion (e.g. "Scandinavian Defense: Portuguese Gambit"). */
+  suggestedOpeningName?: string;
+  /** ECO code of the suggested line. */
+  suggestedEco?: string;
+  /** DB win rate of the user's current move (if it appears in the DB) — for the comparison bar. */
+  userMoveDbWinRate?: number;
+  /** DB game count of the user's current move. */
+  userMoveDbGames?: number;
+  /** Average DB rating of players who played the suggestion. */
+  averageRating: number;
+};
+
 export type GameOpeningTrace = {
   gameIndex: number;
   userColor: PlayerColor;
@@ -357,6 +400,8 @@ export type AnalyzeResponse = {
   repeatedPositions: number;
   leaks: RepeatedOpeningLeak[];
   oneOffMistakes: RepeatedOpeningLeak[];
+  /** Interesting alternatives from the Lichess DB: high-win-rate, highly-played moves the user doesn't play from recurring positions. */
+  openingIdeas?: OpeningIdea[];
   /** Positional-pattern findings below the main cpLoss threshold */
   positionalFindings?: PositionalFinding[];
   brilliantMoves?: BrilliantMove[];

@@ -764,7 +764,7 @@ export function TimeCard({
               <button
                 type="button"
                 onClick={onOpenAnalysis}
-                className="flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500/20 hover:text-white"
+                className="flex items-center gap-1.5 rounded-lg border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-3 py-1.5 text-xs font-semibold text-[#ff8c42] transition hover:bg-[#ff5a1f]/[0.14] hover:text-white"
               >
                 Open analysis
               </button>

@@ -31,6 +31,7 @@ import {
 } from "@/components/scan-mental-game";
 import { OpeningRankings } from "@/components/opening-rankings";
 import { PositionPerformance } from "@/components/position-performance";
+import { OpeningIdeas } from "@/components/opening-ideas";
 import { OppositeCastlingCard } from "@/components/opposite-castling-card";
 import { AiReportAnalysis } from "@/components/ai-report-analysis";
 import { CoachStickyNote } from "@/components/coach-sticky-note";
@@ -64,6 +65,7 @@ import type {
   EndgameMistake,
   MentalStats,
   MissedTactic,
+  OpeningIdea,
   PositionalFinding,
   RepeatedOpeningLeak,
   StructuralReport,
@@ -1694,6 +1696,19 @@ function buildOpeningAnalysisTarget(
   };
 }
 
+function buildOpeningIdeaAnalysisTarget(
+  idea: OpeningIdea,
+): ReportAnalysisTarget {
+  return {
+    fen: idea.fenBefore,
+    orientation: orientationFromFen(idea.fenBefore),
+    title: idea.suggestedOpeningName?.trim()
+      ? `${idea.suggestedOpeningName} — try ${idea.suggestedMove}`
+      : `Try ${idea.suggestedMove} from this position`,
+    subtitle: `The database scores ${idea.suggestedMove} ${(idea.suggestedWinRate * 100).toFixed(1)}% across ${idea.suggestedGames.toLocaleString()} games. Test the line on the board before committing it to your repertoire.`,
+  };
+}
+
 function buildTacticAnalysisTarget(tactic: MissedTactic): ReportAnalysisTarget {
   return {
     fen: tactic.fenBefore,
@@ -1769,6 +1784,7 @@ export function ScanSessionReport({
 
   const leaks = result?.leaks ?? [];
   const oneOffMistakes = result?.oneOffMistakes ?? [];
+  const openingIdeas = result?.openingIdeas ?? [];
   const missedTactics = result?.missedTactics ?? [];
   const endgameMistakes = result?.endgameMistakes ?? [];
   const brilliantMoves = result?.brilliantMoves ?? [];
@@ -2655,7 +2671,7 @@ export function ScanSessionReport({
                 </p>
                 <div className="h-56">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={categoryData} margin={{ left: -12, bottom: 0 }}>
+                    <BarChart data={categoryData} margin={{ left: 0, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                       <XAxis
                         dataKey="name"
@@ -2706,7 +2722,7 @@ export function ScanSessionReport({
                 </p>
                 <div className="h-56">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={phaseData} margin={{ left: -12, bottom: 0 }}>
+                    <BarChart data={phaseData} margin={{ left: 0, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                       <XAxis
                         dataKey="name"
@@ -2860,6 +2876,15 @@ export function ScanSessionReport({
             ) : null}
 
             <PositionPerformance leaks={leaks} hasProAccess={hasProAccess} />
+
+            {openingIdeas.length > 0 ? (
+              <OpeningIdeas
+                ideas={openingIdeas}
+                onOpenAnalysis={(idea) =>
+                  setAnalysisTarget(buildOpeningIdeaAnalysisTarget(idea))
+                }
+              />
+            ) : null}
 
             {analysis?.sectionNotes?.openings ? (
               <CoachStickyNote section="openings" note={analysis.sectionNotes.openings} />

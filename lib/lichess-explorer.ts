@@ -20,6 +20,8 @@ export type ExplorerMove = {
   totalGames: number;
   winRate: number;  // from the perspective of sideToMove (0-1)
   averageRating: number;
+  /** Opening name of the position reached by this move (e.g. "Queen's Gambit Accepted: Slav Gambit"). */
+  opening?: { eco?: string; name?: string };
 };
 
 export type ExplorerResult = {
@@ -193,6 +195,12 @@ export async function fetchExplorerMoves(
               totalGames: w + d + b,
               winRate: computeWinRate(w, d, b, sideToMove),
               averageRating: Number(m.averageRating) || 0,
+              opening: m.opening
+                ? {
+                    eco: m.opening.eco as string | undefined,
+                    name: m.opening.name as string | undefined,
+                  }
+                : undefined,
             };
           });
 

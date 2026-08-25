@@ -44,8 +44,8 @@ export function ReportEntryChoice({
         "Walk through your biggest findings one card at a time — your top leak, a missed tactic, and a weekly plan.",
       icon: <Route className="h-5 w-5" />,
       accent:
-        "border-emerald-400/40 bg-emerald-500/[0.08] hover:border-emerald-400/70 hover:bg-emerald-500/[0.14]",
-      iconWrap: "bg-emerald-500/15 text-emerald-300",
+        "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.14]",
+      iconWrap: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
     },
     {
       value: "full",

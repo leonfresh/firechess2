@@ -193,8 +193,12 @@ export function GuidedWalk(props: GuidedWalkProps) {
   }, [props.leaks]);
 
   // Top tactic: prefer mate / big swing, needs a FEN.
+  // Skip positions where the user was already losing (down 300cp+): coaching a dead
+  // position is noise. Guards old stored reports scanned before the scan-time guard.
   const topTactic = useMemo(() => {
-    const usable = props.missedTactics.filter((t) => t.fenBefore && t.userColor);
+    const usable = props.missedTactics.filter(
+      (t) => t.fenBefore && t.userColor && (t.cpBefore ?? 0) >= -300,
+    );
     if (usable.length === 0) return null;
     return [...usable].sort((a, b) => {
       const aScore = (a.mateIn ?? 0) * 1000 + (a.cpAfter ?? 0);
@@ -214,10 +218,12 @@ export function GuidedWalk(props: GuidedWalkProps) {
     )[0];
   }, [props.brilliantMoves]);
 
-  // One endgame moment: biggest cpLoss, needs a FEN.
+  // One endgame moment: biggest cpLoss, needs a FEN. Same lost-position filter as
+  // the tactic step — an endgame "blunder" from a position already down 300cp+ is
+  // not actionable advice (and old stored reports may predate the scan-time guard).
   const topEndgame = useMemo(() => {
     const usable = (props.endgameMistakes ?? []).filter(
-      (e) => e.fenBefore && e.userColor,
+      (e) => e.fenBefore && e.userColor && (e.cpBefore ?? 0) >= -300,
     );
     if (usable.length === 0) return null;
     return [...usable].sort((a, b) => (b.cpLoss ?? 0) - (a.cpLoss ?? 0))[0];

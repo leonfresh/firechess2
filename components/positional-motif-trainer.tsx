@@ -10,6 +10,7 @@ import {
   useCustomPieces,
 } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
+import { stockfishClient, type LocalEngineLine } from "@/lib/stockfish-client";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -42,7 +43,12 @@ type DrillPosition = {
   resolvedFen: string;
 };
 
-type TrainState = "thinking" | "correct" | "wrong" | "revealed";
+type TrainState =
+  | "thinking"
+  | "correct"
+  | "wrong"
+  | "revealed"
+  | "freeplay";
 
 export type PositionalMotifTrainerProps = {
   motifs: Motif[];
@@ -54,6 +60,29 @@ export type PositionalMotifTrainerProps = {
 
 function isUci(move: string): boolean {
   return /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(move);
+}
+
+/** Convert a UCI principal variation into SAN moves (stops at the first illegal ply). */
+function pvToSan(fen: string, pv: string[]): string[] {
+  const san: string[] = [];
+  const chess = new Chess(fen);
+  for (const uci of pv) {
+    const move = chess.move({
+      from: uci.slice(0, 2),
+      to: uci.slice(2, 4),
+      promotion: (uci[4] || undefined) as PieceSymbol | undefined,
+    });
+    if (!move) break;
+    san.push(move.san);
+  }
+  return san;
+}
+
+/** Format an engine eval as "+1.2" / "−0.4" / "M3". */
+function formatEval(line: LocalEngineLine): string {
+  if (line.mateIn != null) return `M${Math.abs(line.mateIn)}`;
+  const cp = line.cp / 100;
+  return `${cp > 0 ? "+" : cp < 0 ? "−" : ""}${Math.abs(cp).toFixed(1)}`;
 }
 
 function resolveMove(
@@ -131,6 +160,11 @@ export function PositionalMotifTrainer({
     from: string;
     to: string;
   } | null>(null);
+  const [wrongFen, setWrongFen] = useState<string | null>(null);
+  const [playedSan, setPlayedSan] = useState<string | null>(null);
+  const [bestLine, setBestLine] = useState<LocalEngineLine | null>(null);
+  const [lineLoading, setLineLoading] = useState(false);
+  const [pvStep, setPvStep] = useState(0);
   const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(
     null,
   );
@@ -141,6 +175,22 @@ export function PositionalMotifTrainer({
 
   const current = queue[currentIdx];
 
+  /** SAN of the move the user should have played, from the starting FEN. */
+  const bestSan = useMemo(() => {
+    if (!current) return null;
+    try {
+      const chess = new Chess(current.fenBefore);
+      const mv = chess.move({
+        from: current.correctFrom,
+        to: current.correctTo,
+        promotion: current.correctPromo as PieceSymbol | undefined,
+      });
+      return mv?.san ?? null;
+    } catch {
+      return null;
+    }
+  }, [current]);
+
   // Load position when index changes or when trainer expands
   useEffect(() => {
     if (!expanded || !current) return;
@@ -150,6 +200,11 @@ export function PositionalMotifTrainer({
     setSelectedSq(null);
     setLegalMoveSqs([]);
     setWrongMove(null);
+    setWrongFen(null);
+    setPlayedSan(null);
+    setBestLine(null);
+    setLineLoading(false);
+    setPvStep(0);
     setLastMove(null);
     setHintShown(false);
     try {
@@ -162,7 +217,32 @@ export function PositionalMotifTrainer({
 
   const attemptMove = useCallback(
     (from: string, to: string, promotion?: string) => {
-      if (trainState !== "thinking" || !current) return false;
+      if (!current) return false;
+      // Free play: any legal move applies, no scoring, no feedback.
+      if (
+        trainState === "freeplay" ||
+        trainState === "correct" ||
+        trainState === "revealed"
+      ) {
+        try {
+          const chess = new Chess(fen);
+          const r = chess.move({
+            from,
+            to,
+            promotion: (promotion || undefined) as PieceSymbol | undefined,
+          });
+          if (!r) return false;
+          setFen(chess.fen());
+          setLastMove({ from, to });
+          setTrainState("freeplay");
+          setSelectedSq(null);
+          setLegalMoveSqs([]);
+          return true;
+        } catch {
+          return false;
+        }
+      }
+      if (trainState !== "thinking") return false;
 
       const isCorrect =
         from === current.correctFrom &&
@@ -186,15 +266,39 @@ export function PositionalMotifTrainer({
           setTotal((t) => t + 1);
           playSound("correct");
         } else {
+          // Keep the wrong position on the board and fetch the engine's
+          // best line so the user can see — right there — what they missed.
           setTrainState("wrong");
           setTotal((t) => t + 1);
           setWrongMove({ from, to });
+          setWrongFen(chess.fen());
+          try {
+            const chessAfter = new Chess(fen);
+            const played = chessAfter.move({
+              from,
+              to,
+              promotion: (promotion || undefined) as PieceSymbol | undefined,
+            });
+            setPlayedSan(played?.san ?? null);
+          } catch {
+            setPlayedSan(null);
+          }
           playSound("wrong");
-          setTimeout(() => {
-            setFen(current.fenBefore);
-            setTrainState("thinking");
-            setWrongMove(null);
-          }, 900);
+          setLineLoading(true);
+          setBestLine(null);
+          setPvStep(0);
+          // Line starts AFTER the wrong move: shows how play continues (the
+          // punishment / refutation) all the way to the end.
+          stockfishClient
+            .getPrincipalVariation(chess.fen(), 18, 12)
+            .then((line) => {
+              setBestLine(line);
+              setLineLoading(false);
+            })
+            .catch(() => {
+              setBestLine(null);
+              setLineLoading(false);
+            });
         }
         return true;
       } catch {
@@ -204,20 +308,63 @@ export function PositionalMotifTrainer({
     [trainState, current, fen],
   );
 
+  /** Step through the engine line on the board (wrong-move explanation). */
+  const stepLine = useCallback(
+    (step: number) => {
+      if (!wrongFen || !bestLine?.pvMoves?.length) return;
+      const clamped = Math.max(0, Math.min(step, bestLine.pvMoves.length));
+      const chess = new Chess(wrongFen);
+      let lastFrom = "";
+      let lastTo = "";
+      for (let i = 0; i < clamped; i += 1) {
+        const uci = bestLine.pvMoves[i];
+        const mv = chess.move({
+          from: uci.slice(0, 2),
+          to: uci.slice(2, 4),
+          promotion: (uci[4] || undefined) as PieceSymbol | undefined,
+        });
+        if (!mv) break;
+        lastFrom = mv.from;
+        lastTo = mv.to;
+      }
+      setFen(chess.fen());
+      setLastMove(lastFrom && lastTo ? { from: lastFrom, to: lastTo } : null);
+      setPvStep(clamped);
+    },
+    [wrongFen, bestLine],
+  );
+
+  /** Reset the current position back to the starting FEN and try again. */
+  const retryPosition = useCallback(() => {
+    if (!current) return;
+    setFen(current.fenBefore);
+    setTrainState("thinking");
+    setSelectedSq(null);
+    setLegalMoveSqs([]);
+    setWrongMove(null);
+    setWrongFen(null);
+    setPlayedSan(null);
+    setBestLine(null);
+    setLineLoading(false);
+    setPvStep(0);
+    setLastMove(null);
+    setHintShown(false);
+  }, [current]);
+
   const onDrop = useCallback(
     (from: string, to: string) => {
-      if (trainState !== "thinking") return false;
+      if (trainState === "wrong" || lineLoading) return false;
       const result = attemptMove(from, to);
       setSelectedSq(null);
       setLegalMoveSqs([]);
       return result;
     },
-    [trainState, attemptMove],
+    [trainState, lineLoading, attemptMove],
   );
 
   const onSquareClick = useCallback(
     (square: CbSquare) => {
-      if (trainState !== "thinking") {
+      if (trainState === "wrong" || lineLoading) {
         setSelectedSq(null);
         setLegalMoveSqs([]);
         return;
@@ -267,7 +414,7 @@ export function PositionalMotifTrainer({
       styles[selectedSq] = { background: "rgba(255,255,0,0.4)" };
     }
 
-    if (selectedSq && trainState === "thinking") {
+    if (selectedSq && (trainState === "thinking" || trainState === "freeplay")) {
       try {
         const chess = new Chess(fen);
         for (const sq of legalMoveSqs) {
@@ -496,7 +643,7 @@ export function PositionalMotifTrainer({
             position={fen}
             onPieceDrop={onDrop}
             onSquareClick={onSquareClick}
-            arePiecesDraggable={trainState === "thinking"}
+            arePiecesDraggable={trainState !== "wrong"}
             boardOrientation={orientation}
             boardWidth={boardSize}
             animationDuration={200}
@@ -535,12 +682,14 @@ export function PositionalMotifTrainer({
                 }`}
               >
                 {trainState === "correct"
-                  ? "✓ Correct!"
+                  ? "✓ Correct — keep playing"
                   : trainState === "wrong"
-                    ? "✗ Wrong"
+                    ? "✗ Wrong — see best line"
                     : trainState === "revealed"
-                      ? "Solution shown"
-                      : "Your turn"}
+                      ? "Solution shown — keep playing"
+                      : trainState === "freeplay"
+                        ? "♟ Free play"
+                        : "Your turn"}
               </span>
             </div>
           </div>
@@ -560,28 +709,89 @@ export function PositionalMotifTrainer({
               {trainState === "correct" && (
                 <>
                   <span className="text-emerald-400">Well done!</span>{" "}
-                  That&apos;s the best move here. Understanding <em>why</em>{" "}
-                  this works will help break the{" "}
-                  <span className="font-semibold text-[#ff8c42]">
-                    {current?.motifName}
-                  </span>{" "}
-                  habit.
+                  That&apos;s the best move here. The board is unlocked — keep
+                  playing the line yourself, or move to the next position.
                 </>
               )}
               {trainState === "wrong" && (
                 <>
-                  <span className="text-red-400">Not quite.</span> The position
-                  will reset — try again, or use Hint / Show Solution below.
+                  {lineLoading ? (
+                    <span className="text-red-400">Not quite.</span>
+                  ) : (
+                    <span className="text-red-400">Not the best move.</span>
+                  )}{" "}
+                  {lineLoading ? (
+                    <>Checking the engine&apos;s best line…</>
+                  ) : bestLine?.pvMoves?.length ? (
+                    <>
+                      You played{" "}
+                      <span className="font-mono font-bold text-white">
+                        {playedSan ?? "that move"}
+                      </span>
+                      {bestSan ? (
+                        <>
+                          {" "}
+                          — best was{" "}
+                          <span className="font-mono font-bold text-emerald-400">
+                            {bestSan}
+                          </span>
+                        </>
+                      ) : null}
+                      . From here the engine&apos;s line{" "}
+                      <span className="font-semibold text-emerald-400">
+                        ({formatEval(bestLine)})
+                      </span>
+                      :
+                    </>
+                  ) : (
+                    <>Try again, or use Hint / Show Solution below.</>
+                  )}
                 </>
               )}
               {trainState === "revealed" && (
                 <>
                   <span className="text-blue-400">Solution revealed.</span>{" "}
-                  Study the position, then move to the next one when ready.
+                  Study the position — the board is unlocked if you want to
+                  keep playing it.
+                </>
+              )}
+              {trainState === "freeplay" && (
+                <>
+                  <span className="text-[#ff8c42]">Free play.</span> Make
+                  moves for either side to explore the position, then move to
+                  the next one when ready.
                 </>
               )}
             </p>
           </div>
+
+          {/* Wrong-move explanation: engine line, clickable to step through */}
+          {trainState === "wrong" &&
+            !lineLoading &&
+            bestLine?.pvMoves &&
+            bestLine.pvMoves.length > 0 && (
+              <div className="rounded-xl border border-red-500/15 bg-red-500/[0.04] p-4">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {pvToSan(wrongFen ?? fen, bestLine.pvMoves).map((san, i) => (
+                    <button
+                      key={`${san}-${i}`}
+                      type="button"
+                      onClick={() => stepLine(i + 1)}
+                      className={`rounded-md px-2 py-1 font-mono text-xs font-bold transition-colors ${
+                        pvStep === i + 1
+                          ? "bg-emerald-500/25 text-emerald-300"
+                          : "bg-black/30 text-[#8d8696] hover:bg-black/50 hover:text-white"
+                      }`}
+                    >
+                      {san}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-2 text-[11px] text-[#565061]">
+                  Click a move to step through the line on the board.
+                </p>
+              </div>
+            )}
 
           {/* Progress bar */}
           <div className="space-y-1.5">
@@ -632,14 +842,43 @@ export function PositionalMotifTrainer({
                 </button>
               </>
             )}
-            {(trainState === "correct" || trainState === "revealed") && (
-              <button
-                type="button"
-                onClick={goNext}
-                className="flex-1 rounded-xl bg-gradient-to-r from-[#ff5a1f] to-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-amber-500/20 transition-all hover:brightness-110"
-              >
-                Next Position →
-              </button>
+            {trainState === "wrong" && (
+              <>
+                <button
+                  type="button"
+                  onClick={retryPosition}
+                  className="flex items-center gap-1.5 rounded-xl border border-orange-500/10 bg-orange-500/[0.03] px-4 py-2.5 text-xs font-medium text-[#8d8696] transition-colors hover:bg-orange-500/[0.06] hover:text-white"
+                >
+                  ↺ Try Again
+                </button>
+                <button
+                  type="button"
+                  onClick={goNext}
+                  className="flex-1 rounded-xl bg-gradient-to-r from-[#ff5a1f] to-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-amber-500/20 transition-all hover:brightness-110"
+                >
+                  Next Position →
+                </button>
+              </>
+            )}
+            {(trainState === "correct" ||
+              trainState === "revealed" ||
+              trainState === "freeplay") && (
+              <>
+                <button
+                  type="button"
+                  onClick={retryPosition}
+                  className="flex items-center gap-1.5 rounded-xl border border-orange-500/10 bg-orange-500/[0.03] px-4 py-2.5 text-xs font-medium text-[#8d8696] transition-colors hover:bg-orange-500/[0.06] hover:text-white"
+                >
+                  ↺ Reset
+                </button>
+                <button
+                  type="button"
+                  onClick={goNext}
+                  className="flex-1 rounded-xl bg-gradient-to-r from-[#ff5a1f] to-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-amber-500/20 transition-all hover:brightness-110"
+                >
+                  Next Position →
+                </button>
+              </>
             )}
           </div>
         </div>
