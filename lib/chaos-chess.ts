@@ -736,6 +736,40 @@ function seededRandom(seed: number): () => number {
 }
 
 /**
+ * Guarantee at least one card the player can take freely (unlocked).
+ * A player with few unlocks (guests, new accounts) can otherwise be dealt
+ * 3 locked "premium" cards and have no way to proceed without burning a
+ * one-time preview — reported as a soft-lock ("have to restart the game").
+ *
+ * Swaps the first locked card for a random unlocked card of the same phase
+ * that hasn't been drafted/spent this game. If no such card exists (player
+ * has unlocked everything in this phase already drafted), returns choices
+ * unchanged — the preview path still lets them pick anything.
+ */
+export function ensureUnlockedChoice(
+  choices: ChaosModifier[],
+  unlockedIds: Set<string>,
+  phase: number,
+  alreadyDrafted: ChaosModifier[],
+  spentIds: string[],
+): ChaosModifier[] {
+  if (choices.some((m) => unlockedIds.has(m.id))) return choices;
+  const taken = new Set([...alreadyDrafted.map((m) => m.id), ...spentIds]);
+  const candidates = ALL_MODIFIERS.filter(
+    (m) =>
+      unlockedIds.has(m.id) &&
+      m.phases.includes(phase) &&
+      !taken.has(m.id),
+  );
+  if (candidates.length === 0) return choices;
+  const idx = choices.findIndex((m) => !unlockedIds.has(m.id));
+  if (idx === -1) return choices;
+  const next = [...choices];
+  next[idx] = candidates[Math.floor(Math.random() * candidates.length)];
+  return next;
+}
+
+/**
  * Apply the player's chosen modifier and roll the AI's choice automatically.
  * In multiplayer mode (skipOpponentRoll=true), only add the player's pick —
  * the opponent picks for themselves independently.

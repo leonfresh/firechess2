@@ -73,6 +73,7 @@ import {
   createChaosState,
   checkDraftTrigger,
   rollDraftChoices,
+  ensureUnlockedChoice,
   countPiecesFromFen,
   applyDraft,
   getAiDraftMessage,
@@ -4378,6 +4379,38 @@ export default function ChaosChessPage() {
     [lockedForAuthUser],
   );
 
+  // Player drafts always guarantee at least one freely-pickable card —
+  // otherwise a guest/new player can be dealt 3 locked "premium" cards and
+  // have no way to proceed without burning a one-time preview (soft-lock).
+  const rollPlayerDraftChoices = useCallback(
+    (
+      phase: number,
+      alreadyDrafted: ChaosModifier[],
+      pieceCounts: Partial<Record<PieceType, number>> | undefined,
+      anomaly: Parameters<typeof rollDraftChoices>[4],
+      spentIds: string[],
+      seed?: number,
+    ) => {
+      const unlocked = authenticated ? authUnlockedIds : GUEST_UNLOCKED_IDS;
+      const choices = rollDraftChoices(
+        phase,
+        alreadyDrafted,
+        seed,
+        pieceCounts,
+        anomaly,
+        spentIds,
+      );
+      return ensureUnlockedChoice(
+        choices,
+        unlocked,
+        phase,
+        alreadyDrafted,
+        spentIds,
+      );
+    },
+    [authenticated, authUnlockedIds],
+  );
+
   /** Modifier earnt by the guest after their first win — shown in unlock modal */
   const [pendingGuestUnlock, setPendingGuestUnlock] =
     useState<ChaosModifier | null>(null);
@@ -5528,10 +5561,9 @@ export default function ChaosChessPage() {
             // White drafts immediately
             setPendingPhase(phase);
             const playerPieceCounts = countPiecesFromFen(g.fen(), "w");
-            const choices = rollDraftChoices(
+            const choices = rollPlayerDraftChoices(
               phase,
               state.playerModifiers,
-              undefined,
               playerPieceCounts,
               state.playerAnomaly,
               [
@@ -5578,10 +5610,9 @@ export default function ChaosChessPage() {
           prevPhaseRef.current = phase;
           const playerColor_ = playerColor === "white" ? "w" : "b";
           const playerPieceCounts = countPiecesFromFen(g.fen(), playerColor_);
-          const choices = rollDraftChoices(
+          const choices = rollPlayerDraftChoices(
             phase,
             state.playerModifiers,
-            undefined,
             playerPieceCounts,
             state.playerAnomaly,
             [
@@ -7603,10 +7634,9 @@ export default function ChaosChessPage() {
               incoming.aiModifiers[incoming.aiModifiers.length - 1];
             if (oppPick) {
               // Queue my own draft to fire after Black's own move
-              const choices = rollDraftChoices(
+              const choices = rollPlayerDraftChoices(
                 phaseForDraft,
                 incoming.playerModifiers,
-                undefined,
                 countPiecesFromFen(gameRef.current.fen(), "b"),
                 incoming.playerAnomaly,
                 [
@@ -7985,10 +8015,9 @@ export default function ChaosChessPage() {
                 if (oppPick) {
                   const myColor_ =
                     (myColor as string) === "white" ? "w" : ("b" as "w" | "b");
-                  const choices = rollDraftChoices(
+                  const choices = rollPlayerDraftChoices(
                     phaseForDraft,
                     incoming.playerModifiers,
-                    undefined,
                     countPiecesFromFen(gameRef.current.fen(), myColor_),
                     incoming.playerAnomaly,
                     [
@@ -9649,10 +9678,9 @@ export default function ChaosChessPage() {
         ...chaosState.playerModifiers,
         ...chaosState.draftChoices,
       ];
-      const fresh = rollDraftChoices(
+      const fresh = rollPlayerDraftChoices(
         pendingPhase,
         excludeAll,
-        Date.now(),
         countPiecesFromFen(game.fen(), pCode),
         chaosState.playerAnomaly,
         [
@@ -9661,6 +9689,7 @@ export default function ChaosChessPage() {
             ? [...triedLockedModsThisGame]
             : [...guestPreviewedMods]),
         ],
+        Date.now(),
       );
       const remaining = chaosState.draftChoices.filter(
         (m) => m.id !== discarded.id,
