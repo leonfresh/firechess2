@@ -794,7 +794,7 @@ export function ScanSessionPage({
                 <div className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
                   {/* Key stats — single ember accent, neutral numbers */}
                   {scan.result?.gamesAnalyzed ? (
-                    <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e] px-4 py-3.5">
+                    <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e]/80 px-4 py-3.5 backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ff5a1f]/25 [box-shadow:inset_0_1px_0_rgba(255,255,255,0.04)]">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                         Games
                       </p>
@@ -804,7 +804,7 @@ export function ScanSessionPage({
                     </div>
                   ) : null}
                   {liveReportMeta?.estimatedAccuracy ? (
-                    <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e] px-4 py-3.5">
+                    <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e]/80 px-4 py-3.5 backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ff5a1f]/25 [box-shadow:inset_0_1px_0_rgba(255,255,255,0.04)]">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                         Accuracy
                       </p>
@@ -814,7 +814,7 @@ export function ScanSessionPage({
                     </div>
                   ) : null}
                   {liveReportMeta?.estimatedRating ? (
-                    <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e] px-4 py-3.5">
+                    <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e]/80 px-4 py-3.5 backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ff5a1f]/25 [box-shadow:inset_0_1px_0_rgba(255,255,255,0.04)]">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                         Est. Rating
                       </p>
@@ -824,7 +824,7 @@ export function ScanSessionPage({
                     </div>
                   ) : null}
                   {scan.result && scan.result.leaks.length > 0 ? (
-                    <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e] px-4 py-3.5">
+                    <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e]/80 px-4 py-3.5 backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ff5a1f]/25 [box-shadow:inset_0_1px_0_rgba(255,255,255,0.04)]">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                         Opening Leaks
                       </p>
@@ -834,7 +834,7 @@ export function ScanSessionPage({
                     </div>
                   ) : null}
                   {scan.result && scan.result.missedTactics.length > 0 ? (
-                    <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e] px-4 py-3.5">
+                    <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e]/80 px-4 py-3.5 backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ff5a1f]/25 [box-shadow:inset_0_1px_0_rgba(255,255,255,0.04)]">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                         Missed Tactics
                       </p>
@@ -846,7 +846,7 @@ export function ScanSessionPage({
                   {scan.result &&
                   scan.result.brilliantMoves &&
                   scan.result.brilliantMoves.length > 0 ? (
-                    <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e] px-4 py-3.5">
+                    <div className="rounded-xl border border-[#1e1a24] bg-[#0d0b0e]/80 px-4 py-3.5 backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ff5a1f]/25 [box-shadow:inset_0_1px_0_rgba(255,255,255,0.04)]">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                         Brilliant Moves
                       </p>

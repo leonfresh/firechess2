@@ -245,7 +245,7 @@ function CompactCardFooter({
   const remaining = Math.max(0, total - shown);
 
   return (
-    <div className="mt-4 flex flex-col gap-3 rounded-[1.25rem] border border-[#1e1a24] bg-[#121015] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mt-4 flex flex-col gap-3 rounded-[1.25rem] border border-[#1e1a24] bg-[#121015] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-2">
         <div className="h-1.5 w-28 overflow-hidden rounded-full bg-[#1e1a24]">
           <div
@@ -416,7 +416,7 @@ function SectionLoadingProgress({
     hasCount && safeTotal ? (safeCurrent / safeTotal) * 100 : percent;
 
   return (
-    <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
+    <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)] p-5 sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-white">{message}</p>
@@ -470,7 +470,7 @@ function RadarLoadingState({
     : "This scan needs more scored positions before the radar chart can lock onto a stable profile.";
 
   return (
-    <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] p-6">
+    <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)] p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-2xl">
           <h2 className="text-lg font-bold text-white">
@@ -519,7 +519,7 @@ function RadarLoadingState({
           {["Current edge", "Also helping"].map((label) => (
             <div
               key={label}
-              className="rounded-[1.25rem] border border-[#1e1a24] bg-[#121015] p-4 animate-pulse"
+              className="rounded-[1.25rem] border border-[#1e1a24] bg-[#121015] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)] p-4 animate-pulse"
             >
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                 {label}
@@ -537,7 +537,7 @@ function RadarLoadingState({
       </div>
 
       <div className="mt-5 grid gap-6 xl:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
-        <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5">
+        <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)] p-5">
           <div className="mx-auto flex aspect-square w-full max-w-[22rem] items-center justify-center rounded-full border border-[#1e1a24] bg-[radial-gradient(circle,_rgba(34,211,238,0.08),_rgba(15,23,42,0.18)_52%,_rgba(2,6,23,0.08)_100%)]">
             <div className="flex flex-col items-center gap-3 text-center">
               <div className="grid h-24 w-24 place-items-center rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] text-[11px] font-semibold uppercase tracking-[0.24em] text-[#ff8c42]">
@@ -552,7 +552,7 @@ function RadarLoadingState({
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6 animate-pulse">
+          <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)] p-5 sm:p-6 animate-pulse">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#565061]">
               Coach&apos;s note
             </p>
@@ -561,7 +561,7 @@ function RadarLoadingState({
             <div className="mt-2 h-3 w-4/5 rounded-full bg-[#1e1a24]" />
           </div>
 
-          <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
+          <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)] p-5 sm:p-6">
             <div className="max-w-2xl">
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#565061]">
                 Profile outline
@@ -576,7 +576,7 @@ function RadarLoadingState({
                 (label) => (
                   <div
                     key={label}
-                    className="rounded-[1.25rem] border border-[#1e1a24] bg-[#121015] p-4 animate-pulse"
+                    className="rounded-[1.25rem] border border-[#1e1a24] bg-[#121015] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)] p-4 animate-pulse"
                   >
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#565061]">
                       {label}
@@ -902,23 +902,26 @@ function SectionHeader({
   onToggleView?: () => void;
 }) {
   return (
-    <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
+    <div className="group">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="max-w-3xl">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#565061]">
-            {eyebrow}
-          </p>
-          <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white">
+          <div className="flex items-center gap-2.5">
+            <span className="h-3.5 w-1 rounded-full bg-gradient-to-b from-[#ff5a1f] to-[#ff8c42] shadow-[0_0_12px_rgba(255,90,31,0.35)]" />
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#ff8c42]">
+              {eyebrow}
+            </p>
+          </div>
+          <h2 className="mt-3 text-[1.65rem] font-extrabold leading-tight tracking-[-0.02em] text-white sm:text-3xl">
             {title}
           </h2>
-          <p className="mt-2 text-sm leading-relaxed text-[#8d8696]">
+          <p className="mt-2.5 max-w-2xl text-sm leading-relaxed text-[#8d8696]">
             {description}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {badge ? (
-            <span className="rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 font-medium text-white">
+            <span className="rounded-full border border-[#ff5a1f]/20 bg-[#ff5a1f]/[0.06] px-3 py-1 font-medium text-[#f0edf2]">
               {badge}
             </span>
           ) : null}
@@ -935,7 +938,7 @@ function SectionHeader({
             <button
               type="button"
               onClick={onToggleView}
-              className="inline-flex items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 text-xs font-medium text-[#8d8696] transition hover:bg-[#ff5a1f]/[0.08] hover:text-white"
+              className="inline-flex items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#121015]/70 px-3 py-1 text-xs font-medium text-[#8d8696] backdrop-blur-xl transition hover:border-[#ff5a1f]/30 hover:bg-[#ff5a1f]/[0.08] hover:text-white"
               aria-label={`Switch to ${viewMode === "list" ? "carousel" : viewMode === "carousel" ? "grid" : "list"} view`}
             >
               {viewMode === "list" ? (
@@ -1000,11 +1003,20 @@ function MetricCard({
   }[tone];
 
   return (
-    <div className={`rounded-[1.25rem] border p-4 ${toneClasses}`}>
+    <div
+      className={`group relative overflow-hidden rounded-[1.25rem] border border-[#1e1a24] bg-[#121015] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)]/70 p-4 backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ff5a1f]/30 ${
+        tone === "slate" ? "" : "hover:shadow-[0_8px_40px_-12px_rgba(255,90,31,0.25)]"
+      }`}
+      style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)" }}
+    >
+      {/* ember glow dot */}
+      <span className="pointer-events-none absolute right-3 top-3 h-1.5 w-1.5 rounded-full bg-[#ff5a1f]/50 shadow-[0_0_10px_rgba(255,90,31,0.6)] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8d8696]">
         {label}
       </p>
-      <p className="mt-2 text-2xl font-extrabold tracking-tight">{value}</p>
+      <p className="mt-2 text-2xl font-extrabold tracking-tight text-white transition-colors group-hover:text-[#ff8c42]">
+        {value}
+      </p>
       {hint ? <p className="mt-1 text-xs text-[#565061]">{hint}</p> : null}
     </div>
   );
@@ -1237,7 +1249,7 @@ function TacticalPatternAnalysis({ motifs }: { motifs: DerivedMotif[] }) {
   if (motifs.length === 0) return null;
 
   return (
-    <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
+    <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)] p-5 sm:p-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#565061]">
@@ -1456,7 +1468,7 @@ function EndgameTypeBreakdown({
   return (
     <div className="space-y-4">
       {endgameStats.byType.length > 0 ? (
-        <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
+        <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)] p-5 sm:p-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#565061]">
@@ -2330,7 +2342,7 @@ export function ScanSessionReport({
         showTimeManagement ? (
           <nav
             aria-label="Report sections"
-            className="flex items-center gap-2 overflow-x-auto rounded-2xl border border-[#1e1a24] bg-[#121015] px-3 py-2.5"
+            className="sticky top-2 z-30 flex items-center gap-2 overflow-x-auto rounded-2xl border border-[#1e1a24]/80 bg-[#0d0b0e]/80 px-3 py-2.5 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl"
           >
             {showBrilliants ? (
               <button
@@ -2512,30 +2524,38 @@ export function ScanSessionReport({
 
         {reportMeta ? (
           <section className="grid gap-4 xl:grid-cols-[1.25fr_0.95fr]">
-            <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[radial-gradient(circle_at_top_right,_rgba(34,211,238,0.16),_rgba(15,23,42,0.9)_42%,_rgba(2,6,23,0.98)_100%)] p-6 sm:p-7">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8d8696]">
-                {isProcessing ? "Live report preview" : "Report summary"}
-              </p>
-              <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-[2.2rem]">
-                {reportMeta.vibeTitle}
-              </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#f0edf2] sm:text-base">
-                {reportMeta.reportSummary
-                  ? reportMeta.reportSummary
-                  : reportMeta.topTag === "No big leak pattern"
-                    ? "The scan has enough signal to score the profile, but no single opening tag is dominating the sample."
-                    : `Your strongest recurring signal right now is ${reportMeta.topTag}. The sections below update as more detail locks in.`}
-              </p>
-              <div className="mt-5 flex flex-wrap gap-2 text-xs">
-                <span className="rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 text-white">
-                  Confidence {reportMeta.confidence}%
-                </span>
-                <span className="rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 text-white">
-                  {reportMeta.sampleSize} scored positions
-                </span>
-                <span className="rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 text-white">
-                  Consistency {reportMeta.consistencyScore}/100
-                </span>
+            <div className="relative overflow-hidden rounded-[1.75rem] border border-[#1e1a24] bg-[radial-gradient(circle_at_top_right,_rgba(255,90,31,0.16),_rgba(15,23,42,0.9)_42%,_rgba(2,6,23,0.98)_100%)] p-6 sm:p-7">
+              {/* top shimmer + ambient glow */}
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff8c42]/50 to-transparent" />
+              <div className="pointer-events-none absolute -left-16 -bottom-20 h-56 w-56 rounded-full bg-[#ff5a1f]/[0.05] blur-3xl" />
+              <div className="relative">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-3.5 w-1 rounded-full bg-gradient-to-b from-[#ff5a1f] to-[#ff8c42] shadow-[0_0_12px_rgba(255,90,31,0.35)]" />
+                  <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#ff8c42]">
+                    {isProcessing ? "Live report preview" : "Report summary"}
+                  </p>
+                </div>
+                <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-[2.2rem]">
+                  {reportMeta.vibeTitle}
+                </h2>
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#f0edf2] sm:text-base">
+                  {reportMeta.reportSummary
+                    ? reportMeta.reportSummary
+                    : reportMeta.topTag === "No big leak pattern"
+                      ? "The scan has enough signal to score the profile, but no single opening tag is dominating the sample."
+                      : `Your strongest recurring signal right now is ${reportMeta.topTag}. The sections below update as more detail locks in.`}
+                </p>
+                <div className="mt-5 flex flex-wrap gap-2 text-xs">
+                  <span className="rounded-full border border-[#ff5a1f]/20 bg-[#ff5a1f]/[0.06] px-3 py-1 text-[#f0edf2]">
+                    Confidence {reportMeta.confidence}%
+                  </span>
+                  <span className="rounded-full border border-[#ff5a1f]/20 bg-[#ff5a1f]/[0.06] px-3 py-1 text-[#f0edf2]">
+                    {reportMeta.sampleSize} scored positions
+                  </span>
+                  <span className="rounded-full border border-[#ff5a1f]/20 bg-[#ff5a1f]/[0.06] px-3 py-1 text-[#f0edf2]">
+                    Consistency {reportMeta.consistencyScore}/100
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -2607,12 +2627,12 @@ export function ScanSessionReport({
               />
 
               <div className="grid gap-4 xl:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
-                <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
+                <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)] p-5 sm:p-6">
                   <StrengthsRadar {...radarProps} />
                 </div>
 
                 <div className="space-y-4">
-                  <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
+                  <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)] p-5 sm:p-6">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#565061]">
                       Coach&apos;s note
                     </p>
@@ -2621,7 +2641,7 @@ export function ScanSessionReport({
                     </p>
                   </div>
 
-                  <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
+                  <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)] p-5 sm:p-6">
                     <div className="max-w-2xl">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#565061]">
                         Profile outline
@@ -2662,7 +2682,7 @@ export function ScanSessionReport({
             />
             <div className="grid gap-4 sm:grid-cols-2">
               {/* Mistakes by category */}
-              <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
+              <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)] p-5 sm:p-6">
                 <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-[#565061]">
                   Mistakes by category
                 </h3>
@@ -2713,7 +2733,7 @@ export function ScanSessionReport({
               </div>
 
               {/* CP loss by game phase */}
-              <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
+              <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)] p-5 sm:p-6">
                 <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-[#565061]">
                   CP loss by game phase
                 </h3>
@@ -2892,7 +2912,7 @@ export function ScanSessionReport({
 
             {leaks.length > 0 ? (
               <div className="space-y-4">
-                <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
+                <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)] p-5 sm:p-6">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="text-lg font-bold text-white">
                       Recurring opening leaks
@@ -2954,7 +2974,7 @@ export function ScanSessionReport({
 
             {oneOffMistakes.length > 0 ? (
               <div className="space-y-4">
-                <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] p-5 sm:p-6">
+                <div className="rounded-[1.5rem] border border-[#1e1a24] bg-[#121015] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)] p-5 sm:p-6">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="text-lg font-bold text-white">
                       Sharp one-off misses
