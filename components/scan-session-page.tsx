@@ -763,7 +763,7 @@ export function ScanSessionPage({
         </div>
       )}
     <div className="min-h-screen overflow-x-clip bg-[#070608] text-[#f0edf2]">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <nav className="mb-5 flex items-center gap-2 text-xs text-[#565061]">
           <Link href="/" className="transition-colors hover:text-[#f0edf2]">
             Home

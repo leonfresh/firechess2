@@ -850,7 +850,7 @@ function StrengthSpotlightCard({
         };
 
   return (
-    <div className={`rounded-[1.5rem] border p-5 ${accentClasses.border}`}>
+    <div className={`rounded-[1.5rem] border p-6 ${accentClasses.border}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#565061]">

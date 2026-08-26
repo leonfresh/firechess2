@@ -27,16 +27,16 @@ export function AiReportAnalysis({ analysis, loading }: { analysis: AnalysisResu
   if (!analysis) return null;
 
   return (
-    <div className="rounded-[1.75rem] border border-[#ff5a1f]/25 bg-[radial-gradient(circle_at_top_right,rgba(255,90,31,0.25),rgba(18,16,21,0.6)_50%,rgba(7,6,8,0.9)_100%)] p-6 sm:p-8">
-      <div className="mb-5 flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
+    <div className="rounded-[1.75rem] border border-[#ff5a1f]/25 bg-[radial-gradient(circle_at_top_right,rgba(255,90,31,0.25),rgba(18,16,21,0.6)_50%,rgba(7,6,8,0.9)_100%)] p-8 sm:p-10">
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div className="flex items-center gap-4">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#ff5a1f] to-[#ff8c42]">
-            <Brain className="h-6 w-6 text-[#ff8c42]" />
+            <Brain className="h-6 w-6 text-[#070608]" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <p className="text-sm font-bold text-white">AI Coach Analysis</p>
-              <span className="rounded-full bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#ff8c42]">
+              <span className="rounded-full bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#070608]">
                 <Sparkles className="mr-0.5 inline h-2.5 w-2.5" />AI
               </span>
             </div>
@@ -46,7 +46,7 @@ export function AiReportAnalysis({ analysis, loading }: { analysis: AnalysisResu
       </div>
 
       {analysis.badges.length > 0 && (
-        <div className="mb-5 flex flex-wrap gap-2">
+        <div className="mb-6 flex flex-wrap gap-2">
           {analysis.badges.map((badge, i) => (
             <span
               key={i}
@@ -62,12 +62,12 @@ export function AiReportAnalysis({ analysis, loading }: { analysis: AnalysisResu
         </div>
       )}
 
-      <p className="mb-5 text-base font-semibold leading-relaxed text-[#ff8c42]">
+      <p className="mb-7 text-lg font-semibold leading-relaxed text-[#ff8c42]">
         &ldquo;{analysis.verdict}&rdquo;
       </p>
 
       {analysis.coachNote && (
-        <div className="mb-6 rounded-xl border border-[#1e1a24] bg-black/30 p-4">
+        <div className="mb-7 rounded-xl border border-[#1e1a24] bg-black/30 p-5">
           <div className="mb-2 flex items-center gap-1.5">
             <Lightbulb className="h-4 w-4 text-[#ff8c42]" />
             <p className="text-xs font-semibold text-white">Coach&apos;s Note</p>
@@ -77,9 +77,9 @@ export function AiReportAnalysis({ analysis, loading }: { analysis: AnalysisResu
       )}
 
       {(analysis.strengths.length > 0 || analysis.weaknesses.length > 0) && (
-        <div className="mb-4 grid gap-4 sm:grid-cols-2">
+        <div className="mb-5 grid gap-5 sm:grid-cols-2">
           {analysis.strengths.length > 0 && (
-            <div className="rounded-xl border border-emerald-500/10 bg-emerald-500/[0.03] p-4">
+            <div className="rounded-xl border border-emerald-500/10 bg-emerald-500/[0.03] p-5">
               <div className="mb-2 flex items-center gap-1.5">
                 <Target className="h-4 w-4 text-emerald-400" />
                 <p className="text-xs font-bold text-emerald-300">Strengths</p>
@@ -94,7 +94,7 @@ export function AiReportAnalysis({ analysis, loading }: { analysis: AnalysisResu
             </div>
           )}
           {analysis.weaknesses.length > 0 && (
-            <div className="rounded-xl border border-red-500/10 bg-red-500/[0.03] p-4">
+            <div className="rounded-xl border border-red-500/10 bg-red-500/[0.03] p-5">
               <div className="mb-2 flex items-center gap-1.5">
                 <Swords className="h-4 w-4 text-red-400" />
                 <p className="text-xs font-bold text-red-300">Growth Areas</p>
@@ -112,7 +112,7 @@ export function AiReportAnalysis({ analysis, loading }: { analysis: AnalysisResu
       )}
 
       {analysis.nextSteps.length > 0 && (
-        <div className="rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] p-4">
+        <div className="rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] p-5">
           <div className="mb-2 flex items-center gap-1.5">
             <Zap className="h-4 w-4 text-[#ff8c42]" />
             <p className="text-xs font-bold text-[#ff8c42]">Next Steps</p>
