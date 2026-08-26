@@ -276,15 +276,40 @@ class StockfishClient {
       return await runSearch(depth);
     } catch (err) {
       // Timeout at high depth on a slow machine: retry once shallower so
-      // the scan degrades gracefully instead of failing entirely.
+      // the scan degrades gracefully instead of failing entirely. The
+      // worker is still mid-search when sendAndWaitFor gives up — resync
+      // it first, otherwise the next task resolves on the STALE bestmove
+      // of the abandoned search and caches wrong evals.
       if (
         depth > 10 &&
         err instanceof Error &&
         err.message.includes("Stockfish timeout")
       ) {
+        await this.resyncAfterTimeout();
         return await runSearch(Math.max(8, depth - 4));
       }
       throw err;
+    }
+  }
+
+  /**
+   * The engine keeps searching after sendAndWaitFor times out (movetime
+   * overshoot on slow/busy machines). Interrupt it and drain the worker so
+   * the next queued search starts from a clean state — otherwise its
+   * sendAndWaitFor listener catches the abandoned search's "bestmove" and
+   * caches the WRONG position's eval.
+   */
+  private async resyncAfterTimeout(): Promise<void> {
+    if (!this.worker) return;
+    try {
+      this.worker.postMessage("stop");
+      await this.sendAndWaitFor(
+        "isready",
+        (line) => line.trim() === "readyok",
+        10000,
+      );
+    } catch {
+      // Worker is unusable — the retry will throw and the pool degrades.
     }
   }
 
@@ -487,13 +512,29 @@ export class StockfishPool {
     }
 
     const worker = this.pickWorker();
-    const result = await worker.evaluateFen(fen, depth, skillLevel);
-    this.evalCache.set(cacheKey, result);
-    if (skillLevel === undefined) {
-      const prevMax = this.maxDepthPerFen.get(fen) ?? 0;
-      if (depth > prevMax) this.maxDepthPerFen.set(fen, depth);
+    try {
+      const result = await worker.evaluateFen(fen, depth, skillLevel);
+      this.evalCache.set(cacheKey, result);
+      if (skillLevel === undefined) {
+        const prevMax = this.maxDepthPerFen.get(fen) ?? 0;
+        if (depth > prevMax) this.maxDepthPerFen.set(fen, depth);
+      }
+      return result;
+    } catch (err) {
+      // Transient engine errors (search timeouts, worker hiccups) must not
+      // kill the whole scan — the analysis loops already treat a null eval
+      // as "missing_eval" and continue. Only structural failures (worker
+      // failed to load/init) still propagate so the user sees a real error.
+      if (
+        err instanceof Error &&
+        (err.message.includes("analysis engine") ||
+          err.message.includes("WebAssembly") ||
+          err.message.includes("not initialized"))
+      ) {
+        throw err;
+      }
+      return null;
     }
-    return result;
   }
 
   async getPrincipalVariation(
@@ -502,7 +543,20 @@ export class StockfishPool {
     depth = 12,
   ): Promise<LocalEngineLine | null> {
     const worker = this.pickWorker();
-    return worker.getPrincipalVariation(fen, maxPlies, depth);
+    try {
+      return await worker.getPrincipalVariation(fen, maxPlies, depth);
+    } catch (err) {
+      // Same degrade-not-die policy as evaluateFen above.
+      if (
+        err instanceof Error &&
+        (err.message.includes("analysis engine") ||
+          err.message.includes("WebAssembly") ||
+          err.message.includes("not initialized"))
+      ) {
+        throw err;
+      }
+      return null;
+    }
   }
 
   /** Get the top N moves with evaluations (multi-PV) */
@@ -513,7 +567,20 @@ export class StockfishPool {
     skillLevel?: number,
   ): Promise<LocalEngineLine[]> {
     const worker = this.pickWorker();
-    return worker.getTopMoves(fen, numMoves, depth, skillLevel);
+    try {
+      return await worker.getTopMoves(fen, numMoves, depth, skillLevel);
+    } catch (err) {
+      // Same degrade-not-die policy as evaluateFen above.
+      if (
+        err instanceof Error &&
+        (err.message.includes("analysis engine") ||
+          err.message.includes("WebAssembly") ||
+          err.message.includes("not initialized"))
+      ) {
+        throw err;
+      }
+      return [];
+    }
   }
 
   /** Terminate all workers and free resources. */
