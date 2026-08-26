@@ -73,6 +73,7 @@ class StockfishClient {
   private async sendAndWaitFor(
     command: string,
     doneWhen: (line: string) => boolean,
+    timeoutMs = 20000,
   ): Promise<string[]> {
     if (!this.worker) {
       throw new Error("Stockfish worker is not initialized");
@@ -86,7 +87,7 @@ class StockfishClient {
       const timeout = setTimeout(() => {
         cleanup();
         reject(new Error(`Stockfish timeout waiting for: ${command}`));
-      }, 20000);
+      }, timeoutMs);
 
       const onMessage = (event: MessageEvent) => {
         const text =
@@ -245,24 +246,46 @@ class StockfishClient {
     if (!this.worker) {
       return null;
     }
+    const worker = this.worker;
 
     if (skillLevel !== undefined) {
-      this.worker.postMessage(`setoption name Skill Level value ${skillLevel}`);
+      worker.postMessage(`setoption name Skill Level value ${skillLevel}`);
       await this.sendAndWaitFor("isready", (line) => line.trim() === "readyok");
     }
-    this.worker.postMessage(`position fen ${fen}`);
-    // Cap movetime so we always respond before the 20 s sendAndWaitFor timeout,
+    worker.postMessage(`position fen ${fen}`);
+    // Cap movetime so we always respond before the sendAndWaitFor timeout,
     // even at high depths under CPU contention from parallel analysis phases.
+    // The response timeout is movetime + a generous margin: at depth 24 the
+    // movetime cap is 17.5s and a busy/slow device can overshoot it in wall
+    // clock — a flat 20s kill used to abort depth-24 scans mid-search.
     const moveTimeMs = Math.min(17500, Math.max(4000, depth * 1000));
-    const searchLines = await this.sendAndWaitFor(
-      `go depth ${depth} movetime ${moveTimeMs}`,
-      (line) => line.startsWith("bestmove "),
-    );
-    if (skillLevel !== undefined) {
-      // Reset to full strength for any non-AI usage (analysis etc.)
-      this.worker.postMessage("setoption name Skill Level value 20");
+    const searchTimeoutMs = moveTimeMs + 12000;
+    const runSearch = async (d: number) => {
+      const searchLines = await this.sendAndWaitFor(
+        `go depth ${d} movetime ${moveTimeMs}`,
+        (line) => line.startsWith("bestmove "),
+        searchTimeoutMs,
+      );
+      if (skillLevel !== undefined) {
+        // Reset to full strength for any non-AI usage (analysis etc.)
+        worker.postMessage("setoption name Skill Level value 20");
+      }
+      return this.parseInfo(searchLines, maxPvPlies);
+    };
+    try {
+      return await runSearch(depth);
+    } catch (err) {
+      // Timeout at high depth on a slow machine: retry once shallower so
+      // the scan degrades gracefully instead of failing entirely.
+      if (
+        depth > 10 &&
+        err instanceof Error &&
+        err.message.includes("Stockfish timeout")
+      ) {
+        return await runSearch(Math.max(8, depth - 4));
+      }
+      throw err;
     }
-    return this.parseInfo(searchLines, maxPvPlies);
   }
 
   /** Run multi-PV analysis and return the top N lines */
@@ -286,6 +309,7 @@ class StockfishClient {
     const searchLines = await this.sendAndWaitFor(
       `go depth ${depth} movetime ${moveTimeMs}`,
       (line) => line.startsWith("bestmove "),
+      moveTimeMs + 12000,
     );
     // Reset multi-PV and skill level back to defaults
     this.worker.postMessage("setoption name MultiPV value 1");
