@@ -233,7 +233,7 @@ export const GM_PROFILES: GmProfile[] = [
   {
     id: "bobby-fischer",
     imageUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Bobby_Fischer_in_1962_portrait.jpg/330px-Bobby_Fischer_in_1962_portrait.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Bobby_Fischer_1972.jpg/330px-Bobby_Fischer_1972.jpg",
     name: "Bobby Fischer",
     fullName: "Robert James Fischer",
     born: 1943,

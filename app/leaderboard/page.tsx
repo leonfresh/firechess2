@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { AvatarImg } from "@/components/avatar-image";
 
 /* ── Types ── */
 interface LeaderboardEntry {
@@ -164,16 +164,15 @@ export default function LeaderboardPage() {
                     <div className="relative">
                       <span className="text-3xl">{rankBadge(rank)}</span>
                       <div className="mt-3 flex items-center justify-center gap-2">
-                        {entry.userImage && (
-                          <Image
-                            src={entry.userImage}
-                            alt=""
-                            width={28}
-                            height={28}
-                            className="rounded-full"
-                            unoptimized
-                          />
-                        )}
+                        <AvatarImg
+                          src={entry.userImage}
+                          className="h-7 w-7 rounded-full object-cover"
+                          fallback={
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.08] text-xs font-bold text-slate-400">
+                              {(entry.chessUsername?.[0] ?? "?").toUpperCase()}
+                            </span>
+                          }
+                        />
                         <p className={`text-lg font-extrabold bg-gradient-to-r ${titleGrad} bg-clip-text text-transparent`}>
                           {entry.chessUsername}
                         </p>
@@ -239,20 +238,15 @@ export default function LeaderboardPage() {
                           <td className="px-5 py-3.5 font-bold text-slate-500">{rank}</td>
                           <td className="px-5 py-3.5">
                             <div className="flex items-center gap-2.5">
-                              {entry.userImage ? (
-                                <Image
-                                  src={entry.userImage}
-                                  alt=""
-                                  width={24}
-                                  height={24}
-                                  className="rounded-full"
-                                  unoptimized
-                                />
-                              ) : (
-                                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/[0.08] text-xs font-bold text-slate-400">
-                                  {(entry.chessUsername?.[0] ?? "?").toUpperCase()}
-                                </div>
-                              )}
+                              <AvatarImg
+                                src={entry.userImage}
+                                className="h-6 w-6 rounded-full object-cover"
+                                fallback={
+                                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/[0.08] text-xs font-bold text-slate-400">
+                                    {(entry.chessUsername?.[0] ?? "?").toUpperCase()}
+                                  </div>
+                                }
+                              />
                               <div>
                                 <p className="font-semibold text-white">{entry.chessUsername}</p>
                                 <p className="text-[10px] text-slate-500">

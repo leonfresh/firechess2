@@ -394,6 +394,20 @@ function BlunderBoard({
 
   const handleDrop = useCallback(
     (from: CbSquare, to: CbSquare) => {
+      // Free play after solving — try other moves and see what happens
+      if (status === "correct") {
+        try {
+          const g = new Chess(game.fen());
+          const r = g.move({ from, to, promotion: "q" });
+          if (!r) return false;
+          setGame(new Chess(g.fen()));
+          setSelectedSquare(null);
+          setLegalMoveSquares({});
+          return true;
+        } catch {
+          return false;
+        }
+      }
       if (status !== "playing") return false;
       setSelectedSquare(null);
       setLegalMoveSquares({});
@@ -425,7 +439,7 @@ function BlunderBoard({
         earnCoins("study_task");
         // Record correct result in SRS
         recordResult(tactic.fenBefore, tactic.bestMove, tactic.cpLoss, true);
-        setTimeout(() => onComplete(true), 900);
+        onComplete(true);
         return true;
       }
 
@@ -461,7 +475,7 @@ function BlunderBoard({
 
   const handleSquareClick = useCallback(
     (square: CbSquare) => {
-      if (status !== "playing") return;
+      if (status !== "playing" && status !== "correct") return;
 
       // Clicking a highlighted legal-move square → execute move
       if (selectedSquare && legalMoveSquares[square]) {
@@ -550,7 +564,7 @@ function BlunderBoard({
           boardOrientation={orientation}
           boardWidth={boardSize}
           animationDuration={200}
-          arePiecesDraggable={status === "playing"}
+          arePiecesDraggable={status === "playing" || status === "correct"}
           customSquareStyles={customSquareStyles}
           customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
           customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
@@ -580,7 +594,9 @@ function BlunderBoard({
       </div>
 
       {status === "correct" && (
-        <p className="text-sm font-medium text-emerald-400">✓ Correct!</p>
+        <p className="text-sm font-medium text-emerald-400">
+          ✓ Correct! Keep playing to explore — or hit Next when ready.
+        </p>
       )}
       {status === "wrong" && (
         <p className="text-sm font-medium text-red-400">
@@ -668,6 +684,20 @@ function LichessPuzzleBoard({
 
   const handleDrop = useCallback(
     (from: CbSquare, to: CbSquare) => {
+      // Free play after solving — try other moves and see what happens
+      if (status === "correct") {
+        try {
+          const g = new Chess(game.fen());
+          const r = g.move({ from, to, promotion: "q" });
+          if (!r) return false;
+          setGame(new Chess(g.fen()));
+          setSelectedSquare(null);
+          setLegalMoveSquares({});
+          return true;
+        } catch {
+          return false;
+        }
+      }
       if (status !== "playing" || moveIndex < 0) return false;
       setSelectedSquare(null);
       setLegalMoveSquares({});
@@ -704,7 +734,7 @@ function LichessPuzzleBoard({
         if (deliversMate || next >= solution.length) {
           setStatus("correct");
           earnCoins("study_task");
-          setTimeout(() => onComplete(true), 900);
+          onComplete(true);
           return true;
         }
 
@@ -727,7 +757,7 @@ function LichessPuzzleBoard({
           } catch {
             setStatus("correct");
             earnCoins("study_task");
-            setTimeout(() => onComplete(true), 400);
+            onComplete(true);
           }
         }, 400);
 
@@ -766,7 +796,7 @@ function LichessPuzzleBoard({
 
   const handleSquareClick = useCallback(
     (square: CbSquare) => {
-      if (status !== "playing") return;
+      if (status !== "playing" && status !== "correct") return;
 
       // Clicking a highlighted legal-move square → execute move
       if (selectedSquare && legalMoveSquares[square]) {
@@ -866,7 +896,7 @@ function LichessPuzzleBoard({
           boardOrientation={orientation}
           boardWidth={boardSize}
           animationDuration={200}
-          arePiecesDraggable={status === "playing"}
+          arePiecesDraggable={status === "playing" || status === "correct"}
           customSquareStyles={customSquareStyles}
           customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
           customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
@@ -897,7 +927,9 @@ function LichessPuzzleBoard({
       </div>
 
       {status === "correct" && (
-        <p className="text-sm font-medium text-emerald-400">✓ Correct!</p>
+        <p className="text-sm font-medium text-emerald-400">
+          ✓ Correct! Keep playing to explore — or hit Next when ready.
+        </p>
       )}
       {status === "wrong" && (
         <p className="text-sm font-medium text-red-400">

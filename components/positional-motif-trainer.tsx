@@ -11,6 +11,7 @@ import {
 } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
 import { stockfishClient, type LocalEngineLine } from "@/lib/stockfish-client";
+import { applyPv } from "@/lib/engine-lines";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -21,6 +22,7 @@ type MotifExample = {
   userMove?: string;
   bestMove?: string | null;
   cpLoss: number;
+  gameUrl?: string;
 };
 
 type Motif = {
@@ -41,6 +43,7 @@ type DrillPosition = {
   correctTo: string;
   correctPromo?: string;
   resolvedFen: string;
+  gameUrl?: string;
 };
 
 type TrainState =
@@ -143,6 +146,7 @@ export function PositionalMotifTrainer({
           correctTo: resolved.to,
           correctPromo: resolved.promotion,
           resolvedFen: resolved.fen,
+          gameUrl: ex.gameUrl,
         });
       }
     }
@@ -165,6 +169,9 @@ export function PositionalMotifTrainer({
   const [bestLine, setBestLine] = useState<LocalEngineLine | null>(null);
   const [lineLoading, setLineLoading] = useState(false);
   const [pvStep, setPvStep] = useState(0);
+  // Best continuation after a CORRECT solve (why the move works)
+  const [correctLine, setCorrectLine] = useState<LocalEngineLine | null>(null);
+  const [correctLineLoading, setCorrectLineLoading] = useState(false);
   const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(
     null,
   );
@@ -205,6 +212,8 @@ export function PositionalMotifTrainer({
     setBestLine(null);
     setLineLoading(false);
     setPvStep(0);
+    setCorrectLine(null);
+    setCorrectLineLoading(false);
     setLastMove(null);
     setHintShown(false);
     try {
@@ -265,6 +274,15 @@ export function PositionalMotifTrainer({
           setSolved((s) => s + 1);
           setTotal((t) => t + 1);
           playSound("correct");
+          // Show the engine's continuation so the user sees WHY the move
+          // works — the best moves after the first one.
+          setCorrectLineLoading(true);
+          setCorrectLine(null);
+          void stockfishClient
+            .getPrincipalVariation(chess.fen(), 18, 12)
+            .then((l) => setCorrectLine(l))
+            .catch(() => setCorrectLine(null))
+            .finally(() => setCorrectLineLoading(false));
         } else {
           // Keep the wrong position on the board and fetch the engine's
           // best line so the user can see — right there — what they missed.
@@ -347,6 +365,8 @@ export function PositionalMotifTrainer({
     setBestLine(null);
     setLineLoading(false);
     setPvStep(0);
+    setCorrectLine(null);
+    setCorrectLineLoading(false);
     setLastMove(null);
     setHintShown(false);
   }, [current]);
@@ -792,6 +812,57 @@ export function PositionalMotifTrainer({
                 </p>
               </div>
             )}
+
+          {/* Correct-solve continuation: the best moves after the first one */}
+          {trainState === "correct" &&
+            current &&
+            !correctLineLoading &&
+            correctLine?.pvMoves &&
+            correctLine.pvMoves.length > 0 && (
+              <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] p-4">
+                <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-emerald-400/80">
+                  Best continuation ({formatEval(correctLine)})
+                </p>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {pvToSan(current.resolvedFen, correctLine.pvMoves).map(
+                    (san, i) => (
+                      <button
+                        key={`${san}-${i}`}
+                        type="button"
+                        onClick={() =>
+                          setFen(
+                            applyPv(current.resolvedFen, correctLine.pvMoves, i + 1),
+                          )
+                        }
+                        className="rounded-md px-2 py-1 font-mono text-xs font-bold text-emerald-300 transition-colors bg-emerald-500/10 hover:bg-emerald-500/20"
+                      >
+                        {san}
+                      </button>
+                    ),
+                  )}
+                </div>
+                <p className="mt-2 text-[11px] text-[#565061]">
+                  Click a move to step through the line on the board.
+                </p>
+              </div>
+            )}
+          {trainState === "correct" && correctLineLoading && (
+            <p className="text-[11px] text-[#565061]">
+              Checking the engine&apos;s best continuation…
+            </p>
+          )}
+
+          {/* Source game link */}
+          {current?.gameUrl && (
+            <a
+              href={current.gameUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block text-[11px] text-cyan-400 transition-colors hover:text-cyan-300 hover:underline"
+            >
+              View full game ↗
+            </a>
+          )}
 
           {/* Progress bar */}
           <div className="space-y-1.5">

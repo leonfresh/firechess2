@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, HelpCircle } from "lucide-react";
+import { useSession } from "@/components/session-provider";
 import { splitMultiPgn } from "@/lib/client-analysis";
 import type { AnalysisSource, ScanMode, TimeControl } from "@/lib/client-analysis";
 import { scanOwnerStorageKey } from "@/lib/scan-session";
@@ -28,6 +29,9 @@ function HelpTip({ text }: { text: string }) {
 
 export function ScanSection() {
   const router = useRouter();
+  const { plan } = useSession();
+  const hasProAccess = plan === "pro" || plan === "lifetime";
+  const MAX_DEPTH = hasProAccess ? 24 : FREE_MAX_DEPTH;
   const [username, setUsername] = useState("");
   const [source, setSource] = useState<AnalysisSource | null>(null);
   const [pgnText, setPgnText] = useState("");
@@ -101,7 +105,7 @@ export function ScanSection() {
           config: {
             maxGames: gameRangeMode === "since" ? 100000 : Math.min(gameCount, FREE_MAX_GAMES),
             maxMoves: Math.min(moveCount, FREE_MAX_MOVES),
-            engineDepth: Math.min(engineDepth, FREE_MAX_DEPTH),
+            engineDepth: Math.min(engineDepth, MAX_DEPTH),
             cpThreshold,
             source,
             scanMode: FULL_SCAN_MODE,
@@ -216,7 +220,7 @@ export function ScanSection() {
             {[
               { label: "Games", value: gameCount, set: setGameCount, max: FREE_MAX_GAMES },
               { label: "Moves", value: moveCount, set: setMoveCount, max: FREE_MAX_MOVES },
-              { label: "Depth", value: engineDepth, set: setEngineDepth, max: FREE_MAX_DEPTH },
+              { label: "Depth", value: engineDepth, set: setEngineDepth, max: MAX_DEPTH },
             ].map(({ label, value, set, max }) => (
               <div key={label} className="flex-1 min-w-[100px] rounded-xl border border-orange-500/5 bg-black/20 px-3 py-2">
                 <p className="text-[9px] font-medium uppercase tracking-wider text-[#565061]">{label}</p>
