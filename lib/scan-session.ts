@@ -185,28 +185,30 @@ export function computeScanReportMeta(
   const severeLeakRate =
     lossValues.filter((loss) => loss >= cpThreshold).length / lossValues.length;
 
-  // Accuracy: opening leak-loss only, frequency-weighted and calibrated to
-  // chess.com-like move accuracy (K=1000: ~50cp weighted loss ≈ 95%, ~150cp ≈ 86%).
-  // The endgame sampler's avgCpLoss is mistakes-biased and unstable (130-1800cp),
-  // so it no longer feeds the accuracy blend; conversion rate adds a light
-  // full-game signal when available.
-  const conversionRate =
-    typeof result?.endgameStats?.conversionRate === "number"
-      ? result.endgameStats.conversionRate
-      : null;
-  const leakAccuracy = Math.min(
-    99.5,
-    Math.max(25, 100 * Math.exp(-weightedCpLoss / 1000)),
-  );
-  const estimatedAccuracy =
-    conversionRate !== null
-      ? Math.min(
-          99.5,
-          Math.max(25, leakAccuracy * 0.85 + conversionRate * 0.15),
-        )
-      : leakAccuracy;
-
+  // Accuracy: anchor to a rating-appropriate curve, then nudge by how the
+  // opening leak sample compares to what that rating should produce.
+  // A pure leak-loss curve (K=1000) cannot separate skill levels — the
+  // flagged-leak samples cluster at 60-125cp for everyone, which left
+  // 850-rated players at ~90% and the demo reports looking broken.
+  // Anchor ≈ 55-97.5% across 400-3400 rating; the leak adjustment moves the
+  // value within ±6 points, so an unusually leaky sample still reads lower.
   const actualRating = result?.playerRating;
+  const anchorAccuracy =
+    actualRating && actualRating > 0
+      ? Math.min(97.5, Math.max(30, 55 + (actualRating - 400) * 0.014))
+      : Math.min(99.5, Math.max(25, 100 * Math.exp(-weightedCpLoss / 1000)));
+  const expectedLoss =
+    actualRating && actualRating > 0
+      ? Math.max(2, 50 - actualRating / 60)
+      : null;
+  let estimatedAccuracy = anchorAccuracy;
+  if (expectedLoss !== null) {
+    const diff = expectedLoss - weightedCpLoss;
+    const adjustment = Math.max(-6, Math.min(6, diff * 0.25));
+    estimatedAccuracy = anchorAccuracy + adjustment;
+  }
+  estimatedAccuracy = Math.min(99.5, Math.max(25, estimatedAccuracy));
+
   let estimatedRating: number;
 
   if (actualRating && actualRating > 0) {
