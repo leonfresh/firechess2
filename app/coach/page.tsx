@@ -74,6 +74,8 @@ interface CoachAnalyzedMove {
   isKeyMoment: boolean;
   keyMomentLabel: string | null;
   themes: string[];
+  /** Short human reason chip, e.g. "Hanging piece" / "Missed fork". */
+  whyLabel: string | null;
 }
 
 interface GameInfo {
@@ -572,9 +574,33 @@ export default function CoachPage() {
           classification,
           bestMoveSan,
           bestMoveUci: pvMoves[0] ?? null,
+          bestPvSans: pvToSan(fenBefore, pvMoves, 6),
           evalBeforeWhite,
           evalAfterWhite,
         };
+
+        // 6b. For bad moves, fetch the opponent's best reply to the played move
+        //     (the refutation) — the "why" engine uses it to say concretely what
+        //     the move allows instead of guessing.
+        const isBadMove =
+          classification === "inaccuracy" ||
+          classification === "mistake" ||
+          classification === "blunder";
+        let continuationSans: string[] = [];
+        if (isBadMove) {
+          try {
+            const contPv = await stockfishPool.getPrincipalVariation(
+              fenAfter,
+              4,
+              8,
+            );
+            if (contPv?.pvMoves?.length) {
+              continuationSans = pvToSan(fenAfter, contPv.pvMoves, 4);
+            }
+          } catch {
+            /* skip */
+          }
+        }
 
         const prevAnalyzed = analyzed[analyzed.length - 1];
         const prevCtx: PrevMoveContext | undefined = prevAnalyzed
@@ -590,29 +616,37 @@ export default function CoachPage() {
           blackName: info.black || undefined,
         };
 
-        const { text, isKeyMoment, keyMomentLabel, themes } = generateCoachLine(
+        const {
+          text,
+          isKeyMoment,
+          keyMomentLabel,
+          themes,
+          why,
+        } = generateCoachLine(
           coachMove,
           usedLines,
           prevCtx,
           gameCtx,
+          continuationSans,
         );
 
         // For key moments, compute a "What if?" variation line
         let varLine: string | null = null;
         if (isKeyMoment || cpLoss > 150) {
           const bestLineSans = pvToSan(fenBefore, pvMoves, 4);
-          let continuationSans: string[] = [];
-          try {
-            const contPv = await stockfishPool.getPrincipalVariation(
-              fenAfter,
-              4,
-              8,
-            );
-            if (contPv?.pvMoves?.length) {
-              continuationSans = pvToSan(fenAfter, contPv.pvMoves, 4);
+          if (continuationSans.length === 0) {
+            try {
+              const contPv = await stockfishPool.getPrincipalVariation(
+                fenAfter,
+                4,
+                8,
+              );
+              if (contPv?.pvMoves?.length) {
+                continuationSans = pvToSan(fenAfter, contPv.pvMoves, 4);
+              }
+            } catch {
+              /* skip */
             }
-          } catch {
-            /* skip */
           }
           varLine = generateVariationLine(
             coachMove,
@@ -644,6 +678,7 @@ export default function CoachPage() {
           isKeyMoment,
           keyMomentLabel,
           themes,
+          whyLabel: why?.label ?? null,
         });
 
         setAnalysisProgress(Math.round(((i + 1) / maxMoves) * 100));
@@ -1380,6 +1415,19 @@ export default function CoachPage() {
                 <>
                   {currentMove?.themes.length ? (
                     <div className="mb-2 flex flex-wrap gap-1">
+                      {currentMove.whyLabel ? (
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                            currentMove.classification === "blunder"
+                              ? "bg-red-500/25 text-red-300"
+                              : currentMove.classification === "mistake"
+                                ? "bg-orange-500/25 text-orange-300"
+                                : "bg-amber-500/25 text-amber-200"
+                          }`}
+                        >
+                          {currentMove.whyLabel}
+                        </span>
+                      ) : null}
                       {currentMove.themes.slice(0, 4).map((t) => (
                         <span
                           key={t}

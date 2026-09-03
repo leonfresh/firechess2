@@ -3709,3 +3709,49 @@ export function describeEndPosition(
 
   return { summary, details };
 }
+
+/* ──────────────────────────────────────────────────────────────
+   Shared detector API for derived engines (lib/move-why.ts, etc.)
+   The low-level detectors are intentionally exposed as one grouped
+   object so new coaching engines can reuse them without editing the
+   thousands of lines of analysis above.
+   ────────────────────────────────────────────────────────────── */
+
+export const explainer = {
+  pieceAt,
+  getAllPieces,
+  pieceName,
+  colorName,
+  oppColor,
+  formatSquare,
+  materialBalance,
+  describeMaterialDiff,
+  countDeveloped,
+  hasCastled,
+  canStillCastle,
+  findKing,
+  kingSafetyScore,
+  centerControl,
+  pawnStructure,
+  detectTacticalThemes,
+  detectFork,
+  detectPins,
+  detectHangingPieces,
+  isPieceTrapped,
+  detectWeakenedSquares,
+  detectSkewer,
+  isKingExposed,
+  getCastlingSide,
+  isSacrifice,
+  openFiles,
+  hasBishopPair,
+  classifyGamePhase,
+  classifyEndgameType,
+  getCheckers,
+  analyzeSpeedChange,
+  detectAdvancedPawns,
+  detectIntermezzo,
+  PIECE_VALUES,
+  CENTER_SQUARES,
+  EXTENDED_CENTER,
+} as const;

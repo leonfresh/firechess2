@@ -8,6 +8,7 @@
 
 import { Chess, type Square } from "chess.js";
 import { explainMoves } from "./position-explainer";
+import { analyzeMoveWhy, type MoveWhy } from "./move-why";
 
 /* ── Types ── */
 
@@ -31,6 +32,8 @@ export interface CoachMove {
   classification: MoveClassification;
   bestMoveSan: string | null;
   bestMoveUci: string | null;
+  /** Engine PV from fenBefore as SANs (best move first) — feeds the why engine. */
+  bestPvSans?: string[];
   evalBeforeWhite: number;
   evalAfterWhite: number;
 }
@@ -40,6 +43,8 @@ export interface CoachNarration {
   isKeyMoment: boolean;
   keyMomentLabel: string | null;
   themes: string[];
+  /** Concrete human "why" for bad moves (inaccuracy/mistake/blunder). */
+  why: MoveWhy | null;
 }
 
 /* ── Phase detection ── */
@@ -691,10 +696,11 @@ export function generateCoachLine(
   usedLines = new Set<string>(),
   prevContext?: PrevMoveContext,
   gameContext?: GameContext,
+  refutationSans: string[] = [],
 ): CoachNarration {
   // Skip silent narration for very early book moves
   if (move.moveNumber <= 2 && move.cpLoss < 5) {
-    return { text: "", isKeyMoment: false, keyMomentLabel: null, themes: [] };
+    return { text: "", isKeyMoment: false, keyMomentLabel: null, themes: [], why: null };
   }
 
   // Get the position explanation from the existing engine
@@ -709,7 +715,7 @@ export function generateCoachLine(
       move.evalAfterWhite,
     );
   } catch {
-    return { text: "", isKeyMoment: false, keyMomentLabel: null, themes: [] };
+    return { text: "", isKeyMoment: false, keyMomentLabel: null, themes: [], why: null };
   }
 
   const themes: string[] = explanation.played.themes ?? [];
@@ -717,6 +723,33 @@ export function generateCoachLine(
 
   // Find primary instructional theme (skip game-phase labels)
   const primaryTheme = themes.find((t) => !PHASE_LABELS.has(t));
+
+  // ── "Why" engine: concrete human reason for bad moves ──
+  let why: MoveWhy | null = null;
+  if (
+    (move.classification === "inaccuracy" ||
+      move.classification === "mistake" ||
+      move.classification === "blunder") &&
+    move.cpLoss >= 10
+  ) {
+    try {
+      why = analyzeMoveWhy({
+        fenBefore: move.fenBefore,
+        playedUci: move.uci,
+        playedSan: move.san,
+        fenAfterPlayed: move.fenAfter,
+        bestUci: move.bestMoveUci,
+        bestSan: move.bestMoveSan,
+        bestPvSans: move.bestPvSans ?? [],
+        refutationSans,
+        cpLoss: move.cpLoss,
+        classification: move.classification,
+        evalBeforeWhite: move.evalBeforeWhite,
+      });
+    } catch {
+      why = null;
+    }
+  }
 
   // Decide if this is a key "lesson" moment
   const isKeyMoment =
@@ -731,19 +764,23 @@ export function generateCoachLine(
   if (move.classification === "book" && move.cpLoss < 10) {
     if (move.moveNumber <= 8) {
       const text = pickLine(BOOK_COMMENTS, usedLines);
-      return { text, isKeyMoment: false, keyMomentLabel: null, themes };
+      return { text, isKeyMoment: false, keyMomentLabel: null, themes, why: null };
     }
-    return { text: "", isKeyMoment: false, keyMomentLabel: null, themes };
+    return { text: "", isKeyMoment: false, keyMomentLabel: null, themes, why: null };
   }
 
-  const keyMomentLabel = getKeyMomentLabel(move.classification, primaryTheme);
+  const keyMomentLabel =
+    why &&
+    (move.classification === "blunder" || move.classification === "mistake")
+      ? `${move.classification === "blunder" ? "Blunder" : "Mistake"} — ${why.label}`
+      : getKeyMomentLabel(move.classification, primaryTheme);
   // Seed for deterministic style choices — different every move, not truly random so TTS sounds
   // natural rather than repeating the same structural format back-to-back
   const seed = move.moveNumber * 7 + (move.color === "w" ? 0 : 3);
   let text = "";
 
   if (isKeyMoment) {
-    /* ── Key moment: classification intro + theme analogy + engine coaching ── */
+    /* ── Key moment: classification intro + concrete why + engine coaching ── */
     let intro = "";
     if (move.classification === "blunder") {
       intro =
@@ -763,34 +800,52 @@ export function generateCoachLine(
     const coaching = explanation.played.coaching ?? "";
     const takeaway = explanation.played.takeaway ?? "";
 
-    // 50% chance to use a shorter theme opener for variety — avoids every key moment being a long lecture
-    let themeOpener = "";
-    if (primaryTheme && THEME_OPENERS[primaryTheme]) {
-      const pool = THEME_OPENERS[primaryTheme];
-      // Prefer shorter entries (≤90 chars) roughly half the time
-      const short = pool.filter((l) => l.length <= 90);
-      const useShort = stableRandom(seed + 5) < 0.45 && short.length > 0;
-      themeOpener = pickLine(useShort ? short : pool, usedLines);
-    }
+    if (why && move.classification !== "brilliant") {
+      // Concrete-first narration: the reason leads, extra color follows.
+      const parts = [intro, why.reason, why.detail, takeaway].filter(Boolean);
+      text = parts
+        .join(" ")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+    } else {
+      // 50% chance to use a shorter theme opener for variety — avoids every key moment being a long lecture
+      let themeOpener = "";
+      if (primaryTheme && THEME_OPENERS[primaryTheme]) {
+        const pool = THEME_OPENERS[primaryTheme];
+        // Prefer shorter entries (≤90 chars) roughly half the time
+        const short = pool.filter((l) => l.length <= 90);
+        const useShort = stableRandom(seed + 5) < 0.45 && short.length > 0;
+        themeOpener = pickLine(useShort ? short : pool, usedLines);
+      }
 
-    const parts = [intro, themeOpener, coaching, takeaway].filter(Boolean);
-    text = parts
-      .join(" ")
-      .replace(/\s{2,}/g, " ")
-      .trim();
+      const parts = [intro, themeOpener, coaching, takeaway].filter(Boolean);
+      text = parts
+        .join(" ")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+    }
   } else if (move.classification === "inaccuracy") {
     /* ── Minor inaccuracy ── */
-    const intro =
-      INACCURACY_INTROS[
-        Math.floor(stableRandom(seed) * INACCURACY_INTROS.length)
-      ];
-    const coaching = explanation.played.coaching ?? "";
-    text = coaching ? `${intro} ${coaching}`.trim() : intro;
+    if (why) {
+      // No fluff intro — the concrete reason IS the message.
+      text = [why.reason, why.detail, explanation.played.takeaway]
+        .filter(Boolean)
+        .join(" ")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+    } else {
+      const intro =
+        INACCURACY_INTROS[
+          Math.floor(stableRandom(seed) * INACCURACY_INTROS.length)
+        ];
+      const coaching = explanation.played.coaching ?? "";
+      text = coaching ? `${intro} ${coaching}`.trim() : intro;
+    }
   } else {
     /* ── Good/best move: phase comment + optional theme note ── */
     // Silence filter: skip routine moves that teach nothing
     if (!shouldNarrate(move.cpLoss, themes, primaryTheme)) {
-      return { text: "", isKeyMoment: false, keyMomentLabel: null, themes };
+      return { text: "", isKeyMoment: false, keyMomentLabel: null, themes, why: null };
     }
 
     const phasePool =
@@ -818,7 +873,10 @@ export function generateCoachLine(
 
   /* ── Narrative continuity prefix ── */
   let continuityPrefix = "";
-  if (prevContext && text) {
+  if (prevContext && text && !why) {
+    // (Skipped when the why engine produced a concrete reason — the text is
+    // already specific enough; stacking "After that mistake," on top of it
+    // just adds noise.)
     if (
       prevContext.classification === "blunder" ||
       prevContext.classification === "mistake"
@@ -859,7 +917,23 @@ export function generateCoachLine(
     text = `${playerPrefix}${continuityPrefix}${text}`;
   }
 
-  return { text, isKeyMoment, keyMomentLabel, themes };
+  // Speech/plain-text cleanup: narration is spoken aloud and shown raw —
+  // strip markdown bold markers and decorative emoji that leak in from the
+  // report-card copy pools (theme takeaways like "💡 **Lesson**: ...").
+  let clean = text.replace(/\*\*/g, "");
+  let cleanOut = "";
+  for (const ch of clean) {
+    const cp = ch.codePointAt(0) ?? 0;
+    const isEmoji =
+      (cp >= 0x1f000 && cp <= 0x1faff) ||
+      (cp >= 0x2600 && cp <= 0x27bf) ||
+      (cp >= 0x2b00 && cp <= 0x2bff) ||
+      cp === 0xfe0f;
+    if (!isEmoji) cleanOut += ch;
+  }
+  text = cleanOut.replace(/\s{2,}/g, " ").trim();
+
+  return { text, isKeyMoment, keyMomentLabel, themes, why };
 }
 
 /* ══════════════════════════════════════════════════════════════
