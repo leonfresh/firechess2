@@ -251,7 +251,9 @@ export function PieceMemory({
   onComplete: (correct: boolean) => void;
   viewSeconds?: number;
 }) {
-  const { ref: boardRef, size: boardSize } = useBoardSize(440);
+  const { ref: boardRef, size: boardSize } = useBoardSize(1600, {
+    evalBar: false,
+  });
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
 
@@ -313,7 +315,7 @@ export function PieceMemory({
     : {};
 
   return (
-    <div className="space-y-4">
+    <div className="w-full space-y-4">
       <p className="text-sm font-medium text-[#8d8696]">{position.label}</p>
 
       {/* ── MEMORIZE PHASE ──────────────────────────────────────────── */}
@@ -327,7 +329,7 @@ export function PieceMemory({
               {timeLeft}s
             </span>
           </div>
-          <div ref={boardRef} className="w-full max-w-[440px]">
+          <div ref={boardRef} className="w-full">
             <Chessboard
               id="memory-board"
               position={position.fen}
@@ -360,7 +362,7 @@ export function PieceMemory({
                   ? `Selected: ${selected.toUpperCase()} — click another square or confirm`
                   : "Click the square on the board below"}
               </p>
-              <div ref={boardRef} className="w-full max-w-[440px]">
+              <div ref={boardRef} className="w-full">
                 <Chessboard
                   id="memory-recall-board"
                   position="8/8/8/8/8/8/8/8"
@@ -468,7 +470,7 @@ export function PieceMemory({
           <p className="text-base font-semibold text-white">{position.question}</p>
 
           {/* Show full board with square highlights */}
-          <div ref={boardRef} className="w-full max-w-[440px]">
+          <div ref={boardRef} className="w-full">
             <Chessboard
               id="memory-result-board"
               position={position.fen}

@@ -538,7 +538,7 @@ function BlunderBoard({
   }
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex w-full flex-col items-center gap-3">
       <div className="flex items-center gap-2 text-xs">
         <div
           className={`h-3 w-3 rounded-full border ${
@@ -552,9 +552,10 @@ function BlunderBoard({
 
       <div
         ref={boardContainerRef}
-        className={`relative w-full max-w-[440px] overflow-hidden rounded-xl shadow-2xl transition-transform ${
+        className={`relative w-full overflow-hidden rounded-xl shadow-2xl transition-transform ${
           shaking ? "animate-[shake_0.3s_ease-in-out]" : ""
         }`}
+        style={{ maxWidth: "min(100%, max(300px, calc(100dvh - 260px)))" }}
       >
         <Chessboard
           id="daily-blunder"
@@ -870,7 +871,7 @@ function LichessPuzzleBoard({
   }
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex w-full flex-col items-center gap-3">
       <div className="flex items-center gap-2 text-xs">
         <div
           className={`h-3 w-3 rounded-full border ${
@@ -884,9 +885,10 @@ function LichessPuzzleBoard({
 
       <div
         ref={boardContainerRef}
-        className={`relative w-full max-w-[440px] overflow-hidden rounded-xl shadow-2xl ${
+        className={`relative w-full overflow-hidden rounded-xl shadow-2xl ${
           shaking ? "animate-[shake_0.3s_ease-in-out]" : ""
         }`}
+        style={{ maxWidth: "min(100%, max(300px, calc(100dvh - 260px)))" }}
       >
         <Chessboard
           id="daily-puzzle"
@@ -942,37 +944,6 @@ function LichessPuzzleBoard({
           {puzzle.puzzle.rating}
         </p>
       )}
-    </div>
-  );
-}
-
-/* ─────────────────────────────── TaskIntroCard ─────────────────────── */
-
-function TaskIntroCard({
-  intro,
-  onStart,
-}: {
-  intro: TaskIntro;
-  onStart: () => void;
-}) {
-  return (
-    <div className="flex flex-col items-center gap-6 py-10 text-center">
-      <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.04] text-4xl">
-        {intro.icon}
-      </div>
-      <div className="space-y-2">
-        <h2 className="text-xl font-bold text-white">{intro.headline}</h2>
-        <p className="mx-auto max-w-xs text-sm leading-relaxed text-slate-400">
-          {intro.body}
-        </p>
-      </div>
-      <button
-        type="button"
-        onClick={onStart}
-        className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-8 py-3 text-sm font-bold text-black transition-colors hover:bg-amber-400"
-      >
-        Start →
-      </button>
     </div>
   );
 }
@@ -1220,12 +1191,28 @@ export default function DailyPage() {
   const isLastTask = currentIdx === tasks.length - 1;
   const currentTask = tasks[currentIdx] ?? null;
 
+  /* ── Wizard keyboard shortcuts (session only: Enter/Space/→ advances after a result) ── */
+  useEffect(() => {
+    if (pageState !== "session" || taskPhase !== "playing" || lastResult === null)
+      return;
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "BUTTON" || tag === "INPUT" || tag === "TEXTAREA") return;
+      if (e.key === "Enter" || e.key === " " || e.key === "ArrowRight") {
+        e.preventDefault();
+        handleNext();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [pageState, taskPhase, lastResult, handleNext]);
+
   /* ── Render: Loading ── */
   if (pageState === "loading") {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-[#0a0a0f] px-4">
+      <main className="flex min-h-screen flex-col items-center justify-center bg-[#070608] px-4">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-amber-400" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-[#ff8c42]" />
           <p className="text-sm text-slate-500">Loading today's session…</p>
         </div>
       </main>
@@ -1235,7 +1222,7 @@ export default function DailyPage() {
   /* ── Render: Unauthenticated ── */
   if (pageState === "unauthenticated") {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-[#0a0a0f] px-4">
+      <main className="flex min-h-screen flex-col items-center justify-center bg-[#070608] px-4">
         <div className="max-w-sm text-center">
           <div className="mb-4 text-5xl">📅</div>
           <h1 className="mb-2 text-2xl font-bold text-white">Daily Training</h1>
@@ -1245,7 +1232,7 @@ export default function DailyPage() {
           </p>
           <Link
             href="/auth/signin"
-            className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-6 py-3 text-sm font-bold text-black transition-colors hover:bg-amber-400"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-6 py-3 text-sm font-bold text-[#070608] shadow-[0_0_24px_rgba(255,90,31,0.2)] transition-transform hover:scale-[1.02]"
           >
             Sign in to start
           </Link>
@@ -1257,7 +1244,7 @@ export default function DailyPage() {
   /* ── Render: No reports (first-time user) ── */
   if (pageState === "no-reports") {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-[#0a0a0f] px-4">
+      <main className="flex min-h-screen flex-col items-center justify-center bg-[#070608] px-4">
         <div className="max-w-sm text-center">
           <div className="mb-4 text-5xl">🔍</div>
           <h1 className="mb-2 text-2xl font-bold text-white">No data yet</h1>
@@ -1267,7 +1254,7 @@ export default function DailyPage() {
           </p>
           <Link
             href="/analyze"
-            className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-6 py-3 text-sm font-bold text-black transition-colors hover:bg-amber-400"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-6 py-3 text-sm font-bold text-[#070608] shadow-[0_0_24px_rgba(255,90,31,0.2)] transition-transform hover:scale-[1.02]"
           >
             Scan my games
           </Link>
@@ -1279,7 +1266,7 @@ export default function DailyPage() {
   /* ── Render: No data (Lichess down, no blunders available either) ── */
   if (pageState === "no-data") {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-[#0a0a0f] px-4">
+      <main className="flex min-h-screen flex-col items-center justify-center bg-[#070608] px-4">
         <div className="max-w-sm text-center">
           <div className="mb-4 text-5xl">⚡</div>
           <h1 className="mb-2 text-2xl font-bold text-white">
@@ -1292,7 +1279,7 @@ export default function DailyPage() {
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-6 py-3 text-sm font-bold text-black transition-colors hover:bg-amber-400"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-6 py-3 text-sm font-bold text-[#070608] shadow-[0_0_24px_rgba(255,90,31,0.2)] transition-transform hover:scale-[1.02]"
           >
             Try again
           </button>
@@ -1310,42 +1297,40 @@ export default function DailyPage() {
     const isGreat = scorePercent >= 80;
 
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-[#0a0a0f] px-4">
-        <div className="w-full max-w-md">
-          {/* Completion card */}
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-8 text-center">
-            <div className="mb-2 text-5xl">{isGreat ? "🎉" : "💪"}</div>
-            <h1 className="mb-1 text-2xl font-bold text-white">
+      <main className="relative flex min-h-[calc(100dvh-4rem)] items-center justify-center overflow-hidden bg-[#070608] px-4 py-10">
+        {/* Ambient ember glow */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-96 bg-[radial-gradient(ellipse_60%_100%_at_50%_-20%,rgba(255,90,31,0.1),transparent)]"
+        />
+        <div className="animate-[fade-in-up_0.4s_ease-out] relative w-full max-w-md">
+          <div className="rounded-3xl border border-[#1e1a24] bg-[#121015]/70 p-8 text-center shadow-[0_0_80px_rgba(255,90,31,0.06)] backdrop-blur-xl">
+            <div className="mb-5 text-4xl">{isGreat ? "🎉" : "💪"}</div>
+            <h1 className="mb-1 text-2xl font-bold tracking-tight text-[#f0edf2]">
               {isGreat ? "Session complete!" : "Session complete"}
             </h1>
-            <p className="mb-6 text-sm text-slate-400">
+            <p className="mb-7 text-sm text-[#8d8696]">
               {isGreat
                 ? "Great work — see you tomorrow."
                 : "Keep at it — consistency beats perfection."}
             </p>
 
-            {/* Score */}
-            <div className="mb-4 flex justify-center gap-6">
-              <div className="text-center">
-                <p className="text-3xl font-extrabold text-white">
-                  {completedCorrect}/{completedTotal}
-                </p>
-                <p className="text-xs text-slate-500">correct</p>
+            {/* Score ring */}
+            <div
+              className="relative mx-auto mb-6 flex h-36 w-36 items-center justify-center rounded-full"
+              style={{
+                background: `conic-gradient(#ff5a1f ${scorePercent * 3.6}deg, #1e1a24 0deg)`,
+                boxShadow: "0 0 40px rgba(255,90,31,0.12)",
+              }}
+            >
+              <div className="flex h-[7.4rem] w-[7.4rem] flex-col items-center justify-center rounded-full bg-[#0b0a10]">
+                <span className="text-3xl font-extrabold tracking-tight text-[#f0edf2]">
+                  {scorePercent}%
+                </span>
+                <span className="text-[11px] text-[#8d8696]">
+                  {completedCorrect}/{completedTotal} correct
+                </span>
               </div>
-              <div className="text-center">
-                <p className="text-3xl font-extrabold text-amber-400">
-                  🔥 {streak}
-                </p>
-                <p className="text-xs text-slate-500">day streak</p>
-              </div>
-            </div>
-
-            {/* Progress bar */}
-            <div className="mb-6 h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all"
-                style={{ width: `${scorePercent}%` }}
-              />
             </div>
 
             {/* Result dots */}
@@ -1354,12 +1339,12 @@ export default function DailyPage() {
                 {results.map((r, i) => (
                   <div
                     key={i}
-                    className={`h-3 w-3 rounded-full ${
+                    className={`h-2.5 w-2.5 rounded-full ${
                       r === "correct"
-                        ? "bg-emerald-500"
+                        ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
                         : r === "wrong"
-                          ? "bg-red-500"
-                          : "bg-white/10"
+                          ? "bg-red-500/80"
+                          : "bg-[#2a2633]"
                     }`}
                     title={`Task ${i + 1}: ${r}`}
                   />
@@ -1367,22 +1352,32 @@ export default function DailyPage() {
               </div>
             )}
 
-            <p className="mb-6 text-xs text-slate-600">
+            {/* Streak */}
+            {streak > 0 && (
+              <div className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-4 py-1.5">
+                <span>🔥</span>
+                <span className="text-sm font-bold text-[#ff8c42]">
+                  {streak} day streak
+                </span>
+              </div>
+            )}
+
+            <p className="mb-7 text-xs text-[#565061]">
               Come back tomorrow for a new session
             </p>
 
-            <div className="flex flex-col gap-2">
-              <Link
-                href="/train"
-                className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:bg-white/[0.08] hover:text-white"
-              >
-                More training →
-              </Link>
+            <div className="flex flex-col gap-2.5">
               <Link
                 href="/dashboard"
-                className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:bg-white/[0.08] hover:text-white"
+                className="rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-4 py-3 text-sm font-bold text-[#070608] shadow-[0_0_24px_rgba(255,90,31,0.2)] transition-transform hover:scale-[1.01]"
               >
                 Back to dashboard
+              </Link>
+              <Link
+                href="/train"
+                className="rounded-xl border border-[#1e1a24] bg-[#121015]/60 px-4 py-3 text-sm font-medium text-[#8d8696] backdrop-blur transition-colors hover:border-[#ff5a1f]/30 hover:text-[#f0edf2]"
+              >
+                More training →
               </Link>
             </div>
           </div>
@@ -1391,211 +1386,246 @@ export default function DailyPage() {
     );
   }
 
-  /* ── Render: Session ── */
+  /* ── Render: Session — fullscreen daily wizard ── */
   const progressPct =
     tasks.length > 0 ? Math.round((currentIdx / tasks.length) * 100) : 0;
 
+  const taskMeta = currentTask
+    ? currentTask.type === "puzzle"
+      ? { label: "Puzzle", icon: "🧩", instruction: "Find the best move sequence" }
+      : currentTask.type === "blunder"
+        ? { label: "Blunder Drill", icon: "♟️", instruction: "Fix your mistake — find the best move" }
+        : currentTask.type === "quiz"
+          ? { label: "Knowledge Check", icon: "🧠", instruction: "Answer the question" }
+          : { label: "Memory", icon: "👁️", instruction: "Study the position, then recall it" }
+    : null;
+
   return (
-    <main className="min-h-screen bg-[#0a0a0f] px-4 pb-16 pt-8">
-      <div className="mx-auto max-w-2xl">
-        {/* ── Header ── */}
-        <div className="mb-6">
-          <div className="mb-1 flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-white">Daily Training</h1>
-              <p className="text-xs text-slate-500">{today}</p>
-            </div>
-            {streak > 0 && (
-              <div className="flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/[0.08] px-3 py-1.5">
-                <span className="text-sm">🔥</span>
-                <span className="text-xs font-bold text-amber-400">
-                  {streak} day streak
-                </span>
-              </div>
+    <main className="relative flex min-h-[calc(100dvh-4rem)] flex-col overflow-hidden bg-[#070608] lg:h-[calc(100dvh-4rem)]">
+      {/* Ambient ember glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-80 bg-[radial-gradient(ellipse_60%_100%_at_50%_-20%,rgba(255,90,31,0.08),transparent)]"
+      />
+
+      {/* ── HUD ── */}
+      <header className="relative z-10 flex shrink-0 items-center gap-3 border-b border-[#1e1a24] bg-[#0b0a10]/80 px-4 py-2.5 backdrop-blur-xl sm:px-6">
+        <Link
+          href="/dashboard"
+          title="Exit session"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#1e1a24] text-[#8d8696] transition-colors hover:border-[#ff5a1f]/40 hover:text-[#f0edf2]"
+        >
+          ✕
+        </Link>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-2">
+            <h1 className="text-sm font-bold tracking-tight text-[#f0edf2]">
+              Daily Training
+            </h1>
+            <span className="hidden text-[11px] text-[#8d8696] sm:inline">
+              {today}
+            </span>
+          </div>
+          <div className="mt-0.5 flex items-center gap-2 text-[11px] text-[#8d8696]">
+            <span className="font-bold text-[#ff8c42]">
+              Task {currentIdx + 1} / {tasks.length}
+            </span>
+            {taskMeta && (
+              <span className="hidden sm:inline">
+                · {taskMeta.icon} {taskMeta.label}
+              </span>
             )}
           </div>
-
-          {/* Progress bar */}
-          <div className="mt-3">
-            <div className="mb-1.5 flex items-center justify-between text-xs text-slate-500">
-              <span>
-                {currentIdx} / {tasks.length} done
-              </span>
-              <span>{tasks.length - currentIdx} remaining</span>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-500"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
+        </div>
+        {streak > 0 && (
+          <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-3 py-1">
+            <span className="text-xs">🔥</span>
+            <span className="text-xs font-bold text-[#ff8c42]">{streak}</span>
           </div>
+        )}
+      </header>
 
-          {/* Task dots */}
-          <div className="mt-2.5 flex gap-1.5 flex-wrap">
+      {/* Progress hairline */}
+      <div className="relative z-10 h-[3px] w-full shrink-0 bg-[#1e1a24]">
+        <div
+          className="h-full bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] shadow-[0_0_12px_rgba(255,90,31,0.6)] transition-all duration-500"
+          style={{ width: `${progressPct}%` }}
+        />
+      </div>
+
+      {/* ── Stage: board left, controls right (stacks on mobile) ── */}
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col lg:flex-row">
+        <section className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-4 py-4 sm:px-8">
+          <div className="m-auto flex w-full max-w-4xl flex-col items-center justify-center gap-3">
+
+        {/* ── Task: intro overlay or live exercise ── */}
+        {currentTask &&
+          (taskPhase === "intro" ? (
+            <div
+              key={`intro-${currentIdx}`}
+              className="animate-[fade-in-up_0.3s_ease-out] relative flex min-h-[55vh] w-full flex-col items-center justify-center gap-5 rounded-2xl border border-[#1e1a24] bg-[#121015]/60 px-6 py-10 text-center backdrop-blur-xl lg:min-h-0 lg:flex-1"
+            >
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-[#ff5a1f]/20 bg-gradient-to-b from-[#ff5a1f]/[0.14] to-transparent text-4xl shadow-[0_0_30px_rgba(255,90,31,0.15)]">
+                {currentTask.intro.icon}
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold tracking-tight text-[#f0edf2]">
+                  {currentTask.intro.headline}
+                </h2>
+                <p className="mx-auto max-w-md text-sm leading-relaxed text-[#8d8696]">
+                  {currentTask.intro.body}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setTaskPhase("playing");
+                  setTaskKey((k) => k + 1);
+                }}
+                className="rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-10 py-3.5 text-sm font-bold text-[#070608] shadow-[0_0_24px_rgba(255,90,31,0.25)] transition-transform hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Start →
+              </button>
+            </div>
+          ) : (
+            <div
+              key={taskKey}
+              className="animate-[fade-in-up_0.25s_ease-out] flex w-full flex-col items-center gap-3"
+            >
+              {currentTask.type === "puzzle" ? (
+                <LichessPuzzleBoard
+                  puzzle={currentTask.puzzle}
+                  onComplete={handleTaskComplete}
+                />
+              ) : currentTask.type === "blunder" ? (
+                <BlunderBoard
+                  tactic={currentTask.tactic}
+                  onComplete={handleTaskComplete}
+                />
+              ) : currentTask.type === "quiz" ? (
+                <ChessQuiz
+                  question={currentTask.question}
+                  onComplete={handleTaskComplete}
+                />
+              ) : (
+                <PieceMemory
+                  position={currentTask.position}
+                  onComplete={handleTaskComplete}
+                />
+              )}
+            </div>
+          ))}
+      </div>
+        </section>
+
+        {/* ── Right rail: context, result, controls ── */}
+        <aside className="flex w-full shrink-0 flex-col gap-4 border-t border-[#1e1a24] bg-[#0b0a10]/70 p-4 backdrop-blur-xl sm:p-5 lg:w-[340px] lg:border-l lg:border-t-0 xl:w-[390px]">
+          {taskMeta && (
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#ff5a1f]/20 bg-[#ff5a1f]/[0.07] text-lg">
+                {taskMeta.icon}
+              </span>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#ff8c42]">
+                  {taskMeta.label}
+                </p>
+                <p className="truncate text-sm text-[#f0edf2]">
+                  {taskMeta.instruction}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Session dots */}
+          <div className="flex flex-wrap gap-1.5">
             {tasks.map((_, i) => (
               <div
                 key={i}
-                className={`h-2 w-2 rounded-full transition-all ${
+                className={`h-1.5 w-1.5 rounded-full transition-all ${
                   i < currentIdx
                     ? results[i] === "correct"
                       ? "bg-emerald-500"
-                      : "bg-red-500/70"
+                      : "bg-red-500/80"
                     : i === currentIdx
-                      ? "scale-125 bg-amber-400"
-                      : "bg-white/10"
+                      ? "h-2 w-2 bg-[#ff8c42] shadow-[0_0_8px_rgba(255,140,66,0.7)]"
+                      : "bg-[#2a2633]"
                 }`}
               />
             ))}
           </div>
 
-          {/* SRS due-count badge */}
-          {srsStats && srsStats.totalCards > 0 && (
-            <div className="mt-3 flex items-center gap-2">
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
-                  srsStats.dueToday > 0
-                    ? "border-amber-500/25 bg-amber-500/[0.07] text-amber-400"
-                    : "border-emerald-500/25 bg-emerald-500/[0.07] text-emerald-400"
-                }`}
-              >
-                <span>{srsStats.dueToday > 0 ? "🔁" : "✅"}</span>
-                {srsStats.dueToday > 0
-                  ? `${srsStats.dueToday} blunder${srsStats.dueToday !== 1 ? "s" : ""} due for review`
-                  : "All blunders reviewed — come back tomorrow"}
-              </span>
-              {srsStats.totalSeen > 0 && (
-                <span className="text-[10px] text-slate-600">
-                  {srsStats.totalSeen}/{srsStats.totalCards} in rotation
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* No tactics scan notice */}
-          {!hasTacticsScan && (
-            <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-sky-500/15 bg-sky-500/[0.05] px-3 py-2.5">
-              <span className="mt-0.5 shrink-0 text-sm">💡</span>
-              <p className="text-xs leading-relaxed text-slate-400">
-                Today's session is{" "}
-                <span className="text-white">puzzles only</span> — blunder
-                drills activate after a{" "}
-                <Link
-                  href="/analyze"
-                  className="text-sky-400 underline-offset-2 hover:underline"
-                >
-                  tactics scan
-                </Link>
-                .
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* ── Task Card ── */}
-        {currentTask && (
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
-            {/* Type badge + instruction */}
-            <div className="mb-4 flex items-center gap-3">
-              {currentTask.type === "puzzle" ? (
-                <span className="rounded-full border border-sky-500/20 bg-sky-500/[0.08] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-sky-400">
-                  Puzzle
-                </span>
-              ) : currentTask.type === "blunder" ? (
-                <span className="rounded-full border border-orange-500/20 bg-orange-500/[0.08] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-orange-400">
-                  Blunder Drill
-                </span>
-              ) : currentTask.type === "quiz" ? (
-                <span className="rounded-full border border-violet-500/20 bg-violet-500/[0.08] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-violet-400">
-                  Quiz
-                </span>
-              ) : (
-                <span className="rounded-full border border-amber-500/20 bg-amber-500/[0.08] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-amber-400">
-                  Memory
-                </span>
-              )}
-              <p className="text-sm text-slate-400">
-                {currentTask.type === "puzzle"
-                  ? "Find the best move sequence"
-                  : currentTask.type === "blunder"
-                    ? "Fix your mistake — find the best move"
-                    : currentTask.type === "quiz"
-                      ? "Answer the question"
-                      : "Study the position, then recall from memory"}
-              </p>
-              <span className="ml-auto text-xs text-slate-600">
-                {currentIdx + 1}/{tasks.length}
-              </span>
-            </div>
-
-            {/* Intro slide or active task */}
-            {taskPhase === "intro" ? (
-              <TaskIntroCard
-                intro={currentTask.intro}
-                onStart={() => {
-                  setTaskPhase("playing");
-                  setTaskKey((k) => k + 1);
-                }}
-              />
-            ) : (
-              <div key={taskKey}>
-                {currentTask.type === "puzzle" ? (
-                  <LichessPuzzleBoard
-                    puzzle={currentTask.puzzle}
-                    onComplete={handleTaskComplete}
-                  />
-                ) : currentTask.type === "blunder" ? (
-                  <BlunderBoard
-                    tactic={currentTask.tactic}
-                    onComplete={handleTaskComplete}
-                  />
-                ) : currentTask.type === "quiz" ? (
-                  <ChessQuiz
-                    question={currentTask.question}
-                    onComplete={handleTaskComplete}
-                  />
-                ) : (
-                  <PieceMemory
-                    position={currentTask.position}
-                    onComplete={handleTaskComplete}
-                  />
-                )}
-              </div>
-            )}
-
-            {/* Next / Complete button — shown after task finishes */}
+          {/* Bottom group: result, SRS status, notice */}
+          <div className="mt-auto flex flex-col gap-3">
             {lastResult !== null && taskPhase === "playing" && (
-              <div className="mt-5 flex flex-col items-center gap-2">
+              <div
+                key={`res-${currentIdx}-${lastResult}`}
+                className="animate-[fade-in-up_0.25s_ease-out] flex flex-col gap-3"
+              >
                 <div
-                  className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium ${
+                  className={`flex items-center gap-2.5 rounded-xl border px-4 py-3 text-sm font-semibold ${
                     lastResult === "correct"
-                      ? "border-emerald-500/20 bg-emerald-500/[0.06] text-emerald-400"
-                      : "border-red-500/20 bg-red-500/[0.06] text-red-400"
+                      ? "border-emerald-500/25 bg-emerald-500/[0.07] text-emerald-400"
+                      : "border-red-500/25 bg-red-500/[0.07] text-red-400"
                   }`}
                 >
-                  {lastResult === "correct" ? "✓ Correct" : "✗ Missed it"}
+                  <span className="text-base">
+                    {lastResult === "correct" ? "✓" : "✗"}
+                  </span>
+                  {lastResult === "correct"
+                    ? "Correct — nice work"
+                    : "Missed it — the best move is shown"}
                 </div>
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="flex items-center gap-2 rounded-xl bg-amber-500 px-6 py-3 text-sm font-bold text-black transition-colors hover:bg-amber-400"
+                  className="w-full rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-6 py-3.5 text-sm font-bold text-[#070608] shadow-[0_0_24px_rgba(255,90,31,0.2)] transition-transform hover:scale-[1.01] active:scale-[0.99]"
                 >
-                  {isLastTask ? "Complete session ✓" : "Next exercise →"}
+                  {isLastTask ? "Finish session ✓" : "Next exercise →"}
                 </button>
+                <p className="text-center text-[11px] text-[#565061]">
+                  Press Enter or → for the next exercise
+                </p>
+              </div>
+            )}
+
+            {/* SRS status */}
+            {srsStats && srsStats.totalCards > 0 && (
+              <div className="flex items-center gap-2 text-[11px] text-[#565061]">
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-semibold ${
+                    srsStats.dueToday > 0
+                      ? "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.07] text-[#ff8c42]"
+                      : "border-emerald-500/25 bg-emerald-500/[0.07] text-emerald-400"
+                  }`}
+                >
+                  {srsStats.dueToday > 0 ? "🔁" : "✅"}
+                  {srsStats.dueToday > 0
+                    ? `${srsStats.dueToday} blunder${srsStats.dueToday !== 1 ? "s" : ""} due for review`
+                    : "All blunders reviewed"}
+                </span>
+              </div>
+            )}
+
+            {/* No tactics scan notice */}
+            {!hasTacticsScan && (
+              <div className="flex items-start gap-2.5 rounded-xl border border-[#ff5a1f]/15 bg-[#ff5a1f]/[0.04] px-3 py-2.5">
+                <span className="mt-0.5 shrink-0 text-sm">💡</span>
+                <p className="text-xs leading-relaxed text-[#8d8696]">
+                  Today's session is{" "}
+                  <span className="text-[#f0edf2]">puzzles only</span> — blunder
+                  drills activate after a{" "}
+                  <Link
+                    href="/analyze"
+                    className="text-[#ff8c42] underline-offset-2 hover:underline"
+                  >
+                    tactics scan
+                  </Link>
+                  .
+                </p>
               </div>
             )}
           </div>
-        )}
-
-        {/* Back link */}
-        <div className="mt-6 text-center">
-          <Link
-            href="/dashboard"
-            className="text-xs text-slate-600 hover:text-slate-400"
-          >
-            ← Back to dashboard
-          </Link>
-        </div>
+        </aside>
       </div>
     </main>
   );

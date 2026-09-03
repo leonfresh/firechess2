@@ -798,7 +798,7 @@ export function ChessQuiz({ question, onComplete }: Props) {
   const badge = CATEGORY_BADGE[question.category];
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto w-full max-w-2xl space-y-4">
       {/* Category badge */}
       <span
         className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${badge.color}`}
