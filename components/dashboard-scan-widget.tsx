@@ -156,7 +156,7 @@ export function DashboardScanWidget() {
   return (
     <form onSubmit={handleScan} className="glass-card space-y-4 p-5">
       <div className="flex items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-lg">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#ff5a1f]/[0.12] text-lg">
           🔬
         </span>
         <div>
@@ -177,7 +177,7 @@ export function DashboardScanWidget() {
               onClick={() => setSource(s)}
               className={`rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition-all ${
                 source === s
-                  ? "bg-gradient-to-r from-amber-200 to-orange-300 text-slate-950"
+                  ? "bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] text-[#070608]"
                   : "text-[#8d8696] hover:text-white"
               }`}
             >
@@ -247,7 +247,7 @@ export function DashboardScanWidget() {
                   }}
                   className={`rounded-md text-[10px] font-semibold transition-all ${
                     speed.includes(tc)
-                      ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950"
+                      ? "bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] text-[#070608]"
                       : "text-[#8d8696] hover:bg-[#ff5a1f]/[0.05]"
                   }`}
                 >
@@ -268,7 +268,7 @@ export function DashboardScanWidget() {
                 onClick={() => setGameRangeMode("count")}
                 className={`rounded px-2 text-[10px] font-semibold transition-all ${
                   gameRangeMode === "count"
-                    ? "bg-emerald-500/80 text-slate-950"
+                    ? "bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] text-[#070608]"
                     : "text-[#565061]"
                 }`}
               >
@@ -279,7 +279,7 @@ export function DashboardScanWidget() {
                 onClick={() => setGameRangeMode("since")}
                 className={`rounded px-2 text-[10px] font-semibold transition-all ${
                   gameRangeMode === "since"
-                    ? "bg-emerald-500/80 text-slate-950"
+                    ? "bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] text-[#070608]"
                     : "text-[#565061]"
                 }`}
               >
@@ -351,7 +351,7 @@ export function DashboardScanWidget() {
           </div>
 
           {gameRangeMode === "since" && sinceDate && !hasProAccess && (
-            <p className="text-xs font-medium text-amber-400">
+            <p className="text-xs font-medium text-[#ff8c42]">
               Requires <a href="/pricing" className="underline">Pro</a>
             </p>
           )}

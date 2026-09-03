@@ -368,9 +368,9 @@ export default function DashboardPage() {
     <div className="relative min-h-screen">
       {/* Background orbs */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="animate-float absolute -left-32 top-20 h-96 w-96 rounded-full bg-emerald-500/[0.07] blur-[100px]" />
-        <div className="animate-float-delayed absolute -right-32 top-40 h-80 w-80 rounded-full bg-cyan-500/[0.06] blur-[100px]" />
-        <div className="animate-float absolute bottom-20 left-1/3 h-72 w-72 rounded-full bg-fuchsia-500/[0.05] blur-[100px]" />
+        <div className="absolute -left-32 top-20 h-96 w-96 rounded-full bg-[#ff5a1f]/[0.06] blur-[100px]" />
+        <div className="absolute -right-32 top-40 h-80 w-80 rounded-full bg-[#ff8c42]/[0.05] blur-[100px]" />
+        <div className="absolute bottom-20 left-1/3 h-72 w-72 rounded-full bg-[#ff5a1f]/[0.04] blur-[100px]" />
       </div>
 
       <div className="relative z-10 px-6 py-8 md:px-10">
@@ -385,17 +385,27 @@ export default function DashboardPage() {
             ) : (
               <>
                 <div>
-                  <h1 className="text-2xl font-bold tracking-tight text-white md:text-3xl">
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className="h-3.5 w-1 rounded-full bg-gradient-to-b from-[#ff5a1f] to-[#ff8c42] shadow-[0_0_12px_rgba(255,90,31,0.35)]" />
+                    <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#ff8c42]">
+                      Command Center
+                    </span>
+                  </div>
+                  <h1 className="text-2xl font-bold tracking-tight text-[#f0edf2] md:text-3xl">
                     Hello, {user?.name?.split(" ")[0] ?? "Player"}
                   </h1>
-                  <p className="mt-0.5 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-[#8d8696]">
                     What do you want to work on today?
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   {(plan === "pro" || plan === "lifetime") && (
                     <span
-                      className={`text-xs ${plan === "lifetime" ? "tag-amber" : "tag-emerald"}`}
+                      className={`rounded-full border px-3 py-1 text-[10px] font-bold tracking-wide ${
+                        plan === "lifetime"
+                          ? "border-[#ff8c42]/30 bg-[#ff8c42]/[0.1] text-[#ff8c42]"
+                          : "border-[#1e1a24] bg-[#121015]/60 text-[#8d8696]"
+                      }`}
                     >
                       {plan === "lifetime" ? "LIFETIME" : "PRO"}
                     </span>
@@ -408,7 +418,7 @@ export default function DashboardPage() {
                     </span>
                   )}
                   {coinBalance > 0 && (
-                    <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-bold text-amber-400">
+                    <span className="flex items-center gap-1.5 rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-3 py-1 text-[11px] font-bold text-[#ff8c42]">
                       <span>🪙</span> {coinBalance.toLocaleString()}
                     </span>
                   )}
@@ -431,7 +441,7 @@ export default function DashboardPage() {
                 </p>
                 <Link
                   href="/auth/signin"
-                  className="btn-primary mx-auto mt-4 inline-block"
+                  className="mx-auto mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-8 py-3 text-sm font-bold text-[#070608] shadow-[0_0_24px_rgba(255,90,31,0.25)] transition-transform hover:scale-[1.02]"
                 >
                   Sign In
                 </Link>
@@ -447,12 +457,12 @@ export default function DashboardPage() {
                 <h2 className="text-xl font-bold text-white">No reports yet</h2>
                 <p className="text-sm text-white/50">
                   Run your first analysis on the{" "}
-                  <Link href="/?scan=1" className="text-emerald-400 hover:underline">
+                  <Link href="/?scan=1" className="text-[#ff8c42] hover:underline">
                     scanner page
                   </Link>{" "}
                   and your report will appear here automatically.
                 </p>
-                <Link href="/?scan=1" className="btn-primary mx-auto mt-4 inline-block">
+                <Link href="/?scan=1" className="mx-auto mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-8 py-3 text-sm font-bold text-[#070608] shadow-[0_0_24px_rgba(255,90,31,0.25)] transition-transform hover:scale-[1.02]">
                   Go to Scanner
                 </Link>
               </div>
@@ -521,30 +531,30 @@ export default function DashboardPage() {
               <div className="animate-fade-in-up grid gap-4 sm:grid-cols-2" style={{ animationDelay: "0.13s" }}>
                 <Link
                   href="/daily"
-                  className="group rounded-xl border border-amber-500/15 bg-gradient-to-r from-amber-500/[0.06] to-orange-500/[0.03] p-4 transition-all hover:border-amber-500/25 hover:shadow-lg"
+                  className="group rounded-xl border border-[#1e1a24] bg-[#121015]/60 p-4 backdrop-blur transition-all hover:-translate-y-0.5 hover:border-[#ff5a1f]/40 hover:shadow-[0_0_30px_rgba(255,90,31,0.08)]"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-lg">📅</div>
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-b from-[#ff5a1f]/[0.16] to-transparent text-lg ring-1 ring-[#ff5a1f]/25">📅</div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-bold text-white group-hover:text-amber-300">Daily Training</h3>
-                      <p className="mt-0.5 text-[11px] text-slate-500">8 personalized exercises</p>
+                      <h3 className="text-sm font-bold text-[#f0edf2] group-hover:text-[#ff8c42]">Daily Training</h3>
+                      <p className="mt-0.5 text-[11px] text-[#565061]">8 personalized exercises</p>
                     </div>
-                    <svg className="h-4 w-4 shrink-0 text-slate-600 transition-all group-hover:translate-x-0.5 group-hover:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="h-4 w-4 shrink-0 text-[#565061] transition-all group-hover:translate-x-0.5 group-hover:text-[#ff8c42]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
                 </Link>
                 <Link
                   href="/train"
-                  className="group rounded-xl border border-fuchsia-500/15 bg-gradient-to-r from-fuchsia-500/[0.06] to-cyan-500/[0.03] p-4 transition-all hover:border-fuchsia-500/25 hover:shadow-lg"
+                  className="group rounded-xl border border-[#1e1a24] bg-[#121015]/60 p-4 backdrop-blur transition-all hover:-translate-y-0.5 hover:border-[#ff5a1f]/40 hover:shadow-[0_0_30px_rgba(255,90,31,0.08)]"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-fuchsia-500/15 text-lg">🎯</div>
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-b from-[#ff5a1f]/[0.16] to-transparent text-lg ring-1 ring-[#ff5a1f]/25">🎯</div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-bold text-white group-hover:text-fuchsia-300">Training Center</h3>
-                      <p className="mt-0.5 text-[11px] text-slate-500">Puzzles, drills & more</p>
+                      <h3 className="text-sm font-bold text-[#f0edf2] group-hover:text-[#ff8c42]">Training Center</h3>
+                      <p className="mt-0.5 text-[11px] text-[#565061]">Puzzles, drills & more</p>
                     </div>
-                    <svg className="h-4 w-4 shrink-0 text-slate-600 transition-all group-hover:translate-x-0.5 group-hover:text-fuchsia-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="h-4 w-4 shrink-0 text-[#565061] transition-all group-hover:translate-x-0.5 group-hover:text-[#ff8c42]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
@@ -575,7 +585,13 @@ export default function DashboardPage() {
                 className="glass-card animate-fade-in-up space-y-4 p-5"
                 style={{ animationDelay: "0.3s" }}
               >
-                <h2 className="text-sm font-semibold text-white">Progress Over Time</h2>
+                <h2 className="mb-1 text-sm font-semibold text-[#f0edf2]">Progress Over Time</h2>
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="h-3.5 w-1 rounded-full bg-gradient-to-b from-[#ff5a1f] to-[#ff8c42] shadow-[0_0_12px_rgba(255,90,31,0.35)]" />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#ff8c42]">
+                    Trend
+                  </span>
+                </div>
                 {progressData.length < 2 ? (
                   <div className="flex h-48 items-center justify-center">
                     <p className="text-xs text-white/40">Run at least 2 analyses to see your progress chart.</p>
@@ -584,7 +600,7 @@ export default function DashboardPage() {
                   <>
                     <div>
                       <div className="mb-2 flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                        <span className="h-2 w-2 rounded-full bg-[#ff8c42]" />
                         <span className="text-[11px] font-medium text-white/50">Accuracy</span>
                         {latestNonTimeMgmt && previousNonTimeMgmt && (
                           <DeltaBadge value={delta(latestNonTimeMgmt.estimatedAccuracy, previousNonTimeMgmt.estimatedAccuracy)} />
@@ -594,8 +610,8 @@ export default function DashboardPage() {
                         <AreaChart data={progressData}>
                           <defs>
                             <linearGradient id="gradAccuracy" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="rgb(16,185,129)" stopOpacity={0.3} />
-                              <stop offset="100%" stopColor="rgb(16,185,129)" stopOpacity={0} />
+                              <stop offset="0%" stopColor="rgb(255,90,31)" stopOpacity={0.3} />
+                              <stop offset="100%" stopColor="rgb(255,90,31)" stopOpacity={0} />
                             </linearGradient>
                           </defs>
                           <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
@@ -605,15 +621,15 @@ export default function DashboardPage() {
                           />
                           <YAxis domain={[0, 100]} tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 9 }} axisLine={false} tickLine={false} width={25} />
                           <Tooltip labelFormatter={(label) => new Date(Number(label)).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                            contentStyle={{ background: "rgba(15,23,42,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", fontSize: "11px" }}
+                            contentStyle={{ background: "rgba(11,10,16,0.95)", border: "1px solid rgba(30,26,36,1)", borderRadius: "8px", color: "#f0edf2", fontSize: "11px" }}
                           />
-                          <Area type="monotone" dataKey="accuracy" stroke="rgb(16,185,129)" fill="url(#gradAccuracy)" strokeWidth={2} dot={{ r: 3, fill: "rgb(52,211,153)" }} animationDuration={800} />
+                          <Area type="monotone" dataKey="accuracy" stroke="rgb(255,90,31)" fill="url(#gradAccuracy)" strokeWidth={2} dot={{ r: 3, fill: "rgb(255,140,66)" }} animationDuration={800} />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
                     <div>
                       <div className="mb-2 flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-cyan-400" />
+                        <span className="h-2 w-2 rounded-full bg-[#8d8696]" />
                         <span className="text-[11px] font-medium text-white/50">Avg CP Loss</span>
                         {latestNonTimeMgmt && previousNonTimeMgmt && (
                           <DeltaBadge value={delta(latestNonTimeMgmt.weightedCpLoss, previousNonTimeMgmt.weightedCpLoss)} invert />
@@ -623,8 +639,8 @@ export default function DashboardPage() {
                         <AreaChart data={progressData}>
                           <defs>
                             <linearGradient id="gradCp" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="rgb(6,182,212)" stopOpacity={0.3} />
-                              <stop offset="100%" stopColor="rgb(6,182,212)" stopOpacity={0} />
+                              <stop offset="0%" stopColor="rgb(141,134,150)" stopOpacity={0.28} />
+                              <stop offset="100%" stopColor="rgb(141,134,150)" stopOpacity={0} />
                             </linearGradient>
                           </defs>
                           <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
@@ -634,9 +650,9 @@ export default function DashboardPage() {
                           />
                           <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 9 }} axisLine={false} tickLine={false} width={25} />
                           <Tooltip labelFormatter={(label) => new Date(Number(label)).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                            contentStyle={{ background: "rgba(15,23,42,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", fontSize: "11px" }}
+                            contentStyle={{ background: "rgba(11,10,16,0.95)", border: "1px solid rgba(30,26,36,1)", borderRadius: "8px", color: "#f0edf2", fontSize: "11px" }}
                           />
-                          <Area type="monotone" dataKey="cpLoss" stroke="rgb(6,182,212)" fill="url(#gradCp)" strokeWidth={2} dot={{ r: 3, fill: "rgb(34,211,238)" }} animationDuration={800} />
+                          <Area type="monotone" dataKey="cpLoss" stroke="rgb(141,134,150)" fill="url(#gradCp)" strokeWidth={2} dot={{ r: 3, fill: "rgb(168,162,179)" }} animationDuration={800} />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
@@ -650,7 +666,10 @@ export default function DashboardPage() {
                 className="animate-fade-in-up space-y-4"
                 style={{ animationDelay: "0.5s" }}
               >
-                <h2 className="text-sm font-semibold text-white">Report History</h2>
+              <div className="flex items-center gap-2.5">
+                <span className="h-3.5 w-1 rounded-full bg-gradient-to-b from-[#ff5a1f] to-[#ff8c42] shadow-[0_0_12px_rgba(255,90,31,0.35)]" />
+                <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-[#f0edf2]">Report History</h2>
+              </div>
                 {loading ? (
                   <div className="space-y-2">
                     {[1, 2, 3].map((i) => (
@@ -693,13 +712,13 @@ export default function DashboardPage() {
               <div className="animate-fade-in-up space-y-3" style={{ animationDelay: "0.02s" }}>
                 {userOptions.length > 1 ? (
                   <div className="relative">
-                    <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#565061]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
                     </svg>
                     <select
                       value={selectedUser}
                       onChange={(e) => setSelectedUser(e.target.value)}
-                      className="w-full appearance-none rounded-xl border border-white/[0.08] bg-white/[0.04] py-2.5 pl-10 pr-4 text-sm text-white/80 transition-colors hover:border-white/20 focus:border-emerald-500/50 focus:outline-none"
+                      className="w-full appearance-none rounded-xl border border-[#1e1a24] bg-[#121015]/60 py-2.5 pl-10 pr-4 text-sm text-[#f0edf2] backdrop-blur transition-colors hover:border-[#ff5a1f]/30 focus:border-[#ff8c42]/60 focus:outline-none"
                     >
                       <option value="__all__" className="bg-[#08070b]">All players</option>
                       {userOptions.map((u) => (
@@ -709,11 +728,11 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="relative">
-                    <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#565061]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
                     </svg>
                     <input readOnly value={selectedUser !== "__all__" ? selectedUser.split("__")[0] : "Your games"}
-                      className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] py-2.5 pl-10 pr-4 text-sm text-white/60 outline-none"
+                      className="w-full rounded-xl border border-[#1e1a24] bg-[#121015]/60 py-2.5 pl-10 pr-4 text-sm text-[#8d8696] outline-none"
                     />
                   </div>
                 )}
@@ -722,7 +741,7 @@ export default function DashboardPage() {
                 {loading ? (
                   <div className="grid grid-cols-4 gap-2">
                     {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="animate-pulse rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5">
+                      <div key={i} className="animate-pulse rounded-xl border border-[#1e1a24] bg-[#121015]/50 p-2.5">
                         <div className="h-5 w-8 rounded bg-white/[0.06]" />
                         <div className="mt-1 h-2 w-10 rounded bg-white/[0.04]" />
                       </div>
@@ -730,33 +749,33 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-4 gap-2">
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5">
+                    <div className="rounded-xl border border-[#1e1a24] bg-[#121015]/50 p-2.5">
                       <div className="flex items-center gap-1.5">
                         <span className="text-base">📊</span>
                         <div className="text-base font-bold text-white">{filtered.length}</div>
                       </div>
-                      <div className="text-[9px] text-slate-500 leading-tight">Reports</div>
+                      <div className="text-[9px] text-[#565061] leading-tight">Reports</div>
                     </div>
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5">
+                    <div className="rounded-xl border border-[#1e1a24] bg-[#121015]/50 p-2.5">
                       <div className="flex items-center gap-1.5">
                         <span className="text-base">♟️</span>
                         <div className="text-base font-bold text-white">{totalGames.toLocaleString()}</div>
                       </div>
-                      <div className="text-[9px] text-slate-500 leading-tight">Games</div>
+                      <div className="text-[9px] text-[#565061] leading-tight">Games</div>
                     </div>
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5">
+                    <div className="rounded-xl border border-[#1e1a24] bg-[#121015]/50 p-2.5">
                       <div className="flex items-center gap-1.5">
                         <span className="text-base">💣</span>
                         <div className="text-base font-bold text-white">{totalLeaks.toLocaleString()}</div>
                       </div>
-                      <div className="text-[9px] text-slate-500 leading-tight">Leaks</div>
+                      <div className="text-[9px] text-[#565061] leading-tight">Leaks</div>
                     </div>
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5">
+                    <div className="rounded-xl border border-[#1e1a24] bg-[#121015]/50 p-2.5">
                       <div className="flex items-center gap-1.5">
                         <span className="text-base">🧩</span>
                         <div className="text-base font-bold text-white">{totalTactics.toLocaleString()}</div>
                       </div>
-                      <div className="text-[9px] text-slate-500 leading-tight">Tactics</div>
+                      <div className="text-[9px] text-[#565061] leading-tight">Tactics</div>
                     </div>
                   </div>
                 )}
@@ -821,14 +840,14 @@ export default function DashboardPage() {
 
               {/* Rescan reminder (compact) */}
               {daysSinceLastScan != null && daysSinceLastScan >= 3 && (
-                <div className="animate-fade-in-up rounded-xl border border-amber-500/15 bg-amber-500/[0.04] p-3" style={{ animationDelay: "0.16s" }}>
+                <div className="animate-fade-in-up rounded-xl border border-[#ff5a1f]/20 bg-[#ff5a1f]/[0.05] p-3" style={{ animationDelay: "0.16s" }}>
                   <div className="flex items-center gap-2">
                     <span className="text-lg">⏰</span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-white">New scan ready</p>
-                      <p className="text-[10px] text-slate-500">{daysSinceLastScan} day{daysSinceLastScan !== 1 ? "s" : ""} ago</p>
+                      <p className="text-xs font-bold text-[#f0edf2]">New scan ready</p>
+                      <p className="text-[10px] text-[#565061]">{daysSinceLastScan} day{daysSinceLastScan !== 1 ? "s" : ""} ago</p>
                     </div>
-                    <Link href="/?scan=1" className="shrink-0 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 px-3 py-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/15 transition-all hover:brightness-110">Scan</Link>
+                    <Link href="/?scan=1" className="shrink-0 rounded-lg bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-3 py-1.5 text-[10px] font-bold text-[#070608] shadow-[0_0_18px_rgba(255,90,31,0.25)] transition-all hover:brightness-110">Scan</Link>
                   </div>
                 </div>
               )}
@@ -904,7 +923,7 @@ function CompactMetric({
   const diff = current != null && prev != null ? current - prev : null;
   const isGood = diff != null ? (invert ? diff < 0 : diff > 0) : false;
   return (
-    <div className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-2.5">
+    <div className="rounded-lg border border-[#1e1a24] bg-[#121015]/50 p-2.5">
       <div className="text-[10px] text-white/40">{label}</div>
       <div className="mt-0.5 flex items-baseline gap-1.5">
         <span className="text-sm font-bold text-white">
@@ -953,9 +972,9 @@ function ReportRow({
     avg >= 75
       ? "text-emerald-400"
       : avg >= 50
-        ? "text-cyan-400"
+        ? "text-[#ff8c42]"
         : avg >= 30
-          ? "text-amber-400"
+          ? "text-[#ff8c42]/70"
           : "text-red-400";
 
   const sourceIcon = r.source === "lichess" ? "♞" : "♚";
@@ -971,15 +990,7 @@ function ReportRow({
             : "Full Scan";
 
   const modeTagColor =
-    r.scanMode === "openings"
-      ? "bg-cyan-500/10 text-cyan-400"
-      : r.scanMode === "tactics"
-        ? "bg-amber-500/10 text-amber-400"
-        : r.scanMode === "endgames"
-          ? "bg-sky-500/10 text-sky-400"
-          : r.scanMode === "time-management"
-            ? "bg-violet-500/10 text-violet-400"
-            : "bg-white/5 text-white/40";
+    "rounded-full border border-[#ff5a1f]/20 bg-[#ff5a1f]/[0.08] text-[#ff8c42]";
 
   const rowContent = (
     <>
@@ -1038,7 +1049,7 @@ function ReportRow({
 
       {reportHref ? (
         <svg
-          className="h-4 w-4 flex-shrink-0 text-cyan-300/70"
+          className="h-4 w-4 flex-shrink-0 text-[#ff8c42]/80"
           viewBox="0 0 20 20"
           fill="none"
           stroke="currentColor"
@@ -1103,14 +1114,14 @@ function ReportRow({
         <div className="border-t border-white/5 p-6 space-y-6">
           {/* Time Management Report */}
           {r.scanMode === "time-management" && r.timeManagement && (
-            <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] p-6">
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.08] via-purple-500/[0.05] to-cyan-500/[0.08]" />
+            <div className="relative overflow-hidden rounded-2xl border border-[#1e1a24] p-6">
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#ff5a1f]/[0.07] via-transparent to-[#ff8c42]/[0.04]" />
               <div className="relative space-y-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h3 className="text-lg font-bold text-white">
+                  <h3 className="text-lg font-bold text-[#f0edf2]">
                     ⏱️ Time Management Report
                   </h3>
-                  <span className="rounded-full bg-violet-500/10 px-2.5 py-0.5 text-[10px] font-bold text-violet-400">
+                  <span className="rounded-full border border-[#ff5a1f]/20 bg-[#ff5a1f]/[0.08] px-2.5 py-0.5 text-[10px] font-bold text-[#ff8c42]">
                     Time Mgmt
                   </span>
                 </div>
@@ -1118,25 +1129,25 @@ function ReportRow({
                 {/* Score + overview stats */}
                 <div className="grid gap-3 sm:grid-cols-5">
                   <div className="stat-card py-3">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">
                       Score
                     </p>
                     <p
-                      className={`mt-0.5 text-2xl font-bold ${r.timeManagement.score >= 70 ? "text-emerald-400" : r.timeManagement.score >= 45 ? "text-amber-400" : "text-red-400"}`}
+                      className={`mt-0.5 text-2xl font-bold ${r.timeManagement.score >= 70 ? "text-emerald-400" : r.timeManagement.score >= 45 ? "text-[#ff8c42]" : "text-red-400"}`}
                     >
                       {r.timeManagement.score}/100
                     </p>
                   </div>
                   <div className="stat-card py-3">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">
                       Avg / Move
                     </p>
-                    <p className="mt-0.5 text-2xl font-bold text-slate-200">
+                    <p className="mt-0.5 text-2xl font-bold text-[#f0edf2]">
                       {r.timeManagement.avgTimePerMove.toFixed(1)}s
                     </p>
                   </div>
                   <div className="stat-card py-3">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">
                       Justified Thinks
                     </p>
                     <p className="mt-0.5 text-2xl font-bold text-emerald-400">
@@ -1144,7 +1155,7 @@ function ReportRow({
                     </p>
                   </div>
                   <div className="stat-card py-3">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">
                       Time Wasted
                     </p>
                     <p className="mt-0.5 text-2xl font-bold text-red-400">
@@ -1152,10 +1163,10 @@ function ReportRow({
                     </p>
                   </div>
                   <div className="stat-card py-3">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-[#565061]">
                       Rushed
                     </p>
-                    <p className="mt-0.5 text-2xl font-bold text-amber-400">
+                    <p className="mt-0.5 text-2xl font-bold text-[#ff8c42]">
                       {r.timeManagement.rushedMoves}
                     </p>
                   </div>
@@ -1202,25 +1213,25 @@ function ReportRow({
 
           {/* Standard Report Card (non-time-management) */}
           {r.scanMode !== "time-management" && r.estimatedAccuracy != null && (
-            <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] p-6">
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-fuchsia-500/[0.08] via-emerald-500/[0.05] to-cyan-500/[0.08]" />
+            <div className="relative overflow-hidden rounded-2xl border border-[#1e1a24] p-6">
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#ff5a1f]/[0.07] via-transparent to-[#ff8c42]/[0.04]" />
               <div className="relative">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h3 className="text-lg font-bold text-white">
+                  <h3 className="text-lg font-bold text-[#f0edf2]">
                     Analysis Report
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {r.reportMeta?.vibeTitle && (
-                      <span className="tag-fuchsia">
+                      <span className="rounded-full border border-[#ff5a1f]/20 bg-[#ff5a1f]/[0.08] px-2.5 py-0.5 text-[10px] font-bold text-[#ff8c42]">
                         {r.reportMeta.vibeTitle}
                       </span>
                     )}
-                    <span className="tag-emerald">Stockfish 18</span>
+                    <span className="rounded-full border border-[#1e1a24] bg-[#121015]/60 px-2.5 py-0.5 text-[10px] font-bold text-[#8d8696]">Stockfish 18</span>
                   </div>
                 </div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-4">
                   <div className="stat-card">
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                       Accuracy
                     </p>
                     <p className="mt-1 text-2xl font-bold text-emerald-400">
@@ -1228,7 +1239,7 @@ function ReportRow({
                     </p>
                   </div>
                   <div className="stat-card">
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                       Est. Rating
                     </p>
                     <p className="mt-1 text-2xl font-bold text-emerald-400">
@@ -1236,7 +1247,7 @@ function ReportRow({
                     </p>
                   </div>
                   <div className="stat-card">
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                       Avg Eval Loss
                     </p>
                     <p className="mt-1 text-2xl font-bold text-emerald-400">
@@ -1244,7 +1255,7 @@ function ReportRow({
                     </p>
                   </div>
                   <div className="stat-card">
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                       Leak Rate
                     </p>
                     <p className="mt-1 text-2xl font-bold text-red-400">
@@ -1255,34 +1266,34 @@ function ReportRow({
                 {r.reportMeta && (
                   <div className="mt-3 grid gap-3 sm:grid-cols-4">
                     <div className="stat-card">
-                      <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                         Consistency
                       </p>
-                      <p className="mt-1 text-2xl font-bold text-cyan-400">
+                      <p className="mt-1 text-2xl font-bold text-[#ff8c42]">
                         {r.reportMeta.consistencyScore ?? "—"}/100
                       </p>
                     </div>
                     <div className="stat-card">
-                      <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                         Peak Throw
                       </p>
-                      <p className="mt-1 text-2xl font-bold text-cyan-400">
+                      <p className="mt-1 text-2xl font-bold text-[#ff8c42]">
                         {((r.reportMeta.p75CpLoss ?? 0) / 100).toFixed(2)}
                       </p>
                     </div>
                     <div className="stat-card">
-                      <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                         Confidence
                       </p>
-                      <p className="mt-1 text-2xl font-bold text-cyan-400">
+                      <p className="mt-1 text-2xl font-bold text-[#ff8c42]">
                         {r.reportMeta.confidence ?? "—"}%
                       </p>
                     </div>
                     <div className="stat-card">
-                      <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-[#565061]">
                         Main Pattern
                       </p>
-                      <p className="mt-1 text-sm font-bold text-fuchsia-400">
+                      <p className="mt-1 text-sm font-bold text-[#ff8c42]">
                         {r.reportMeta.topTag ?? "—"}
                       </p>
                     </div>
@@ -1408,7 +1419,7 @@ function ReportRow({
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2">
+    <div className="rounded-lg border border-[#1e1a24] bg-[#121015]/50 px-3 py-2">
       <div className="text-[10px] text-white/30">{label}</div>
       <div className="text-sm font-semibold text-white">{value}</div>
     </div>

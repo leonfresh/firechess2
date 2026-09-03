@@ -281,7 +281,7 @@ export function DailyChallenge({ allTactics }: DailyChallengeProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-xl">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#ff5a1f]/[0.2] to-[#ff8c42]/[0.1] text-xl">
             🧩
           </span>
           <div>
@@ -292,9 +292,9 @@ export function DailyChallenge({ allTactics }: DailyChallengeProps) {
           </div>
         </div>
         {streak > 0 && (
-          <div className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1">
-            <span className="text-sm">🔥</span>
-            <span className="text-xs font-bold text-amber-400">{streak}</span>
+          <div className="flex items-center gap-1.5 rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-3 py-1">
+            <span>🔥</span>
+            <span className="text-xs font-bold text-[#ff8c42]">{streak}</span>
           </div>
         )}
       </div>

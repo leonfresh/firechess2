@@ -64,17 +64,17 @@ export function GoalWidget({
   // No goal set — show CTA
   if (!goal && !editing) {
     return (
-      <div className="relative overflow-hidden rounded-2xl border border-cyan-500/15 p-6">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-cyan-500/[0.04] via-transparent to-emerald-500/[0.04]" />
+      <div className="relative overflow-hidden rounded-2xl border border-[#ff5a1f]/20 p-6">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#ff5a1f]/[0.06] via-transparent to-[#ff8c42]/[0.04]" />
         <div className="relative flex flex-col items-center text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/15 text-2xl">🎯</span>
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#ff5a1f]/[0.14] text-2xl">🎯</span>
           <h3 className="mt-3 text-base font-bold text-white">Set a Goal</h3>
           <p className="mt-1 max-w-xs text-xs text-[#8d8696]">
             Set a target rating or accuracy and track your progress toward it.
           </p>
           <button
             onClick={() => setEditing(true)}
-            className="mt-4 rounded-xl bg-gradient-to-r from-cyan-600 to-emerald-600 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-cyan-500/15 transition-all hover:brightness-110"
+            className="mt-4 rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-5 py-2 text-xs font-bold text-[#070608] shadow-[0_0_18px_rgba(255,90,31,0.2)] transition-all hover:brightness-110"
           >
             Set Goal
           </button>
@@ -86,7 +86,7 @@ export function GoalWidget({
   // Editing mode
   if (editing) {
     return (
-      <div className="rounded-2xl border border-cyan-500/20 p-6">
+      <div className="rounded-2xl border border-[#ff5a1f]/20 p-6">
         <h3 className="text-base font-bold text-white">Set Your Goal</h3>
         <div className="mt-4 space-y-4">
           {/* Type picker */}
@@ -95,7 +95,7 @@ export function GoalWidget({
               onClick={() => { setGoalType("rating"); setGoalValue(""); }}
               className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition-all ${
                 goalType === "rating"
-                  ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
+                  ? "bg-[#ff5a1f]/20 text-[#ff8c42] border border-[#ff5a1f]/30"
                   : "bg-[#ff5a1f]/[0.04] text-white/40 border border-[#1e1a24] hover:text-white/60"
               }`}
             >
@@ -123,7 +123,7 @@ export function GoalWidget({
               value={goalValue}
               onChange={(e) => setGoalValue(e.target.value)}
               placeholder={goalType === "rating" ? "1500" : "80"}
-              className="mt-1 w-full rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-2 text-sm text-white placeholder-white/20 focus:border-cyan-500/50 focus:outline-none"
+              className="mt-1 w-full rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-2 text-sm text-white placeholder-white/20 focus:border-[#ff8c42]/60 focus:outline-none"
               min={goalType === "accuracy" ? 1 : 100}
               max={goalType === "accuracy" ? 100 : 3500}
             />
@@ -139,7 +139,7 @@ export function GoalWidget({
             <button
               onClick={saveGoal}
               disabled={!goalValue || isNaN(parseInt(goalValue))}
-              className="flex-1 rounded-lg bg-gradient-to-r from-cyan-600 to-emerald-600 px-4 py-2 text-xs font-bold text-white transition-all hover:brightness-110 disabled:opacity-40"
+              className="flex-1 rounded-lg bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-4 py-2 text-xs font-bold text-[#070608] transition-all hover:brightness-110 disabled:opacity-40"
             >
               Save Goal
             </button>
@@ -157,10 +157,10 @@ export function GoalWidget({
 
   // Active goal display
   const isRating = goal?.type === "rating";
-  const gradientFrom = achieved ? "from-emerald-500/[0.08]" : isRating ? "from-cyan-500/[0.06]" : "from-emerald-500/[0.06]";
-  const gradientTo = achieved ? "to-cyan-500/[0.08]" : "to-transparent";
-  const borderColor = achieved ? "border-emerald-500/25" : isRating ? "border-cyan-500/20" : "border-emerald-500/20";
-  const barColor = achieved ? "bg-gradient-to-r from-emerald-400 to-cyan-400" : isRating ? "bg-cyan-500" : "bg-emerald-500";
+  const gradientFrom = achieved ? "from-[#ff8c42]/[0.1]" : isRating ? "from-[#ff5a1f]/[0.06]" : "from-[#ff8c42]/[0.08]";
+  const gradientTo = achieved ? "to-[#ff5a1f]/[0.06]" : "to-transparent";
+  const borderColor = achieved ? "border-[#ff8c42]/40" : isRating ? "border-[#ff5a1f]/25" : "border-[#ff8c42]/30";
+  const barColor = achieved ? "bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42]" : isRating ? "bg-[#ff8c42]" : "bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42]/70";
 
   return (
     <div className={`relative overflow-hidden rounded-2xl border ${borderColor} p-6`}>
@@ -225,7 +225,7 @@ export function GoalWidget({
         {achieved && (
           <button
             onClick={() => { setGoalType(goal!.type); setGoalValue(""); setEditing(true); }}
-            className="mt-3 text-xs font-semibold text-emerald-400 transition-colors hover:text-emerald-300"
+            className="mt-3 text-xs font-semibold text-[#ff8c42] transition-colors hover:text-[#ff8c42]/70"
           >
             Set a new goal →
           </button>

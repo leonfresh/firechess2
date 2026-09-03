@@ -48,7 +48,7 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string
   tactic: { bg: "bg-[#ff5a1f]/[0.08]", text: "text-[#ff8c42]", border: "border-[#ff5a1f]/25" },
   endgame: { bg: "bg-[#ff5a1f]/[0.08]", text: "text-[#ff8c42]", border: "border-[#ff5a1f]/25" },
   habit: { bg: "bg-[#ff5a1f]/[0.08]", text: "text-[#ff8c42]", border: "border-[#ff5a1f]/25" },
-  puzzle: { bg: "bg-orange-500/10", text: "text-orange-400", border: "border-orange-500/20" },
+  puzzle: { bg: "bg-[#ff5a1f]/[0.1]", text: "text-[#ff8c42]", border: "border-[#ff5a1f]/25" },
   review: { bg: "bg-[#ff5a1f]/[0.08]", text: "text-[#ff8c42]", border: "border-[#ff5a1f]/25" },
 };
 
@@ -57,10 +57,8 @@ function categoryLabel(cat: string) {
 }
 
 function progressColor(p: number) {
-  if (p >= 80) return "bg-emerald-500";
-  if (p >= 50) return "bg-[#ff5a1f]";
-  if (p >= 25) return "bg-[#ff5a1f]";
-  return "bg-slate-500";
+  if (p >= 25) return "bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42]";
+  return "bg-[#565061]";
 }
 
 function streakMessage(streak: number) {
@@ -169,10 +167,10 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
         <div className="pointer-events-none absolute -bottom-16 -left-16 h-36 w-36 rounded-full bg-[#ff5a1f]/[0.08] blur-[60px]" />
         <div className="relative flex flex-col items-center px-8 pb-8 pt-10 text-center">
           {/* Chess king illustration */}
-          <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ff5a1f] to-[#ff8c42] shadow-lg shadow-violet-500/10">
+          <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ff5a1f] to-[#ff8c42] shadow-lg shadow-[#ff5a1f]/10">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-[#ff8c42]">
-              <path d="M12 2 L13 6 L16 4 L14 8 L18 8 L15 11 L18 14 L14 14 L13 18 L11 18 L10 14 L6 14 L9 11 L6 8 L10 8 L8 4 L11 6 Z" className="fill-violet-300/10" />
-              <rect x="7" y="19" width="10" height="3" rx="0.5" className="fill-violet-400/20" />
+              <path d="M12 2 L13 6 L16 4 L14 8 L18 8 L15 11 L18 14 L14 14 L13 18 L11 18 L10 14 L6 14 L9 11 L6 8 L10 8 L8 4 L11 6 Z" className="fill-[#ff8c42]/10" />
+              <rect x="7" y="19" width="10" height="3" rx="0.5" className="fill-[#ff8c42]/20" />
             </svg>
           </div>
           <h3 className="text-xl font-extrabold text-white">Unlock Your Personal Study Plan</h3>
@@ -181,7 +179,7 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
           </p>
           <Link
             href="/"
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-500/20 transition-all hover:brightness-110"
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-5 py-2.5 text-sm font-bold text-[#070608] shadow-lg shadow-[#ff5a1f]/25 transition-all hover:brightness-110"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             Run a Scan
@@ -207,14 +205,14 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
         {/* Top row: illustration + title */}
         <div className="flex flex-col items-center text-center md:flex-row md:items-start md:gap-8 md:text-left">
           {/* Chess illustration (like Brilliant's balance scale) */}
-          <div className="mb-4 flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ff5a1f] to-[#ff8c42] shadow-lg shadow-violet-500/10 md:mb-0">
+          <div className="mb-4 flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ff5a1f] to-[#ff8c42] shadow-lg shadow-[#ff5a1f]/10 md:mb-0">
             <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-[#ff8c42]">
-              <rect x="4" y="2" width="16" height="3" rx="0.5" className="fill-violet-400/20" />
-              <circle cx="12" cy="10" r="5" className="fill-violet-300/10" />
-              <path d="M7 15 L17 15 L12 19 Z" className="fill-violet-300/15" />
+              <rect x="4" y="2" width="16" height="3" rx="0.5" className="fill-[#ff8c42]/20" />
+              <circle cx="12" cy="10" r="5" className="fill-[#ff8c42]/10" />
+              <path d="M7 15 L17 15 L12 19 Z" className="fill-[#ff8c42]/15" />
               <circle cx="12" cy="10" r="1.5" fill="currentColor" />
               <rect x="11" y="10" width="2" height="5" />
-              <rect x="8" y="19" width="8" height="3" rx="0.5" className="fill-violet-400/20" />
+              <rect x="8" y="19" width="8" height="3" rx="0.5" className="fill-[#ff8c42]/20" />
             </svg>
           </div>
 
@@ -252,7 +250,7 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <Link
                 href="/daily"
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-500/20 transition-all hover:brightness-110"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-5 py-2.5 text-sm font-bold text-[#070608] shadow-lg shadow-[#ff5a1f]/25 transition-all hover:brightness-110"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <polygon points="5 3 19 12 5 21 5 3" />
@@ -370,7 +368,7 @@ function TaskRow({
           disabled={toggling}
           className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-all ${
             task.completed
-              ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-400"
+              ? "border-[#ff5a1f]/40 bg-[#ff5a1f]/[0.12] text-[#ff8c42]"
               : "border-[#1e1a24] bg-[#ff5a1f]/[0.04] hover:border-[#1e1a24]"
           } ${toggling ? "animate-pulse" : ""}`}
         >

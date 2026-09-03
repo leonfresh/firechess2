@@ -20,12 +20,7 @@ export function DailyTipWidget() {
         <div className="flex items-center gap-2">
           <span className="text-lg">{meta.icon}</span>
           <h3 className="text-sm font-bold text-white">Daily Chess {meta.label}</h3>
-          <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-            tip.type === "quote" ? "border-blue-500/20 bg-blue-500/10 text-blue-400" :
-            tip.type === "tip" ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400" :
-            tip.type === "fact" ? "border-amber-500/20 bg-amber-500/10 text-amber-400" :
-            "border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-400"
-          }`}>
+          <span className="rounded-full border border-[#ff5a1f]/20 bg-[#ff5a1f]/[0.08] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#ff8c42]">
             {tip.type}
           </span>
         </div>

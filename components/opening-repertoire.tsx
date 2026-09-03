@@ -149,7 +149,7 @@ export function SaveToRepertoireButton({
       title={saved ? "Remove from repertoire" : "Save correct move to repertoire"}
       className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-medium transition-all ${
         saved
-          ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10"
+          ? "bg-[#ff5a1f]/[0.14] text-[#ff8c42] hover:bg-[#ff5a1f]/[0.08]"
           : "bg-[#ff5a1f]/[0.05] text-white/40 hover:bg-[#1e1a24] hover:text-white/60"
       }`}
     >
@@ -197,7 +197,7 @@ export function RepertoirePanel() {
     return (
       <div className="glass-card space-y-3 p-6">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500/20 to-violet-500/20 text-xl">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#ff5a1f]/[0.18] to-[#ff8c42]/[0.08] text-xl">
             📖
           </span>
           <div>
@@ -220,7 +220,7 @@ export function RepertoirePanel() {
     <div className="glass-card space-y-4 p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500/20 to-violet-500/20 text-xl">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#ff5a1f]/[0.18] to-[#ff8c42]/[0.08] text-xl">
             📖
           </span>
           <div>

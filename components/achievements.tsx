@@ -235,15 +235,17 @@ const ACHIEVEMENTS: AchievementDef[] = [
 /*  Colour map                                                          */
 /* ------------------------------------------------------------------ */
 
+/* Single ember accent — achievement rarity is conveyed by the tile itself
+   (locked tiles dim independently), not by color-coding the grid. */
 const COLOR_MAP: Record<string, { bg: string; border: string; text: string; glow: string }> = {
-  emerald: { bg: "bg-emerald-500/10", border: "border-emerald-500/25", text: "text-emerald-400", glow: "shadow-emerald-500/10" },
-  amber:   { bg: "bg-amber-500/10",   border: "border-amber-500/25",   text: "text-amber-400",   glow: "shadow-amber-500/10" },
-  cyan:    { bg: "bg-cyan-500/10",     border: "border-cyan-500/25",    text: "text-cyan-400",    glow: "shadow-cyan-500/10" },
-  fuchsia: { bg: "bg-fuchsia-500/10",  border: "border-fuchsia-500/25", text: "text-fuchsia-400", glow: "shadow-fuchsia-500/10" },
-  violet:  { bg: "bg-violet-500/10",   border: "border-violet-500/25",  text: "text-violet-400",  glow: "shadow-violet-500/10" },
-  orange:  { bg: "bg-orange-500/10",   border: "border-orange-500/25",  text: "text-orange-400",  glow: "shadow-orange-500/10" },
-  rose:    { bg: "bg-rose-500/10",     border: "border-rose-500/25",    text: "text-rose-400",    glow: "shadow-rose-500/10" },
-  sky:     { bg: "bg-sky-500/10",      border: "border-sky-500/25",     text: "text-sky-400",     glow: "shadow-sky-500/10" },
+  emerald: { bg: "bg-[#ff5a1f]/10", border: "border-[#ff5a1f]/25", text: "text-[#ff8c42]", glow: "shadow-[#ff5a1f]/10" },
+  amber:   { bg: "bg-[#ff5a1f]/10", border: "border-[#ff5a1f]/25", text: "text-[#ff8c42]", glow: "shadow-[#ff5a1f]/10" },
+  cyan:    { bg: "bg-[#ff5a1f]/10", border: "border-[#ff5a1f]/25", text: "text-[#ff8c42]", glow: "shadow-[#ff5a1f]/10" },
+  fuchsia: { bg: "bg-[#ff5a1f]/10", border: "border-[#ff5a1f]/25", text: "text-[#ff8c42]", glow: "shadow-[#ff5a1f]/10" },
+  violet:  { bg: "bg-[#ff5a1f]/10", border: "border-[#ff5a1f]/25", text: "text-[#ff8c42]", glow: "shadow-[#ff5a1f]/10" },
+  orange:  { bg: "bg-[#ff5a1f]/10", border: "border-[#ff5a1f]/25", text: "text-[#ff8c42]", glow: "shadow-[#ff5a1f]/10" },
+  rose:    { bg: "bg-[#ff5a1f]/10", border: "border-[#ff5a1f]/25", text: "text-[#ff8c42]", glow: "shadow-[#ff5a1f]/10" },
+  sky:     { bg: "bg-[#ff5a1f]/10", border: "border-[#ff5a1f]/25", text: "text-[#ff8c42]", glow: "shadow-[#ff5a1f]/10" },
 };
 
 /* ------------------------------------------------------------------ */
@@ -293,7 +295,7 @@ export function AchievementsPanel({ ctx }: { ctx: AchievementCtx }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold text-white">Achievements</h2>
-          <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+          <span className="rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.12] px-2 py-0.5 text-[10px] font-bold text-[#ff8c42]">
             {unlocked.length}/{ACHIEVEMENTS.length}
           </span>
         </div>
@@ -308,7 +310,7 @@ export function AchievementsPanel({ ctx }: { ctx: AchievementCtx }) {
       {/* Progress bar */}
       <div className="h-2 w-full overflow-hidden rounded-full bg-[#1e1a24]">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-700"
+          className="h-full rounded-full bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] transition-all duration-700"
           style={{ width: `${(unlocked.length / ACHIEVEMENTS.length) * 100}%` }}
         />
       </div>
