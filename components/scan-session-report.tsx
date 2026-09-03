@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowRight, ExternalLink } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { AnalysisBoardModal } from "@/components/analysis-board-modal";
 import { BrilliantMoveCard } from "@/components/brilliant-move-card";
@@ -33,6 +34,8 @@ import { OpeningRankings } from "@/components/opening-rankings";
 import { PositionPerformance } from "@/components/position-performance";
 import { OpeningIdeas } from "@/components/opening-ideas";
 import { OppositeCastlingCard } from "@/components/opposite-castling-card";
+import { BestGameReplay } from "@/components/best-game-replay";
+import { pickBestGame, type BestGame } from "@/lib/best-game";
 import { AiReportAnalysis } from "@/components/ai-report-analysis";
 import { CoachStickyNote } from "@/components/coach-sticky-note";
 import { useReportAnalysis } from "@/lib/use-report-analysis";
@@ -1919,6 +1922,22 @@ export function ScanSessionReport({
     ? timeMoments
     : timeMoments.slice(0, FREE_SCAN_SECTION_SAMPLE);
 
+  // Best-game highlight — shared picker used by the guided tour, this full
+  // report section, and the standalone /best-game replay page. Engine-free:
+  // replays stored SAN lists to find a win with a checkmate finish, ranked by
+  // engine findings (brilliants, missed tactics, endgame errors) per game.
+  const bestGame: BestGame | null = useMemo(() => {
+    if (!result?.games?.length || result.gamesAnalyzed === 0) return null;
+    return pickBestGame({
+      username: scan.chessUsername,
+      games: result.games,
+      brilliantMoves: result.brilliantMoves,
+      missedTactics: result.missedTactics,
+      endgameMistakes: result.endgameMistakes,
+    });
+  }, [result, scan.chessUsername]);
+  const showBestGame = !isProcessing && bestGame !== null;
+
   const leakReveal = useCompactSectionReveal(
     accessibleLeaks.length,
     `${scan.id}:leaks`,
@@ -2323,6 +2342,8 @@ export function ScanSessionReport({
             username={scan.chessUsername}
             radarProps={radarProps}
             brilliantMoves={accessibleBrilliants}
+            bestGame={bestGame}
+            bestGameHref={`/best-game/${scan.id}`}
             onSave={onSave}
             saveStatus={saveStatus}
             authenticated={authenticated}
@@ -2339,6 +2360,7 @@ export function ScanSessionReport({
         showTactics ||
         showEndgames ||
         showBrilliants ||
+        showBestGame ||
         showTimeManagement ? (
           <nav
             aria-label="Report sections"
@@ -2358,6 +2380,24 @@ export function ScanSessionReport({
                 {brilliantMoves.length > 0 ? (
                   <span className="rounded-full bg-[#1e1a24] px-1.5 text-[10px] font-bold text-[#f0edf2]">
                     {brilliantMoves.length}
+                  </span>
+                ) : null}
+              </button>
+            ) : null}
+            {showBestGame ? (
+              <button
+                type="button"
+                onClick={() =>
+                  document
+                    .getElementById("section-best-game")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#1e1a24] bg-[#121015] px-3 py-1 text-xs font-semibold text-[#f0edf2] transition hover:border-[#ff5a1f]/30 hover:bg-[#ff5a1f]/[0.08] hover:text-white"
+              >
+                🏆 Best game
+                {bestGame?.endedInMate ? (
+                  <span className="rounded-full bg-[#ff5a1f]/[0.15] px-1.5 text-[10px] font-bold text-[#ff8c42]">
+                    mate
                   </span>
                 ) : null}
               </button>
@@ -2868,6 +2908,151 @@ export function ScanSessionReport({
                 total={brilliantMoves.length}
               />
             ) : null}
+          </section>
+        ) : null}
+
+        {showBestGame && bestGame ? (
+          <section id="section-best-game" className="space-y-4">
+            <SectionHeader
+              eyebrow="Best game"
+              title={
+                bestGame.endedInMate
+                  ? "A checkmate to remember"
+                  : "Your best game"
+              }
+              description={
+                bestGame.mate
+                  ? `${bestGame.mate.san} on move ${bestGame.mate.moveNumber} — the scan picked this as your most complete win of the set.`
+                  : "The cleanest win of the set — fewest flagged errors across the whole game."
+              }
+            />
+
+            <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+              {/* Finish replay */}
+              <div className="rounded-2xl border border-[#1e1a24] bg-[#121015] p-4 sm:p-5">
+                <BestGameReplay bestGame={bestGame} />
+              </div>
+
+              {/* Game details */}
+              <div className="flex flex-col gap-3">
+                <div className="rounded-2xl border border-[#1e1a24] bg-[#121015] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-[#f0edf2]">
+                        {bestGame.userColor === "white"
+                          ? bestGame.whiteName ?? "White"
+                          : bestGame.blackName ?? "Black"}
+                      </p>
+                      <p className="text-xs text-[#565061]">
+                        {bestGame.userColor === "white"
+                          ? bestGame.whiteRating ?? "—"
+                          : bestGame.blackRating ?? "—"}
+                      </p>
+                    </div>
+                    <span className="text-lg font-black text-[#565061]">vs</span>
+                    <div className="min-w-0 text-right">
+                      <p className="truncate text-sm font-bold text-[#f0edf2]">
+                        {bestGame.userColor === "white"
+                          ? bestGame.blackName ?? "Black"
+                          : bestGame.whiteName ?? "White"}
+                      </p>
+                      <p className="text-xs text-[#565061]">
+                        {bestGame.userColor === "white"
+                          ? bestGame.blackRating ?? "—"
+                          : bestGame.whiteRating ?? "—"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    <span className="rounded-full border border-emerald-500/25 bg-emerald-500/[0.08] px-2.5 py-0.5 text-xs font-bold text-emerald-400">
+                      {bestGame.isWin ? "Win" : "Draw"}
+                    </span>
+                    {bestGame.mate ? (
+                      <span className="rounded-full border border-red-500/25 bg-red-500/[0.08] px-2.5 py-0.5 font-mono text-xs font-bold text-red-300">
+                        {bestGame.mate.san}
+                      </span>
+                    ) : null}
+                    {bestGame.mate?.pattern ? (
+                      <span className="rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-2.5 py-0.5 text-xs font-semibold text-[#ff8c42]">
+                        {bestGame.mate.pattern}
+                      </span>
+                    ) : null}
+                    <span className="rounded-full border border-[#1e1a24] bg-[#0d0b0e] px-2.5 py-0.5 text-xs font-semibold text-[#8d8696]">
+                      {Math.floor(bestGame.moveCount / 2)} moves
+                    </span>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-[#1e1a24] bg-[#121015] p-4">
+                  <p className="text-xs leading-relaxed text-[#8d8696]">
+                    {bestGame.openingName ? (
+                      <>
+                        <span className="font-semibold text-[#f0edf2]">
+                          {bestGame.openingName}.
+                        </span>{" "}
+                      </>
+                    ) : null}
+                    {bestGame.brilliantCount > 0 ? (
+                      <>
+                        The engine approved{" "}
+                        <span className="font-semibold text-emerald-400">
+                          {bestGame.brilliantCount} brilliant{" "}
+                          {bestGame.brilliantCount > 1 ? "moves" : "move"}
+                        </span>{" "}
+                        in this game.
+                      </>
+                    ) : null}
+                    {bestGame.missedTacticsInGame === 0 &&
+                    bestGame.endgameErrorsInGame === 0 ? (
+                      <>
+                        {" "}
+                        No missed tactics and no endgame slips were flagged all
+                        game.
+                      </>
+                    ) : (
+                      <>
+                        {" "}
+                        Still flagged:{" "}
+                        <span className="font-semibold text-[#ff8c42]">
+                          {bestGame.missedTacticsInGame} missed{" "}
+                          {bestGame.missedTacticsInGame === 1 ? "tactic" : "tactics"}
+                        </span>
+                        ,{" "}
+                        <span className="font-semibold text-[#ff8c42]">
+                          {bestGame.endgameErrorsInGame} endgame{" "}
+                          {bestGame.endgameErrorsInGame === 1 ? "slip" : "slips"}
+                        </span>
+                        .{" "}
+                        {bestGame.endedInMate
+                          ? "Even so, you finished it off."
+                          : "Still a win worth studying."}
+                      </>
+                    )}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    href={`/best-game/${scan.id}`}
+                    className="group inline-flex items-center gap-1.5 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-4 py-2 text-sm font-semibold text-[#f0edf2] transition hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.14] hover:text-white"
+                  >
+                    Watch the full replay
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                  {bestGame.gameUrl ? (
+                    <a
+                      href={bestGame.gameUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-[#1e1a24] bg-[#121015] px-4 py-2 text-sm font-semibold text-[#8d8696] transition hover:border-[#ff5a1f]/25 hover:text-white"
+                    >
+                      Original game
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  ) : null}
+                </div>
+              </div>
+            </div>
           </section>
         ) : null}
 

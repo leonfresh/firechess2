@@ -13,19 +13,7 @@ import {
   useCustomPieces,
 } from "@/lib/use-coins";
 
-type BestGameData = {
-  index: number;
-  moves: string;
-  whiteName?: string;
-  blackName?: string;
-  winner?: string;
-  gameUrl?: string;
-  openingName?: string;
-  whiteRating?: number;
-  blackRating?: number;
-  brilliantCount: number;
-  totalScore: number;
-};
+import type { BestGame } from "@/lib/best-game";
 
 type AnnotatedMove = {
   san: string;
@@ -39,7 +27,7 @@ export function BestGameView({
   scanId,
   username,
 }: {
-  bestGame: BestGameData;
+  bestGame: BestGame;
   scanId: string;
   username: string;
 }) {
@@ -74,13 +62,7 @@ export function BestGameView({
 
   const totalPlies = moves.length;
   const currentFen = ply === 0 ? new Chess().fen() : moves[ply - 1].fen;
-  const orientation = (() => {
-    // Orient the board toward the user's color
-    // If username matches whiteName, orient white; else black
-    if (bestGame.whiteName === username) return "white" as const;
-    if (bestGame.blackName === username) return "black" as const;
-    return "white" as const;
-  })();
+  const orientation = bestGame.userColor === "black" ? ("black" as const) : ("white" as const);
 
   const resultLabel =
     bestGame.winner === "white"
@@ -89,9 +71,7 @@ export function BestGameView({
         ? "0–1"
         : "½–½";
 
-  const isWin =
-    (bestGame.winner === "white" && bestGame.whiteName === username) ||
-    (bestGame.winner === "black" && bestGame.blackName !== username);
+  const isWin = bestGame.isWin;
 
   const handleAnalyze = () => {
     try {
@@ -158,6 +138,17 @@ export function BestGameView({
           {resultLabel}
           {bestGame.openingName ? ` · ${bestGame.openingName}` : ""}
         </p>
+        {bestGame.endedInMate && bestGame.mate ? (
+          <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-red-500/25 bg-red-500/[0.08] px-4 py-1.5 font-mono text-sm font-bold text-red-300">
+            <span className="text-base">♛</span>
+            {bestGame.mate.san}
+            <span className="font-sans font-semibold text-red-200/80">
+              {bestGame.mate.pattern
+                ? `${bestGame.mate.pattern.toLowerCase()} · move ${bestGame.mate.moveNumber}`
+                : `Checkmate · move ${bestGame.mate.moveNumber}`}
+            </span>
+          </p>
+        ) : null}
       </div>
 
       {/* Board + moves */}
@@ -224,11 +215,26 @@ export function BestGameView({
                 {bestGame.blackRating != null && <p className="text-xs text-slate-400">{bestGame.blackRating}</p>}
               </div>
             </div>
-            <div className="mt-3 flex items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-bold text-emerald-300">{resultLabel}</span>
+              {bestGame.endedInMate ? (
+                <span className="rounded-full bg-red-500/15 px-2.5 py-0.5 text-xs font-bold text-red-300">
+                  Checkmate · move {bestGame.mate?.moveNumber}
+                </span>
+              ) : null}
               {bestGame.brilliantCount > 0 && (
                 <span className="rounded-full bg-cyan-500/15 px-2.5 py-0.5 text-xs font-bold text-cyan-300">
                   {bestGame.brilliantCount} brilliant{bestGame.brilliantCount > 1 ? "s" : ""}
+                </span>
+              )}
+              {bestGame.missedTacticsInGame > 0 && (
+                <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-300/90">
+                  {bestGame.missedTacticsInGame} missed tactic{bestGame.missedTacticsInGame > 1 ? "s" : ""}
+                </span>
+              )}
+              {bestGame.endgameErrorsInGame > 0 && (
+                <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-300/90">
+                  {bestGame.endgameErrorsInGame} endgame slip{bestGame.endgameErrorsInGame > 1 ? "s" : ""}
                 </span>
               )}
             </div>

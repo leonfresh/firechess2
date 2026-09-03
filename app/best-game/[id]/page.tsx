@@ -1,9 +1,10 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { scanSessions } from "@/lib/schema";
 import { isExpiredScanSession, type PublicScanSessionPayload } from "@/lib/scan-session";
 import { SAMPLE_REPORTS } from "@/lib/sample-reports";
+import { pickBestGame } from "@/lib/best-game";
 import { BestGameView } from "./best-game-view";
 
 const SAMPLE_REPORT_IDS = new Set(
@@ -11,63 +12,6 @@ const SAMPLE_REPORT_IDS = new Set(
 );
 
 export const dynamic = "force-dynamic";
-
-function pickBestGame(scan: PublicScanSessionPayload) {
-  const result = scan.result;
-  if (!result) return null;
-
-  const brilliants = result.brilliantMoves ?? [];
-  const tactics = result.missedTactics;
-  const endgames = result.endgameMistakes;
-  const games = result.games ?? [];
-
-  if (games.length === 0) return null;
-
-  // Score each game: +3 per brilliant move, -1 per missed tactic or endgame error
-  const scores = new Map<number, number>();
-  const brilliantPerGame = new Map<number, number>();
-
-  for (let i = 0; i < games.length; i++) {
-    scores.set(i, 0);
-    brilliantPerGame.set(i, 0);
-  }
-
-  for (const b of brilliants) {
-    const idx = b.gameIndex;
-    scores.set(idx, (scores.get(idx) ?? 0) + 3);
-    brilliantPerGame.set(idx, (brilliantPerGame.get(idx) ?? 0) + 1);
-  }
-
-  for (const t of tactics) {
-    const idx = t.gameIndex;
-    scores.set(idx, (scores.get(idx) ?? 0) - 1);
-  }
-
-  for (const e of endgames) {
-    const idx = e.gameIndex;
-    scores.set(idx, (scores.get(idx) ?? 0) - 1);
-  }
-
-  // Best game = highest score, tie-break on brilliant moves
-  let bestIdx = 0;
-  let bestScore = -Infinity;
-  for (let i = 0; i < games.length; i++) {
-    const score = scores.get(i) ?? 0;
-    const brills = brilliantPerGame.get(i) ?? 0;
-    if (score > bestScore || (score === bestScore && brills > (brilliantPerGame.get(bestIdx) ?? 0))) {
-      bestScore = score;
-      bestIdx = i;
-    }
-  }
-
-  const game = games[bestIdx];
-  return {
-    index: bestIdx,
-    ...game,
-    brilliantCount: brilliantPerGame.get(bestIdx) ?? 0,
-    totalScore: bestScore,
-  };
-}
 
 export default async function BestGamePage({
   params,
@@ -103,7 +47,13 @@ export default async function BestGamePage({
     updatedAt: scan.updatedAt ? scan.updatedAt.toISOString() : null,
   };
 
-  const bestGame = pickBestGame(payload);
+  const bestGame = pickBestGame({
+    username: scan.chessUsername,
+    games: payload.result?.games,
+    brilliantMoves: payload.result?.brilliantMoves,
+    missedTactics: payload.result?.missedTactics,
+    endgameMistakes: payload.result?.endgameMistakes,
+  });
 
   if (!bestGame) {
     return (

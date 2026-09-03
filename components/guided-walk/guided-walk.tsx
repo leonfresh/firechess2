@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Copy,
   Crosshair,
+  ExternalLink,
   Gauge,
   Lightbulb,
   ListChecks,
@@ -20,6 +21,8 @@ import {
   Trophy,
   X,
 } from "lucide-react";
+import Link from "next/link";
+import { BestGameReplay } from "@/components/best-game-replay";
 import { GuidedWalkBoard } from "@/components/guided-walk/guided-walk-board";
 import {
   StrengthsRadar,
@@ -38,6 +41,7 @@ import type {
   RepeatedOpeningLeak,
   TimeMoment,
 } from "@/lib/types";
+import type { BestGame } from "@/lib/best-game";
 import {
   buildMotifs,
   POSITIONAL_MOTIF_NAMES,
@@ -106,16 +110,9 @@ function colorFromFen(fen: string): "white" | "black" {
  * Renders as a fixed full-screen overlay (deep-black, immersive) so the report
  * page is fully hidden while in guided mode, like the Brilliant screenshot.
  *
- * Up to 8 steps (steps with no data are omitted, so the counter always matches
- * real content):
- *   1. Headline   — accuracy snapshot + the one-line verdict
- *   2. Radar      — strengths radar + strongest/weakest dimensions
- *   3. Top leak   — biggest repeated opening mistake (your move vs best)
- *   4. Tactic     — one missed tactic as a solve/reveal micro-interaction
- *   5. Brilliant  — your best engine-approved move (a positive beat)
- *   6. Endgame    — one endgame technique moment
- *   7. Profile    — coach's note + top strengths spotlights
- *   8. The plan   — top things to drill this week + clock/tilt check
+ * Steps (steps with no data are omitted, so the counter always matches real
+ * content): headline → radar → top leak → motif → cross-ref → tactic →
+ * brilliant → endgame → best game → coach profile → lesson → plan.
  *
  * The full report is rendered separately (untouched) by the page once the
  * user finishes or skips.
@@ -161,6 +158,10 @@ export type GuidedWalkProps = {
   radarProps?: RadarProps | null;
   /** Brilliant moves — when present, the brilliant-move step is shown. */
   brilliantMoves?: BrilliantMove[];
+  /** Best-game highlight (computed by the parent via lib/best-game). */
+  bestGame?: BestGame | null;
+  /** Link to the standalone full replay page (/best-game/[id]). */
+  bestGameHref?: string;
   /**
    * Save-to-profile handler. When provided (along with `saveStatus`), the final
    * "plan" step shows a save prompt. The parent owns the real save logic and
@@ -299,11 +300,12 @@ export function GuidedWalk(props: GuidedWalkProps) {
     list.push("tactic");
     if (topBrilliant) list.push("brilliant");
     if (topEndgame) list.push("endgame");
+    if (props.bestGame) list.push("bestgame");
     if (narrative) list.push("profile");
     if (topCrossRefInsight) list.push("lesson");
     list.push("plan");
     return list;
-  }, [props.radarProps, radarData, topMotif, topCrossRefInsight, topBrilliant, topEndgame, narrative]);
+  }, [props.radarProps, radarData, topMotif, topCrossRefInsight, topBrilliant, topEndgame, narrative, props.bestGame]);
 
   const totalSteps = steps.length;
   const isLast = step === totalSteps - 1;
@@ -426,6 +428,12 @@ export function GuidedWalk(props: GuidedWalkProps) {
           )}
           {currentStep === "endgame" && topEndgame && (
             <EndgameStep endgame={topEndgame} />
+          )}
+          {currentStep === "bestgame" && props.bestGame && (
+            <BestGameStep
+              bestGame={props.bestGame}
+              href={props.bestGameHref}
+            />
           )}
           {currentStep === "profile" && narrative && radarData && (
             <ProfileStep narrative={narrative} data={radarData} />
@@ -1385,7 +1393,137 @@ function SavePrompt({
   );
 }
 
-/* ── Step 10: Best game showcase ──────────────────────────────────────────── */
+/* ── Step: Best game showcase ──────────────────────────────────────────── */
+
+function BestGameStep({
+  bestGame,
+  href,
+}: {
+  bestGame: BestGame;
+  href?: string;
+}) {
+  const mate = bestGame.mate;
+  const oppLine =
+    bestGame.opponentName && bestGame.opponentRating
+      ? `${bestGame.opponentName} (${bestGame.opponentRating})`
+      : bestGame.opponentName || "";
+  const fullMoves = Math.max(1, Math.floor(bestGame.moveCount / 2));
+
+  const title = mate
+    ? mate.pattern
+      ? `${mate.pattern}, move ${mate.moveNumber}`
+      : `Checkmate on move ${mate.moveNumber}`
+    : "Your cleanest win";
+
+  const sub: string[] = [];
+  if (mate) {
+    sub.push(
+      oppLine
+        ? `You checkmated ${oppLine} with ${mate.san}.`
+        : `The last move was ${mate.san} — checkmate.`,
+    );
+  } else if (oppLine) {
+    sub.push(`You beat ${oppLine} in ${fullMoves} moves.`);
+  } else {
+    sub.push(`A win in ${fullMoves} moves.`);
+  }
+  if (bestGame.brilliantCount > 0) {
+    sub.push(
+      `The engine approved ${bestGame.brilliantCount} move${
+        bestGame.brilliantCount > 1 ? "s" : ""
+      } as brilliant.`,
+    );
+  }
+  if (bestGame.missedTacticsInGame === 0 && bestGame.endgameErrorsInGame === 0) {
+    sub.push("No missed tactics, no endgame slips all game.");
+  } else {
+    const parts: string[] = [];
+    if (bestGame.missedTacticsInGame > 0) {
+      parts.push(
+        `${bestGame.missedTacticsInGame} missed tactic${
+          bestGame.missedTacticsInGame > 1 ? "s" : ""
+        }`,
+      );
+    }
+    if (bestGame.endgameErrorsInGame > 0) {
+      parts.push(
+        `${bestGame.endgameErrorsInGame} endgame slip${
+          bestGame.endgameErrorsInGame > 1 ? "s" : ""
+        }`,
+      );
+    }
+    sub.push(`The scan still flagged ${parts.join(" and ")} — room to sharpen.`);
+  }
+  if (bestGame.openingName) sub.push(`Opening: ${bestGame.openingName}.`);
+
+  return (
+    <div>
+      <StepHeader
+        eyebrow="Your best game this scan"
+        title={title}
+        icon={<Trophy className="h-4 w-4" />}
+        tone="orange"
+      />
+      <div className="mt-4 grid items-start gap-5 lg:grid-cols-2">
+        <div className="rounded-2xl border border-[#1e1a24] bg-black/20 p-3 sm:p-4">
+          <BestGameReplay bestGame={bestGame} />
+        </div>
+        <div className="space-y-4 lg:pt-1">
+          <p className="text-sm leading-relaxed text-[#f0edf2]">
+            {sub.map((line, i) => (
+              <span key={line}>
+                {line}
+                {i < sub.length - 1 ? " " : ""}
+              </span>
+            ))}
+          </p>
+          <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
+            <MiniStat label="Moves" value={`${fullMoves}`} tone="good" />
+            <MiniStat
+              label="Brilliants"
+              value={`${bestGame.brilliantCount}`}
+              tone={bestGame.brilliantCount > 0 ? "good" : "neutral"}
+            />
+            <MiniStat
+              label="Missed tactics"
+              value={`${bestGame.missedTacticsInGame}`}
+              tone={bestGame.missedTacticsInGame === 0 ? "good" : "warn"}
+            />
+            <MiniStat
+              label="Endgame slips"
+              value={`${bestGame.endgameErrorsInGame}`}
+              tone={bestGame.endgameErrorsInGame === 0 ? "good" : "warn"}
+            />
+          </div>
+          {(href || bestGame.gameUrl) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {href ? (
+                <Link
+                  href={href}
+                  className="group inline-flex items-center gap-1.5 rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-4 py-2 text-sm font-semibold text-white transition hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.14]"
+                >
+                  See the full replay
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+              ) : null}
+              {bestGame.gameUrl ? (
+                <a
+                  href={bestGame.gameUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-[#1e1a24] px-4 py-2 text-sm font-semibold text-[#8d8696] transition hover:border-[#ff5a1f]/25 hover:text-white"
+                >
+                  View the game
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              ) : null}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /* ── Shared bits ───────────────────────────────────────────────────────── */
 
