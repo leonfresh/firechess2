@@ -22,8 +22,9 @@ export default async function AnalysisBoardPage({
   const title = params.title?.trim() || "Analysis board";
 
   return (
-    <div className="min-h-screen bg-[#030712] text-white">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+    <div className="min-h-screen bg-[#070608] text-white">
+      {/* Full-width layout — analysis boards get all the room they can use */}
+      <div className="px-4 py-6 sm:px-6 sm:py-8 xl:px-12">
         <PositionAnalysisBoard
           initialFen={fen}
           initialOrientation={orientation}

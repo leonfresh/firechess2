@@ -22,7 +22,6 @@ import {
   MOVE_CLASSIFICATION_LABELS,
   type MoveClassification,
 } from "@/lib/move-quality";
-import { useBoardSize } from "@/lib/use-board-size";
 import { stockfishClient, type LocalEngineLine } from "@/lib/stockfish-client";
 import {
   useBoardTheme,
@@ -307,7 +306,34 @@ export function PositionAnalysisBoard({
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
-  const { ref: boardRef, size: boardSize } = useBoardSize(520);
+  // Board fills its card: min(card width − eval bar, viewport height − chrome).
+  // No fixed fallback cap — grows large on wide/full-width layouts.
+  const boardAreaRef = useRef<HTMLDivElement>(null);
+  const [boardSize, setBoardSize] = useState(520);
+  useEffect(() => {
+    const measure = () => {
+      const el = boardAreaRef.current;
+      if (!el) return;
+      const cs = getComputedStyle(el);
+      const padX =
+        parseFloat(cs.paddingLeft || "0") + parseFloat(cs.paddingRight || "0");
+      const contentW = el.clientWidth - padX;
+      const availW = contentW - 44; // eval bar (24) + gap (12) + slack
+      const vh = window.visualViewport?.height ?? window.innerHeight;
+      const availH = Math.max(320, vh - 330); // navbar + title card + controls
+      const size = Math.max(300, Math.min(availW, availH));
+      setBoardSize((prev) => (Math.abs(prev - size) > 4 ? size : prev));
+    };
+    const t = setTimeout(measure, 60);
+    const ro = new ResizeObserver(measure);
+    if (boardAreaRef.current) ro.observe(boardAreaRef.current);
+    window.addEventListener("resize", measure);
+    return () => {
+      clearTimeout(t);
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
   const [fen, setFen] = useState(initialFen || STARTING_FEN);
   const [orientation, setOrientation] = useState<"white" | "black">(
     initialOrientation,
@@ -949,8 +975,11 @@ export function PositionAnalysisBoard({
         </div>
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(17rem,20rem)]">
-          <div className="rounded-[1.75rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-4 sm:p-5">
-            <div ref={boardRef} className="mx-auto w-full max-w-[640px]">
+          <div
+            ref={boardAreaRef}
+            className="rounded-[1.75rem] border border-[#1e1a24] bg-[#ff5a1f]/[0.04] p-4 sm:p-5"
+          >
+            <div className="mx-auto w-full">
               <div className="flex items-start gap-2 sm:gap-3">
                 <EvalBar evalCp={engineEval ?? 0} height={boardSize} />
                 <div className="overflow-hidden rounded-xl">
