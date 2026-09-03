@@ -59,13 +59,15 @@ async def main():
 
         results = []
         seen = set()
+        page_errors = []
+        page.on("pageerror", lambda e: page_errors.append(str(e)))
         for b in interesting:
             idx = b["idx"]
             if idx in seen:
                 continue
             seen.add(idx)
             await page.locator(f"button[data-move-idx='{idx}']").click()
-            await page.wait_for_timeout(1400)
+            await page.wait_for_timeout(2200)
             chips = await page.eval_on_selector_all(
                 "div.mb-2 > span", "els => els.map(e => e.textContent.trim())"
             )
@@ -93,9 +95,37 @@ async def main():
                 )
             except Exception:
                 pass
-            results.append(
-                {"idx": idx, "san": b["san"], "badge": badge, "chips": chips, "narration": narration, "variation": variation}
+            entry = {
+                "idx": idx,
+                "san": b["san"],
+                "badge": badge,
+                "chips": chips,
+                "narration": narration,
+                "variation": variation,
+            }
+            meas = await page.evaluate(
+                """() => {
+                  const img = document.querySelector('img[src*="/move-badges/"]');
+                  const box = img && img.parentElement ? img.parentElement.getBoundingClientRect() : null;
+                  const anyCanvas = document.querySelector('canvas, .cg-board, [class*="cg-board"]');
+                  return {
+                    board: box ? { w: Math.round(box.width), h: Math.round(box.height) } : null,
+                    boardCanvas: !!anyCanvas,
+                    cornerBadges: document.querySelectorAll('img[src*="/move-badges/"]').length,
+                    pills: [...document.querySelectorAll('button[data-move-idx] span')].filter(s => /inaccuracy|mistake|blunder/i.test(s.textContent || '')).length,
+                  };
+                }"""
             )
+            entry["meas"] = meas
+            results.append(entry)
+            print("meas:", meas, flush=True)
+            rowbadge = await page.eval_on_selector(
+                f"button[data-move-idx='{idx}']",
+                "e => e ? e.textContent.trim() : ''",
+            )
+            print("rowbadge:", rowbadge, flush=True)
+            if page_errors:
+                print("pageerrors:", page_errors[-2:], flush=True)
             print(f"\n--- move {b['san']} ---", flush=True)
             print("badge:", badge, flush=True)
             print("chips:", chips, flush=True)

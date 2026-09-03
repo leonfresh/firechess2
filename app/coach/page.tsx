@@ -47,6 +47,7 @@ import {
   type PrevMoveContext,
   type GameContext,
 } from "@/lib/coach-commentary";
+import { MoveBadge } from "@/components/move-badge";
 
 /* ══════════════════════════════════════════════════════════════════
    Types
@@ -326,27 +327,10 @@ export default function CoachPage() {
 
   /* ── Board size (responsive) ── */
   const [boardSize, setBoardSize] = useState(480);
-  const boardContainerRef = useRef<HTMLDivElement>(null);
+  const boardAreaRef = useRef<HTMLDivElement>(null);
 
   /* ── Page state ── */
   const [pageState, setPageState] = useState<PageState>("idle");
-
-  // Re-measure board size whenever the page transitions to coaching (the board div appears)
-  useEffect(() => {
-    const measure = () => {
-      if (!boardContainerRef.current) return;
-      const rect = boardContainerRef.current.getBoundingClientRect();
-      const size = Math.min(rect.width, rect.height, 600);
-      if (size > 0) setBoardSize(size);
-    };
-    const t = setTimeout(measure, 80);
-    const ro = new ResizeObserver(measure);
-    if (boardContainerRef.current) ro.observe(boardContainerRef.current);
-    return () => {
-      clearTimeout(t);
-      ro.disconnect();
-    };
-  }, [pageState]);
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
   const [moves, setMoves] = useState<CoachAnalyzedMove[]>([]);
   const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -384,6 +368,30 @@ export default function CoachPage() {
   const [orientation, setOrientation] = useState<"white" | "black">("white");
   const [cinematic, setCinematic] = useState(false);
   const autoplayRef = useRef(autoplay);
+
+  // Re-measure the board whenever the page transitions or the stage resizes.
+  // The board fills the stage: min(stage width, viewport height − chrome) —
+  // no fixed cap, so it grows large on desktop (like /learn).
+  useEffect(() => {
+    const measure = () => {
+      const el = boardAreaRef.current;
+      if (!el) return;
+      const availW = el.clientWidth - 40; // eval bar + gap + breathing room
+      const vh = window.visualViewport?.height ?? window.innerHeight;
+      const availH = Math.max(320, vh - 150); // page chrome above the stage
+      const size = Math.max(280, Math.min(availW, availH));
+      setBoardSize((prev) => (Math.abs(prev - size) > 4 ? size : prev));
+    };
+    const t = setTimeout(measure, 80);
+    const ro = new ResizeObserver(measure);
+    if (boardAreaRef.current) ro.observe(boardAreaRef.current);
+    window.addEventListener("resize", measure);
+    return () => {
+      clearTimeout(t);
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [pageState, cinematic]);
   autoplayRef.current = autoplay;
   const currentIdxRef = useRef(currentIdx);
   currentIdxRef.current = currentIdx;
@@ -702,6 +710,9 @@ export default function CoachPage() {
   const autoplayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Set to true while we are waiting for TTS to finish before advancing
   const pendingTtsAdvanceRef = useRef(false);
+  // Safety net: Chrome's speechSynthesis occasionally stalls without firing
+  // onend — estimate speech duration and force-advance past it.
+  const ttsFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const scheduleNext = useCallback(
     (delay: number) => {
@@ -731,7 +742,17 @@ export default function CoachPage() {
             : move.narration;
           tts.speak(toSpeak);
           pendingTtsAdvanceRef.current = true;
-          // Advancement is triggered by the tts.speaking watcher below
+          // Advancement is normally triggered by the tts.speaking watcher;
+          // this timer is the safety net if the browser never fires onend.
+          // ~72ms per char ≈ 14 chars/sec speech, +2.5s buffer, capped at 90s.
+          const estMs = Math.min(90000, 1200 + toSpeak.length * 72);
+          if (ttsFallbackTimerRef.current)
+            clearTimeout(ttsFallbackTimerRef.current);
+          ttsFallbackTimerRef.current = setTimeout(() => {
+            if (!pendingTtsAdvanceRef.current) return;
+            pendingTtsAdvanceRef.current = false;
+            scheduleNext(300);
+          }, estMs);
         } else {
           // No TTS — use timer-based advance
           const pauseMs = move.isKeyMoment ? 4000 : move.narration ? speed : 600;
@@ -746,6 +767,7 @@ export default function CoachPage() {
   useEffect(() => {
     if (!tts.speaking && pendingTtsAdvanceRef.current && autoplayRef.current) {
       pendingTtsAdvanceRef.current = false;
+      if (ttsFallbackTimerRef.current) clearTimeout(ttsFallbackTimerRef.current);
       scheduleNext(500);
     }
   }, [tts.speaking, scheduleNext]);
@@ -756,10 +778,12 @@ export default function CoachPage() {
       scheduleNext(autoplay && currentIdx === -1 ? 800 : speed);
     } else {
       if (autoplayTimerRef.current) clearTimeout(autoplayTimerRef.current);
+      if (ttsFallbackTimerRef.current) clearTimeout(ttsFallbackTimerRef.current);
       pendingTtsAdvanceRef.current = false;
     }
     return () => {
       if (autoplayTimerRef.current) clearTimeout(autoplayTimerRef.current);
+      if (ttsFallbackTimerRef.current) clearTimeout(ttsFallbackTimerRef.current);
     };
   }, [autoplay, pageState]); // intentional: only restart when autoplay toggles
 
@@ -1331,14 +1355,14 @@ export default function CoachPage() {
       >
         {/* ── Board area ── */}
         <div
-          className={`flex items-center justify-center ${cinematic ? "flex-1" : "py-4 lg:py-6 lg:pl-6"}`}
+          ref={boardAreaRef}
+          className={`flex w-full min-w-0 items-center justify-center ${cinematic ? "flex-1" : "flex-1 py-4 lg:py-6 lg:pl-6"}`}
         >
           <div className="flex items-center gap-2">
             {/* Eval bar */}
             <EvalBar evalCp={currentEval} height={boardSize || 480} />
             {/* Board */}
             <div
-              ref={boardContainerRef}
               className="relative"
               style={{ width: boardSize || 480, height: boardSize || 480 }}
             >
@@ -1372,6 +1396,36 @@ export default function CoachPage() {
                   </div>
                 </div>
               )}
+              {/* Move-classification badge on the played square (like /analysis) */}
+              {currentMove &&
+                boardSize > 0 &&
+                (currentMove.classification === "blunder" ||
+                  currentMove.classification === "mistake" ||
+                  currentMove.classification === "inaccuracy" ||
+                  currentMove.classification === "brilliant") &&
+                (() => {
+                  const to = currentMove.to;
+                  const file = to.charCodeAt(0) - 97;
+                  const rank = parseInt(to[1], 10) - 1;
+                  const x = orientation === "white" ? file : 7 - file;
+                  const y = orientation === "white" ? 7 - rank : rank;
+                  const sq = boardSize / 8;
+                  const bs = Math.max(22, Math.min(34, Math.round(sq * 0.42)));
+                  return (
+                    <img
+                      src={`/move-badges/${currentMove.classification}.svg`}
+                      alt={currentMove.classification}
+                      title={currentMove.classification}
+                      className="pointer-events-none absolute z-40 drop-shadow-lg"
+                      style={{
+                        left: (x + 1) * sq - bs,
+                        top: y * sq - 2,
+                        width: bs,
+                        height: bs,
+                      }}
+                    />
+                  );
+                })()}
               {boardSize > 0 && (
                 <Chessboard
                   id="coach"
@@ -1523,13 +1577,21 @@ export default function CoachPage() {
                           ${isCurrent ? "bg-amber-500/20 text-amber-200" : "text-slate-300 hover:bg-white/[0.06]"}`}
                       >
                         <span className="font-medium">{m.san}</span>
-                        {CLASSIFICATION_ICON[m.classification] && (
+                        {m.classification === "blunder" ||
+                        m.classification === "mistake" ||
+                        m.classification === "inaccuracy" ||
+                        m.classification === "brilliant" ? (
+                          <MoveBadge
+                            classification={m.classification}
+                            className="shrink-0 px-1.5 py-0.5"
+                          />
+                        ) : CLASSIFICATION_ICON[m.classification] ? (
                           <span
                             className={`text-[10px] ${CLASSIFICATION_COLOR[m.classification]}`}
                           >
                             {CLASSIFICATION_ICON[m.classification]}
                           </span>
-                        )}
+                        ) : null}
                       </button>
                     );
                   })}

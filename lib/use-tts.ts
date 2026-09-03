@@ -73,7 +73,8 @@ function cleanForSpeech(text: string): string {
     .trim();
 }
 
-/** Score a voice — prefer natural/neural English voices */
+/** Score a voice — prefer natural/neural English voices; Ava (Edge's flagship
+ *  multilingual natural voice) wins whenever she is present. */
 function scoreVoice(v: SpeechSynthesisVoice): number {
   let s = 0;
   const name = v.name.toLowerCase();
@@ -81,6 +82,9 @@ function scoreVoice(v: SpeechSynthesisVoice): number {
 
   // Must be English
   if (!lang.startsWith("en")) return -1000;
+
+  // Ava first — she's the requested default for coaching narration
+  if (name.includes("ava")) s += 250;
 
   // Prefer natural / neural / premium voices
   if (name.includes("natural") || name.includes("neural")) s += 100;
@@ -140,7 +144,7 @@ export function useTTS(): TTSControls {
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const allVoicesRef = useRef<SpeechSynthesisVoice[]>([]);
   const onDone = useRef<(() => void) | null>(null);
-  const initialPickDone = useRef(false);
+  const autoEnabledRef = useRef(false);
 
   // Detect support and pick best voice
   useEffect(() => {
@@ -170,10 +174,12 @@ export function useTTS(): TTSControls {
         voiceRef.current = scored[0].voice;
         setVoiceName(scored[0].voice.name);
 
-        // Auto-enable TTS only the first time if a neural voice is available
-        if (!initialPickDone.current) {
-          initialPickDone.current = true;
-          if (neural) setEnabled(true);
+        // Auto-enable TTS the moment a neural voice is available — even if an
+        // earlier voiceschanged fired with only robot voices (Chrome often
+        // exposes local voices first, then Edge online voices arrive late).
+        if (neural && !autoEnabledRef.current) {
+          autoEnabledRef.current = true;
+          setEnabled(true);
         }
       }
     }
