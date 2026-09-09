@@ -18,6 +18,8 @@ export type PreviewPattern = {
   habit: string;
   hint: string;
   severity: string;
+  cpLoss?: number | null;
+  sideline?: { approved: boolean; score?: number; games?: number };
   promotion?: string;
   gameUrl?: string;
   tags?: string[];

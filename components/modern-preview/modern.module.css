@@ -115,3 +115,5 @@
 
 /* Give sample cards room before the following section divider. */
 .sampleSection{padding-bottom:40px}.sampleSection .sectionHeading{margin-bottom:24px}.sampleSection .sectionHeading h2{line-height:1.25}.playerCard h3{line-height:1.4}.playerCard>p{line-height:1.6}.playerCard .playerRating{margin-top:8px;color:var(--muted);font-variant-numeric:tabular-nums}.sampleActions{display:flex;justify-content:center;margin-top:24px}.sampleActions button{gap:8px}.sampleActions svg{transition:transform .2s}
+
+.reportActionCard{margin-top:24px}.reportActionCard>h2{line-height:1.35}.reportActionCard>p{line-height:1.8;margin-bottom:20px!important}.reportActionCard>.arrowLegend{margin-top:20px}.sidelineNote{border:1px solid #6366f180;background:#6366f115;border-radius:10px;padding:16px;margin:16px 0}.sidelineNote>strong{color:#a5b4fc}.sidelineNote>p{line-height:1.75;font-size:13px;margin-top:8px}
