@@ -10,6 +10,8 @@
  *  - Polls chat messages periodically while the tab is visible
  */
 
+import {useChaosPresentation} from '@/components/chaos-presentation';
+import { chaosIdentityHeaders } from '@/lib/chaos-client-identity';
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getGuestId } from "@/lib/guest-id";
 
@@ -19,6 +21,7 @@ function chaosHeaders(json = false): Record<string, string> {
   if (json) h["Content-Type"] = "application/json";
   // Always include guest ID — server prefers session if available
   h["X-Guest-Id"] = getGuestId();
+  Object.assign(h, chaosIdentityHeaders());
   return h;
 }
 
@@ -43,14 +46,19 @@ type LobbyProps = {
     hostColor: string;
     joined: boolean; // true = joined existing room, false = opponent joined ours
     unlimitedTime: boolean;
+    timeControlSeconds: number;
+    incrementSeconds: number;
   }) => void;
   onCancel: () => void;
   /** Whether the user is currently signed in */
   isSignedIn: boolean;
   /** When true, only show online count + chat (no search UI) */
   chatOnly?: boolean;
+  showChat?: boolean;
   /** When true, create/join rooms with unlimited time control (no 30s countdown) */
   unlimitedTime?: boolean;
+  timeControlSeconds?: number;
+  incrementSeconds?: number;
 };
 
 /* ------------------------------------------------------------------ */
@@ -83,8 +91,12 @@ export function ChaosLobby({
   onCancel,
   isSignedIn,
   chatOnly,
+  showChat = true,
   unlimitedTime = false,
+  timeControlSeconds = 300,
+  incrementSeconds = 3,
 }: LobbyProps) {
+  const {activity} = useChaosPresentation();
   /* ── State ── */
   const [onlineCount, setOnlineCount] = useState(0);
   const [messages, setMessages] = useState<LobbyMessage[]>([]);
@@ -143,6 +155,7 @@ export function ChaosLobby({
 
   /* ── Fetch chat messages ── */
   const fetchMessages = useCallback(async (force = false) => {
+    if (!showChat) return;
     if (!force && !isDocumentVisible()) {
       return;
     }
@@ -156,7 +169,7 @@ export function ChaosLobby({
     } catch {
       // ignore
     }
-  }, []);
+  }, [showChat]);
 
   /* ── Send chat message ── */
   const sendMessage = useCallback(async () => {
@@ -228,7 +241,7 @@ export function ChaosLobby({
 
     // Try to find an existing room first
     try {
-      const res = await fetch("/api/chaos/matchmake", {
+      const res = await fetch(`/api/chaos/matchmake?base=${unlimitedTime ? -1 : timeControlSeconds}&inc=${unlimitedTime ? 0 : incrementSeconds}&draftProtocol=2`, {
         headers: chaosHeaders(),
         credentials: "include",
       });
@@ -242,6 +255,7 @@ export function ChaosLobby({
           hostColor: data.hostColor,
           joined: true,
           unlimitedTime: (data.timeControlSeconds ?? 0) === -1,
+          timeControlSeconds: data.timeControlSeconds, incrementSeconds: data.incrementSeconds,
         });
         return;
       }
@@ -255,7 +269,7 @@ export function ChaosLobby({
         method: "POST",
         headers: chaosHeaders(true),
         credentials: "include",
-        body: JSON.stringify({ unlimitedTime: !!unlimitedTime }),
+        body: JSON.stringify({ unlimitedTime: !!unlimitedTime, timeControlSeconds, incrementSeconds, draftProtocol: 2 }),
       });
       const createData = await createRes.json();
       if (createData.error) {
@@ -302,7 +316,7 @@ export function ChaosLobby({
           // Every 3rd cycle, also try to find a different room to join
           // This fixes the simultaneous-creation deadlock
           if (pollCycle % 3 === 0 && ownRoomRef.current) {
-            const retryRes = await fetch("/api/chaos/matchmake", {
+            const retryRes = await fetch(`/api/chaos/matchmake?base=${unlimitedTime ? -1 : timeControlSeconds}&inc=${unlimitedTime ? 0 : incrementSeconds}&draftProtocol=2`, {
               headers: chaosHeaders(),
               credentials: "include",
             });
@@ -329,6 +343,7 @@ export function ChaosLobby({
                 hostColor: retryData.hostColor,
                 joined: true,
                 unlimitedTime: (retryData.timeControlSeconds ?? 0) === -1,
+                timeControlSeconds: retryData.timeControlSeconds, incrementSeconds: retryData.incrementSeconds,
               });
               return;
             }
@@ -355,7 +370,7 @@ export function ChaosLobby({
               roomCode: room.roomCode,
               hostColor: room.hostColor,
               joined: false,
-              unlimitedTime: !!unlimitedTime,
+              unlimitedTime: !!unlimitedTime, timeControlSeconds, incrementSeconds,
             });
           }
         } catch {
@@ -368,7 +383,7 @@ export function ChaosLobby({
   }, [
     isSignedIn,
     chatOnly,
-    unlimitedTime,
+    unlimitedTime, timeControlSeconds, incrementSeconds,
     onMatchFound,
     onCancel,
     clearAllIntervals,
@@ -423,14 +438,14 @@ export function ChaosLobby({
               type="button"
               onClick={startSearch}
               disabled={!isSignedIn}
-              className="rounded-xl border border-purple-500/30 bg-purple-500/10 px-8 py-4 text-lg font-bold text-purple-400 transition-all hover:bg-purple-500/20 hover:scale-105 disabled:opacity-50"
+              className={activity ? "primary-action matchmaking-start" : "rounded-xl border border-purple-500/30 bg-purple-500/10 px-8 py-4 text-lg font-bold text-purple-400 transition-all hover:bg-purple-500/20 hover:scale-105 disabled:opacity-50"}
             >
-              🎲 Find Opponent
+              {activity ? <>Find opponent <span aria-hidden="true">↗</span></> : "🎲 Find Opponent"}
             </button>
           )}
 
           {searchState === "searching" && (
-            <div className="flex w-full max-w-xs flex-col items-center gap-3">
+            <div className={activity ? "matchmaking-search" : "flex w-full max-w-xs flex-col items-center gap-3"}>
               {/* Timer ring */}
               <div className="relative flex h-24 w-24 items-center justify-center">
                 <svg
@@ -485,7 +500,7 @@ export function ChaosLobby({
               <button
                 type="button"
                 onClick={cancelSearch}
-                className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs font-medium text-red-400 transition-all hover:bg-red-500/20"
+                className={activity ? "secondary-action" : "rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs font-medium text-red-400 transition-all hover:bg-red-500/20"}
               >
                 Cancel
               </button>
@@ -494,11 +509,11 @@ export function ChaosLobby({
 
           {searchState === "found" && (
             <div className="flex items-center gap-2 text-lg font-bold text-emerald-400">
-              <img
+              {activity ? <span aria-hidden="true" className="matchmaking-found-icon">✓</span> : <img
                 src={PEPE_GIFS[0]}
                 alt=""
                 className="h-8 w-8 object-contain"
-              />
+              />}
               Opponent found!
             </div>
           )}
@@ -512,7 +527,7 @@ export function ChaosLobby({
       )}
 
       {/* ── Lobby Chat ── */}
-      <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] overflow-hidden">
+      {showChat && <div className="rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03] overflow-hidden">
         {/* Chat header */}
         <div className="flex items-center justify-between border-b border-[#1e1a24] px-4 py-2.5">
           <div className="flex items-center gap-2">
@@ -600,7 +615,7 @@ export function ChaosLobby({
             Sign in to chat
           </div>
         )}
-      </div>
+      </div>}
     </div>
   );
 }

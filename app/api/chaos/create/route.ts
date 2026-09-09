@@ -7,8 +7,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { chaosRooms } from "@/lib/schema";
-import { createChaosState } from "@/lib/chaos-chess";
+import { createSyncState } from "@/lib/chaos-room-sync";
 import { getChaosUserId } from "@/lib/chaos-auth";
+import { timeControl } from "@/lib/chaos-clock";
 
 function generateRoomCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -27,11 +28,10 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const hostColor = body.hostColor === "black" ? "black" : "white";
-  const timeControlSeconds: number | undefined = body.timeControlSeconds ?? undefined;
-  const incrementSeconds: number = body.incrementSeconds ?? 0;
+  const {base: timeControlSeconds, inc: incrementSeconds} = timeControl(body.timeControlSeconds, body.incrementSeconds);
 
   const roomCode = generateRoomCode();
-  const chaosState = createChaosState();
+  const chaosState = createSyncState(body.draftProtocol === 2);
 
   const [room] = await db
     .insert(chaosRooms)
@@ -47,5 +47,5 @@ export async function POST(req: NextRequest) {
     })
     .returning({ id: chaosRooms.id, roomCode: chaosRooms.roomCode });
 
-  return NextResponse.json({ roomCode: room.roomCode, roomId: room.id });
+  return NextResponse.json({ roomCode: room.roomCode, roomId: room.id, draftProtocol: body.draftProtocol === 2 ? 2 : undefined });
 }

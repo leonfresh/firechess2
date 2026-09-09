@@ -10,9 +10,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { chaosRooms } from "@/lib/schema";
-import { eq, and, ne, isNull, gte } from "drizzle-orm";
-import { createChaosState } from "@/lib/chaos-chess";
+import { eq, and, ne, isNull, gte, sql } from "drizzle-orm";
+import { createSyncState, startServerOpening } from "@/lib/chaos-room-sync";
 import { getChaosUserId } from "@/lib/chaos-auth";
+import { notifyLiveRoom } from "@/lib/chaos-live-token";
+import { timeControl } from "@/lib/chaos-clock";
 
 /** Rooms older than this are considered abandoned */
 const STALE_THRESHOLD_MS = 90_000; // 90 seconds
@@ -34,7 +36,22 @@ export async function GET(req: NextRequest) {
 
   const cutoff = new Date(Date.now() - STALE_THRESHOLD_MS);
 
-  // Look for a recent, open matchmaking room that isn't ours
+  // Listing never claims a seat and exposes only explicitly public queue rooms.
+  if (req.nextUrl.searchParams.get("list") === "1") {
+    const data = await db.execute(sql`select r."roomCode", r."timeControlSeconds", r."incrementSeconds",
+      coalesce(p.name,'Guest player') as name, p.rating, coalesce(p.games,0) as games,
+      (p.id is not null and r."timeControlSeconds">0) as "ratedEligible",
+      (r."hostId"=${userId}) as yours
+      from chaos_room r left join chaos_player p on p.id=r."hostId"
+      where r."isMatchmaking"=true and r.status='waiting' and r."guestId" is null
+      and r."createdAt">=${cutoff.toISOString()}
+      and coalesce((r."chaosState"->'_sync'->>'draftProtocol')::integer,1)=2
+      order by r."createdAt" asc limit 30`);
+    return NextResponse.json({ rooms: data.rows }, { headers: { "Cache-Control": "no-store" } });
+  }
+
+  const control = timeControl(Number(req.nextUrl.searchParams.get("base")), Number(req.nextUrl.searchParams.get("inc")));
+  // Match players who chose the same clock.
   const rooms = await db
     .select()
     .from(chaosRooms)
@@ -45,6 +62,9 @@ export async function GET(req: NextRequest) {
         isNull(chaosRooms.guestId),
         ne(chaosRooms.hostId, userId),
         gte(chaosRooms.createdAt, cutoff),
+        eq(chaosRooms.timeControlSeconds, control.base),
+        eq(chaosRooms.incrementSeconds, control.inc),
+        sql`coalesce((${chaosRooms.chaosState}->'_sync'->>'draftProtocol')::integer, 1) = ${req.nextUrl.searchParams.get("draftProtocol") === "2" ? 2 : 1}`,
       ),
     )
     .limit(1);
@@ -52,11 +72,13 @@ export async function GET(req: NextRequest) {
   if (rooms.length > 0) {
     const room = rooms[0];
 
+    const openingState = startServerOpening(room);
     // Atomic join — only succeeds if room is still unclaimed
     const result = await db
       .update(chaosRooms)
       .set({
         guestId: userId,
+        chaosState: openingState,
         status: "playing",
         isMatchmaking: false,
         updatedAt: new Date(),
@@ -75,11 +97,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ waiting: true });
     }
 
+    await notifyLiveRoom(room.id, (openingState as any)?._sync?.opening?.deadline);
     return NextResponse.json({
       roomId: room.id,
       roomCode: room.roomCode,
       hostColor: room.hostColor,
       timeControlSeconds: room.timeControlSeconds,
+      incrementSeconds: room.incrementSeconds,
     });
   }
 
@@ -94,6 +118,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}));
   const unlimitedTime = !!body.unlimitedTime;
+  const control = timeControl(unlimitedTime ? -1 : body.timeControlSeconds, body.incrementSeconds);
 
   // Auto-cancel any existing matchmaking rooms from this user
   await db
@@ -109,7 +134,7 @@ export async function POST(req: NextRequest) {
 
   const hostColor = Math.random() > 0.5 ? "white" : "black";
   const roomCode = generateRoomCode();
-  const chaosState = createChaosState();
+  const chaosState = createSyncState(body.draftProtocol === 2);
 
   const [room] = await db
     .insert(chaosRooms)
@@ -120,7 +145,8 @@ export async function POST(req: NextRequest) {
       chaosState,
       status: "waiting",
       isMatchmaking: true,
-      timeControlSeconds: unlimitedTime ? -1 : 0,
+      timeControlSeconds: control.base,
+      incrementSeconds: control.inc,
     })
     .returning({ id: chaosRooms.id, roomCode: chaosRooms.roomCode });
 
@@ -150,7 +176,7 @@ export async function DELETE(req: NextRequest) {
       .update(chaosRooms)
       .set({ isMatchmaking: false, status: "cancelled", updatedAt: new Date() })
       .where(
-        and(eq(chaosRooms.id, body.roomId), eq(chaosRooms.hostId, userId)),
+        and(eq(chaosRooms.id, body.roomId), eq(chaosRooms.hostId, userId), eq(chaosRooms.status, "waiting"), eq(chaosRooms.isMatchmaking, true), isNull(chaosRooms.guestId)),
       );
   } else {
     await db
@@ -167,3 +193,4 @@ export async function DELETE(req: NextRequest) {
 
   return NextResponse.json({ ok: true });
 }
+

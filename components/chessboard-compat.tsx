@@ -7,7 +7,7 @@
  * to the v5 `options` API. This avoids rewriting every <Chessboard> usage.
  */
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Chessboard as ChessboardV5, defaultPieces } from "react-chessboard";
 import type { ChessboardOptions } from "react-chessboard";
 import type {
@@ -152,6 +152,12 @@ export function Chessboard(props: ChessboardCompatProps) {
   }, [props.boardWidth]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const squareWidth = measuredWidth / 8;
+  // Stable component identities keep hover/selection updates from remounting
+  // the piece under the pointer between pointer-down and click.
+  const pieces = useMemo(
+    () => props.customPieces ? convertCustomPieces(props.customPieces, squareWidth) : undefined,
+    [props.customPieces, squareWidth],
+  );
 
   // v4 accepted "start" as a special keyword for the initial position; v5 only accepts FEN strings.
   // Also guard against empty strings which produce garbage boards.
@@ -192,9 +198,7 @@ export function Chessboard(props: ChessboardCompatProps) {
     arrows: convertArrows(props.customArrows),
 
     // Pieces
-    pieces: props.customPieces
-      ? convertCustomPieces(props.customPieces, squareWidth)
-      : undefined,
+    pieces,
 
     // Drag activation distance — prevent dnd-kit's PointerSensor from
     // blocking click events due to natural mouse jitter (<5px). Without this,

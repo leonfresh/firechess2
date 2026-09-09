@@ -1,4 +1,7 @@
 "use client";
+import {buildChaosCustomPieces, SINGLE_PIECE_MODIFIERS} from "@/components/chaos-pieces";
+import { chaosIdentityHeaders } from '@/lib/chaos-client-identity';
+import { CHAOS_TIME_CONTROLS, projectClock, timeControl as resolveTimeControl, type MatchClock } from "@/lib/chaos-clock";
 
 /* ── Twemoji helper — consistent cross-platform emoji rendering ── */
 function _twemojiUrl(emoji: string): string {
@@ -50,6 +53,10 @@ import { Chess, type Color, type PieceSymbol, type Square } from "chess.js";
 import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { stockfishPool } from "@/lib/stockfish-client";
 import { ChaosLobby } from "@/components/chaos-lobby";
+import { OpeningMoveNotice, AbortedMatch } from "@/components/chaos-opening-move";
+import { ChaosChat, type ChatLine } from "@/components/chaos-chat";
+import { useChaosPresentation } from "@/components/chaos-presentation";
+import { pendingDraftKey, recoverPendingDraft } from "@/lib/chaos-pending-draft";
 import { useSession } from "@/components/session-provider";
 import { getGuestId } from "@/lib/guest-id";
 // useBoardSize removed — we use onBoardWidthChange from react-chessboard
@@ -84,6 +91,7 @@ import {
   TIER_COLORS,
   TIER_LABELS,
   ALL_MODIFIERS,
+  NUCLEAR_QUEEN_COOLDOWN_TURNS,
   type ChaosState,
   type ChaosModifier,
   type ModifierTier,
@@ -134,926 +142,6 @@ import {
  * Overlays that use `icon` are positioned dynamically in corners to avoid stacking.
  * Overlays with custom `render` draw centred effects (wings, crosshairs, crowns).
  */
-type Corner = "top-left" | "top-right" | "bottom-left" | "bottom-right";
-const CORNER_STYLES: Record<Corner, React.CSSProperties> = {
-  "top-left": { position: "absolute", top: "0%", left: "0%" },
-  "top-right": { position: "absolute", top: "0%", right: "0%" },
-  "bottom-left": { position: "absolute", bottom: "2%", left: "0%" },
-  "bottom-right": { position: "absolute", bottom: "2%", right: "0%" },
-};
-const CORNER_ORDER: Corner[] = [
-  "top-right",
-  "top-left",
-  "bottom-right",
-  "bottom-left",
-];
-
-type OverlayDef = {
-  /** Simple emoji badge — will be auto-positioned into a corner */
-  icon?: string;
-  /** Color for the icon's drop-shadow glow */
-  iconGlow?: string;
-  /** Custom render for complex shapes (centred, not corner-slotted) */
-  render?: (sw: number) => React.ReactElement;
-  /** CSS filter to apply on the base piece */
-  filter?: string;
-  /** Pulsing glow color */
-  glow?: string;
-};
-
-const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
-  "night-rider": {
-    glow: "rgba(168,85,247,0.4)",
-    render: (sw) => {
-      const s = sw * 0.35;
-      return (
-        <svg
-          viewBox="0 0 24 24"
-          width={s}
-          height={s}
-          style={{
-            position: "absolute",
-            top: "2%",
-            right: "2%",
-            opacity: 0.9,
-            filter: "drop-shadow(0 0 2px rgba(168,85,247,0.8))",
-          }}
-        >
-          <path
-            d="M4 12 C4 6, 12 2, 20 6 L16 10 C14 8, 10 8, 8 12 Z"
-            fill="rgba(168,85,247,0.85)"
-            stroke="rgba(216,180,254,0.9)"
-            strokeWidth="0.5"
-          />
-          <path
-            d="M6 14 C6 9, 12 5, 18 8 L15 11 C13 9.5, 10 10, 9 13 Z"
-            fill="rgba(192,132,252,0.5)"
-          />
-        </svg>
-      );
-    },
-  },
-  camel: {
-    glow: "rgba(245,158,11,0.45)",
-  },
-  knook: {
-    glow: "rgba(59,130,246,0.5)",
-    render: (sw) => {
-      const s = sw * 0.28;
-      return (
-        <svg
-          viewBox="0 0 24 24"
-          width={s}
-          height={s}
-          style={{
-            position: "absolute",
-            top: "2%",
-            left: "2%",
-            opacity: 0.85,
-            filter: "drop-shadow(0 0 3px rgba(59,130,246,0.8))",
-          }}
-        >
-          <rect
-            x="4"
-            y="8"
-            width="16"
-            height="14"
-            rx="1"
-            fill="rgba(59,130,246,0.7)"
-            stroke="rgba(147,197,253,0.8)"
-            strokeWidth="0.8"
-          />
-          <rect
-            x="5.5"
-            y="4"
-            width="3"
-            height="6"
-            fill="rgba(59,130,246,0.8)"
-          />
-          <rect x="10" y="4" width="3" height="6" fill="rgba(59,130,246,0.8)" />
-          <rect x="15" y="4" width="3" height="6" fill="rgba(59,130,246,0.8)" />
-        </svg>
-      );
-    },
-  },
-  archbishop: {
-    glow: "rgba(168,85,247,0.5)",
-  },
-  amazon: {
-    glow: "rgba(249,115,22,0.4)",
-    render: (sw) => {
-      const s = sw * 0.26;
-      return (
-        <svg
-          viewBox="0 0 24 24"
-          width={s}
-          height={s}
-          style={{
-            position: "absolute",
-            top: "0%",
-            right: "2%",
-            opacity: 0.9,
-            filter: "drop-shadow(0 0 3px rgba(249,115,22,0.8))",
-          }}
-        >
-          <path
-            d="M6 20 L8 12 L6 8 L10 4 L14 6 L18 4 L16 10 L18 14 L14 18 Z"
-            fill="rgba(249,115,22,0.8)"
-            stroke="rgba(251,191,36,0.8)"
-            strokeWidth="0.6"
-          />
-        </svg>
-      );
-    },
-  },
-  "king-ascension": {
-    glow: "rgba(234,179,8,0.5)",
-    render: (sw) => {
-      const s = sw * 0.32;
-      return (
-        <svg
-          viewBox="0 0 24 24"
-          width={s}
-          height={s}
-          style={{
-            position: "absolute",
-            top: "-4%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            opacity: 0.9,
-            filter: "drop-shadow(0 0 4px rgba(234,179,8,0.9))",
-          }}
-        >
-          <path
-            d="M2 18 L4 8 L8 12 L12 4 L16 12 L20 8 L22 18 Z"
-            fill="rgba(234,179,8,0.8)"
-            stroke="rgba(253,224,71,0.9)"
-            strokeWidth="0.6"
-          />
-          <circle cx="4" cy="8" r="1.5" fill="rgba(253,224,71,0.9)" />
-          <circle cx="12" cy="4" r="1.5" fill="rgba(253,224,71,0.9)" />
-          <circle cx="20" cy="8" r="1.5" fill="rgba(253,224,71,0.9)" />
-        </svg>
-      );
-    },
-  },
-  "phantom-rook": {
-    icon: "👻",
-    iconGlow: "rgba(147,51,234,0.8)",
-    filter: "opacity(0.65) brightness(1.3)",
-    glow: "rgba(147,51,234,0.4)",
-  },
-  "sniper-bishop": {
-    icon: "🎯",
-    iconGlow: "rgba(239,68,68,0.8)",
-    render: (sw) => {
-      const s = sw * 0.35;
-      return (
-        <svg
-          viewBox="0 0 24 24"
-          width={s}
-          height={s}
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%,-50%)",
-            opacity: 0.5,
-            filter: "drop-shadow(0 0 2px rgba(239,68,68,0.6))",
-          }}
-        >
-          <circle
-            cx="12"
-            cy="12"
-            r="9"
-            stroke="rgba(239,68,68,0.7)"
-            strokeWidth="1"
-            fill="none"
-          />
-          <circle
-            cx="12"
-            cy="12"
-            r="4"
-            stroke="rgba(239,68,68,0.5)"
-            strokeWidth="0.8"
-            fill="none"
-          />
-          <line
-            x1="12"
-            y1="1"
-            x2="12"
-            y2="7"
-            stroke="rgba(239,68,68,0.6)"
-            strokeWidth="1"
-          />
-          <line
-            x1="12"
-            y1="17"
-            x2="12"
-            y2="23"
-            stroke="rgba(239,68,68,0.6)"
-            strokeWidth="1"
-          />
-          <line
-            x1="1"
-            y1="12"
-            x2="7"
-            y2="12"
-            stroke="rgba(239,68,68,0.6)"
-            strokeWidth="1"
-          />
-          <line
-            x1="17"
-            y1="12"
-            x2="23"
-            y2="12"
-            stroke="rgba(239,68,68,0.6)"
-            strokeWidth="1"
-          />
-        </svg>
-      );
-    },
-  },
-  "collateral-rook": {
-    icon: "💥",
-    iconGlow: "rgba(249,115,22,0.8)",
-    glow: "rgba(249,115,22,0.4)",
-  },
-  "nuclear-queen": {
-    icon: "☢️",
-    iconGlow: "rgba(34,197,94,0.9)",
-    glow: "rgba(34,197,94,0.5)",
-  },
-  "dragon-rook": {
-    icon: "🐲",
-    iconGlow: "rgba(220,38,38,0.7)",
-    glow: "rgba(220,38,38,0.4)",
-  },
-  "pawn-charge": {
-    icon: "🚀",
-    iconGlow: "rgba(249,115,22,0.8)",
-    glow: "rgba(249,115,22,0.4)",
-  },
-  "pawn-capture-forward": {
-    icon: "🗡️",
-    iconGlow: "rgba(239,68,68,0.6)",
-    glow: "rgba(239,68,68,0.4)",
-  },
-  "dragon-bishop": {
-    icon: "🐉",
-    iconGlow: "rgba(8,145,178,0.7)",
-    glow: "rgba(8,145,178,0.4)",
-  },
-  "pawn-promotion-early": {
-    icon: "⭐",
-    iconGlow: "rgba(234,179,8,0.8)",
-    glow: "rgba(234,179,8,0.3)",
-  },
-  "kings-chains": {
-    render: (sw: number) => {
-      const s = sw * 0.42;
-      return (
-        <svg
-          viewBox="0 0 100 100"
-          width={s}
-          height={s}
-          style={{
-            position: "absolute",
-            bottom: "0%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            opacity: 0.93,
-            filter: "drop-shadow(0 0 4px rgba(200,160,40,0.9))",
-          }}
-        >
-          <ellipse
-            cx="28"
-            cy="72"
-            rx="13"
-            ry="8"
-            fill="none"
-            stroke="#C8A030"
-            strokeWidth="5.5"
-            transform="rotate(-38 28 72)"
-          />
-          <ellipse
-            cx="50"
-            cy="78"
-            rx="13"
-            ry="8"
-            fill="none"
-            stroke="#C8A030"
-            strokeWidth="5.5"
-          />
-          <ellipse
-            cx="72"
-            cy="72"
-            rx="13"
-            ry="8"
-            fill="none"
-            stroke="#C8A030"
-            strokeWidth="5.5"
-            transform="rotate(38 72 72)"
-          />
-        </svg>
-      );
-    },
-    glow: "rgba(200,160,40,0.45)",
-  },
-  "king-wrath": { icon: "⚔️", iconGlow: "rgba(239,68,68,0.7)" },
-  "queen-teleport": {
-    icon: "🌀",
-    iconGlow: "rgba(168,85,247,0.8)",
-    glow: "rgba(168,85,247,0.4)",
-  },
-  "bishop-bounce": { icon: "🪃", iconGlow: "rgba(249,115,22,0.6)" },
-  "rook-cannon": {
-    icon: "💣",
-    iconGlow: "rgba(239,68,68,0.8)",
-    glow: "rgba(239,68,68,0.4)",
-  },
-  "knight-horde": { icon: "🪖", iconGlow: "rgba(34,197,94,0.7)" },
-  "undead-army": {
-    icon: "💀",
-    iconGlow: "rgba(168,85,247,0.8)",
-    filter: "sepia(0.3) hue-rotate(-20deg)",
-  },
-  "bishop-cannon": {
-    icon: "🔮",
-    iconGlow: "rgba(168,85,247,0.7)",
-    glow: "rgba(168,85,247,0.3)",
-  },
-  "forced-en-passant": { icon: "🧱", iconGlow: "rgba(249,115,22,0.6)" },
-  "pawn-shield-wall": { icon: "🔰", iconGlow: "rgba(59,130,246,0.6)" },
-  "enpassant-everywhere": { icon: "♟️", iconGlow: "rgba(234,179,8,0.6)" },
-  "pawn-fortress": { icon: "🏰", iconGlow: "rgba(245,158,11,0.8)" },
-};
-
-/** Map piece code letter → PieceSymbol */
-const PIECE_CODE_MAP: Record<string, string> = {
-  P: "p",
-  N: "n",
-  B: "b",
-  R: "r",
-  Q: "q",
-  K: "k",
-};
-
-/** Modifier IDs that only affect the first piece of their type (visual overlays).
- *  The move gen (genKnook, genArchbishop) also uses the first piece found
- *  in file/rank scan order, so the visual consistently matches. */
-const SINGLE_PIECE_MODIFIERS: Record<string, true> = {
-  knook: true,
-  archbishop: true,
-  camel: true,
-  "night-rider": true,
-};
-
-/** Fairy piece SVG replacements — full piece image swap for transformative modifiers */
-const FAIRY_PIECE_SVGS: Record<string, Record<string, string>> = {
-  knook: { w: "/pieces/fairy/wC.svg", b: "/pieces/fairy/bC.svg" },
-  archbishop: { w: "/pieces/fairy/wA.svg", b: "/pieces/fairy/bA.svg" },
-  amazon: { w: "/pieces/fairy/wAm.svg", b: "/pieces/fairy/bAm.svg" },
-  "night-rider": { w: "/pieces/fairy/wNR.svg", b: "/pieces/fairy/bNR.svg" },
-  camel: { w: "/pieces/fairy/wCa.svg", b: "/pieces/fairy/bCa.svg" },
-  "dragon-bishop": { w: "/pieces/fairy/wDb.svg", b: "/pieces/fairy/bDb.svg" },
-  "dragon-rook": { w: "/pieces/fairy/wDr.svg", b: "/pieces/fairy/bDr.svg" },
-  "rook-cannon": { w: "/pieces/fairy/wRC.svg", b: "/pieces/fairy/bRC.svg" },
-  "pawn-charge": { w: "/pieces/fairy/wPC.svg", b: "/pieces/fairy/bPC.svg" },
-  "pawn-capture-forward": {
-    w: "/pieces/fairy/wPB.svg",
-    b: "/pieces/fairy/bPB.svg",
-  },
-  /** Emperor king — standard king body with gold reach-ring and corner triangles */
-  "emperor-king": { w: "/pieces/fairy/wEK.svg", b: "/pieces/fairy/bEK.svg" },
-  /** Hierophant (Sacred Passage) bishop — ghostly violet phase-bishop */
-  "hierophant-bishop": {
-    w: "/pieces/fairy/wHb.svg",
-    b: "/pieces/fairy/bHb.svg",
-  },
-  /** Usurper — king with swap arrows */
-  usurper: { w: "/pieces/fairy/wUsp.svg", b: "/pieces/fairy/bUsp.svg" },
-  /** Kamikaze Bishop — bishop with explosion flames */
-  "kamikaze-bishop": { w: "/pieces/fairy/wKB.svg", b: "/pieces/fairy/bKB.svg" },
-  /** Queen Cannon — queen with cannon barrel */
-  "queen-cannon": { w: "/pieces/fairy/wQC.svg", b: "/pieces/fairy/bQC.svg" },
-  /** Railgun — rook with electric bolt */
-  railgun: { w: "/pieces/fairy/wRG.svg", b: "/pieces/fairy/bRG.svg" },
-};
-
-/** War Pawn SVG — shown when both pawn-charge AND pawn-capture-forward are active */
-const WAR_PAWN_SVGS: Record<string, string> = {
-  w: "/pieces/fairy/wPW.svg",
-  b: "/pieces/fairy/bPW.svg",
-};
-
-/**
- * Build customPieces with chaos modifier overlays.
- * Wraps each piece image with SVG decorations based on active modifiers.
- */
-function buildChaosCustomPieces(
-  setName: string | null,
-  playerModifiers: ChaosModifier[],
-  aiModifiers: ChaosModifier[],
-  playerColor: "white" | "black",
-  game: Chess,
-  assignedSquares?: Record<string, string | null>,
-  undeadRevived?: { w: boolean; b: boolean },
-  lastMoveRef?: React.MutableRefObject<{ from: string; to: string } | null>,
-  /** Turns remaining on player's nuclear queen cooldown (0 = ready) */
-  playerNukeCdTurns?: number,
-  /** Turns remaining on AI's nuclear queen cooldown (0 = ready) */
-  aiNukeCdTurns?: number,
-  /** Player's active anomaly ID — used for per-anomaly piece visuals */
-  playerAnomalyId?: string | null,
-  /** AI's active anomaly ID — used for per-anomaly piece visuals */
-  aiAnomalyId?: string | null,
-  /** Moon anomaly: whether the queen's nocturnal ability is active */
-  playerMoonUnlocked?: boolean,
-  aiMoonUnlocked?: boolean,
-): Record<
-  string,
-  ({
-    squareWidth,
-    square,
-  }: {
-    squareWidth: number;
-    square?: string;
-  }) => React.ReactElement
-> {
-  const codes = [
-    "wP",
-    "wN",
-    "wB",
-    "wR",
-    "wQ",
-    "wK",
-    "bP",
-    "bN",
-    "bB",
-    "bR",
-    "bQ",
-    "bK",
-  ];
-  const result: Record<
-    string,
-    ({
-      squareWidth,
-      square,
-    }: {
-      squareWidth: number;
-      square?: string;
-    }) => React.ReactElement
-  > = {};
-
-  // Fallback to cburnett if no custom set chosen
-  const actualSet = setName ?? "cburnett";
-
-  // Pre-compute which square is the "single piece" for each modifier
-  // e.g. for knook: the first knight square of each color
-  const singlePieceSquares: Record<string, Record<string, string | null>> = {};
-  for (const modId of Object.keys(SINGLE_PIECE_MODIFIERS)) {
-    singlePieceSquares[modId] = {};
-    for (const color of ["w", "b"] as const) {
-      const mod = (
-        color === (playerColor === "white" ? "w" : "b")
-          ? playerModifiers
-          : aiModifiers
-      ).find((m) => m.id === modId);
-      if (!mod) {
-        singlePieceSquares[modId][color] = null;
-        continue;
-      }
-
-      // Use tracked square from assignedSquares if available
-      const trackedKey = `${color}_${modId}`;
-      if (assignedSquares && trackedKey in assignedSquares) {
-        singlePieceSquares[modId][color] = assignedSquares[trackedKey];
-        continue;
-      }
-
-      // Fallback: find first piece of this type for this color
-      const squares: string[] = [];
-      for (const f of "abcdefgh") {
-        for (const r of "12345678") {
-          const s = `${f}${r}`;
-          const p = game.get(s as any);
-          if (p && p.type === mod.piece && p.color === color) squares.push(s);
-        }
-      }
-      singlePieceSquares[modId][color] = squares[0] ?? null;
-    }
-  }
-
-  for (const code of codes) {
-    const pieceColor = code[0]; // "w" or "b"
-    const pieceType = PIECE_CODE_MAP[code[1]]; // "p", "n", etc.
-    const isPlayerPiece =
-      (pieceColor === "w" && playerColor === "white") ||
-      (pieceColor === "b" && playerColor === "black");
-    const mods = isPlayerPiece ? playerModifiers : aiModifiers;
-    const activeForPiece = mods.filter((m) => m.piece === pieceType);
-    const url = getPieceImageUrl(actualSet, code);
-
-    result[code] = ({
-      squareWidth,
-      square,
-    }: {
-      squareWidth: number;
-      square?: string;
-    }) => {
-      // Collect overlays & effects
-      const overlays: React.ReactElement[] = [];
-      let filter = "";
-      let glowColor = "";
-      let cornerIdx = 0;
-      let pieceUrl = url; // default to standard piece
-
-      // Detect pawn modifier combo: both charge + bayonet = War Pawn
-      const hasPawnCharge =
-        pieceType === "p" && activeForPiece.some((m) => m.id === "pawn-charge");
-      const hasPawnBayonet =
-        pieceType === "p" &&
-        activeForPiece.some((m) => m.id === "pawn-capture-forward");
-      const pawnCombo = hasPawnCharge && hasPawnBayonet;
-      if (pawnCombo) {
-        pieceUrl = WAR_PAWN_SVGS[pieceColor];
-        glowColor = "rgba(245,158,11,0.45)"; // amber glow for war pawn
-      }
-
-      // Choose the fairy piece SVG using the same priority as getPieceDisplayName:
-      // identity mods beat movement mods; newest draft wins within each tier.
-      const IDENTITY_MOD_IDS = [
-        "knook",
-        "archbishop",
-        "camel",
-        "night-rider",
-        "amazon",
-        "king-ascension",
-        "usurper",
-        "kamikaze-bishop",
-        "queen-cannon",
-        "railgun",
-      ];
-      const MOVEMENT_MOD_IDS = ["dragon-bishop", "dragon-rook", "rook-cannon"];
-      const fairyTiers = [IDENTITY_MOD_IDS, MOVEMENT_MOD_IDS];
-      for (const tier of fairyTiers) {
-        // newest-first within the tier
-        const found = [...activeForPiece].reverse().find((m) => {
-          if (!tier.includes(m.id)) return false;
-          if (!FAIRY_PIECE_SVGS[m.id]) return false;
-          if (
-            pawnCombo &&
-            (m.id === "pawn-capture-forward" || m.id === "pawn-charge")
-          )
-            return false;
-          const designatedSquare = singlePieceSquares[m.id]?.[pieceColor];
-          if (designatedSquare === null) return false; // piece was captured
-          if (!square || !designatedSquare) return true;
-          if (square === designatedSquare) return true;
-          // Animation ghost: react-chessboard passes the *source* square while sliding.
-          // After updateTrackedPieces, designatedSquare already points to the target,
-          // so `square` (source) won't match. Only show the fairy SVG for the ghost
-          // if the last move went FROM this square TO the designated square — otherwise
-          // a different piece moving away from an adjacent square would incorrectly
-          // inherit the fairy skin.
-          const lm = lastMoveRef?.current;
-          return (
-            !game.get(square as any) &&
-            !!lm &&
-            lm.from === square &&
-            lm.to === designatedSquare
-          );
-        });
-        if (found) {
-          pieceUrl = FAIRY_PIECE_SVGS[found.id][pieceColor];
-          break;
-        }
-      }
-
-      // Star anomaly: all knights become camels visually (camel SVG)
-      if (
-        pieceType === "n" &&
-        ((isPlayerPiece && playerAnomalyId === "star") ||
-          (!isPlayerPiece && aiAnomalyId === "star")) &&
-        FAIRY_PIECE_SVGS["camel"]
-      ) {
-        pieceUrl = FAIRY_PIECE_SVGS["camel"][pieceColor];
-      }
-
-      // Emperor anomaly: king gets a special SVG with golden reach-ring
-      if (
-        pieceType === "k" &&
-        ((isPlayerPiece && playerAnomalyId === "emperor") ||
-          (!isPlayerPiece && aiAnomalyId === "emperor")) &&
-        FAIRY_PIECE_SVGS["emperor-king"]
-      ) {
-        pieceUrl = FAIRY_PIECE_SVGS["emperor-king"][pieceColor];
-        if (!glowColor) glowColor = "rgba(245,158,11,0.45)";
-      }
-
-      // Hierophant anomaly: all bishops become ghostly phase-bishops
-      if (
-        pieceType === "b" &&
-        ((isPlayerPiece && playerAnomalyId === "hierophant") ||
-          (!isPlayerPiece && aiAnomalyId === "hierophant")) &&
-        FAIRY_PIECE_SVGS["hierophant-bishop"]
-      ) {
-        pieceUrl = FAIRY_PIECE_SVGS["hierophant-bishop"][pieceColor];
-        if (!glowColor) glowColor = "rgba(167,139,250,0.45)";
-      }
-
-      // Now iterate all active mods for overlays, glows, and filters
-      for (const mod of activeForPiece) {
-        // Skip single-piece modifiers if this isn't the designated piece
-        if (SINGLE_PIECE_MODIFIERS[mod.id] && square) {
-          const designatedSquare = singlePieceSquares[mod.id]?.[pieceColor];
-          // Also allow through when the piece has left `square` — animation ghost of the fairy piece
-          if (
-            designatedSquare &&
-            square !== designatedSquare &&
-            game.get(square as any)
-          )
-            continue;
-        }
-
-        const fairySvgs = FAIRY_PIECE_SVGS[mod.id];
-        // Undead army: hide skull icon once revival has been spent
-        const skipUndeadIcon =
-          mod.id === "undead-army" &&
-          !!undeadRevived?.[pieceColor as "w" | "b"];
-
-        const def = MODIFIER_OVERLAYS[mod.id];
-        if (!def) continue;
-
-        // Skip icon/render overlays for most fairy piece replacements.
-        // Exception: mods whose badge should still be visible alongside the fairy SVG.
-        const allowIconWithFairy =
-          mod.id === "pawn-charge" ||
-          mod.id === "pawn-capture-forward" ||
-          mod.id === "dragon-bishop" ||
-          mod.id === "dragon-rook";
-        if ((!fairySvgs || allowIconWithFairy) && !skipUndeadIcon) {
-          if (def.icon) {
-            // For the War Pawn combo (Torpedo + Bayonet), render icons in all
-            // 4 corners: each modifier occupies two opposite corners.
-            if (
-              pawnCombo &&
-              (mod.id === "pawn-charge" || mod.id === "pawn-capture-forward")
-            ) {
-              const corners: Corner[] =
-                mod.id === "pawn-charge"
-                  ? ["top-left", "bottom-right"]
-                  : ["top-right", "bottom-left"];
-              const s = squareWidth * 0.24;
-              for (const c of corners) {
-                const style = CORNER_STYLES[c];
-                overlays.push(
-                  <div
-                    key={`${mod.id}-${c}`}
-                    style={{
-                      position: "absolute",
-                      ...style,
-                      lineHeight: 1,
-                      filter: `drop-shadow(0 0 3px ${def.iconGlow ?? "rgba(255,255,255,0.6)"})`,
-                    }}
-                  >
-                    <Emoji emoji={def.icon} style={{ width: s, height: s }} />
-                  </div>,
-                );
-              }
-              continue;
-            }
-
-            // Icon-based badge — auto-assign to next available corner
-            const corner = CORNER_ORDER[cornerIdx % CORNER_ORDER.length];
-            cornerIdx++;
-            const s = squareWidth * 0.24;
-            const style = CORNER_STYLES[corner];
-            // Nuclear queen on cooldown: show remaining turns number badge and dim
-            const nukeCdTurns =
-              mod.id === "nuclear-queen"
-                ? isPlayerPiece
-                  ? (playerNukeCdTurns ?? 0)
-                  : (aiNukeCdTurns ?? 0)
-                : 0;
-            const nukeOnCooldown = nukeCdTurns > 0;
-            const badgeGlow = nukeOnCooldown
-              ? "rgba(100,100,100,0.5)"
-              : (def.iconGlow ?? "rgba(255,255,255,0.6)");
-            overlays.push(
-              nukeOnCooldown ? (
-                <div
-                  key={mod.id}
-                  style={{
-                    position: "absolute",
-                    ...style,
-                    width: s,
-                    height: s,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "rgba(0,0,0,0.55)",
-                    borderRadius: "3px",
-                    opacity: 0.85,
-                    color: "#ccc",
-                    fontSize: s * 0.68,
-                    fontWeight: "bold",
-                    lineHeight: 1,
-                    filter: `drop-shadow(0 0 3px ${badgeGlow})`,
-                  }}
-                >
-                  {nukeCdTurns}
-                </div>
-              ) : (
-                <div
-                  key={mod.id}
-                  style={{
-                    position: "absolute",
-                    ...style,
-                    lineHeight: 1,
-                    filter: `drop-shadow(0 0 3px ${badgeGlow})`,
-                  }}
-                >
-                  <Emoji emoji={def.icon} style={{ width: s, height: s }} />
-                </div>
-              ),
-            );
-          }
-          if (def.render) {
-            // Custom SVG render — uses its own positioning (can stack with icon badge above)
-            overlays.push(
-              <React.Fragment key={`${mod.id}-render`}>
-                {def.render(squareWidth)}
-              </React.Fragment>,
-            );
-          }
-        }
-
-        if (def.filter) filter = def.filter;
-        if (def.glow && !glowColor) glowColor = def.glow;
-      }
-
-      // Anomaly-specific piece badges (passive anomalies that change piece movement)
-      {
-        const pAnom = isPlayerPiece ? playerAnomalyId : aiAnomalyId;
-        const pMoon = isPlayerPiece ? playerMoonUnlocked : aiMoonUnlocked;
-        if (pAnom) {
-          // Hanged Man — Inversion: 🙃 on all pawns
-          if (pAnom === "hanged-man" && pieceType === "p") {
-            const corner = CORNER_ORDER[cornerIdx % CORNER_ORDER.length];
-            cornerIdx++;
-            const s = squareWidth * 0.24;
-            overlays.push(
-              <div
-                key="anom-badge"
-                style={{
-                  position: "absolute",
-                  ...CORNER_STYLES[corner],
-                  lineHeight: 1,
-                  filter: "drop-shadow(0 0 2px rgba(20,184,166,0.7))",
-                }}
-              >
-                <Emoji emoji="🙃" style={{ width: s, height: s }} />
-              </div>,
-            );
-          }
-          // Emperor — Dominion: SVG handles the visual (see emperor-king in FAIRY_PIECE_SVGS)
-          // Moon — Nocturnal Hunt: 🌑 on queen when unlocked
-          if (pAnom === "moon" && pieceType === "q" && pMoon) {
-            if (!glowColor) glowColor = "rgba(100,116,139,0.4)";
-            const corner = CORNER_ORDER[cornerIdx % CORNER_ORDER.length];
-            cornerIdx++;
-            const s = squareWidth * 0.24;
-            overlays.push(
-              <div
-                key="anom-badge"
-                style={{
-                  position: "absolute",
-                  ...CORNER_STYLES[corner],
-                  lineHeight: 1,
-                  filter: "drop-shadow(0 0 3px rgba(148,163,184,0.9))",
-                }}
-              >
-                <Emoji emoji="🌑" style={{ width: s, height: s }} />
-              </div>,
-            );
-          }
-        }
-      }
-
-      // King's Chains: draw chain overlay on the currently-chained enemy piece square
-      const wChained = assignedSquares?.["w_kings-chains"];
-      const bChained = assignedSquares?.["b_kings-chains"];
-      if (square && (square === wChained || square === bChained)) {
-        const s = squareWidth * 0.42;
-        overlays.push(
-          <React.Fragment key="kings-chains-chain">
-            <svg
-              viewBox="0 0 100 100"
-              width={s}
-              height={s}
-              style={{
-                position: "absolute",
-                bottom: "0%",
-                left: "50%",
-                transform: "translateX(-50%)",
-                opacity: 0.97,
-                filter:
-                  "drop-shadow(0 0 6px rgba(239,68,68,0.95)) drop-shadow(0 0 2px rgba(0,0,0,0.8))",
-                zIndex: 3,
-              }}
-            >
-              <ellipse
-                cx="28"
-                cy="72"
-                rx="13"
-                ry="8"
-                fill="none"
-                stroke="#EF4444"
-                strokeWidth="5.5"
-                transform="rotate(-38 28 72)"
-              />
-              <ellipse
-                cx="50"
-                cy="78"
-                rx="13"
-                ry="8"
-                fill="none"
-                stroke="#EF4444"
-                strokeWidth="5.5"
-              />
-              <ellipse
-                cx="72"
-                cy="72"
-                rx="13"
-                ry="8"
-                fill="none"
-                stroke="#EF4444"
-                strokeWidth="5.5"
-                transform="rotate(38 72 72)"
-              />
-            </svg>
-          </React.Fragment>,
-        );
-        if (!glowColor) glowColor = "rgba(239,68,68,0.5)";
-      }
-
-      return (
-        <div
-          style={{
-            width: squareWidth,
-            height: squareWidth,
-            position: "relative",
-          }}
-        >
-          {/* Glow aura behind piece */}
-          {glowColor && (
-            <div
-              style={{
-                position: "absolute",
-                inset: "10%",
-                borderRadius: "50%",
-                background: `radial-gradient(circle, ${glowColor} 0%, transparent 70%)`,
-                animation: "pulse 2.5s ease-in-out infinite",
-                pointerEvents: "none",
-              }}
-            />
-          )}
-          {/* Base piece image */}
-          <div
-            style={{
-              width: squareWidth,
-              height: squareWidth,
-              backgroundImage: `url(${pieceUrl})`,
-              backgroundSize: "contain",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "center",
-              filter: filter || undefined,
-              position: "relative",
-              zIndex: 1,
-            }}
-          />
-          {/* Modifier overlays */}
-          {overlays.length > 0 && (
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                zIndex: 2,
-                pointerEvents: "none",
-              }}
-            >
-              {overlays}
-            </div>
-          )}
-        </div>
-      );
-    };
-  }
-
-  return result;
-}
 
 /* ────────────────────────── Constants ────────────────────────── */
 
@@ -1069,7 +157,7 @@ type GameStatus =
   | "playing"
   | "drafting"
   | "game-over";
-type GameResult = "white" | "black" | "draw" | null;
+type GameResult = "white" | "black" | "draw" | "aborted" | null;
 
 type MoveLogEntry = {
   moveNumber: number;
@@ -1389,6 +477,7 @@ function AnomalyPickerScreen({
   onSkip,
   waitingForOpponent = false,
   unlimitedTime = false,
+  serverDeadline,
 }: {
   choices: AnomalyDefinition[];
   isPro: boolean;
@@ -1396,13 +485,15 @@ function AnomalyPickerScreen({
   onSkip: () => void;
   waitingForOpponent?: boolean;
   unlimitedTime?: boolean;
+  serverDeadline?: number;
 }) {
+  const presentation = useChaosPresentation();
   const [selected, setSelected] = useState<AnomalyDefinition | null>(null);
   const [hoveredLocked, setHoveredLocked] = useState<number | null>(null);
   // Timer: 30s to pick, then auto-pick from free cards
   const [timeLeft, setTimeLeft] = useState(30);
   // Flip state: each card starts face-down (back visible), then flips to reveal
-  const [revealed, setRevealed] = useState([false, false, false, false]);
+  const [revealed, setRevealed] = useState(() => choices.map(() => false));
 
   // Keep callbacks in refs so the timer interval never stales or resets when
   // the parent re-renders (inline functions change reference every render).
@@ -1425,6 +516,12 @@ function AnomalyPickerScreen({
 
   // Timer — depends only on isPro/choices (stable after mount), never onPick/onSkip
   useEffect(() => {
+    if (serverDeadline) {
+      const tick = () => setTimeLeft(Math.max(0, Math.ceil((serverDeadline - Date.now()) / 1000)));
+      tick(); const timer = setInterval(tick, 250);
+      document.addEventListener("visibilitychange", tick);
+      return () => {clearInterval(timer);document.removeEventListener("visibilitychange", tick);};
+    }
     if (unlimitedTime) return; // no countdown in unlimited mode
     const interval = setInterval(() => {
       setTimeLeft((t) => {
@@ -1456,7 +553,7 @@ function AnomalyPickerScreen({
     }, 1000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPro, choices]);
+  }, [isPro, choices, serverDeadline, unlimitedTime]);
 
   // Middle 2 (indices 1 & 2) are free; outer 2 (indices 0 & 3) are Pro-locked
   const isLocked = (i: number) => !isPro && (i === 0 || i === 3);
@@ -1506,6 +603,8 @@ function AnomalyPickerScreen({
       window.scrollTo(0, scrollY);
     };
   }, []);
+
+  if (presentation.AnomalyPicker) return <presentation.AnomalyPicker choices={choices} revealed={revealed} selected={selected} onSelect={setSelected} onPick={onPick} onSkip={onSkip} waiting={waitingForOpponent} countdown={unlimitedTime ? null : timeLeft} />;
 
   return (
     <div
@@ -1858,6 +957,7 @@ function AnomalyActivatedPopup({
   };
   onDismiss: () => void;
 }) {
+  const presentation = useChaosPresentation();
   const [stage, setStage] = useState<"enter" | "reveal" | "done">("enter");
   const anomaly = getAnomalyById(data.anomalyId);
 
@@ -1878,6 +978,7 @@ function AnomalyActivatedPopup({
 
   return (
     <div
+      data-activity-dialog={presentation.activity ? "anomaly" : undefined}
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{
         animation: "draft-bg-enter 0.3s ease-out both",
@@ -1910,7 +1011,7 @@ function AnomalyActivatedPopup({
                 : "none",
           }}
         >
-          {data.icon}
+          {presentation.activity ? <img className="activity-ability-art" src={`/activity/anomalies/${data.anomalyId}.webp`} alt="" /> : data.icon}
         </div>
         <p
           className={`text-xl font-black text-white ${anomaly?.accentColor ?? ""}`}
@@ -1922,7 +1023,7 @@ function AnomalyActivatedPopup({
         </p>
         {stage === "done" && (
           <p className="mt-3 text-[10px] text-slate-500 animate-pulse">
-            Click to dismiss
+            {presentation.activity ? "Tap outside to continue" : "Click to dismiss"}
           </p>
         )}
       </div>
@@ -1944,6 +1045,7 @@ function OpponentDraftReveal({
   data: OpponentDraftRevealData;
   onDismiss: () => void;
 }) {
+  const presentation = useChaosPresentation();
   const [stage, setStage] = useState<"enter" | "reveal" | "done">("enter");
 
   // The parent passes onDismiss as an inline arrow, so its identity changes on every
@@ -1957,10 +1059,10 @@ function OpponentDraftReveal({
   });
 
   useEffect(() => {
-    playSound("record-scratch");
+    playSound(presentation.activity ? "drumroll" : "record-scratch");
     const t1 = setTimeout(() => {
       setStage("reveal");
-      playSound("bell-double");
+      playSound(presentation.activity ? "reveal-stinger" : "bell-double");
     }, 800);
     const t2 = setTimeout(() => setStage("done"), 1400);
     const t3 = setTimeout(() => onDismissRef.current(), 4500);
@@ -1975,6 +1077,10 @@ function OpponentDraftReveal({
   const tier = TIER_COLORS[mod.tier];
   const glowColor = TIER_GLOW_COLORS[mod.tier];
   const isRevealed = stage !== "enter";
+
+  if (presentation.OpponentReveal) {
+    return <presentation.OpponentReveal mod={mod} phase={data.phase} revealed={isRevealed} onDismiss={onDismiss} />;
+  }
 
   return (
     <div
@@ -2256,6 +1362,7 @@ function DraftModal({
   fen,
   playerColor,
   timeLimit,
+  serverDeadline,
   anomaly,
   temperanceUsed,
   onTemperanceReroll,
@@ -2270,6 +1377,7 @@ function DraftModal({
   playerColor?: "w" | "b";
   /** Seconds before auto-picking first card (PvP only). Undefined = no timer. */
   timeLimit?: number;
+  serverDeadline?: number;
   /** Player's anomaly id — used to show Temperance reroll button */
   anomaly?: import("@/lib/chaos-anomalies").AnomalyId | null;
   /** Whether Temperance reroll has already been used this phase */
@@ -2283,6 +1391,7 @@ function DraftModal({
   /** Whether the current user is authenticated (controls preview warning text) */
   isAuthenticated?: boolean;
 }) {
+  const presentation = useChaosPresentation();
   const pieceCounts =
     fen && playerColor ? countPiecesFromFen(fen, playerColor) : null;
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -2314,6 +1423,8 @@ function DraftModal({
   });
   useEffect(() => {
     playSound("drumroll");
+    setRevealedCards(new Set());
+    setAllRevealed(false);
 
     // Stagger the card reveals
     const timers: ReturnType<typeof setTimeout>[] = [];
@@ -2339,20 +1450,23 @@ function DraftModal({
 
   // Countdown timer: starts when all cards are revealed (PvP only)
   useEffect(() => {
-    if (!timeLimit || !allRevealed) return;
-    setCountdown(timeLimit);
-    let remaining = timeLimit;
-    const id = setInterval(() => {
-      remaining--;
+    if (!serverDeadline && (!timeLimit || !allRevealed)) return;
+    const deadline = serverDeadline ?? Date.now() + timeLimit! * 1000;
+    let picked = false;
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
       setCountdown(remaining);
-      if (remaining <= 0) {
-        clearInterval(id);
+      if (remaining === 0 && !picked && !serverDeadline) {
+        picked = true;
         const opts = choicesRef.current;
-        handlePickRef.current(opts[Math.floor(Math.random() * opts.length)]);
+        if (opts.length) handlePickRef.current(opts[Math.floor(Math.random() * opts.length)]);
       }
-    }, 1000);
-    return () => clearInterval(id);
-  }, [allRevealed, timeLimit]);
+    };
+    tick();
+    const id = setInterval(tick, 250);
+    document.addEventListener("visibilitychange", tick);
+    return () => { clearInterval(id); document.removeEventListener("visibilitychange", tick); };
+  }, [allRevealed, timeLimit, serverDeadline]);
 
   // Handle card pick with a dismiss animation
   const handlePick = useCallback(
@@ -2370,14 +1484,15 @@ function DraftModal({
       }
       setPickedId(mod.id);
       setDismissing(true);
-      playSound("taco-bell-bong");
+      if (serverDeadline) { onPick(mod); return; }
+      playSound(presentation.activity ? "correct" : "taco-bell-bong");
       if (isLockedPick && onLockedPick) {
         setTimeout(() => onLockedPick(mod), 650);
       } else {
         setTimeout(() => onPick(mod), 650);
       }
     },
-    [pickedId, allRevealed, onPick, onLockedPick],
+    [pickedId, allRevealed, onPick, onLockedPick, presentation.activity, serverDeadline],
   );
 
   const confirmPreviewPick = useCallback(() => {
@@ -2389,9 +1504,9 @@ function DraftModal({
     setPendingPreviewMod(null);
     setPickedId(mod.id);
     setDismissing(true);
-    playSound("taco-bell-bong");
+    playSound(presentation.activity ? "correct" : "taco-bell-bong");
     setTimeout(() => onLockedPick(mod), 650);
-  }, [pendingPreviewMod, previewDontAsk, onLockedPick]);
+  }, [pendingPreviewMod, previewDontAsk, onLockedPick, presentation.activity]);
 
   useEffect(() => {
     if (
@@ -2443,6 +1558,12 @@ function DraftModal({
     };
   }, [peeking]);
 
+  if (presentation.Draft && !pendingPreviewMod) {
+    const Draft = presentation.Draft;
+    return <Draft phase={phase} choices={choices} ready={allRevealed} revealedCards={revealedCards} picked={!!pickedId}
+      countdown={countdown} unlockedIds={unlockedIds} onPick={handlePick}
+      onReroll={anomaly === 'temperance' && !temperanceUsed ? onTemperanceReroll : undefined} />;
+  }
   // Preview confirmation popup
   if (pendingPreviewMod) {
     return (
@@ -3238,13 +2359,14 @@ function ModifierList({
 /* ────────────────────────── Inline modifier icons (next to player name) ────────────────────────── */
 
 function InlineModifierIcons({ modifiers }: { modifiers: ChaosModifier[] }) {
+  const presentation = useChaosPresentation();
   if (modifiers.length === 0) return null;
   return (
     <div className="ml-auto flex gap-1">
       {modifiers.map((m) => (
         <ModifierTooltip key={m.id} mod={m}>
           <span className="cursor-default transition-transform inline-block hover:scale-125">
-            <Emoji emoji={m.icon} className="w-5 h-5" />
+            {presentation.PowerArt ? <span className="inline-power-art"><presentation.PowerArt id={m.id} piece={m.piece || 'p'} /></span> : <Emoji emoji={m.icon} className="w-5 h-5" />}
           </span>
         </ModifierTooltip>
       ))}
@@ -3674,6 +2796,13 @@ function getPieceDisplayName(
   ];
   const movementMods = ["dragon-bishop", "dragon-rook"];
 
+  // A lone knight can carry several upgrades; don't hide the older powers.
+  if (pieceType === "n") {
+    const upgrades = mods.filter((m) => singlePieceMods[m.id] && m.piece === "n" &&
+      assignedSquares?.[`${color}_${m.id}`] === square);
+    if (upgrades.length > 1) return upgrades.map((m) => m.name.replace(/^The /, "")).join(" + ");
+  }
+
   for (const tier of [identityMods, movementMods]) {
     for (const m of [...mods].reverse()) {
       if (!tier.includes(m.id)) continue;
@@ -3990,9 +3119,11 @@ function PieceInfoPanel({
 
   const isPlayerPiece = piece.color === playerColorCode;
   const mods = isPlayerPiece ? playerMods : aiMods;
-  const pieceTypeMods = mods.filter(
-    (m) => m.piece === (piece.type as PieceType),
-  );
+  const pieceTypeMods = mods.filter((m) => {
+    if (m.piece !== (piece.type as PieceType)) return false;
+    const assigned = assignedSquares?.[`${piece.color}_${m.id}`];
+    return !SINGLE_PIECE_MODIFIERS[m.id] || assigned === undefined || assigned === square;
+  });
   const displayName = getPieceDisplayName(
     piece.type,
     mods,
@@ -4084,6 +3215,16 @@ function PieceInfoPanel({
 
 /* ────────────────────────── Main Page ────────────────────────── */
 
+// Static SVG decals keep destinations readable without moving the board squares.
+function activityMoveDecal(chaos: boolean, capture: boolean, enemy = false): string {
+  const color = capture ? '#ff986e' : enemy ? '#ffba84' : chaos ? '#cab0ff' : '#a6eeff';
+  const shape = capture
+    ? '<path d="M12 32V16Q12 12 16 12H32M68 12H84Q88 12 88 16V32M88 68V84Q88 88 84 88H68M32 88H16Q12 88 12 84V68"/><path d="M44 12L50 19L56 12M88 44L81 50L88 56M56 88L50 81L44 88M12 56L19 50L12 44"/>'
+    : chaos ? '<path d="M50 28L72 50L50 72L28 50Z"/><path d="M52 37L43 51H51L47 63L60 47H51Z" fill="'+color+'" stroke="none"/>'
+    : '<circle cx="50" cy="50" r="18"/><path d="M41 50L48 57L61 43"/>';
+  return `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g fill="${capture ? 'none' : '#172737cc'}" stroke="#172737" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">${shape}</g><g fill="${capture ? 'none' : '#172737cc'}" stroke="${color}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">${shape}</g></svg>`)}")`;
+}
+
 const EFFECT_DURATIONS: Record<string, number> = {
   explosion: 750,
   nuke: 1000,
@@ -4102,6 +3243,7 @@ const EFFECT_DURATIONS: Record<string, number> = {
 const KING_DEATH_POPUP_DELAY = 950;
 
 export default function ChaosChessPage() {
+  const presentation = useChaosPresentation();
   /* ── Auth ── */
   const { authenticated, plan } = useSession();
 
@@ -4111,6 +3253,7 @@ export default function ChaosChessPage() {
       const h: Record<string, string> = {};
       if (json) h["Content-Type"] = "application/json";
       if (!authenticated) h["X-Guest-Id"] = getGuestId();
+      Object.assign(h, chaosIdentityHeaders());
       return h;
     },
     [authenticated],
@@ -4229,10 +3372,11 @@ export default function ChaosChessPage() {
   rematchRequestedRef.current = rematchRequested;
   const [rematchReceived, setRematchReceived] = useState(false);
   /** Reason for game end (for display) */
+  const [openingMove, setOpeningMove] = useState<{side: "w" | "b"; deadline: number} | null>(null);
   const [endReason, setEndReason] = useState<string>("");
 
   /* ── Piece info floating panel ── */
-  const [pieceInfoOpen, setPieceInfoOpen] = useState(true);
+  const [pieceInfoOpen, setPieceInfoOpen] = useState(!presentation.activity);
   const [pieceInfoPos, setPieceInfoPos] = useState({ x: -1, y: -1 }); // -1 = use default (bottom-right)
   const pieceInfoDragRef = useRef<{
     sx: number;
@@ -4247,7 +3391,7 @@ export default function ChaosChessPage() {
     label: string;
     base: number;
     inc: number;
-  } | null>(null);
+  } | null>(CHAOS_TIME_CONTROLS[1]);
   const [timers, setTimers] = useState<{ w: number; b: number }>({
     w: 0,
     b: 0,
@@ -4260,11 +3404,24 @@ export default function ChaosChessPage() {
     inc: number;
   } | null>(null);
   timeControlRef.current = timeControl;
-  const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  /* ── Per-move timer (PvP only, 30s per turn) ── */
-  const [perMoveSecs, setPerMoveSecs] = useState(30);
-  const perMoveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const serverDraftsRef = useRef(false);
+  const serverMoveCountRef = useRef(0);
+  const [serverOpening, setServerOpening] = useState<{choices: AnomalyDefinition[]; deadline: number} | null>(null);
+  const [serverDraft, setServerDraft] = useState<{id: string; color: string; deadline: number; rerolled?: boolean} | null>(null);
+  const serverDraftRef = useRef(serverDraft); serverDraftRef.current = serverDraft;
+  const serverDraftOffsetRef = useRef(0);
+  const [serverPickSeconds, setServerPickSeconds] = useState(0);
+  useEffect(() => {
+    if (!serverDraft) return;
+    const tick = () => setServerPickSeconds(Math.max(0, Math.ceil((serverDraft.deadline + serverDraftOffsetRef.current - Date.now()) / 1000)));
+    tick(); const interval = setInterval(tick, 250);
+    return () => clearInterval(interval);
+  }, [serverDraft]);
+
+  const serverClockRef = useRef<MatchClock | null>(null);
+  const serverClockReceivedRef = useRef(0);
 
   /* ── Unlimited time mode (no per-move or draft countdown) ── */
   const [unlimitedTime, setUnlimitedTime] = useState(() => {
@@ -4285,12 +3442,9 @@ export default function ChaosChessPage() {
   /** Called from per-move timer when OPPONENT's turn runs out — grants victory to local player */
   const handleOpponentTimeoutRef = useRef<(() => void) | null>(null);
 
-  /* ── In-game chat (PvP only, ephemeral via PartyKit — not saved to DB) ── */
-  const [chatMessages, setChatMessages] = useState<
-    { text: string; mine: boolean; ts: number }[]
-  >([]);
-  const [chatInput, setChatInput] = useState("");
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const [chatMessages, setChatMessages] = useState<ChatLine[]>([]);
+  const [chatError, setChatError] = useState("");
+  useEffect(() => { setChatMessages([]); setChatError(""); }, [roomId]);
 
   /* ── ELO ratings ── */
   const [myRating, setMyRating] = useState<number | null>(null);
@@ -4400,6 +3554,7 @@ export default function ChaosChessPage() {
         anomaly,
         spentIds,
       );
+      if (presentation.activity) return choices;
       return ensureUnlockedChoice(
         choices,
         unlocked,
@@ -4408,7 +3563,7 @@ export default function ChaosChessPage() {
         spentIds,
       );
     },
-    [authenticated, authUnlockedIds],
+    [authenticated, authUnlockedIds, presentation.activity],
   );
 
   /** Modifier earnt by the guest after their first win — shown in unlock modal */
@@ -4460,7 +3615,6 @@ export default function ChaosChessPage() {
    * - "lovers-second": waiting for player to click second piece
    * - "strength": king queen-range captures highlighted
    * - "justice": waiting for player to mark a piece immune
-   * - "devil": waiting for player to click opponent piece to freeze
    * - "judgement": resurrection picker modal shown
    */
   const [anomalyActivationMode, setAnomalyActivationMode] = useState<
@@ -4468,7 +3622,6 @@ export default function ChaosChessPage() {
     | "lovers-second"
     | "strength"
     | "justice"
-    | "devil"
     | "judgement"
     | null
   >(null);
@@ -4508,10 +3661,10 @@ export default function ChaosChessPage() {
   const chaosCustomPieces = useMemo(() => {
     const allMods = [...chaosState.playerModifiers, ...chaosState.aiModifiers];
     const anyAnomaly = !!(chaosState.playerAnomaly || chaosState.aiAnomaly);
-    if (allMods.length === 0 && !anyAnomaly) return baseCustomPieces;
+    if (allMods.length === 0 && !anyAnomaly && !presentation.activity) return baseCustomPieces;
     const currentMove = game.moveNumber();
     return buildChaosCustomPieces(
-      pieceTheme.setName,
+      presentation.activity ? 'chaos-toy' : pieceTheme.setName,
       chaosState.playerModifiers,
       chaosState.aiModifiers,
       playerColor,
@@ -4528,6 +3681,7 @@ export default function ChaosChessPage() {
     );
   }, [
     pieceTheme.setName,
+    presentation.activity,
     chaosState.playerModifiers,
     chaosState.aiModifiers,
     playerColor,
@@ -4686,7 +3840,7 @@ export default function ChaosChessPage() {
     ) => {
       const bounceSquare = move.bounceSquare ?? move.from;
       const pieceCode = `${bishopColor}B`;
-      const pieceUrl = getPieceImageUrl(
+      const pieceUrl = presentation.activity ? `/activity/pieces/${pieceCode}.svg` : getPieceImageUrl(
         pieceTheme.setName ?? "cburnett",
         pieceCode,
       );
@@ -4703,13 +3857,13 @@ export default function ChaosChessPage() {
         950,
       );
     },
-    [pieceTheme.setName],
+    [pieceTheme.setName, presentation.activity],
   );
 
   /** Start the king-capture slide: capturing piece glides from `from` to the king's square `to` */
   const startKingCaptureAnim = useCallback(
     (from: string, to: string, pieceCode: string) => {
-      const pieceUrl = getPieceImageUrl(
+      const pieceUrl = presentation.activity ? `/activity/pieces/${pieceCode}.svg` : getPieceImageUrl(
         pieceTheme.setName ?? "cburnett",
         pieceCode,
       );
@@ -4721,7 +3875,7 @@ export default function ChaosChessPage() {
         750,
       );
     },
-    [pieceTheme.setName],
+    [pieceTheme.setName, presentation.activity],
   );
 
   /* ── Preload sounds ── */
@@ -4752,99 +3906,19 @@ export default function ChaosChessPage() {
     };
   }, []);
 
-  /* ── Timer tick (100ms interval) ── */
+  /* Display the server clock using elapsed time, including after backgrounding. */
   useEffect(() => {
-    if (timerIntervalRef.current) {
-      clearInterval(timerIntervalRef.current);
-      timerIntervalRef.current = null;
-    }
-    if (gameStatus !== "playing" || !timeControl) return;
-    timerIntervalRef.current = setInterval(() => {
-      const turn = gameRef.current.turn() as "w" | "b";
-      setTimers((prev) => ({ ...prev, [turn]: Math.max(0, prev[turn] - 100) }));
-    }, 100);
-    return () => {
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current);
-        timerIntervalRef.current = null;
-      }
+    if (gameMode === "ai") return;
+    const tick = () => {
+      const saved = serverClockRef.current;
+      if (!saved) return;
+      const clock = projectClock(saved, saved.since + Math.max(0, performance.now() - serverClockReceivedRef.current));
+      setTimers(previous => Math.ceil(previous.w / 1000) === Math.ceil(clock.w / 1000) && Math.ceil(previous.b / 1000) === Math.ceil(clock.b / 1000) ? previous : {w: clock.w, b: clock.b});
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameStatus, timeControl]);
-
-  /* ── Timer timeout check ── */
-  useEffect(() => {
-    if (!timeControl || gameStatus !== "playing") return;
-    if (timers.w === 0 && timers.b > 0) {
-      setGameResult("black");
-      setGameStatus("game-over");
-      setEndReason("White ran out of time");
-    } else if (timers.b === 0 && timers.w > 0) {
-      setGameResult("white");
-      setGameStatus("game-over");
-      setEndReason("Black ran out of time");
-    }
-  }, [timers.w, timers.b, gameStatus, timeControl]);
-
-  /* ── Per-move countdown timer (PvP only, 30s per turn — auto-resign at 0) ── */
-  // Ref so the setInterval callback can check turn without a stale closure
-  const isMyTurnRef = useRef(false);
-  useEffect(() => {
-    // Only relevant for PvP games in progress (and only when time-limited)
-    if (gameMode === "ai" || gameStatus !== "playing" || unlimitedTime) {
-      if (perMoveTimerRef.current) {
-        clearInterval(perMoveTimerRef.current);
-        perMoveTimerRef.current = null;
-      }
-      setPerMoveSecs(30);
-      return;
-    }
-
-    const isMyTurn =
-      (playerColor === "white" && game.turn() === "w") ||
-      (playerColor === "black" && game.turn() === "b");
-    isMyTurnRef.current = isMyTurn;
-
-    // Always count down from 30 on each turn change (so both players' timers are visible)
-    setPerMoveSecs(30);
-    if (perMoveTimerRef.current) clearInterval(perMoveTimerRef.current);
-    perMoveTimerRef.current = setInterval(() => {
-      setPerMoveSecs((prev) => {
-        if (prev <= 1) {
-          clearInterval(perMoveTimerRef.current!);
-          perMoveTimerRef.current = null;
-          // Auto-resign on my timeout; grant victory on opponent timeout
-          if (isMyTurnRef.current) {
-            handleResignRef.current?.();
-          } else {
-            handleOpponentTimeoutRef.current?.();
-          }
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => {
-      if (perMoveTimerRef.current) {
-        clearInterval(perMoveTimerRef.current);
-        perMoveTimerRef.current = null;
-      }
-    };
-    // `game` is a new Chess() instance on every move, so this effect re-runs each move
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [game, gameMode, gameStatus, playerColor]);
-
-  /* ── Auto-scroll chat to bottom on new messages (skip bulk initial load) ── */
-  const prevChatLengthRef = useRef(0);
-  useEffect(() => {
-    const prev = prevChatLengthRef.current;
-    prevChatLengthRef.current = chatMessages.length;
-    // Only scroll if exactly one new message arrived (not a bulk history load)
-    if (chatMessages.length === prev + 1) {
-      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [chatMessages.length]);
+    tick(); const timer = setInterval(tick, 100);
+    document.addEventListener("visibilitychange", tick);
+    return () => { clearInterval(timer); document.removeEventListener("visibilitychange", tick); };
+  }, [gameMode]);
 
   /* ── Fetch ELO ratings when multiplayer game starts ── */
   useEffect(() => {
@@ -4868,7 +3942,7 @@ export default function ChaosChessPage() {
 
   /* ── Compute ELO change when game ends (multiplayer only) ── */
   useEffect(() => {
-    if (gameStatus !== "game-over" || gameMode === "ai") return;
+    if (gameStatus !== "game-over" || gameMode === "ai" || gameResult === "aborted") return;
     if (myRatingRef.current === null || opponentRatingRef.current === null)
       return;
     const result =
@@ -5093,6 +4167,7 @@ export default function ChaosChessPage() {
   /* ── Check for game end ── */
   const checkGameEnd = useCallback(
     (g: Chess, captureAt?: string, captureFrom?: string) => {
+      if (gameMode !== "ai" && serverDraftsRef.current) return false;
       // King-capture fallback: chaos moves can land on the king square.
       // If a king is missing from the board, the side that captured it wins.
       const board = g.board();
@@ -5131,7 +4206,7 @@ export default function ChaosChessPage() {
           spawnPepe(PEPE.gigachad);
           // Guest first-win unlock
           if (
-            !authenticated &&
+            !presentation.activity && !authenticated &&
             typeof window !== "undefined" &&
             !window.localStorage.getItem(LS_FIRST_WIN_DONE)
           ) {
@@ -5230,7 +4305,7 @@ export default function ChaosChessPage() {
           setTimeout(() => spawnPepe(PEPE.clap), 400);
           // Guest first-win unlock
           if (
-            !authenticated &&
+            !presentation.activity && !authenticated &&
             typeof window !== "undefined" &&
             !window.localStorage.getItem(LS_FIRST_WIN_DONE)
           ) {
@@ -5542,12 +4617,13 @@ export default function ChaosChessPage() {
 
       return false;
     },
-    [playerColor, spawnPepe, triggerEffect, startKingCaptureAnim],
+    [playerColor, spawnPepe, triggerEffect, startKingCaptureAnim, gameMode],
   );
 
   /* ── Check draft trigger after a full move ── */
   const checkDraft = useCallback(
     (g: Chess, state: ChaosState) => {
+      if (gameMode !== "ai" && serverDraftsRef.current) return false;
       const fullMove = g.moveNumber();
       const phase = checkDraftTrigger(fullMove, state);
       if (phase > 0 && phase > prevPhaseRef.current) {
@@ -5568,7 +4644,7 @@ export default function ChaosChessPage() {
               state.playerAnomaly,
               [
                 ...(state.spentPlayerModIds ?? []),
-                ...(authenticated
+                ...(presentation.activity ? [] : authenticated
                   ? [...triedLockedModsThisGame]
                   : [...guestPreviewedMods]),
               ],
@@ -5617,7 +4693,7 @@ export default function ChaosChessPage() {
             state.playerAnomaly,
             [
               ...(state.spentPlayerModIds ?? []),
-              ...(authenticated
+              ...(presentation.activity ? [] : authenticated
                 ? [...triedLockedModsThisGame]
                 : [...guestPreviewedMods]),
             ],
@@ -5739,7 +4815,7 @@ export default function ChaosChessPage() {
             {
               type: "chaos",
               message:
-                "☢️ NUCLEAR QUEEN! All surrounding pieces destroyed! (3-turn cooldown)",
+                `☢️ NUCLEAR QUEEN! All surrounding pieces destroyed! (${NUCLEAR_QUEEN_COOLDOWN_TURNS}-turn cooldown)`,
               icon: "☢️",
               pepe: PEPE.madpuke,
             },
@@ -5966,6 +5042,7 @@ export default function ChaosChessPage() {
                 cm,
                 cs.aiModifiers,
                 cs.playerModifiers,
+                cs.aiNuclearCooldownUntil,
               );
               if (!newGame) continue;
               // Eval the resulting position — cp is from the player's perspective (side to move after AI's chaos move)
@@ -6123,8 +5200,12 @@ export default function ChaosChessPage() {
                   chaosMove.from,
                   chaosMove.to,
                   chaosMove.type === "capture",
+                  { pieceStays: chaosMove.pieceStays, swap: chaosMove.modifierId === "usurper", board: newGame },
                 );
                 // queen-teleport / railgun / usurper are once per game — remove modifier after AI uses it
+                if (chaosMove.type === "capture" && g.get(chaosMove.from)?.type === "q" && cs.aiModifiers.some(m => m.id === "nuclear-queen") && g.moveNumber() >= (cs.aiNuclearCooldownUntil ?? 0)) {
+                  cs2.aiNuclearCooldownUntil = g.moveNumber() + NUCLEAR_QUEEN_COOLDOWN_TURNS;
+                }
                 if (chaosMove.modifierId === "queen-teleport") {
                   cs2 = {
                     ...cs2,
@@ -6208,6 +5289,7 @@ export default function ChaosChessPage() {
               chaosMove,
               cs.aiModifiers,
               cs.playerModifiers,
+              cs.aiNuclearCooldownUntil,
             );
             if (!execResult) continue;
             const er = await stockfishPool.evaluateFen(
@@ -6843,12 +5925,13 @@ export default function ChaosChessPage() {
 
         // Apply post-move chaos effects
         // Nuclear queen: suppress blast if still on cooldown
-        const aiNukeReady = g.moveNumber() >= (cs.aiNuclearCooldownUntil ?? 0);
+        const aiCaptureTurn = g.moveNumber() - (moveResult.color === "b" ? 1 : 0);
+        const aiNukeReady = aiCaptureTurn >= (cs.aiNuclearCooldownUntil ?? 0);
         const aiEffectiveMods = aiNukeReady
           ? cs.aiModifiers
           : cs.aiModifiers.filter((m) => m.id !== "nuclear-queen");
         let finalGame: Chess = g;
-        let nukeJustFiredAi = false;
+        let nukeJustFiredAi = !!moveResult.captured && finalPieceAtFrom?.type === "q" && aiNukeReady && cs.aiModifiers.some(m => m.id === "nuclear-queen");
         if (moveResult.captured && finalPieceAtFrom) {
           const afterEffects = applyPostMove(
             g,
@@ -6879,10 +5962,11 @@ export default function ChaosChessPage() {
           finalFrom,
           finalTo,
           !!moveResult.captured,
+          { board: finalGame },
         );
-        // Apply AI nuclear queen cooldown — 3 full turns before next blast
+        // Apply the shared nuclear queen cooldown.
         if (nukeJustFiredAi) {
-          cs2 = { ...cs2, aiNuclearCooldownUntil: g.moveNumber() + 3 };
+          cs2 = { ...cs2, aiNuclearCooldownUntil: aiCaptureTurn + NUCLEAR_QUEEN_COOLDOWN_TURNS };
         }
         // Decrement Justice / Devil counters (AI's half-move)
         cs2 = decrementAnomalyCounters(cs2, "ai", finalFrom, finalTo);
@@ -6942,6 +6026,10 @@ export default function ChaosChessPage() {
             (playerColor === "black" && checkmatedColor === "b"));
 
         if (aiJustCheckmatedPlayer) {
+          // Standard chess cannot see fairy-piece escapes (e.g. an archbishop
+          // capturing the checking queen). Keep those moves available while the
+          // chaos-aware end check decides whether this is actually mate.
+          recomputeChaosMoves(activeGame2, cs2);
           setTimeout(() => {
             checkGameEnd(activeGame2);
           }, 1500);
@@ -7115,7 +6203,7 @@ export default function ChaosChessPage() {
       setGameMode(mode);
       // Show anomaly picker before game starts
       const seed = Math.floor(Math.random() * 1_000_000);
-      setAnomalyPickerChoices(rollAnomalyChoices(4, seed));
+      setAnomalyPickerChoices(rollAnomalyChoices(3, seed));
       setGameStatus("picking-anomaly");
     },
     [],
@@ -7133,12 +6221,24 @@ export default function ChaosChessPage() {
       // Always start multiplayer from a fresh chaos state
       let cs = createChaosState();
       if (myAnomaly) cs = applyAnomalyToCs(cs, myAnomaly);
-      if (oppAnomalyId) cs = { ...cs, aiAnomaly: oppAnomalyId as AnomalyId };
+      if (oppAnomalyId) cs = swapPlayerAiFields(applyAnomalyToCs(swapPlayerAiFields(cs), getAnomalyById(oppAnomalyId as AnomalyId) ?? null));
+
+      const openingBoard = new Chess(gameRef.current.fen());
+      const ownColor = playerColor === "white" ? "w" : "b";
+      for (const [id, color] of [[myAnomalyId, ownColor], [oppAnomalyId, ownColor === "w" ? "b" : "w"]] as const) {
+        if (id !== "empress") continue;
+        for (const square of color === "w" ? ["c3", "f3"] : ["c6", "f6"]) {
+          openingBoard.put({ type: "p", color }, square as Square);
+        }
+      }
+      setGame(openingBoard);
 
       setSelectedAnomaly(myAnomaly ?? null);
       setChaosState(cs);
+      setWaitingForOpponentDraft(false);
+      gameStatusRef.current = "playing";
       setGameStatus("playing");
-      recomputeChaosMoves(gameRef.current, cs, {
+      recomputeChaosMoves(openingBoard, cs, {
         playerAnomaly: myAnomalyId as AnomalyId | null,
       });
       setEventLog((prev) => [
@@ -7152,7 +6252,7 @@ export default function ChaosChessPage() {
       ]);
       playSound("reveal-stinger");
     },
-    [recomputeChaosMoves],
+    [recomputeChaosMoves, playerColor],
   );
 
   /* ── Multiplayer: Create room ── */
@@ -7163,6 +6263,7 @@ export default function ChaosChessPage() {
         headers: chaosHeaders(true),
         body: JSON.stringify({
           hostColor: color,
+          draftProtocol: 2,
           timeControlSeconds: unlimitedTimeRef.current
             ? -1
             : (timeControlRef.current?.base ?? 0),
@@ -7177,6 +6278,7 @@ export default function ChaosChessPage() {
         ]);
         return;
       }
+      serverDraftsRef.current = data.draftProtocol === 2;
       setRoomId(data.roomId);
       setRoomCode(data.roomCode);
       setPlayerColor(color);
@@ -7221,13 +6323,13 @@ export default function ChaosChessPage() {
   }, []);
 
   /* ── Multiplayer: Join room ── */
-  const joinRoom = useCallback(async () => {
-    if (joinCode.length !== 6) return;
+  const joinRoom = useCallback(async (code = joinCode) => {
+    if (code.length !== 6) return;
     try {
       const res = await fetch("/api/chaos/join", {
         method: "POST",
         headers: chaosHeaders(true),
-        body: JSON.stringify({ roomCode: joinCode.toUpperCase() }),
+        body: JSON.stringify({ roomCode: code.toUpperCase() }),
       });
       const data = await res.json();
       if (data.error) {
@@ -7238,7 +6340,8 @@ export default function ChaosChessPage() {
         return;
       }
       setRoomId(data.roomId);
-      setRoomCode(joinCode.toUpperCase());
+      setRoomCode(code.toUpperCase());
+      serverDraftsRef.current = data.chaosState?._sync?.draftProtocol === 2;
       const guestColor = data.hostColor === "white" ? "black" : "white";
       setPlayerColor(guestColor as "white" | "black");
       setGameMode("friend");
@@ -7255,7 +6358,7 @@ export default function ChaosChessPage() {
       setCapturedPawns({ w: 0, b: 0 });
       // No clock time controls — always untimed
       setUnlimitedTime((data.timeControlSeconds ?? 0) === -1);
-      setTimeControl(null);
+      setTimeControl(data.timeControlSeconds > 0 ? resolveTimeControl(data.timeControlSeconds, data.incrementSeconds) : null);
       setTimers({ w: 0, b: 0 });
       setEloChange(null);
       setEloSaved(false);
@@ -7296,7 +6399,7 @@ export default function ChaosChessPage() {
       setEventLog([
         {
           type: "info",
-          message: `🎮 Joined room ${joinCode.toUpperCase()}! You are ${guestColor}. Preparing anomaly selection…`,
+          message: `🎮 Joined room ${code.toUpperCase()}! You are ${guestColor}. Preparing anomaly selection…`,
           icon: "🎮",
           pepe: PEPE.hyped,
         },
@@ -7306,7 +6409,7 @@ export default function ChaosChessPage() {
         clearTimeout(matchedTransitionTimeoutRef.current);
       matchedTransitionTimeoutRef.current = setTimeout(() => {
         setAnomalyPickerChoices(
-          rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)),
+          rollAnomalyChoices(3, Math.floor(Math.random() * 1_000_000)),
         );
         setGameStatus("picking-anomaly");
       }, 2500);
@@ -7348,7 +6451,7 @@ export default function ChaosChessPage() {
                 clearTimeout(matchedTransitionTimeoutRef.current);
               matchedTransitionTimeoutRef.current = setTimeout(() => {
                 setAnomalyPickerChoices(
-                  rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)),
+                  rollAnomalyChoices(3, Math.floor(Math.random() * 1_000_000)),
                 );
                 setGameStatus("picking-anomaly");
               }, 2500);
@@ -7396,6 +6499,7 @@ export default function ChaosChessPage() {
       }
 
       if (msg.type === "join") {
+        if (serverDraftsRef.current) return;
         // Fallback join detection (if presence didn't fire first)
         setGameStatus((prev) => {
           if (prev === "waiting") {
@@ -7418,7 +6522,7 @@ export default function ChaosChessPage() {
               clearTimeout(matchedTransitionTimeoutRef.current);
             matchedTransitionTimeoutRef.current = setTimeout(() => {
               setAnomalyPickerChoices(
-                rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)),
+                rollAnomalyChoices(3, Math.floor(Math.random() * 1_000_000)),
               );
               setGameStatus("picking-anomaly");
             }, 2500);
@@ -7495,7 +6599,117 @@ export default function ChaosChessPage() {
         return;
       }
 
+      if (msg.type === "opening_sync") {
+        const saved = msg.snapshot, opening = saved.opening;
+        if (opening && saved.status === "playing") {
+          const picks = saved.openingPicks ?? {};
+          const mine = msg.actor, other = mine === "host" ? "guest" : "host";
+          if (!("host" in picks) || !("guest" in picks)) {
+            if (matchedTransitionTimeoutRef.current) clearTimeout(matchedTransitionTimeoutRef.current);
+            const deadline = opening.deadline + Date.now() - saved.serverNow;
+            setServerOpening(previous => previous && Math.abs(previous.deadline - deadline) < 150 && previous.choices.map(a => a.id).join() === opening.offers[mine].join() ? previous :
+              {deadline, choices: opening.offers[mine].map((id: AnomalyId) => getAnomalyById(id)!).filter(Boolean)});
+            setMyPickSent(mine in picks); myAnomalyPickSentRef.current = mine in picks;
+            setOpponentAnomalyPickedId(picks[other]);
+            gameStatusRef.current = "picking-anomaly"; setGameStatus("picking-anomaly");
+          } else setServerOpening(null);
+        }
+        return;
+      }
+      if (msg.type === "room_protocol") { serverDraftsRef.current = msg.version === 2; return; }
+      if (msg.type === "power_picked") {
+        const mod = ALL_MODIFIERS.find(m => m.id === msg.modifierId);
+        if (mod) setEventLog(prev => [...prev, {type: "modifier", message: (msg.color === playerColor ? "You" : "Opponent") + " drafted " + mod.name + (msg.automatic ? " (auto-pick)" : ""), icon: mod.icon}]);
+        return;
+      }
+      if (msg.type === "clock_sync") {
+        setOpeningMove(msg.openingMove ? {...msg.openingMove, deadline: Date.now() + msg.openingMove.deadline - (msg.serverNow ?? Date.now())} : null);
+        serverClockRef.current = msg.clock ?? null;
+        serverClockReceivedRef.current = performance.now();
+        if (msg.base !== undefined && msg.base !== null) {
+          setUnlimitedTime(msg.base <= 0);
+          setTimeControl(msg.base > 0 ? resolveTimeControl(msg.base, msg.inc) : null);
+        }
+        if (msg.clock) setTimers({w: msg.clock.w, b: msg.clock.b});
+        return;
+      }
+      if (msg.type === "game_over") {
+        setGameResult(msg.winner);
+        setGameStatus("game-over");
+        setEndReason(msg.reason);
+        setWaitingForOpponentDraft(false);
+        return;
+      }
+      if (msg.type === "sync_error" || msg.type === "sync_snapshot") {
+        const saved = msg.snapshot;
+        if (saved) {
+          if (roomId && msg.type === "sync_error") sessionStorage.removeItem(pendingDraftKey(roomId));
+          const pending = saved.draftProtocol !== 2 && roomId && saved.status === "playing" ? recoverPendingDraft(sessionStorage.getItem(pendingDraftKey(roomId)), saved.fen, saved.chaosState.currentPhase ?? 0, playerColor) : null;
+          if (pending) {
+            const restored = new Chess(pending.fen);
+            setGame(restored); setChaosState(pending.state); setPendingPhase(pending.phase);
+            pendingMoveBeforeDraftRef.current = pending.move;
+            gameStatusRef.current = "drafting"; setGameStatus("drafting");
+            recomputeChaosMoves(restored, pending.state);
+            return;
+          }
+          const g = new Chess(saved.fen);
+          const savedColor = saved.actor ? (saved.actor === "host" ? saved.hostColor : saved.hostColor === "white" ? "black" : "white") : playerColor;
+          if (savedColor !== playerColor) setPlayerColor(savedColor);
+          const cs = fromServerChaosState(saved.chaosState, savedColor);
+          if (saved.draftProtocol === 2) {setSelectedAnomaly(cs.playerAnomaly ? getAnomalyById(cs.playerAnomaly) ?? null : null);setServerOpening(null);if (matchedTransitionTimeoutRef.current) clearTimeout(matchedTransitionTimeoutRef.current);}
+          setGame(g);
+          lastFenRef.current = saved.fen;
+          setChaosState(cs);
+          recomputeChaosMoves(g, cs);
+          setSelectedSquare(null);
+          setLegalMoveSquares({});
+          setWaitingForOpponentDraft(false);
+          setGameStatus(saved.status === "playing" ? "playing" : "game-over");
+          if (saved.result) { setGameResult(saved.result.winner); setEndReason(saved.result.reason); }
+          setCapturedPawns({ w: saved.capturedPawnsWhite, b: saved.capturedPawnsBlack });
+          if (saved.draftProtocol === 2) {
+            pendingMoveBeforeDraftRef.current = null; pendingDraftAfterRevealRef.current = null;
+            if (Array.isArray(saved.history)) {
+              const rows = new Map<number, MoveLogEntry>();
+              for (const move of saved.history) {
+                const row: MoveLogEntry = rows.get(move.moveNumber) ?? {moveNumber: move.moveNumber};
+                row[move.color === "w" ? "white" : "black"] = `${move.from}–${move.to}`;
+                rows.set(move.moveNumber, row);
+              }
+              setMoveLog([...rows.values()]);
+              const last = saved.history.at(-1);
+              if (saved.history.length > serverMoveCountRef.current && last?.color !== (savedColor === "white" ? "w" : "b")) playSound("move");
+              serverMoveCountRef.current = saved.history.length;
+            }
+            const draft = saved.draft;
+            serverDraftOffsetRef.current = Date.now() - saved.serverNow;
+            setServerDraft(draft); serverDraftRef.current = draft;
+            const mine = draft?.color === savedColor;
+            if (mine) {
+              const next = {...cs, isDrafting: true, draftingSide: "player" as const, draftChoices: draft.choices.map((id: string) => ALL_MODIFIERS.find(m => m.id === id)!).filter(Boolean), playerTemperanceUsedThisPhase: !!draft.rerolled};
+              setChaosState(next); chaosStateRef.current = next; setPendingPhase(draft.phase);
+            }
+            setWaitingForOpponentDraft(!!draft && !mine);
+            const status = saved.status === "playing" ? mine ? "drafting" : "playing" : "game-over";
+            gameStatusRef.current = status; setGameStatus(status);
+            if (saved.lastMoveFrom && saved.lastMoveTo) setLastMoveHighlight({[saved.lastMoveFrom]: {backgroundColor: "rgba(255,210,90,.25)"}, [saved.lastMoveTo]: {backgroundColor: "rgba(255,210,90,.4)"}});
+          } else if (cs.draftStep === 1 && playerColor === "black") {
+            const phase = cs.currentPhase + 1;
+            const choices = rollPlayerDraftChoices(phase, cs.playerModifiers, countPiecesFromFen(saved.fen, "b"), cs.playerAnomaly, cs.spentPlayerModIds ?? []);
+            pendingDraftAfterRevealRef.current = { phase, choices, chaosState: cs };
+            gameStatusRef.current = "playing";
+            setGameStatus("playing");
+          }
+        }
+        if (msg.type === "sync_error") setEventLog(prev => [...prev, {
+          type: "info", message: `Sync: ${msg.error}. The saved board has been restored.`, icon: "↻",
+        }]);
+        return;
+      }
+
       if (msg.type === "anomaly_pick") {
+        if (serverDraftsRef.current) return;
         // Opponent sent their anomaly choice — check if we've already sent ours
         const oppId = msg.anomalyId;
         setOpponentAnomalyPickedId(oppId);
@@ -7514,13 +6728,11 @@ export default function ChaosChessPage() {
         return;
       }
 
-      if (msg.type === "chat") {
-        setChatMessages((prev) => [
-          ...prev.slice(-49),
-          { text: msg.text, mine: false, ts: Date.now() },
-        ]);
+      if (msg.type === "chat_sync") {
+        setChatMessages(msg.messages.map(m => ({id: m.id, text: m.text, ts: m.ts, mine: m.actor === msg.actor})));
         return;
       }
+      if (msg.type === "chat_error") { setChatError(msg.error); return; }
 
       if (msg.type === "rematch") {
         if (rematchRequestedRef.current) {
@@ -7592,6 +6804,16 @@ export default function ChaosChessPage() {
         return;
       }
 
+      if (msg.type === "ability" && msg.chaosState) {
+        const state = fromServerChaosState(msg.chaosState as ChaosState, playerColor);
+        chaosStateRef.current = state;
+        setChaosState(state);
+        recomputeChaosMoves(gameRef.current, state);
+        setSelectedSquare(null);
+        setLegalMoveSquares({});
+        return;
+      }
+
       if (msg.type === "move" || msg.type === "draft") {
         const data = msg as PartyMessage & {
           fen?: string;
@@ -7603,6 +6825,7 @@ export default function ChaosChessPage() {
           status?: string;
         };
         if (!data.fen) return;
+        if (msg.type === "draft") setWaitingForOpponentDraft(false);
         // Don't apply opponent updates while the local player is actively picking a draft
         if (gameStatusRef.current === "drafting") return;
 
@@ -7621,8 +6844,7 @@ export default function ChaosChessPage() {
 
           if (
             draftStep === 1 &&
-            playerColor === "black" &&
-            !justDraftedRef.current
+            playerColor === "black"
           ) {
             // White just drafted (step 1) → I'm Black: show reveal, then trigger my draft
             const phaseForDraft = incoming.currentPhase + 1;
@@ -7630,10 +6852,11 @@ export default function ChaosChessPage() {
               return; // Already triggered — don't overwrite active draft choices
             }
             triggeredDraftForPhaseRef.current = phaseForDraft;
+            let draftState = incoming;
             const oppPick =
               incoming.aiModifiers[incoming.aiModifiers.length - 1];
             if (oppPick) {
-              // Queue my own draft to fire after Black's own move
+              // Black gets their matching board move before choosing a power.
               const choices = rollPlayerDraftChoices(
                 phaseForDraft,
                 incoming.playerModifiers,
@@ -7641,16 +6864,16 @@ export default function ChaosChessPage() {
                 incoming.playerAnomaly,
                 [
                   ...(incoming.spentPlayerModIds ?? []),
-                  ...(authenticated
+                  ...(presentation.activity ? [] : authenticated
                     ? [...triedLockedModsThisGame]
                     : [...guestPreviewedMods]),
                 ],
               );
-              pendingDraftAfterRevealRef.current = {
-                phase: phaseForDraft,
-                choices,
-                chaosState: incoming,
-              };
+              pendingDraftAfterRevealRef.current = { phase: phaseForDraft, choices, chaosState: incoming };
+              draftState = { ...incoming, isDrafting: false };
+              gameStatusRef.current = "playing";
+              setGameStatus("playing");
+              setWaitingForOpponentDraft(false);
 
               // Show opponent's reveal
               setOpponentDraftReveal({
@@ -7668,14 +6891,14 @@ export default function ChaosChessPage() {
               ]);
               spawnPepe(tierPepe(oppPick.tier));
             }
-            setChaosState(incoming);
+            setChaosState(draftState);
+            recomputeChaosMoves(g, incoming);
             return;
           }
 
           if (
             draftStep === 2 &&
-            playerColor === "white" &&
-            !justDraftedRef.current
+            playerColor === "white"
           ) {
             // Black just drafted (step 2) → I'm White: show reveal, then resume game
             const phaseForDraft = incoming.currentPhase;
@@ -7779,6 +7002,11 @@ export default function ChaosChessPage() {
           activeGame.isStalemate() ||
           activeGame.isDraw()
         ) {
+          const incomingState = data.chaosState
+            ? fromServerChaosState(data.chaosState as ChaosState, playerColor)
+            : chaosStateRef.current;
+          chaosStateRef.current = incomingState;
+          recomputeChaosMoves(activeGame, incomingState);
           if (activeGame.isCheckmate()) {
             setTimeout(() => checkGameEnd(activeGame), 1500);
           } else {
@@ -7864,16 +7092,22 @@ export default function ChaosChessPage() {
       recomputeChaosMoves,
       spawnPepe,
       startMpGameWithAnomalies,
+      roomId,
     ],
   );
 
-  const { send: partySend, isConnected: partyConnected } = usePartyRoom(
+  const { send: partySend, isConnected: partyConnected, isSyncing: partySyncing } = usePartyRoom(
     gameMode !== "ai" ? roomId : null,
     onPartyMessage,
     playerColor,
   );
   // Keep ref in sync so sendMoveToServer (memoized) can use it
   partySendRef.current = partySend;
+  const roomSavingRef = useRef(partySyncing);
+  roomSavingRef.current = partySyncing;
+  const activeSyncRoomRef = useRef(roomId);
+  activeSyncRoomRef.current = roomId;
+  const pollGenerationRef = useRef(0);
   const partyConnectedRef = useRef(partyConnected);
   partyConnectedRef.current = partyConnected;
 
@@ -7893,393 +7127,90 @@ export default function ChaosChessPage() {
   const chaosStateRef = useRef(chaosState);
   chaosStateRef.current = chaosState;
 
-  /**
-   * Anomaly-pick fallback: if we've sent our pick but the opponent's message
-   * never arrives (WebSocket drop, connection not yet open, etc.), auto-start
-   * after 10 s rather than leaving both players frozen on "waiting for opponent".
-   */
+  // A refresh recovers the server's saved board, never a guessed local position.
   useEffect(() => {
-    if (
-      !myPickSent ||
-      opponentAnomalyPickedId !== undefined ||
-      gameMode === "ai"
-    )
-      return;
-    const timer = setTimeout(() => {
-      if (gameStatusRef.current !== "picking-anomaly") return;
-      startMpGameWithAnomalies(pendingMpAnomalyRef.current?.id ?? null, null);
-    }, 10_000);
-    return () => clearTimeout(timer);
-  }, [myPickSent, opponentAnomalyPickedId, gameMode, startMpGameWithAnomalies]);
-
-  /* ── Polling for multiplayer state (slow fallback) ── */
-  const startPolling = useCallback(
-    (rId: string, myColor: string) => {
-      if (pollRef.current) clearInterval(pollRef.current);
-      lastFenRef.current =
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
-      pollRef.current = setInterval(async () => {
-        try {
-          // Don't poll while the user is actively picking a draft — avoids wiping draft choices
-          if (gameStatusRef.current === "drafting") return;
-          // PartyKit is the primary sync path; keep Neon polling as a fallback
-          // while waiting for an opponent or when the realtime socket drops.
-          if (
-            partyConnectedRef.current &&
-            gameStatusRef.current !== "waiting"
-          ) {
-            return;
-          }
-          if (
-            typeof document !== "undefined" &&
-            document.visibilityState === "hidden" &&
-            gameStatusRef.current !== "waiting"
-          ) {
-            return;
-          }
-          const res = await fetch(`/api/chaos/move?roomId=${rId}`, {
-            headers: chaosHeaders(),
-          });
-          if (!res.ok) return;
-          const data = await res.json();
-
-          // Room got a guest — start the game
-          if (data.status === "playing" && data.guestId) {
-            setGameStatus((prev) => {
-              if (prev === "waiting") {
-                setOpponentLabel("Opponent");
-                setEventLog((p) => [
-                  ...p,
-                  {
-                    type: "info",
-                    message: "🎮 Opponent joined! Game on!",
-                    icon: "🎮",
-                    pepe: PEPE.hyped,
-                  },
-                ]);
-                const rawCs = data.chaosState
-                  ? (data.chaosState as ChaosState)
-                  : createChaosState();
-                const cs = fromServerChaosState(
-                  rawCs,
-                  myColor as "white" | "black",
-                );
-                setChaosState(cs);
-                prevPhaseRef.current = cs.currentPhase;
-                const g = new Chess(data.fen);
-                setGame(g);
-                // Transition through matched → picking-anomaly (same as WebSocket path)
-                pendingMpAnomalyRef.current = null;
-                myAnomalyPickSentRef.current = false;
-                setMyPickSent(false);
-                setOpponentAnomalyPickedId(undefined);
-                playSound("reveal-stinger");
-                if (matchedTransitionTimeoutRef.current)
-                  clearTimeout(matchedTransitionTimeoutRef.current);
-                matchedTransitionTimeoutRef.current = setTimeout(() => {
-                  setAnomalyPickerChoices(
-                    rollAnomalyChoices(
-                      4,
-                      Math.floor(Math.random() * 1_000_000),
-                    ),
-                  );
-                  setGameStatus("picking-anomaly");
-                }, 2500);
-                return "matched";
-              }
-              return prev;
-            });
-          }
-
-          // ── Check for draft state changes (may happen without FEN changing) ──
-          if (data.chaosState) {
-            const serverCs = data.chaosState as ChaosState;
-            const incoming = fromServerChaosState(
-              serverCs,
-              myColor as "white" | "black",
-            );
-            const draftStep = serverCs.draftStep ?? 0;
-
-            if (
-              draftStep === 1 &&
-              myColor === "black" &&
-              !justDraftedRef.current
-            ) {
-              // White just drafted (step 1) → I'm Black: show reveal, then defer my draft
-              const phaseForDraft = incoming.currentPhase + 1;
-              if (triggeredDraftForPhaseRef.current !== phaseForDraft) {
-                triggeredDraftForPhaseRef.current = phaseForDraft;
-                const oppPick =
-                  incoming.aiModifiers[incoming.aiModifiers.length - 1];
-                if (oppPick) {
-                  const myColor_ =
-                    (myColor as string) === "white" ? "w" : ("b" as "w" | "b");
-                  const choices = rollPlayerDraftChoices(
-                    phaseForDraft,
-                    incoming.playerModifiers,
-                    countPiecesFromFen(gameRef.current.fen(), myColor_),
-                    incoming.playerAnomaly,
-                    [
-                      ...(incoming.spentPlayerModIds ?? []),
-                      ...(authenticated
-                        ? [...triedLockedModsThisGame]
-                        : [...guestPreviewedMods]),
-                    ],
-                  );
-                  pendingDraftAfterRevealRef.current = {
-                    phase: phaseForDraft,
-                    choices,
-                    chaosState: incoming,
-                  };
-                  setOpponentDraftReveal({
-                    opponentPick: oppPick,
-                    phase: phaseForDraft,
-                  });
-                  setEventLog((prev) => [
-                    ...prev,
-                    {
-                      type: "modifier" as const,
-                      message: `⚔️ Opponent drafted: ${oppPick.icon} ${oppPick.name} — ${oppPick.description}`,
-                      icon: oppPick.icon,
-                      pepe: tierPepe(oppPick.tier),
-                    },
-                  ]);
-                  spawnPepe(tierPepe(oppPick.tier));
-                }
-                // Only update state when first triggering — avoids wiping active draft choices on repeat polls
-                setChaosState(incoming);
-              }
-              // If already triggered, skip setChaosState to not overwrite open draft modal
-            } else if (
-              draftStep === 2 &&
-              myColor === "white" &&
-              !justDraftedRef.current
-            ) {
-              // Black just drafted (step 2) → I'm White: show reveal, then resume
-              const phaseForDraft = incoming.currentPhase;
-              if (triggeredDraftForPhaseRef.current !== phaseForDraft) {
-                triggeredDraftForPhaseRef.current = phaseForDraft;
-                const oppPick =
-                  incoming.aiModifiers[incoming.aiModifiers.length - 1];
-                if (oppPick) {
-                  const g2 = new Chess(data.fen);
-                  setOpponentDraftReveal({
-                    opponentPick: oppPick,
-                    phase: incoming.currentPhase,
-                  });
-                  setEventLog((prev) => [
-                    ...prev,
-                    {
-                      type: "modifier" as const,
-                      message: `⚔️ Opponent drafted: ${oppPick.icon} ${oppPick.name} — ${oppPick.description}`,
-                      icon: oppPick.icon,
-                      pepe: tierPepe(oppPick.tier),
-                    },
-                  ]);
-                  spawnPepe(tierPepe(oppPick.tier));
-                  recomputeChaosMovesCbRef.current(g2, incoming);
-                }
-                setChaosState({ ...incoming, draftStep: 0 });
-                setGameStatus("playing");
-                setWaitingForOpponentDraft(false);
-                setPendingPhase(0);
-                prevPhaseRef.current = incoming.currentPhase;
-                setEventLog((prev) => [
-                  ...prev,
-                  {
-                    type: "info" as const,
-                    message: "⏯️ Both players have drafted! Game resumed!",
-                    icon: "▶️",
-                  },
-                ]);
-              }
-            }
-            // Reset the justDrafted flag once we see the state reflected
-            if (justDraftedRef.current) {
-              justDraftedRef.current = false;
-            }
-          }
-
-          // Check for new moves (FEN changed)
-          if (data.fen && data.fen !== lastFenRef.current) {
-            // Guard: skip if the DB returned a FEN behind our local state.
-            // Compute total half-moves from FEN fields directly — Chess.history() on a
-            // freshly-constructed instance is always [] so it can't be used here.
-            // FEN format: "pieces side castling ep halfclock fullmove"
-            // Total half-moves played = (fullmove - 1) * 2 + (side === 'b' ? 1 : 0)
-            const fenHalfMoves = (fen: string) => {
-              const p = fen.split(" ");
-              return (
-                (parseInt(p[5] ?? "1", 10) - 1) * 2 + (p[1] === "b" ? 1 : 0)
-              );
-            };
-            const localFen = gameRef.current.fen();
-            if (fenHalfMoves(data.fen) < fenHalfMoves(localFen)) {
-              // DB is stale — do nothing; next poll will get the persisted FEN
-              return;
-            }
-
-            const oldFen = lastFenRef.current;
-            lastFenRef.current = data.fen;
-            const g = new Chess(data.fen);
-            setGame(g);
-
-            // Apply chaosState if present (non-draft update)
-            if (data.chaosState) {
-              const serverCs = data.chaosState as ChaosState;
-              const draftStep = serverCs.draftStep ?? 0;
-              // Only apply as regular update if not a draft step we already handled above
-              if (draftStep === 0) {
-                let incoming = fromServerChaosState(
-                  serverCs,
-                  myColor as "white" | "black",
-                );
-                setChaosState(incoming);
-              }
-            }
-
-            if (data.lastMoveFrom && data.lastMoveTo) {
-              setLastMoveHighlight({
-                [data.lastMoveFrom]: {
-                  backgroundColor: "rgba(255, 170, 0, 0.3)",
-                },
-                [data.lastMoveTo]: {
-                  backgroundColor: "rgba(255, 170, 0, 0.3)",
-                },
-              });
-              playSound("move");
-
-              // Update tracked pieces for single-piece modifiers (archbishop/knook).
-              // Skip when chaosState is provided — it already has correct assignedSquares.
-              // Re-running updateTrackedPieces would falsely null-out the tracking by
-              // treating the piece's new square as a captured piece.
-              if (!data.chaosState && oldFen) {
-                const oldBoard = new Chess(oldFen);
-                const hadPiece = oldBoard.get(data.lastMoveTo as any);
-                const wasCaptured = !!hadPiece;
-                setChaosState((prev) =>
-                  updateTrackedPieces(
-                    prev,
-                    data.lastMoveFrom,
-                    data.lastMoveTo,
-                    wasCaptured,
-                  ),
-                );
-              }
-            }
-            setCapturedPawns({
-              w: data.capturedPawnsWhite ?? 0,
-              b: data.capturedPawnsBlack ?? 0,
-            });
-
-            // Sync opponent's timer values from DB
-            if (
-              data.timerWhiteMs !== undefined &&
-              data.timerBlackMs !== undefined
-            ) {
-              setTimers({ w: data.timerWhiteMs, b: data.timerBlackMs });
-            }
-
-            const activeGame = g;
-
-            // Check game end from FEN
-            if (
-              activeGame.isCheckmate() ||
-              activeGame.isStalemate() ||
-              activeGame.isDraw()
-            ) {
-              checkGameEndCbRef.current(activeGame);
-              if (pollRef.current) clearInterval(pollRef.current);
-            } else if (activeGame.inCheck()) {
-              // Chaos-checkmate: in check but not standard checkmate
-              const rawCs2 = data.chaosState
-                ? (data.chaosState as ChaosState)
-                : createChaosState();
-              let cs2 = fromServerChaosState(
-                rawCs2,
-                myColor as "white" | "black",
-              );
-              // Preserve local player anomaly if opponent's state has none (anomaly_pick WS may have been lost)
-              if (!cs2.playerAnomaly && chaosStateRef.current.playerAnomaly) {
-                cs2 = {
-                  ...cs2,
-                  playerAnomaly: chaosStateRef.current.playerAnomaly,
-                };
-              }
-              // Update ref synchronously so checkGameEnd sees fresh modifiers
-              chaosStateRef.current = cs2;
-              setChaosState(cs2);
-              if (checkGameEndCbRef.current(activeGame)) {
-                if (pollRef.current) clearInterval(pollRef.current);
-              } else {
-                recomputeChaosMovesCbRef.current(activeGame, cs2);
-              }
-            } else {
-              // Only recompute moves — checkDraft fires from handlePlayerMove (your own move only)
-              const rawCs2 = data.chaosState
-                ? (data.chaosState as ChaosState)
-                : createChaosState();
-              let cs2 = fromServerChaosState(
-                rawCs2,
-                myColor as "white" | "black",
-              );
-              // Preserve local player anomaly if opponent's state has none (anomaly_pick WS may have been lost)
-              if (!cs2.playerAnomaly && chaosStateRef.current.playerAnomaly) {
-                cs2 = {
-                  ...cs2,
-                  playerAnomaly: chaosStateRef.current.playerAnomaly,
-                };
-              }
-              recomputeChaosMovesCbRef.current(activeGame, cs2);
-            }
-          }
-
-          // Detect opponent resign via polling fallback (in case WS message was lost)
-          if (
-            data.status &&
-            (data.status === "finished" ||
-              (data.status as string).startsWith("resigned-"))
-          ) {
-            if ((data.status as string).startsWith("resigned-")) {
-              const resignedColor = (data.status as string).replace(
-                "resigned-",
-                "",
-              ) as "white" | "black";
-              // Only act if the OPPONENT resigned (not us) and we haven't already ended the game
-              if (
-                resignedColor !== myColor &&
-                gameStatusRef.current !== "game-over"
-              ) {
-                const resignWinner =
-                  resignedColor === "white" ? "black" : "white";
-                setGameResult(resignWinner);
-                setGameStatus("game-over");
-                setEndReason("Opponent Resigned");
-                setEventLog((prev) => [
-                  ...prev,
-                  {
-                    type: "info" as const,
-                    message: `🏳️ Opponent resigned! ${
-                      resignWinner === "white" ? "White" : "Black"
-                    } wins.`,
-                    icon: "🏳️",
-                    pepe: PEPE.gigachad,
-                  },
-                ]);
-                playSound("airhorn");
-                spawnPepe(PEPE.gigachad);
-              }
-            }
-            if (pollRef.current) clearInterval(pollRef.current);
-          }
-        } catch {
-          // Poll error — ignore
+    const savedRoom = sessionStorage.getItem("chaos-active-room");
+    if (!savedRoom) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/chaos/sync?roomId=${encodeURIComponent(savedRoom)}&since=-1`, { headers: chaosHeaders(), cache: "no-store" });
+        if (!res.ok) { if ([401, 403, 404].includes(res.status)) sessionStorage.removeItem("chaos-active-room"); return; }
+        const data = await res.json(), saved = data.snapshot;
+        if (cancelled || !["playing", "finished", "resigned-white", "resigned-black"].includes(saved.status)) return;
+        serverDraftsRef.current = saved.draftProtocol === 2;
+        const color = data.actor === "host" ? saved.hostColor : saved.hostColor === "white" ? "black" : "white";
+        const cs = fromServerChaosState(saved.chaosState, color);
+        const g = new Chess(saved.fen);
+        setGameMode("friend"); setPlayerColor(color); setRoomId(savedRoom); setRoomCode(saved.roomCode ?? "");
+        setGame(g); setChaosState(cs); lastFenRef.current = saved.fen;
+        setOpponentLabel("Opponent"); setUnlimitedTime(true);
+        setCapturedPawns({w:saved.capturedPawnsWhite,b:saved.capturedPawnsBlack});
+        setSelectedAnomaly(cs.playerAnomaly ? getAnomalyById(cs.playerAnomaly) ?? null : null);
+        if (data.myPick !== undefined && data.opponentPick !== undefined) {
+          setGameStatus(saved.status === "playing" ? "playing" : "game-over");
+        } else {
+          setAnomalyPickerChoices(rollAnomalyChoices(3, Math.floor(Math.random()*1_000_000)));
+          pendingMpAnomalyRef.current = data.myPick ? getAnomalyById(data.myPick) ?? null : null;
+          myAnomalyPickSentRef.current = data.myPick !== undefined;
+          setMyPickSent(data.myPick !== undefined); setOpponentAnomalyPickedId(data.opponentPick);
+          setGameStatus("picking-anomaly");
         }
-      }, POLL_INTERVAL);
-    },
-    [spawnPepe],
-  );
+        recomputeChaosMoves(g, cs);
+        const pending = saved.draftProtocol === 2 ? null : recoverPendingDraft(sessionStorage.getItem(pendingDraftKey(savedRoom)), saved.fen, cs.currentPhase, color);
+        if (pending) {
+          const restored = new Chess(pending.fen);
+          setGame(restored); setChaosState(pending.state); setPendingPhase(pending.phase);
+          pendingMoveBeforeDraftRef.current = pending.move;
+          gameStatusRef.current = "drafting"; setGameStatus("drafting");
+          recomputeChaosMoves(restored, pending.state);
+        }
+      } catch { /* Leave the saved room available for the next refresh. */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+  const previousPersistenceStatusRef = useRef(gameStatus);
+  useEffect(() => {
+    if (roomId && gameMode !== "ai" && gameStatus !== "setup") sessionStorage.setItem("chaos-active-room", roomId);
+    else if (gameStatus === "setup" && previousPersistenceStatusRef.current !== "setup") sessionStorage.removeItem("chaos-active-room");
+    previousPersistenceStatusRef.current = gameStatus;
+  }, [roomId, gameMode, gameStatus]);
+
+  // Keep the unconfirmed move and the exact offered cards across a tab reload.
+  // The server still validates the bundled move+pick when it is submitted.
+  useEffect(() => {
+    if (!roomId || gameMode === "ai") return;
+    const key = pendingDraftKey(roomId);
+    if (gameStatus === "drafting" && playerColor === "white" && pendingMoveBeforeDraftRef.current) {
+      sessionStorage.setItem(key, JSON.stringify({ baseFen: lastFenRef.current, fen: game.fen(), state: chaosState, phase: pendingPhase, move: pendingMoveBeforeDraftRef.current }));
+    } else if (gameStatus === "game-over" || gameStatus === "playing" && !pendingMoveBeforeDraftRef.current) {
+      sessionStorage.removeItem(key);
+    }
+  }, [roomId, gameMode, gameStatus, playerColor, game, chaosState, pendingPhase]);
+
+  const onPartyMessageCbRef = useRef(onPartyMessage);
+  onPartyMessageCbRef.current = onPartyMessage;
+  // Only lobby discovery uses the old endpoint. In-game recovery belongs to the
+  // versioned event transport, so two independent readers cannot roll state back.
+  const startPolling = useCallback((rId: string, _myColor: string) => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    let busy = false;
+    pollRef.current = setInterval(async () => {
+      if (busy || activeSyncRoomRef.current !== rId || gameStatusRef.current !== "waiting") return;
+      busy = true;
+      try {
+        const res = await fetch(`/api/chaos/move?roomId=${rId}`, {
+          headers: chaosHeaders(), cache: "no-store", signal: AbortSignal.timeout(8_000),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (activeSyncRoomRef.current === rId && data.status === "playing" && data.guestId) {
+          onPartyMessageCbRef.current({ type: "join", guestId: "joined" });
+        }
+      } catch { /* Retry lobby discovery on the next interval. */ }
+      finally { busy = false; }
+    }, POLL_INTERVAL);
+  }, [chaosHeaders]);
 
   /* ── Send move to server (multiplayer) ── */
   const sendMoveToServer = useCallback(
@@ -8294,26 +7225,11 @@ export default function ChaosChessPage() {
       // Convert to server perspective (white=playerModifiers, black=aiModifiers)
       const serverCs = toServerChaosState(cs, playerColor);
 
-      // Compute post-increment timers (real moves only, not draft syncs)
-      const isRealMove = from !== "" && to !== "";
-      const movedSide = isRealMove ? (g.turn() === "w" ? "b" : "w") : null;
-      const incMs =
-        isRealMove && timeControlRef.current
-          ? timeControlRef.current.inc * 1000
-          : 0;
-      const timerW =
-        movedSide === "w" ? timersRef.current.w + incMs : timersRef.current.w;
-      const timerB =
-        movedSide === "b" ? timersRef.current.b + incMs : timersRef.current.b;
-      if (isRealMove && incMs > 0) {
-        setTimers({ w: timerW, b: timerB });
-      }
-
       let wsMsg: PartyMessage;
       if (from === "" && to === "") {
         wsMsg = { type: "draft", chaosState: serverCs, fen: g.fen() };
       } else if (isChaosMove) {
-        // Chaos moves (non-standard): server relays without validation
+        // Powered moves are validated by the shared rules on the server.
         wsMsg = {
           type: "chaos_move",
           newFen: g.fen(),
@@ -8323,8 +7239,6 @@ export default function ChaosChessPage() {
           capturedPawnsWhite: capturedPawns.w,
           capturedPawnsBlack: capturedPawns.b,
           status: g.isGameOver() ? "finished" : "playing",
-          timerWhiteMs: timerW,
-          timerBlackMs: timerB,
         };
       } else {
         // Standard move: server validates with chess.js before broadcasting
@@ -8337,39 +7251,15 @@ export default function ChaosChessPage() {
           capturedPawnsWhite: capturedPawns.w,
           capturedPawnsBlack: capturedPawns.b,
           status: g.isGameOver() ? "finished" : "playing",
-          timerWhiteMs: timerW,
-          timerBlackMs: timerB,
         };
       }
 
-      // ── Broadcast via WebSocket FIRST for instant opponent sync ──
+      // Commit through the authenticated room transport before opponent delivery.
       if (partySendRef.current) {
         partySendRef.current(wsMsg);
       }
       lastFenRef.current = g.fen();
 
-      // ── Persist to DB in the background (polling fallback) ──
-      const payload = {
-        roomId,
-        from,
-        to,
-        newFen: g.fen(),
-        chaosState: serverCs,
-        lastMoveFrom: from,
-        lastMoveTo: to,
-        capturedPawnsWhite: capturedPawns.w,
-        capturedPawnsBlack: capturedPawns.b,
-        status: g.isGameOver() ? "finished" : "playing",
-        timerWhiteMs: timerW,
-        timerBlackMs: timerB,
-      };
-      fetch("/api/chaos/move", {
-        method: "POST",
-        headers: chaosHeaders(true),
-        body: JSON.stringify(payload),
-      }).catch(() => {
-        /* network error — polling will resync */
-      });
     },
     [roomId, capturedPawns, playerColor],
   );
@@ -8379,6 +7269,7 @@ export default function ChaosChessPage() {
     (from: CbSquare, to: CbSquare) => {
       if (gameStatus !== "playing") return false;
       if (isThinking) return false;
+      if (gameMode !== "ai" && roomSavingRef.current) return false;
       if (isAnimatingEndRef.current) return false;
       if (waitingForOpponentDraft) return false;
 
@@ -8470,6 +7361,7 @@ export default function ChaosChessPage() {
         // intercept and declare the win before calling executeChaosMove.
         const targetPieceAtTo = game.get(chaosMove.to as any);
         if (targetPieceAtTo?.type === "k") {
+          if (gameMode !== "ai") partySendRef.current?.({ type: "king_capture", from, to });
           // Let the board animation play before showing game-over popup
           isAnimatingEndRef.current = true;
           setLastMoveHighlight({
@@ -8503,6 +7395,7 @@ export default function ChaosChessPage() {
           chaosMove,
           chaosState.playerModifiers,
           chaosState.aiModifiers,
+          chaosState.playerNuclearCooldownUntil,
         );
         if (!newGame) return false;
 
@@ -8598,8 +7491,12 @@ export default function ChaosChessPage() {
           from,
           to,
           chaosMove.type === "capture",
+          { pieceStays: chaosMove.pieceStays, swap: chaosMove.modifierId === "usurper", board: newGame },
         );
         // queen-teleport / railgun / usurper are once per game — remove modifier after use
+        if (chaosMove.type === "capture" && game.get(from as Square)?.type === "q" && chaosState.playerModifiers.some(m => m.id === "nuclear-queen") && game.moveNumber() >= (chaosState.playerNuclearCooldownUntil ?? 0)) {
+          cs.playerNuclearCooldownUntil = game.moveNumber() + NUCLEAR_QUEEN_COOLDOWN_TURNS;
+        }
         if (chaosMove.modifierId === "queen-teleport") {
           cs = {
             ...cs,
@@ -8673,10 +7570,11 @@ export default function ChaosChessPage() {
           // Staggered draft: fire Black's deferred draft pick after their move
           if (pendingDraftAfterRevealRef.current) {
             const deferred = pendingDraftAfterRevealRef.current;
+            partySendRef.current?.({ type: "draft_freeze" });
             pendingDraftAfterRevealRef.current = null;
             setChaosState((prev) => ({
               ...prev,
-              ...deferred.chaosState,
+
               isDrafting: true,
               draftingSide: "player",
               draftChoices: deferred.choices,
@@ -8843,14 +7741,15 @@ export default function ChaosChessPage() {
       addMoveToLog(game, moveResult.san, moveResult.color);
 
       // Apply post-move chaos effects (collateral rook, nuclear queen, pawn fortress)
-      // Nuclear queen: suppress blast if still on cooldown (fired within the last 3 full turns)
+      // Nuclear queen: suppress blast until the cooldown expires.
+      const playerCaptureTurn = game.moveNumber() - (moveResult.color === "b" ? 1 : 0);
       const playerNukeReady =
-        game.moveNumber() >= (chaosState.playerNuclearCooldownUntil ?? 0);
+        playerCaptureTurn >= (chaosState.playerNuclearCooldownUntil ?? 0);
       const playerEffectiveMods = playerNukeReady
         ? chaosState.playerModifiers
         : chaosState.playerModifiers.filter((m) => m.id !== "nuclear-queen");
       let finalGame: Chess = game;
-      let nukeJustFiredPlayer = false;
+      let nukeJustFiredPlayer = !!moveResult.captured && pieceAtFrom?.type === "q" && playerNukeReady && chaosState.playerModifiers.some(m => m.id === "nuclear-queen");
       if (moveResult.captured && pieceAtFrom) {
         const afterEffects = applyPostMove(
           game,
@@ -8921,10 +7820,11 @@ export default function ChaosChessPage() {
         from,
         to,
         !!moveResult.captured,
+        { board: newG },
       );
-      // Apply nuclear queen cooldown — 3 full turns before next blast (off-by-one fix: +3 not +4)
+      // Apply the shared nuclear queen cooldown.
       if (nukeJustFiredPlayer) {
-        cs2 = { ...cs2, playerNuclearCooldownUntil: game.moveNumber() + 3 };
+        cs2 = { ...cs2, playerNuclearCooldownUntil: playerCaptureTurn + NUCLEAR_QUEEN_COOLDOWN_TURNS };
       }
       // Decrement Justice / Devil counters (player's half-move)
       cs2 = decrementAnomalyCounters(cs2, "player", from, to);
@@ -8947,10 +7847,14 @@ export default function ChaosChessPage() {
       setChaosState(cs2);
       setGame(activeG);
       if (activeG.isCheckmate()) {
+        if (gameMode !== "ai") sendMoveToServer(activeG, from, to, cs2, false);
         setTimeout(() => checkGameEnd(activeG), 1500);
         return true;
       }
-      if (checkGameEnd(activeG)) return true;
+      if (checkGameEnd(activeG)) {
+        if (gameMode !== "ai") sendMoveToServer(activeG, from, to, cs2, false);
+        return true;
+      }
 
       const drafted = checkDraft(activeG, cs2);
 
@@ -8969,10 +7873,11 @@ export default function ChaosChessPage() {
         // Staggered draft: fire Black's deferred draft pick after their move
         if (pendingDraftAfterRevealRef.current) {
           const deferred = pendingDraftAfterRevealRef.current;
+            partySendRef.current?.({ type: "draft_freeze" });
           pendingDraftAfterRevealRef.current = null;
           setChaosState((prev) => ({
             ...prev,
-            ...deferred.chaosState,
+
             isDrafting: true,
             draftingSide: "player",
             draftChoices: deferred.choices,
@@ -9121,10 +8026,11 @@ export default function ChaosChessPage() {
         // Staggered draft: fire Black's deferred draft pick after their move
         if (pendingDraftAfterRevealRef.current) {
           const deferred = pendingDraftAfterRevealRef.current;
+            partySendRef.current?.({ type: "draft_freeze" });
           pendingDraftAfterRevealRef.current = null;
           setChaosState((prev) => ({
             ...prev,
-            ...deferred.chaosState,
+
             isDrafting: true,
             draftingSide: "player",
             draftChoices: deferred.choices,
@@ -9249,10 +8155,11 @@ export default function ChaosChessPage() {
         // Staggered draft: fire Black's deferred draft pick after their move
         if (pendingDraftAfterRevealRef.current) {
           const deferred = pendingDraftAfterRevealRef.current;
+            partySendRef.current?.({ type: "draft_freeze" });
           pendingDraftAfterRevealRef.current = null;
           setChaosState((prev) => ({
             ...prev,
-            ...deferred.chaosState,
+
             isDrafting: true,
             draftingSide: "player",
             draftChoices: deferred.choices,
@@ -9293,24 +8200,22 @@ export default function ChaosChessPage() {
   );
 
   /* ── Square click for mobile + to show legal moves ── */
-  const handleSquareClick = useCallback(
-    (square: CbSquare) => {
-      if (gameStatus !== "playing") return;
-
-      const playerCode = playerColor === "white" ? "w" : "b";
-      const isPlayerTurn = game.turn() === playerCode;
-
-      // Helper: build highlight map for a given square using real game.moves()
-      const buildHighlights = (
+      const buildHighlights = useCallback((
         sq: CbSquare,
       ): Record<string, React.CSSProperties> => {
-        const p = game.get(sq as any);
+        const p = game.get(sq as Square);
+        if (!p) return {};
+        const parts = game.fen().split(" ");
+        if (parts[1] !== p.color) { parts[1] = p.color; parts[3] = "-"; }
+        const preview = new Chess(parts.join(" "));
+        const yours = p.color === (playerColor === "white" ? "w" : "b");
+        const extraMoves = yours && game.turn() === p.color ? activeChaosMoves : getChaosMoves(preview, yours ? chaosState.playerModifiers : chaosState.aiModifiers, p.color, chaosState.assignedSquares, yours ? chaosState.aiModifiers : chaosState.playerModifiers, { playerAnomaly: yours ? chaosState.playerAnomaly : chaosState.aiAnomaly, moonUnlocked: (chaosState.currentPhase ?? 0) >= 2 });
         const highlights: Record<string, React.CSSProperties> = {
           [sq]: { backgroundColor: "rgba(255, 255, 0, 0.3)" },
         };
-        const moves = game.moves({ square: sq as any, verbose: true });
+        const moves = preview.moves({ square: sq as Square, verbose: true });
         for (const m of moves) {
-          if (m.piece === "k" && isKingMoveChaosUnsafe(game, m.from, m.to))
+          if (m.piece === "k" && isKingMoveChaosUnsafe(preview, m.from, m.to))
             continue;
           highlights[m.to] = {
             background: m.captured
@@ -9318,8 +8223,8 @@ export default function ChaosChessPage() {
               : "radial-gradient(circle, rgba(0,180,0,0.75) 14%, transparent 15%)",
           };
         }
-        for (const cm of activeChaosMoves.filter((m) => m.from === sq)) {
-          if (p?.type === "k" && isKingMoveChaosUnsafe(game, cm.from, cm.to))
+        for (const cm of extraMoves.filter((m) => m.from === sq)) {
+          if (p?.type === "k" && isKingMoveChaosUnsafe(preview, cm.from, cm.to))
             continue;
           highlights[cm.to] = {
             background:
@@ -9329,9 +8234,23 @@ export default function ChaosChessPage() {
           };
         }
         return highlights;
-      };
+      }, [game, playerColor, activeChaosMoves, chaosState, isKingMoveChaosUnsafe]);
 
-      // While AI is thinking: allow selecting own pieces for preview, but never deselect or move
+  const handleSquareClick = useCallback(
+    (square: CbSquare) => {
+      if (gameStatus !== "playing") return;
+
+      if (selectedSquare === square && !anomalyActivationMode) {
+        setSelectedSquare(null);
+        setLegalMoveSquares({});
+        setHoverMoveSquares({});
+        return;
+      }
+
+      const playerCode = playerColor === "white" ? "w" : "b";
+      const isPlayerTurn = game.turn() === playerCode;
+
+      // While AI is thinking: allow selecting own pieces for preview, but never move.
       if (isThinking) {
         const piece = game.get(square as any);
         if (piece && piece.color === playerCode) {
@@ -9381,7 +8300,11 @@ export default function ChaosChessPage() {
       // Not the player's turn (and not thinking) — do nothing.
       // Exception: anomaly activation modes must still work
       // even after the turn has flipped, because they are post-move actions.
-      if (!isPlayerTurn && !anomalyActivationMode) return;
+      if (!isPlayerTurn && !anomalyActivationMode) {
+        setSelectedSquare(game.get(square as Square) ? square : null);
+        setLegalMoveSquares(buildHighlights(square));
+        return;
+      }
 
       // ── Anomaly activation mode click handling ──
       if (anomalyActivationMode) {
@@ -9488,6 +8411,7 @@ export default function ChaosChessPage() {
               playerImmuneSquare: square,
               playerImmuneTurnsLeft: 3,
             };
+            if (gameMode !== "ai") partySendRef.current?.({ type: "ability", square });
             setChaosState(cs);
             setAnomalyActivationMode(null);
             setLegalMoveSquares({
@@ -9502,46 +8426,6 @@ export default function ChaosChessPage() {
                 type: "chaos" as const,
                 message: `⚖️ Verdict: ${square} is immune for 3 turns!`,
                 icon: "⚖️",
-                pepe: PEPE.hyped,
-              },
-            ]);
-            playSound("crowd-ooh");
-          }
-          return;
-        }
-
-        if (anomalyActivationMode === "devil") {
-          // Freeze enemy piece for 2 turns
-          if (
-            clickedPiece &&
-            clickedPiece.color === oppC &&
-            clickedPiece.type !== "k"
-          ) {
-            // Push undo snapshot before consuming the ability
-            if (undoSnapshotRef.current) {
-              const snap = undoSnapshotRef.current;
-              setUndoStack((prev) => [...prev.slice(-2), snap]);
-            }
-            const cs = {
-              ...chaosState,
-              playerAnomalyUsed: true,
-              aiFrozenSquare: square,
-              aiFrozenTurnsLeft: 2,
-            };
-            setChaosState(cs);
-            setAnomalyActivationMode(null);
-            setLegalMoveSquares({
-              [square]: { backgroundColor: "rgba(225,29,72,0.45)" },
-            });
-            recomputeChaosMoves(game, cs, {
-              playerAnomaly: selectedAnomaly?.id as AnomalyId | null,
-            });
-            setEventLog((prev) => [
-              ...prev,
-              {
-                type: "chaos" as const,
-                message: `😈 Bargain: ${square} is frozen for 2 turns!`,
-                icon: "😈",
                 pepe: PEPE.hyped,
               },
             ]);
@@ -9624,13 +8508,13 @@ export default function ChaosChessPage() {
             setLegalMoveSquares(buildHighlights(square));
             playSound("select");
           } else {
-            setSelectedSquare(null);
-            setLegalMoveSquares({});
+            setSelectedSquare(piece ? square : null);
+            setLegalMoveSquares(piece ? buildHighlights(square) : {});
           }
         }
       } else {
         const piece = game.get(square as any);
-        if (piece && piece.color === game.turn()) {
+        if (piece) {
           setSelectedSquare(square);
           setLegalMoveSquares(buildHighlights(square));
           playSound("select");
@@ -9644,6 +8528,7 @@ export default function ChaosChessPage() {
       isThinking,
       selectedSquare,
       handlePlayerMove,
+      buildHighlights,
       activeChaosMoves,
       isKingMoveChaosUnsafe,
       anomalyActivationMode,
@@ -9658,10 +8543,16 @@ export default function ChaosChessPage() {
     ],
   );
 
-  /* ── Hover: no move dots, just track hovered square for sidebar info ── */
+  /* ── Hover movement preview ── */
   const handleMouseOverSquare = useCallback((square: CbSquare) => {
-    setHoveredSquare(square);
-  }, []);
+    const piece = game.get(square as Square);
+    const ownColor = playerColor === "white" ? "w" : "b";
+    const previewEnemy = !!piece && piece.color !== ownColor;
+    setHoveredSquare(previewEnemy ? square : null);
+    setHoverMoveSquares(gameStatus === "playing" && !anomalyActivationMode && previewEnemy ? buildHighlights(square) : {});
+  }, [game, playerColor, gameStatus, anomalyActivationMode, buildHighlights]);
+
+  useEffect(() => { setHoverMoveSquares({}); }, [game, gameStatus]);
 
   const handleMouseOutSquare = useCallback(() => {
     setHoveredSquare(null);
@@ -9671,6 +8562,7 @@ export default function ChaosChessPage() {
   /* ── Temperance: reroll one draft card, draw 2 replacements ── */
   const handleTemperanceReroll = useCallback(
     (discarded: ChaosModifier) => {
+      if (gameMode !== "ai" && serverDraftsRef.current && serverDraftRef.current) {partySendRef.current?.({type: "power_reroll", draftId: serverDraftRef.current.id, modifierId: discarded.id}); return;}
       if (chaosState.playerTemperanceUsedThisPhase) return;
       const pCode = playerColor === "white" ? "w" : "b";
       // Exclude already-drafted + currently-shown cards so replacements are truly fresh
@@ -9685,7 +8577,7 @@ export default function ChaosChessPage() {
         chaosState.playerAnomaly,
         [
           ...(chaosState.spentPlayerModIds ?? []),
-          ...(authenticated
+          ...(presentation.activity ? [] : authenticated
             ? [...triedLockedModsThisGame]
             : [...guestPreviewedMods]),
         ],
@@ -9720,6 +8612,7 @@ export default function ChaosChessPage() {
   const handleDraftPick = useCallback(
     (mod: ChaosModifier) => {
       const isMultiplayer = gameMode !== "ai";
+      if (isMultiplayer && serverDraftsRef.current && serverDraftRef.current) {partySendRef.current?.({type: "power_pick", draftId: serverDraftRef.current.id, modifierId: mod.id}); return;}
 
       // ── Build new state ──
       // For multiplayer: don't use applyDraft — we manage phase advancement manually
@@ -10067,20 +8960,8 @@ export default function ChaosChessPage() {
         const moveFrom = pendingMove?.from ?? "";
         const moveTo = pendingMove?.to ?? "";
 
-        const payload = {
-          roomId,
-          from: moveFrom,
-          to: moveTo,
-          newFen: currentGame.fen(),
-          chaosState: serverCs,
-          lastMoveFrom: moveFrom,
-          lastMoveTo: moveTo,
-          capturedPawnsWhite: capturedPawns.w,
-          capturedPawnsBlack: capturedPawns.b,
-          status: "playing",
-        };
 
-        // Broadcast via WebSocket FIRST for instant sync (move + modifier in one packet)
+        // Commit the triggering move and draft pick as one versioned action.
         if (partySendRef.current) {
           partySendRef.current({
             type: "draft",
@@ -10092,13 +8973,6 @@ export default function ChaosChessPage() {
         lastFenRef.current = currentGame.fen();
 
         // Persist to DB in the background
-        fetch("/api/chaos/move", {
-          method: "POST",
-          headers: chaosHeaders(true),
-          body: JSON.stringify(payload),
-        }).catch(() => {
-          /* network error — polling will resync */
-        });
       }
 
       // (AI move is handled inside the sequential reveal timeout above for gameMode === "ai")
@@ -10137,19 +9011,7 @@ export default function ChaosChessPage() {
     spawnPepe(PEPE.sadge);
     if (pollRef.current) clearInterval(pollRef.current);
     if (gameMode !== "ai" && roomId) {
-      // Mark room as resigned (includes which side resigned so polling fallback can inform opponent)
-      fetch("/api/chaos/move", {
-        method: "POST",
-        headers: chaosHeaders(true),
-        body: JSON.stringify({
-          roomId,
-          from: "",
-          to: "",
-          newFen: game.fen(),
-          status: `resigned-${playerColor}`,
-        }),
-      });
-      // Notify opponent via WebSocket
+      // Notify opponent through the durable event stream
       if (partySendRef.current) {
         partySendRef.current({ type: "resign", winner });
       }
@@ -10193,6 +9055,7 @@ export default function ChaosChessPage() {
       }
     }
     const cs = { ...chaosState, playerAnomalyUsed: true };
+    if (gameMode !== "ai") sendMoveToServer(newG, "", "", cs);
     setSunSurgeUsed(true);
     setChaosState(cs);
     setGame(newG);
@@ -10272,20 +9135,11 @@ export default function ChaosChessPage() {
   }, [playerColor, spawnPepe]);
   handleOpponentTimeoutRef.current = handleOpponentTimeout;
 
-  /* ── Send an in-game chat message (PvP only, ephemeral via PartyKit) ── */
   const sendChat = useCallback((text: string) => {
-    const trimmed = text.trim().slice(0, 200);
+    const trimmed = text.trim().slice(0, 300);
     if (!trimmed || !partySendRef.current) return;
-    // Send to opponent via PartyKit relay
-    partySendRef.current({
-      type: "chat",
-      text: trimmed,
-    } as import("@/lib/use-party-room").PartyChatMessage);
-    // Append locally as "mine"
-    setChatMessages((prev) => [
-      ...prev.slice(-49),
-      { text: trimmed, mine: true, ts: Date.now() },
-    ]);
+    setChatError("");
+    partySendRef.current({type: "chat", text: trimmed});
   }, []);
 
   /* ── Undo (AI mode only, up to 3 times) ── */
@@ -10367,19 +9221,6 @@ export default function ChaosChessPage() {
     if (partySendRef.current) {
       partySendRef.current({ type: "draw-accept" });
     }
-    if (roomId) {
-      fetch("/api/chaos/move", {
-        method: "POST",
-        headers: chaosHeaders(true),
-        body: JSON.stringify({
-          roomId,
-          from: "",
-          to: "",
-          newFen: game.fen(),
-          status: "finished",
-        }),
-      });
-    }
   }, [roomId, game]);
 
   const handleDrawDecline = useCallback(() => {
@@ -10416,6 +9257,13 @@ export default function ChaosChessPage() {
   }, []);
 
   const handleAcceptRematch = useCallback(() => {
+    setWaitingForOpponentDraft(false);
+    setPendingPhase(0);
+    pendingDraftAfterRevealRef.current = null;
+    pendingMoveBeforeDraftRef.current = null;
+    justDraftedRef.current = false;
+    setOpponentDraftReveal(null);
+    gameStatusRef.current = "playing";
     // Reset the game
     const g = new Chess();
     setGame(g);
@@ -10533,8 +9381,7 @@ export default function ChaosChessPage() {
 
   /* ── Board squares merging ── */
   const mergedSquareStyles = useMemo(() => {
-    // hoverMoveSquares last so hovering a piece always shows its dots,
-    // even when another piece is already selected (legalMoveSquares).
+    // Show one piece's destinations at a time; leaving hover restores selection.
     // checkKingHighlight stays on top of everything.
     const immuneFrozenHighlights: Record<string, React.CSSProperties> = {};
     // Justice: player's own immune piece (indigo glow)
@@ -10605,14 +9452,30 @@ export default function ChaosChessPage() {
       }
     }
 
+    const destinations = {...(Object.keys(hoverMoveSquares).length ? hoverMoveSquares : legalMoveSquares)};
+    if (presentation.activity) {
+      const source = Object.entries(destinations).find(([,style]) => style.backgroundColor)?.[0];
+      const enemy = !!source && game.get(source as Square)?.color !== (playerColor === "white" ? "w" : "b");
+      for (const [square, style] of Object.entries(destinations)) {
+        const background = String(style.background ?? '');
+        if (background.includes('radial-gradient')) {
+          const chaos = background.includes('168,85,247');
+          const capture = background.includes('68%');
+          destinations[square] = {backgroundImage: activityMoveDecal(chaos, capture, enemy), backgroundSize:'100% 100%', backgroundRepeat:'no-repeat'};
+        } else if (style.backgroundColor) {
+          destinations[square] = {backgroundColor:enemy ? '#ffad6855' : '#69d9ff55',boxShadow:enemy ? 'inset 0 0 0 3px #ffd3a6' : 'inset 0 0 0 3px #a6eeff'};
+        }
+      }
+    }
+
     return {
       ...immuneFrozenHighlights,
       ...lastMoveHighlight,
-      ...legalMoveSquares,
-      ...hoverMoveSquares,
+      ...destinations,
       ...checkKingHighlight,
     };
   }, [
+    presentation.activity,
     lastMoveHighlight,
     hoverMoveSquares,
     legalMoveSquares,
@@ -10631,6 +9494,25 @@ export default function ChaosChessPage() {
     playerColor,
   ]);
 
+  const impactState = useRef({fen: '', count: 0, check: false});
+  useEffect(() => {
+    const fen = game.fen();
+    const count = game.board().flat().filter(Boolean).length;
+    const check = game.isCheck();
+    const previous = impactState.current;
+    impactState.current = {fen, count, check};
+    if (!presentation.activity || !previous.fen || previous.fen === fen || gameStatus !== 'playing' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const captured = previous.count - count;
+    const board = boardContainerRef.current;
+    if (!board || (captured <= 0 && (!check || previous.check))) return;
+    const power = captured > 1 ? 5 : captured === 1 ? 2.5 : 1.5;
+    const animation = board.animate([
+      {transform:'translate(0,0)'}, {transform:`translate(${-power}px,${power/2}px)`},
+      {transform:`translate(${power}px,${-power/2}px)`}, {transform:`translate(${-power/2}px,0)`}, {transform:'translate(0,0)'}
+    ], {duration:captured>1 ? 260 : 180,easing:'ease-out'});
+    return () => animation.cancel();
+  }, [game, gameStatus, presentation.activity]);
+
   /* ── Reset warp-queen and usurper toggles after every move ── */
   useEffect(() => {
     setWarpQueenActive(false);
@@ -10648,7 +9530,113 @@ export default function ChaosChessPage() {
 
   /* ────────────────────────── Render ────────────────────────── */
 
+  const matchmakingLobby = (
+              <ChaosLobby showChat={!presentation.activity}
+                isSignedIn={true}
+                unlimitedTime={unlimitedTime}
+                timeControlSeconds={timeControl?.base ?? 300} incrementSeconds={timeControl?.inc ?? 3}
+                onMatchFound={(data) => {
+                  setRoomId(data.roomId);
+                  setRoomCode(data.roomCode);
+                  setGameMode("matchmake");
+                  setOpponentLabel("Random Opponent");
+
+                  // Determine our color based on whether we joined or hosted
+                  const myColor = data.joined
+                    ? data.hostColor === "white"
+                      ? "black"
+                      : "white"
+                    : data.hostColor === "white"
+                      ? "white"
+                      : "black";
+                  setPlayerColor(myColor as "white" | "black");
+                  setMatchmakeState("found");
+
+                  // Initialize fresh game state (anomalies applied after both players pick)
+                  const cs = createChaosState();
+                  setChaosState(cs);
+                  const g = new Chess();
+                  setGame(g);
+                  // Reset all per-game state/refs
+                  prevPhaseRef.current = 0;
+                  triggeredDraftForPhaseRef.current = -1;
+                  pendingDraftAfterRevealRef.current = null;
+                  justDraftedRef.current = false;
+                  pendingMpAnomalyRef.current = null;
+                  myAnomalyPickSentRef.current = false;
+                  setMyPickSent(false);
+                  setOpponentAnomalyPickedId(undefined);
+                  setEndReason("");
+                  setDrawOfferSent(false);
+                  setDrawOfferReceived(false);
+                  setRematchRequested(false);
+                  setRematchReceived(false);
+                  setSelectedSquare(null);
+                  setLegalMoveSquares({});
+                  setLastMoveHighlight({});
+                  setAvailableChaosMoves([]);
+                  setMoveLog([]);
+                  setFloatingPepes([]);
+                  setCapturedPawns({ w: 0, b: 0 });
+                  // Reset ELO and timer state (timers will be synced from first poll)
+                  setEloChange(null);
+                  setEloSaved(false);
+                  setAiEloSaved(false);
+                  setMyRating(null);
+                  setOpponentRating(null);
+                  setTimers({ w: 0, b: 0 });
+                  setUnlimitedTime(data.unlimitedTime ?? false);
+                  setTimeControl(data.unlimitedTime ? null : resolveTimeControl(data.timeControlSeconds, data.incrementSeconds));
+                  spawnPepe(PEPE.hyped);
+                  startPolling(data.roomId, myColor);
+                  // Notify via WebSocket
+                  if (data.joined) {
+                    setTimeout(() => {
+                      if (partySendRef.current) {
+                        partySendRef.current({ type: "join", guestId: "" });
+                      }
+                    }, 500);
+                  }
+                  // Show "matched" animation, then open anomaly picker for both
+                  setGameStatus("matched");
+                  setEventLog([
+                    {
+                      type: "info",
+                      message:
+                        "⚔️ Opponent found! Preparing anomaly selection…",
+                      icon: "⚔️",
+                      pepe: PEPE.hyped,
+                    },
+                  ]);
+                  playSound("reveal-stinger");
+                  if (matchedTransitionTimeoutRef.current)
+                    clearTimeout(matchedTransitionTimeoutRef.current);
+                  matchedTransitionTimeoutRef.current = setTimeout(() => {
+                    setAnomalyPickerChoices(
+                      rollAnomalyChoices(
+                        4,
+                        Math.floor(Math.random() * 1_000_000),
+                      ),
+                    );
+                    setGameStatus("picking-anomaly");
+                  }, 2500);
+                }}
+                onCancel={() => {
+                  setMatchmakeState("idle");
+                  if (pollRef.current) clearInterval(pollRef.current);
+                }}
+              />
+  );
+
   // Setup screen
+  if (gameStatus === 'setup' && presentation.Lobby) {
+    const Lobby = presentation.Lobby;
+    return <Lobby startPractice={(side) => startGame(side, 'ai')}
+      createRoom={createRoom} joinRoom={() => joinRoom()} joinOpenRoom={joinRoom} matchmaking={matchmakingLobby} joinCode={joinCode} setJoinCode={setJoinCode}
+      difficulty={aiLevel} setDifficulty={setAiLevel} unlimited={unlimitedTime} setUnlimited={setUnlimitedTime}
+      clockLabel={timeControl?.label ?? "5+3"} setClockLabel={label => {setTimeControl(CHAOS_TIME_CONTROLS.find(c => c.label === label) ?? CHAOS_TIME_CONTROLS[1]); setUnlimitedTime(false);}}
+      error={eventLog.filter(entry => entry.message.startsWith('❌')).at(-1)?.message} />;
+  }
   if (gameStatus === "setup") {
     return (
       <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-gradient-to-b from-[#030712] via-[#0a0f1a] to-[#030712]">
@@ -10912,6 +9900,12 @@ export default function ChaosChessPage() {
             ))}
           </div>
 
+          {gameMode !== "ai" && <label className="mb-4 flex items-center gap-3 text-sm text-slate-300">Match clock
+            <select className="rounded-lg bg-slate-800 p-2" value={unlimitedTime ? "untimed" : timeControl?.label ?? "5+3"} onChange={e => {
+              setUnlimitedTime(e.target.value === "untimed");
+              if (e.target.value !== "untimed") setTimeControl(CHAOS_TIME_CONTROLS.find(c => c.label === e.target.value) ?? CHAOS_TIME_CONTROLS[1]);
+            }}>{CHAOS_TIME_CONTROLS.map(c => <option key={c.label}>{c.label}</option>)}<option value="untimed">No rush</option></select>
+          </label>}
           {/* ── AI Mode ── */}
           {gameMode === "ai" && (
             <div className="flex w-full max-w-sm flex-col items-center gap-5">
@@ -11027,7 +10021,7 @@ export default function ChaosChessPage() {
                     onClick={() => setUnlimitedTime(false)}
                     className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2 text-sm font-medium transition-all ${!unlimitedTime ? "border-purple-500/40 bg-purple-500/15 text-purple-300" : "border-white/[0.08] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08]"}`}
                   >
-                    ⏱ 30s / move
+                    ⏱ {timeControl?.label ?? "5+3"} match clock
                   </button>
                   <button
                     type="button"
@@ -11079,7 +10073,7 @@ export default function ChaosChessPage() {
                   />
                   <button
                     type="button"
-                    onClick={joinRoom}
+                    onClick={() => void joinRoom()}
                     disabled={joinCode.length !== 6}
                     className="rounded-lg bg-purple-500/20 px-5 py-2.5 text-sm font-medium text-purple-400 transition-all hover:bg-purple-500/30 disabled:opacity-40"
                   >
@@ -11158,7 +10152,7 @@ export default function ChaosChessPage() {
                     onClick={() => setUnlimitedTime(false)}
                     className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2 text-sm font-medium transition-all ${!unlimitedTime ? "border-purple-500/40 bg-purple-500/15 text-purple-300" : "border-white/[0.08] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08]"}`}
                   >
-                    ⏱ 30s / move
+                    ⏱ 5+3 match clock
                   </button>
                   <button
                     type="button"
@@ -11169,100 +10163,7 @@ export default function ChaosChessPage() {
                   </button>
                 </div>
               </div>
-              <ChaosLobby
-                isSignedIn={true}
-                unlimitedTime={unlimitedTime}
-                onMatchFound={(data) => {
-                  setRoomId(data.roomId);
-                  setRoomCode(data.roomCode);
-                  setGameMode("matchmake");
-                  setOpponentLabel("Random Opponent");
-
-                  // Determine our color based on whether we joined or hosted
-                  const myColor = data.joined
-                    ? data.hostColor === "white"
-                      ? "black"
-                      : "white"
-                    : data.hostColor === "white"
-                      ? "white"
-                      : "black";
-                  setPlayerColor(myColor as "white" | "black");
-                  setMatchmakeState("found");
-
-                  // Initialize fresh game state (anomalies applied after both players pick)
-                  const cs = createChaosState();
-                  setChaosState(cs);
-                  const g = new Chess();
-                  setGame(g);
-                  // Reset all per-game state/refs
-                  prevPhaseRef.current = 0;
-                  triggeredDraftForPhaseRef.current = -1;
-                  pendingDraftAfterRevealRef.current = null;
-                  justDraftedRef.current = false;
-                  pendingMpAnomalyRef.current = null;
-                  myAnomalyPickSentRef.current = false;
-                  setMyPickSent(false);
-                  setOpponentAnomalyPickedId(undefined);
-                  setEndReason("");
-                  setDrawOfferSent(false);
-                  setDrawOfferReceived(false);
-                  setRematchRequested(false);
-                  setRematchReceived(false);
-                  setSelectedSquare(null);
-                  setLegalMoveSquares({});
-                  setLastMoveHighlight({});
-                  setAvailableChaosMoves([]);
-                  setMoveLog([]);
-                  setFloatingPepes([]);
-                  setCapturedPawns({ w: 0, b: 0 });
-                  // Reset ELO and timer state (timers will be synced from first poll)
-                  setEloChange(null);
-                  setEloSaved(false);
-                  setAiEloSaved(false);
-                  setMyRating(null);
-                  setOpponentRating(null);
-                  setTimers({ w: 0, b: 0 });
-                  setUnlimitedTime(data.unlimitedTime ?? false);
-                  setTimeControl(null);
-                  spawnPepe(PEPE.hyped);
-                  startPolling(data.roomId, myColor);
-                  // Notify via WebSocket
-                  if (data.joined) {
-                    setTimeout(() => {
-                      if (partySendRef.current) {
-                        partySendRef.current({ type: "join", guestId: "" });
-                      }
-                    }, 500);
-                  }
-                  // Show "matched" animation, then open anomaly picker for both
-                  setGameStatus("matched");
-                  setEventLog([
-                    {
-                      type: "info",
-                      message:
-                        "⚔️ Opponent found! Preparing anomaly selection…",
-                      icon: "⚔️",
-                      pepe: PEPE.hyped,
-                    },
-                  ]);
-                  playSound("reveal-stinger");
-                  if (matchedTransitionTimeoutRef.current)
-                    clearTimeout(matchedTransitionTimeoutRef.current);
-                  matchedTransitionTimeoutRef.current = setTimeout(() => {
-                    setAnomalyPickerChoices(
-                      rollAnomalyChoices(
-                        4,
-                        Math.floor(Math.random() * 1_000_000),
-                      ),
-                    );
-                    setGameStatus("picking-anomaly");
-                  }, 2500);
-                }}
-                onCancel={() => {
-                  setMatchmakeState("idle");
-                  if (pollRef.current) clearInterval(pollRef.current);
-                }}
-              />
+              {matchmakingLobby}
             </div>
           )}
 
@@ -11458,11 +10359,11 @@ export default function ChaosChessPage() {
   // Waiting for opponent screen
   if (gameStatus === "waiting") {
     return (
-      <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-gradient-to-b from-[#030712] via-[#0a0f1a] to-[#030712]">
+      <div data-activity-stage={presentation.activity ? "waiting" : undefined} className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-gradient-to-b from-[#030712] via-[#0a0f1a] to-[#030712]">
         <ChaosParticles />
         <div className="relative z-10 mx-auto flex max-w-md flex-col items-center px-4 py-20 text-center">
           <img
-            src={PEPE.prayge}
+            src={presentation.activity ? "/activity/pieces/wN.svg" : PEPE.prayge}
             alt=""
             className="mb-4 h-20 w-20 object-contain"
             style={{ animation: "pepe-bounce 1.5s ease-in-out infinite" }}
@@ -11579,11 +10480,11 @@ export default function ChaosChessPage() {
   // Matched animation screen — both players connected, about to pick anomalies
   if (gameStatus === "matched") {
     return (
-      <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-gradient-to-b from-[#030712] via-[#0a0f1a] to-[#030712]">
+      <div data-activity-stage={presentation.activity ? "matched" : undefined} className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-gradient-to-b from-[#030712] via-[#0a0f1a] to-[#030712]">
         <ChaosParticles />
         <div className="relative z-10 mx-auto flex max-w-md flex-col items-center px-4 py-20 text-center">
           <img
-            src={PEPE.hyped}
+            src={presentation.activity ? "/activity/pieces/wK.svg" : PEPE.hyped}
             alt=""
             className="mb-6 h-24 w-24 object-contain"
             style={{ animation: "pepe-bounce 1s ease-in-out infinite" }}
@@ -11632,14 +10533,14 @@ export default function ChaosChessPage() {
 
   return (
     <>
-      <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-gradient-to-b from-[#030712] via-[#0a0f1a] to-[#030712]">
+      <div data-chaos-arena className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-gradient-to-b from-[#030712] via-[#0a0f1a] to-[#030712]">
         <ChaosParticles />
 
         {/* Floating pepe reactions */}
         {floatingPepes.map((p) => (
           <FloatingPepe
             key={p.id}
-            src={p.src}
+            src={presentation.activity ? "/activity/logo.svg" : p.src}
             onDone={() => removePepe(p.id)}
           />
         ))}
@@ -11653,11 +10554,12 @@ export default function ChaosChessPage() {
             onPick={handleDraftPick}
             fen={game.fen()}
             playerColor={playerColor === "white" ? "w" : "b"}
-            timeLimit={gameMode !== "ai" && !unlimitedTime ? 15 : undefined}
+            timeLimit={gameMode !== "ai" ? 20 : undefined}
+            serverDeadline={serverDraft ? serverDraft.deadline + serverDraftOffsetRef.current : undefined}
             anomaly={chaosState.playerAnomaly}
             temperanceUsed={chaosState.playerTemperanceUsedThisPhase}
             onTemperanceReroll={handleTemperanceReroll}
-            unlockedIds={authenticated ? authUnlockedIds : GUEST_UNLOCKED_IDS}
+            unlockedIds={presentation.activity ? undefined : authenticated ? authUnlockedIds : GUEST_UNLOCKED_IDS}
             isAuthenticated={authenticated}
             onLockedPick={(mod) => {
               if (!authenticated) {
@@ -11702,7 +10604,7 @@ export default function ChaosChessPage() {
           )}
 
         {/* Progression unlock modal — shown when authenticated user crosses a milestone */}
-        {pendingAuthUnlocks.length > 0 && (
+        {!presentation.activity && pendingAuthUnlocks.length > 0 && (
           <AuthUnlockModal
             mods={pendingAuthUnlocks}
             onClose={() => setPendingAuthUnlocks([])}
@@ -11710,7 +10612,7 @@ export default function ChaosChessPage() {
         )}
 
         {/* Guest unlock modal — shown after first win for unauthenticated players */}
-        {pendingGuestUnlock && (
+        {!presentation.activity && pendingGuestUnlock && (
           <GuestUnlockModal
             mod={pendingGuestUnlock}
             onClose={() => setPendingGuestUnlock(null)}
@@ -11731,14 +10633,16 @@ export default function ChaosChessPage() {
         {/* Anomaly picker screen — shown before game starts */}
         {gameStatus === "picking-anomaly" && (
           <AnomalyPickerScreen
-            choices={anomalyPickerChoices}
-            isPro={plan === "pro" || plan === "lifetime"}
+            choices={gameMode !== "ai" && serverOpening ? serverOpening.choices : anomalyPickerChoices}
+            serverDeadline={gameMode !== "ai" ? serverOpening?.deadline : undefined}
+            isPro={!!presentation.activity || plan === "pro" || plan === "lifetime"}
             onPick={(anomaly) => {
               if (gameMode === "ai") {
                 // Solo AI game — launch immediately
                 launchGame(playerColor, gameMode, anomaly);
                 return;
               }
+              if (serverDraftsRef.current) {setMyPickSent(true);partySendRef.current?.({type: "anomaly_pick", anomalyId: anomaly.id});return;}
               // Multiplayer: store pick, broadcast to opponent, wait for their pick
               pendingMpAnomalyRef.current = anomaly;
               myAnomalyPickSentRef.current = true;
@@ -11758,6 +10662,7 @@ export default function ChaosChessPage() {
                 launchGame(playerColor, gameMode, null);
                 return;
               }
+              if (serverDraftsRef.current) {setMyPickSent(true);partySendRef.current?.({type: "anomaly_pick", anomalyId: null});return;}
               // Multiplayer: skip = no anomaly
               pendingMpAnomalyRef.current = null;
               myAnomalyPickSentRef.current = true;
@@ -11768,7 +10673,7 @@ export default function ChaosChessPage() {
               }
             }}
             waitingForOpponent={myPickSent && gameMode !== "ai"}
-            unlimitedTime={unlimitedTime}
+            unlimitedTime={serverOpening ? false : unlimitedTime}
           />
         )}
 
@@ -11782,7 +10687,7 @@ export default function ChaosChessPage() {
 
         {/* Judgement — Resurrection: pick a captured piece to revive */}
         {anomalyActivationMode === "judgement" && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div data-activity-dialog={presentation.activity ? "resurrection" : undefined} className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
             <div className="rounded-2xl border border-orange-400/40 bg-gray-950 p-6 text-center shadow-2xl max-w-sm w-full">
               <p className="mb-1 text-xs font-bold uppercase tracking-widest text-orange-400">
                 🎺 Resurrection
@@ -11837,6 +10742,7 @@ export default function ChaosChessPage() {
                               playerAnomalyUsed: true,
                               playerCapturedForJudgement: newCaptured,
                             };
+                            if (gameMode !== "ai") sendMoveToServer(newG, "", "", cs);
                             setChaosState(cs);
                             setGame(newG);
                             setAnomalyActivationMode(null);
@@ -11881,14 +10787,14 @@ export default function ChaosChessPage() {
           </div>
         )}
 
-        <div className="relative z-10 mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 px-3 py-3 sm:px-4 sm:py-4 lg:grid-cols-[1fr_280px] lg:gap-6 lg:px-8 lg:py-6">
+        <div data-chaos-layout className="relative z-10 mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 px-3 py-3 sm:px-4 sm:py-4 lg:grid-cols-[1fr_280px] lg:gap-6 lg:px-8 lg:py-6">
           {/* ── Center: Board + Modifiers below ── */}
           <div className="flex flex-col items-center gap-2 sm:gap-3 min-w-0">
             {/* Header */}
-            <div className="flex w-full max-w-[640px] items-center justify-between px-1">
+            <div data-arena-heading className="flex w-full max-w-[640px] items-center justify-between px-1">
               <div className="flex items-center gap-2">
-                <span className="text-lg">⚡</span>
-                <h1 className="text-lg font-bold text-white">Chaos Chess</h1>
+                <span className="text-lg">{presentation.activity ? '✦' : '⚡'}</span>
+                <h1 className="text-lg font-bold text-white">{presentation.activity ? 'THE PLAYGROUND' : 'Chaos Chess'}</h1>
                 {gameMode !== "ai" && roomCode && (
                   <span className="rounded bg-white/10 px-2 py-0.5 font-mono text-[10px] font-bold text-slate-400">
                     {roomCode}
@@ -11898,7 +10804,7 @@ export default function ChaosChessPage() {
                   <div className="flex items-center gap-1.5">
                     <img
                       src={
-                        gameResult === "draw"
+                        presentation.activity ? "/activity/pieces/wK.svg" : gameResult === "draw"
                           ? PEPE.hmm
                           : gameResult === playerColor
                             ? PEPE.gigachad
@@ -11916,7 +10822,7 @@ export default function ChaosChessPage() {
                             : "bg-red-500/20 text-red-400"
                       }`}
                     >
-                      {gameResult === "draw"
+                      {gameResult === "aborted" ? "Match aborted" : gameResult === "draw"
                         ? "Draw"
                         : gameResult === playerColor
                           ? "You Win!"
@@ -11936,6 +10842,12 @@ export default function ChaosChessPage() {
             </div>
 
             {/* Opponent label */}
+            {gameMode !== "ai" && gameStatus === "playing" && openingMove && <OpeningMoveNotice deadline={openingMove.deadline} mine={openingMove.side === (playerColor === "white" ? "w" : "b")} />}
+            {presentation.activity && <div className="activity-turn" data-turn={waitingForOpponentDraft || gameStatus === "drafting" ? "draft" : game.turn() === (playerColor === "white" ? "w" : "b") ? "yours" : "opponent"} role="status">
+              {gameStatus === 'game-over' ? 'Match complete' : waitingForOpponentDraft ? `Opponent is picking${serverDraft ? ` · ${serverPickSeconds}s` : ''}` : gameStatus === 'drafting' ? 'Pick a power · clocks paused' : gameStatus !== 'playing' ? 'Get ready' : game.turn() === (playerColor === 'white' ? 'w' : 'b') ? 'Your move' : isThinking ? 'Opponent is thinking…' : 'Opponent’s move'}
+              <span>{nextDraftTurn ? `Next power · turn ${nextDraftTurn}` : 'All powers drafted'}</span>
+              <span className="piece-guide-hint">{gameMode !== "ai" && (!partyConnected || partySyncing) ? (partySyncing ? "Saving move…" : "Reconnecting…") : "Tap a piece to see moves"}</span>
+            </div>}
             <div className="flex w-full max-w-[640px] items-center gap-2 rounded-lg bg-white/[0.02] px-2 py-1 sm:px-3 sm:py-1.5">
               <span className="text-xs sm:text-sm">
                 {gameMode === "ai" ? "🤖" : "👤"}
@@ -11944,88 +10856,13 @@ export default function ChaosChessPage() {
                 {gameMode === "ai" ? `Stockfish (${aiLevel})` : opponentLabel}
               </span>
               <InlineModifierIcons modifiers={chaosState.aiModifiers} />
-              {gameMode !== "ai" &&
-                !unlimitedTime &&
-                gameStatus === "playing" &&
-                (() => {
-                  const isOppTurn =
-                    (playerColor === "white" && game.turn() === "b") ||
-                    (playerColor === "black" && game.turn() === "w");
-                  if (!isOppTurn) return null;
-                  return (
-                    <span
-                      className={`ml-auto font-mono text-sm font-bold tabular-nums ${
-                        perMoveSecs <= 7
-                          ? "text-red-400 animate-pulse"
-                          : perMoveSecs <= 15
-                            ? "text-amber-400"
-                            : "text-slate-400"
-                      }`}
-                    >
-                      {perMoveSecs}s
-                    </span>
-                  );
-                })()}
+              {timeControl && gameMode !== "ai" && !unlimitedTime && <span className="match-clock ml-auto" data-active={game.turn() === (playerColor === "white" ? "b" : "w") && gameStatus === "playing" && !waitingForOpponentDraft}>
+                {formatTimer(playerColor === "white" ? timers.b : timers.w)}
+              </span>}
             </div>
 
-            {/* Per-move countdown (PvP only — 30s per turn) */}
-            {gameMode !== "ai" &&
-              !unlimitedTime &&
-              gameStatus === "playing" &&
-              (() => {
-                const isMyTurn =
-                  (playerColor === "white" && game.turn() === "w") ||
-                  (playerColor === "black" && game.turn() === "b");
-                const pct = (perMoveSecs / 30) * 100;
-                const color =
-                  perMoveSecs > 15
-                    ? "text-emerald-400 border-emerald-500/60"
-                    : perMoveSecs > 7
-                      ? "text-amber-400 border-amber-500/60"
-                      : "text-red-400 border-red-500/60";
-                const barColor =
-                  perMoveSecs > 15
-                    ? "bg-emerald-500"
-                    : perMoveSecs > 7
-                      ? "bg-amber-400"
-                      : "bg-red-500";
-                return (
-                  <div className="w-full max-w-[640px] flex items-center gap-2">
-                    {/* Circular badge */}
-                    <div
-                      className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 bg-black/40 font-mono text-sm font-black tabular-nums transition-colors ${color} ${perMoveSecs <= 7 ? "animate-pulse" : ""}`}
-                    >
-                      {perMoveSecs}
-                    </div>
-                    {/* Bar + label */}
-                    <div className="flex-1">
-                      <div className="mb-1 flex items-center justify-between">
-                        <span
-                          className={`text-[10px] font-semibold ${color.split(" ")[0]}`}
-                        >
-                          {isMyTurn ? "Your move" : "Opponent's turn"}
-                        </span>
-                        {perMoveSecs <= 10 && (
-                          <span
-                            className={`text-[10px] font-bold animate-pulse ${isMyTurn ? "text-red-400" : "text-orange-400"}`}
-                          >
-                            {isMyTurn ? "⚠ Hurry!" : "⏳ Waiting…"}
-                          </span>
-                        )}
-                      </div>
-                      <div className="relative h-2 overflow-hidden rounded-full bg-white/[0.07]">
-                        <div
-                          className={`h-full rounded-full transition-[width] duration-1000 ease-linear ${barColor}`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-
             {/* Board size controls (±) */}
-            <div className="flex w-full max-w-[760px] justify-end pr-1">
+            <div data-board-sizing className="flex w-full max-w-[760px] justify-end pr-1">
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
@@ -12054,8 +10891,10 @@ export default function ChaosChessPage() {
             {/* Board — auto-sizes to fill container, capped by viewport width and height */}
             <div
               ref={boardContainerRef}
+              data-arena-board
+              data-impact={boardEffects.some(effect => ["explosion", "nuke"].includes(effect.type)) ? "blast" : undefined}
               style={{
-                width: `min(100%, min(${640 + boardSizeOffset * 40}px, max(200px, calc(100dvh - ${Math.max(200, 380 - boardSizeOffset * 40)}px))))`,
+                width: `min(100%, min(${640 + boardSizeOffset * 40}px, max(200px, calc(100dvh - ${Math.max(200, (presentation.activity ? 330 : 380) - boardSizeOffset * 40)}px))))`,
                 maxWidth: `${640 + boardSizeOffset * 40}px`,
               }}
             >
@@ -12072,12 +10911,13 @@ export default function ChaosChessPage() {
                         )
                       : false
                   }
-                  onSquareClick={(square) =>
-                    handleSquareClick(square as CbSquare)
-                  }
-                  onMouseOverSquare={(square) =>
-                    handleMouseOverSquare(square as CbSquare)
-                  }
+                  onSquareClick={(square) => {
+                    setHoverMoveSquares({});
+                    handleSquareClick(square as CbSquare);
+                  }}
+                  onMouseOverSquare={(square) => {
+                    handleMouseOverSquare(square as CbSquare);
+                  }}
                   onMouseOutSquare={() => handleMouseOutSquare()}
                   customSquareStyles={mergedSquareStyles}
                   customBoardStyle={{
@@ -12085,10 +10925,10 @@ export default function ChaosChessPage() {
                     boxShadow: "0 4px 30px rgba(0,0,0,0.4)",
                   }}
                   customDarkSquareStyle={{
-                    backgroundColor: boardTheme.darkSquare,
+                    backgroundColor: presentation.activity ? '#779aa3' : boardTheme.darkSquare,
                   }}
                   customLightSquareStyle={{
-                    backgroundColor: boardTheme.lightSquare,
+                    backgroundColor: presentation.activity ? '#ede2c8' : boardTheme.lightSquare,
                   }}
                   showBoardNotation={showCoordinates}
                   customPieces={chaosCustomPieces || undefined}
@@ -12124,6 +10964,7 @@ export default function ChaosChessPage() {
             {/* Chaos Promotion Piece Picker */}
             {pendingPromotion && (
               <div
+                data-activity-dialog={presentation.activity ? "promotion" : undefined}
                 className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
                 onClick={() => setPendingPromotion(null)}
               >
@@ -12153,7 +10994,7 @@ export default function ChaosChessPage() {
                           className="group flex flex-col items-center gap-1 rounded-xl border border-slate-600/50 bg-slate-800/80 p-2 transition-all hover:border-purple-400/60 hover:bg-purple-500/20 hover:scale-110 active:scale-95"
                         >
                           <img
-                            src={`https://images.chesscomfiles.com/chess-themes/pieces/neo/150/${pieceCode}.png`}
+                            src={presentation.activity ? `/activity/pieces/${pieceCode}.svg` : `https://images.chesscomfiles.com/chess-themes/pieces/neo/150/${pieceCode}.png`}
                             alt={labels[p]}
                             className="h-12 w-12 sm:h-14 sm:w-14"
                             draggable={false}
@@ -12179,6 +11020,7 @@ export default function ChaosChessPage() {
             {/* Standard Promotion Piece Picker */}
             {pendingStdPromotion && (
               <div
+                data-activity-dialog={presentation.activity ? "promotion" : undefined}
                 className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
                 onClick={() => setPendingStdPromotion(null)}
               >
@@ -12208,7 +11050,7 @@ export default function ChaosChessPage() {
                           className="group flex flex-col items-center gap-1 rounded-xl border border-slate-600/50 bg-slate-800/80 p-2 transition-all hover:border-amber-400/60 hover:bg-amber-500/20 hover:scale-110 active:scale-95"
                         >
                           <img
-                            src={`https://images.chesscomfiles.com/chess-themes/pieces/neo/150/${pieceCode}.png`}
+                            src={presentation.activity ? `/activity/pieces/${pieceCode}.svg` : `https://images.chesscomfiles.com/chess-themes/pieces/neo/150/${pieceCode}.png`}
                             alt={labels[p]}
                             className="h-12 w-12 sm:h-14 sm:w-14"
                             draggable={false}
@@ -12254,7 +11096,7 @@ export default function ChaosChessPage() {
                   </div>
                 </AnomalyTooltip>
               )}
-              {timeControl && gameMode !== "ai" && (
+              {timeControl && gameMode !== "ai" && !unlimitedTime && (
                 <span
                   className={`ml-auto font-mono text-sm font-bold tabular-nums ${
                     (playerColor === "white" ? timers.w : timers.b) < 10000
@@ -12267,8 +11109,23 @@ export default function ChaosChessPage() {
               )}
             </div>
 
+            {selectedSquare && (() => {
+              const piece = game.get(selectedSquare as Square);
+              if (!piece || piece.color === (playerColor === "white" ? "w" : "b")) return null;
+              const rules = chaosState.aiModifiers.filter(m => (m.piece === piece.type || m.piece === null) &&
+                (!SINGLE_PIECE_MODIFIERS[m.id] || chaosState.assignedSquares?.[`${piece.color}_${m.id}`] === undefined || chaosState.assignedSquares?.[`${piece.color}_${m.id}`] === selectedSquare));
+              const basics = {p: "Advances forward; captures diagonally.", n: "Jumps in an L: 2 squares, then 1 sideways.", b: "Moves and captures diagonally.", r: "Moves and captures along ranks and files.", q: "Moves and captures in any straight line.", k: "Moves and captures 1 square. Must stay out of check."};
+              return <aside className="enemy-piece-inspect w-full max-w-[640px] rounded-xl border border-orange-300/30 bg-slate-900 p-3 text-sm text-slate-200" aria-label="Enemy piece details">
+                <div className="flex items-center justify-between gap-3"><strong>{getPieceDisplayName(piece.type, chaosState.aiModifiers, selectedSquare, chaosState.assignedSquares, piece.color)} · {selectedSquare.toUpperCase()}</strong><button type="button" aria-label="Close piece details" onClick={() => {setSelectedSquare(null);setLegalMoveSquares({});}}>×</button></div>
+                <p>{basics[piece.type]}</p>
+                {chaosState.aiFrozenSquare === selectedSquare && (chaosState.aiFrozenTurnsLeft ?? 0) > 0 && <p>Frozen · cannot move or capture.</p>}
+                {chaosState.aiImmuneSquare === selectedSquare && (chaosState.aiImmuneTurnsLeft ?? 0) > 0 && <p>Protected · cannot be captured.</p>}
+                {chaosState.assignedSquares?.[`${piece.color}_kings-chains`] === selectedSquare && <p>Chained · cannot move or capture, but still threatens squares.</p>}
+                {rules.map(m => <p key={m.id}><strong>{m.name}:</strong> {m.description}{m.warning ? ` ${m.warning}` : ""}</p>)}
+              </aside>;
+            })()}
             {/* Controls */}
-            <div className="mt-2 sm:mt-3 flex gap-2">
+            <div className={presentation.activity ? "activity-match-controls" : "mt-2 sm:mt-3 flex gap-2"}>
               {gameStatus === "playing" && (
                 <>
                   {/* Warp Queen activation button */}
@@ -12315,12 +11172,15 @@ export default function ChaosChessPage() {
                     if (
                       !selectedAnomaly ||
                       selectedAnomaly.trigger !== "once-per-game" ||
-                      chaosState.playerAnomalyUsed ||
-                      !isPlayerTurn_ ||
                       anomalyActivationMode !== null
                     )
                       return null;
                     const anomId = selectedAnomaly.id;
+                    const unavailableReason = chaosState.playerAnomalyUsed
+                      ? "Used this match"
+                      : partySyncing ? "Saving your move…"
+                      : !isPlayerTurn_ ? "Available on your turn"
+                      : null;
                     return (
                       <button
                         type="button"
@@ -12342,9 +11202,7 @@ export default function ChaosChessPage() {
                           } else if (anomId === "justice") {
                             setAnomalyActivationMode("justice");
                             setSelectedSquare(null);
-                          } else if (anomId === "devil") {
-                            setAnomalyActivationMode("devil");
-                            setSelectedSquare(null);
+
                           } else if (anomId === "judgement") {
                             setAnomalyActivationMode("judgement");
                           }
@@ -12353,9 +11211,11 @@ export default function ChaosChessPage() {
                         style={{
                           boxShadow: `0 0 8px ${selectedAnomaly.glowColor}`,
                         }}
-                        title={selectedAnomaly.description}
+                        disabled={!!unavailableReason}
+                        aria-label={`${selectedAnomaly.name}: ${unavailableReason ?? "Activate"}`}
+                        title={unavailableReason ?? selectedAnomaly.description}
                       >
-                        {selectedAnomaly.icon} Activate
+                        {selectedAnomaly.icon} {unavailableReason ?? "Activate"}
                       </button>
                     );
                   })()}
@@ -12384,8 +11244,6 @@ export default function ChaosChessPage() {
                               ? "(pick target)"
                               : anomalyActivationMode === "justice"
                                 ? "(mark immune)"
-                                : anomalyActivationMode === "devil"
-                                  ? "(pick to freeze)"
                                   : ""}
                       </button>
                     )}
@@ -12395,7 +11253,7 @@ export default function ChaosChessPage() {
                     onClick={handleResign}
                     className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs font-medium text-red-400 transition-all hover:bg-red-500/20"
                   >
-                    🏳️ Resign
+                    {presentation.activity ? "Resign" : "🏳️ Resign"}
                   </button>
                   {gameMode === "ai" && (
                     <>
@@ -12412,14 +11270,14 @@ export default function ChaosChessPage() {
                             : `Undo move (${3 - undoUsed} left)`
                         }
                       >
-                        ↩️ Undo ({3 - undoUsed})
+                        {presentation.activity ? "Undo " : "↩️ Undo "} ({3 - undoUsed})
                       </button>
                       <button
                         type="button"
                         onClick={handleRestart}
                         className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-xs font-medium text-emerald-400 transition-all hover:bg-emerald-500/20"
                       >
-                        🔄 Restart
+                        {presentation.activity ? "Restart" : "🔄 Restart"}
                       </button>
                     </>
                   )}
@@ -12429,7 +11287,7 @@ export default function ChaosChessPage() {
                       onClick={handleDrawOffer}
                       className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs font-medium text-amber-400 transition-all hover:bg-amber-500/20"
                     >
-                      🤝 Offer Draw
+                      {presentation.activity ? "Offer draw" : "🤝 Offer Draw"}
                     </button>
                   )}
                   {drawOfferSent && (
@@ -12444,9 +11302,9 @@ export default function ChaosChessPage() {
 
             {/* Draw offer received banner */}
             {drawOfferReceived && gameStatus === "playing" && (
-              <div className="mt-2 flex w-full max-w-[640px] items-center justify-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 backdrop-blur-sm">
+              <div data-activity-notice={presentation.activity ? "draw" : undefined} className="mt-2 flex w-full max-w-[640px] items-center justify-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 backdrop-blur-sm">
                 <img
-                  src={PEPE.think}
+                  src={presentation.activity ? "/activity/pieces/wK.svg" : PEPE.think}
                   alt=""
                   className="h-8 w-8 object-contain"
                 />
@@ -12458,14 +11316,14 @@ export default function ChaosChessPage() {
                   onClick={handleDrawAccept}
                   className="rounded-lg bg-emerald-500/20 px-3 py-1.5 text-xs font-bold text-emerald-400 transition-all hover:bg-emerald-500/30"
                 >
-                  ✅ Accept
+                  {presentation.activity ? "Accept draw" : "✅ Accept"}
                 </button>
                 <button
                   type="button"
                   onClick={handleDrawDecline}
                   className="rounded-lg bg-red-500/20 px-3 py-1.5 text-xs font-bold text-red-400 transition-all hover:bg-red-500/30"
                 >
-                  ❌ Decline
+                  {presentation.activity ? "Keep playing" : "❌ Decline"}
                 </button>
               </div>
             )}
@@ -12512,7 +11370,18 @@ export default function ChaosChessPage() {
             )}
 
             {/* ── Game Over Overlay ── */}
-            {gameStatus === "game-over" && (
+            {gameStatus === "game-over" && (gameResult === "aborted" && !presentation.Result ? <AbortedMatch reason={endReason} onLobby={() => {setGameStatus("setup"); setGameResult(null); setRoomId(null); setRoomCode(""); setMatchmakeState("idle");}} /> : presentation.Result ? <presentation.Result
+              outcome={gameResult === 'aborted' ? 'aborted' : gameResult === playerColor ? 'win' : gameResult === 'draw' ? 'draw' : 'loss'}
+              reason={endReason} practice={gameMode === 'ai'} turns={moveLog.length}
+              powers={chaosState.playerModifiers} rematchRequested={rematchRequested} rematchReceived={rematchReceived}
+              onRematch={() => gameMode === 'ai' ? startGame(playerColor, 'ai') : rematchReceived ? handleAcceptRematch() : handleRematch()}
+              onLobby={() => {
+                setGameStatus('setup'); setGameResult(null); setEndReason(''); setRoomId(null); setRoomCode('');
+                setMatchmakeState('idle'); setDrawOfferSent(false); setDrawOfferReceived(false);
+                setRematchRequested(false); setRematchReceived(false);
+                if (pollRef.current) clearInterval(pollRef.current);
+              }}
+            /> : (
               <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/70 backdrop-blur-sm p-3">
                 <div className="rounded-2xl border border-white/10 bg-slate-900/95 p-5 shadow-2xl max-w-2xl w-full overflow-y-auto max-h-[92vh]">
                   <div className="grid grid-cols-1 min-[480px]:grid-cols-[200px_1fr] gap-5 min-[480px]:gap-6 min-[480px]:items-start">
@@ -12584,12 +11453,12 @@ export default function ChaosChessPage() {
                             </>
                           ) : (
                             <div className="text-xs text-slate-500">
-                              ⚡ Chaos ELO — sign in to track your rating
+                              {presentation.activity ? "Friendly match · all powers available" : "⚡ Chaos ELO — sign in to track your rating"}
                             </div>
                           )}
 
                           {/* Save / Auth CTA */}
-                          {eloChange !== null && !authenticated && (
+                          {eloChange !== null && !authenticated && !presentation.activity && (
                             <a
                               href="/auth/signin"
                               className="mt-2 block w-full rounded-lg border border-purple-500/40 bg-purple-500/20 px-4 py-2 text-xs font-bold text-purple-300 transition-all hover:bg-purple-500/30"
@@ -12664,11 +11533,11 @@ export default function ChaosChessPage() {
                             </>
                           ) : (
                             <div className="text-xs text-slate-500">
-                              ⚡ Chaos ELO — sign in to track your rating
+                              {presentation.activity ? "Friendly match · all powers available" : "⚡ Chaos ELO — sign in to track your rating"}
                             </div>
                           )}
 
-                          {eloChange !== null && !authenticated && (
+                          {eloChange !== null && !authenticated && !presentation.activity && (
                             <a
                               href="/auth/signin"
                               className="mt-2 block w-full rounded-lg border border-purple-500/40 bg-purple-500/20 px-4 py-2 text-xs font-bold text-purple-300 transition-all hover:bg-purple-500/30"
@@ -12804,7 +11673,7 @@ export default function ChaosChessPage() {
                           onClick={handleAcceptRematch}
                           className="w-full rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-sm font-bold text-emerald-400 transition-all hover:bg-emerald-500/20 animate-pulse"
                         >
-                          ✅ Accept Rematch
+                          {presentation.activity ? "Accept draw" : "✅ Accept"} Rematch
                         </button>
                       )}
 
@@ -12891,7 +11760,7 @@ export default function ChaosChessPage() {
                       </button>
 
                       {/* Guest upsell — context-aware based on whether they previewed anything */}
-                      {!authenticated && previewedThisGame.size > 0 && (
+                      {!presentation.activity && !authenticated && previewedThisGame.size > 0 && (
                         <a
                           href="/auth/signin"
                           className="mt-1 flex items-center justify-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-medium text-amber-300 transition-all hover:bg-amber-500/20 w-full"
@@ -12903,7 +11772,7 @@ export default function ChaosChessPage() {
                           permanently
                         </a>
                       )}
-                      {!authenticated && previewedThisGame.size === 0 && (
+                      {!presentation.activity && !authenticated && previewedThisGame.size === 0 && (
                         <a
                           href="/auth/signin"
                           className="mt-1 flex items-center justify-center gap-2 rounded-lg border border-amber-500/25 bg-amber-500/8 px-4 py-2.5 text-xs font-medium text-amber-300/80 transition-all hover:bg-amber-500/15 w-full"
@@ -12958,10 +11827,10 @@ export default function ChaosChessPage() {
                   {/* /grid */}
                 </div>
               </div>
-            )}
+            ))}
 
             {/* ── Move log (below board) ── */}
-            <div className="mt-2 sm:mt-3 w-full max-w-[640px] rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3">
+            <div data-arena-moves className="mt-2 sm:mt-3 w-full max-w-[640px] rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3">
               <h3 className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:mb-2 sm:text-xs">
                 Moves
               </h3>
@@ -12993,7 +11862,7 @@ export default function ChaosChessPage() {
             </div>
 
             {/* Status badges below modifiers */}
-            <div className="mt-1.5 sm:mt-2 flex w-full max-w-[640px] flex-wrap justify-center gap-1.5 sm:gap-2">
+            <div data-arena-status className="mt-1.5 sm:mt-2 flex w-full max-w-[640px] flex-wrap justify-center gap-1.5 sm:gap-2">
               {nextDraftTurn && gameStatus === "playing" && (
                 <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 px-3 py-1.5 text-center">
                   <p className="text-xs text-purple-400">
@@ -13017,62 +11886,13 @@ export default function ChaosChessPage() {
           </div>
 
           {/* ── Right sidebar / bottom panel: Event log + Move log ── */}
-          <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-1">
-            {/* In-game chat (PvP only, ephemeral — not saved to DB) */}
-            {gameMode !== "ai" && (
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3 sm:col-span-2 lg:col-span-1">
-                <h3 className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-400 sm:mb-2 sm:text-xs">
-                  💬 Chat
-                </h3>
-                <div className="max-h-28 space-y-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 sm:max-h-36">
-                  {chatMessages.length === 0 && (
-                    <p className="text-center text-[11px] text-slate-600">
-                      No messages yet…
-                    </p>
-                  )}
-                  {chatMessages.map((m, i) => (
-                    <div
-                      key={i}
-                      className={`rounded px-2 py-1 text-[11px] leading-relaxed break-words ${
-                        m.mine
-                          ? "ml-4 bg-blue-500/15 text-blue-200"
-                          : "mr-4 bg-white/[0.04] text-slate-300"
-                      }`}
-                    >
-                      <span className="mr-1 text-[10px] text-slate-600">
-                        {m.mine ? "You" : "Opp"}
-                      </span>
-                      {m.text}
-                    </div>
-                  ))}
-                  <div ref={chatEndRef} />
-                </div>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    sendChat(chatInput);
-                    setChatInput("");
-                  }}
-                  className="mt-1.5 flex gap-1.5"
-                >
-                  <input
-                    type="text"
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    placeholder="Type a message…"
-                    maxLength={200}
-                    className="flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-[11px] text-slate-300 placeholder-slate-600 outline-none focus:border-blue-500/40 focus:bg-white/[0.06]"
-                  />
-                  <button
-                    type="submit"
-                    disabled={!chatInput.trim()}
-                    className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-2.5 py-1.5 text-[11px] font-semibold text-blue-400 transition-all hover:bg-blue-500/20 disabled:opacity-40"
-                  >
-                    ➤
-                  </button>
-                </form>
-              </div>
-            )}
+          <div data-chaos-sidebar className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-1">
+            {presentation.Hud && <presentation.Hud yours={chaosState.playerModifiers} theirs={chaosState.aiModifiers}
+              turn={game.moveNumber()} nextDraft={nextDraftTurn ?? null}
+              moves={moveLog.map(m => `${m.moveNumber}. ${m.white ?? ''}  ${m.black ?? ''}`)} events={eventLog.map(e => e.message)}
+              anomalies={[chaosState.playerAnomaly,chaosState.aiAnomaly].flatMap((id,i) => { const a=id ? getAnomalyById(id) : null; return a ? [{name:`${i===0 ? 'You' : 'Opponent'} · ${a.name}`,description:a.description}] : []; })} />}
+            {gameMode !== "ai" && roomId && <ChaosChat key={roomId} messages={chatMessages}
+              connected={partyConnected} busy={partySyncing} error={chatError} onSend={sendChat} />}
 
             {/* Event log */}
             <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3">
@@ -13150,7 +11970,7 @@ export default function ChaosChessPage() {
             </div>
 
             {/* Quick info */}
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3 sm:col-span-2 lg:col-span-1">
+            <div data-chaos-debug className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3 sm:col-span-2 lg:col-span-1">
               <h3 className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:mb-2 sm:text-xs">
                 Game Info
               </h3>
@@ -13256,7 +12076,7 @@ export default function ChaosChessPage() {
             </div>
 
             {/* ── Settings ── */}
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3 sm:col-span-2 lg:col-span-1">
+            <div data-chaos-audio className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3 sm:col-span-2 lg:col-span-1">
               <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:text-xs">
                 ⚙️ Settings
               </h3>
@@ -13328,7 +12148,7 @@ export default function ChaosChessPage() {
                   🔍 Show Piece Info
                 </button>
               )}
-              {!authenticated && (
+              {!presentation.activity && !authenticated && !presentation.activity && (
                 <a
                   href="/auth/signin"
                   className="mt-2 flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-300/80 transition-all hover:bg-amber-500/10"
@@ -13361,7 +12181,7 @@ export default function ChaosChessPage() {
       </div>
 
       {/* ── Floating draggable piece info panel ── */}
-      {pieceInfoOpen &&
+      {!presentation.activity && pieceInfoOpen &&
         gameStatus === "playing" &&
         (() => {
           const sq = hoveredSquare ?? selectedSquare;

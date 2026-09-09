@@ -266,8 +266,9 @@ function genCamel(
     const p = game.get(trackedSquare as any);
     if (p && p.type === "n" && p.color === color) {
       camelSquare = trackedSquare as Square;
+    } else {
+      return moves; // A stale assignment must never transfer the upgrade.
     }
-    // else: tracking is stale (knight moved) — fall back to first knight found
   }
 
   const [f, r] = sqToCoords(camelSquare);
@@ -1177,7 +1178,7 @@ function genEnPassantEverywhere(game: Chess, color: Color): ChaosMove[] {
  * Only pawns on rank 4 or below (white) / rank 5 or above (black) can trigger. */
 function genEarlyPromotion(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
-  const promoRank = color === "w" ? 6 : 1; // 0-indexed: white promotes to rank 7 (index 6), black to rank 2 (index 1)
+  const promoRank = color === "w" ? 4 : 3; // Rank 5 for White, rank 4 for Black, as the card promises.
   const dir = color === "w" ? 1 : -1;
   const pawns = allSquaresOf(game, "p", color);
 
@@ -1638,6 +1639,14 @@ export function getChaosMoves(
       const key = `${m.from}-${m.to}-${m.modifierId}`;
       if (seen.has(key)) continue;
       seen.add(key);
+      // A ranged attacker can disappear to Kamikaze retaliation and uncover its king.
+      if (m.pieceStays && opponentModifiers?.some(mod => mod.id === "kamikaze-bishop")) {
+        const resolved = executeChaosMove(game, m, modifiers, opponentModifiers);
+        if (!resolved) continue;
+        const king = allSquaresOf(resolved, "k", color)[0];
+        const enemy = color === "w" ? "b" : "w";
+        if (!king || resolved.isAttacked(king, enemy) || getChaosAttackedSquares(resolved, opponentModifiers, enemy, assignedSquares).has(king)) continue;
+      }
       // Also verify this move doesn't expose our king to an opponent chaos attack
       if (
         opponentModifiers &&
@@ -2368,6 +2377,7 @@ export function executeChaosMove(
   move: ChaosMove,
   modifiers: ChaosModifier[],
   opponentModifiers?: ChaosModifier[],
+  nuclearCooldownUntil = 0,
 ): Chess | null {
   const piece = game.get(move.from);
   if (!piece) return null;
@@ -2431,16 +2441,15 @@ export function executeChaosMove(
   // ── Kamikaze Bishop: reactive — mutual kill when opponent captures a bishop ──
   if (
     move.type === "capture" &&
-    !move.pieceStays &&
     opponentModifiers?.some((m) => m.id === "kamikaze-bishop")
   ) {
-    const capturedWasBishop = game.get(move.to);
-    if (
-      capturedWasBishop?.type === "b" &&
-      capturedWasBishop.color !== piece.color
-    ) {
-      // Attacker that landed on the bishop's square dies too (mutual kill, no area blast)
-      tmp.remove(move.to);
+    const targets = move.modifierId === "railgun" ? [move.to, ...(move.sideEffects ?? [])] : [move.to];
+    if (targets.some(target => {
+      const captured = game.get(target);
+      return captured?.type === "b" && captured.color !== piece.color;
+    })) {
+      // The attacker also dies, including a stationary sniper or railgun.
+      tmp.remove(move.pieceStays ? move.from : move.to);
     }
   }
 
@@ -2450,12 +2459,17 @@ export function executeChaosMove(
     piece.type === "r" &&
     modifiers.some((m) => m.id === "collateral-rook")
   ) {
-    const collateral = getCollateralSquare(game, move.from, move.to);
-    if (collateral) tmp.remove(collateral);
+    // Railgun captures in several directions; every direct hit gets collateral.
+    const targets = move.modifierId === "railgun" ? [move.to, ...(move.sideEffects ?? [])] : [move.to];
+    for (const target of targets) {
+      const collateral = getCollateralSquare(game, move.from, target);
+      if (collateral) tmp.remove(collateral);
+    }
   }
 
   // Check for nuclear queen
   if (
+    game.moveNumber() >= nuclearCooldownUntil &&
     move.type === "capture" &&
     piece.type === "q" &&
     modifiers.some((m) => m.id === "nuclear-queen")

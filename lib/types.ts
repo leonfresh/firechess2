@@ -371,6 +371,8 @@ export type StructuralReport = {
 };
 
 export type BrilliantMove = {
+  /** Version 2 requires legal material offers and confirmed engine alternatives. */
+  classificationVersion?: number;
   fenBefore: string;
   fenAfter: string;
   userMove: string;

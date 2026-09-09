@@ -109,6 +109,10 @@ const SOUND_VOLUMES: Partial<Record<SoundName, number>> = {
 };
 
 const audioCache = new Map<SoundName, HTMLAudioElement>();
+let packOptions = { reactionCooldownMs: 0, maxReactionMs: 0 };
+let lastReaction = -Infinity;
+let activeReaction: HTMLAudioElement | undefined;
+let reactionStop: ReturnType<typeof setTimeout> | undefined;
 
 const MEME_SOUNDS = new Set<SoundName>([
   "vine-boom", "bruh", "mario-death", "record-scratch", "roblox-oof",
@@ -135,6 +139,7 @@ export function getMemeVolume(): number { return memeVolume; }
 
 export function setSoundVolume(v: number): void {
   globalVolume = Math.max(0, Math.min(1, v));
+  if (globalVolume === 0) for (const audio of audioCache.values()) audio.pause();
   if (typeof window !== "undefined") {
     localStorage.setItem("chaos-sound-volume", String(globalVolume));
   }
@@ -142,6 +147,7 @@ export function setSoundVolume(v: number): void {
 
 export function setMemeVolume(v: number): void {
   memeVolume = Math.max(0, Math.min(1, v));
+  if (memeVolume === 0) for (const name of MEME_SOUNDS) audioCache.get(name)?.pause();
   if (typeof window !== "undefined") {
     localStorage.setItem("chaos-meme-volume", String(memeVolume));
   }
@@ -157,13 +163,33 @@ function getAudio(name: SoundName): HTMLAudioElement {
   return audio;
 }
 
+/** Apply a host-specific sound pack before mounting the game. */
+export function configureSoundPack(paths: Partial<Record<SoundName, string>>, options?: Partial<typeof packOptions>) {
+  clearTimeout(reactionStop);
+  activeReaction = undefined;
+  lastReaction = -Infinity;
+  packOptions = { reactionCooldownMs: 0, maxReactionMs: 0, ...options };
+  for (const audio of audioCache.values()) audio.pause();
+  audioCache.clear();
+  Object.assign(SOUND_PATHS, paths);
+}
+
 /** Play a sound effect. Fails silently if audio is blocked. */
 export function playSound(name: SoundName): void {
   try {
     if (globalVolume === 0) return;
     const effectiveMemeMultiplier = MEME_SOUNDS.has(name) ? memeVolume : 1;
     if (effectiveMemeMultiplier === 0) return;
+    const reaction = MEME_SOUNDS.has(name) || ['crowd-ooh', 'crowd-laugh', 'applause', 'applause-short', 'sad-trombone', 'honk'].includes(name);
+    if (reaction && packOptions.reactionCooldownMs && performance.now() - lastReaction < packOptions.reactionCooldownMs) return;
     const audio = getAudio(name);
+    if (reaction && packOptions.maxReactionMs) {
+      activeReaction?.pause();
+      clearTimeout(reactionStop);
+      activeReaction = audio;
+      lastReaction = performance.now();
+      reactionStop = setTimeout(() => audio.pause(), packOptions.maxReactionMs);
+    }
     audio.currentTime = 0;
     audio.volume = Math.min(1, (SOUND_VOLUMES[name] ?? 0.6) * globalVolume * effectiveMemeMultiplier);
     audio.play().catch(() => {});

@@ -1,0 +1,8 @@
+const ts=require('typescript'),fs=require('fs');
+require.extensions['.ts']=(mod,file)=>mod._compile(ts.transpile(fs.readFileSync(file,'utf8'),{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}),file);
+const {test}=require('node:test'),assert=require('node:assert/strict');
+const {signDiscordIdentity,readDiscordIdentity}=require('../lib/chaos-discord-identity.ts');
+process.env.CHAOS_LIVE_SECRET='test-secret-not-a-real-credential';
+test('Discord identity survives a signed roundtrip and expires after 12 hours',()=>{const token=signDiscordIdentity('discord_123456789012345678',1000);assert.equal(readDiscordIdentity(token,2000),'discord_123456789012345678');assert.equal(readDiscordIdentity(token,1000+12*60*60_000),null);});
+test('guest IDs, altered signatures, altered identities and malformed tokens cannot authenticate',()=>{assert.throws(()=>signDiscordIdentity('guest_123'));const token=signDiscordIdentity('discord_123456789012345678');const [payload,sig]=token.split('.');const data=JSON.parse(Buffer.from(payload,'base64url'));data.sub='discord_999999999999999999';assert.equal(readDiscordIdentity(Buffer.from(JSON.stringify(data)).toString('base64url')+'.'+sig),null);for(const bad of ['',token+'.extra',payload+'.bad','x'.repeat(3000)])assert.equal(readDiscordIdentity(bad),null);});
+test('room socket tickets cannot be used as account identities',()=>{const {createHmac}=require('node:crypto');const payload=Buffer.from(JSON.stringify({roomId:'room',userId:'discord_123456789012345678',exp:Date.now()+10000})).toString('base64url');const token=payload+'.'+createHmac('sha256',process.env.CHAOS_LIVE_SECRET).update(payload).digest('base64url');assert.equal(readDiscordIdentity(token),null);});

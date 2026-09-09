@@ -11,7 +11,18 @@
  * proper [locale] migration.
  */
 
-export { auth as middleware } from "@/lib/auth";
+import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+
+export const middleware = auth((request) => {
+  // Keep existing game/deep links intact; the clean URL is the public introduction.
+  if (request.nextUrl.pathname === "/chaos" && !request.nextUrl.search) {
+    const destination = request.nextUrl.clone();
+    destination.pathname = "/chaos/about";
+    return NextResponse.rewrite(destination);
+  }
+  return NextResponse.next();
+});
 
 export const config = {
   matcher: [

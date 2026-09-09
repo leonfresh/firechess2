@@ -16,11 +16,13 @@ export function SupportWidget() {
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
+    if (!authenticated) { setUnread(0); return; }
+    let cancelled = false;
     const check = () => {
       if (document.visibilityState === "hidden") return;
       fetch("/api/feedback/unread")
         .then((r) => r.json())
-        .then((d) => setUnread(d.count ?? 0))
+        .then((d) => { if (!cancelled) setUnread(d.count ?? 0); })
         .catch(() => {});
     };
     check();
@@ -28,17 +30,18 @@ export function SupportWidget() {
     const onFocus = () => check();
     window.addEventListener("focus", onFocus);
     return () => {
+      cancelled = true;
       window.clearInterval(id);
       window.removeEventListener("focus", onFocus);
     };
-  }, []);
+  }, [authenticated]);
 
   return (
     <Link
       href={authenticated ? "/support" : "/feedback"}
-      aria-label="Support"
-      title="Support"
-      className="fixed bottom-5 right-5 z-[60] flex h-12 w-12 items-center justify-center rounded-full border border-[#1e1a24] bg-[#121015] text-[#ff8c42] shadow-[0_10px_30px_-12px_rgba(0,0,0,0.7)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ff5a1f]/40 hover:bg-[#181520]"
+      aria-label="Message support"
+      title="Message support"
+      className="fixed bottom-5 right-5 z-[60] flex h-12 w-12 items-center justify-center rounded-full border border-[#ff7938]/40 bg-[#192330] text-[#ff9b66] shadow-[0_10px_30px_-12px_rgba(0,0,0,0.7)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#ff5a1f]/40 hover:bg-[#243246]"
     >
       <svg
         className="h-5 w-5"

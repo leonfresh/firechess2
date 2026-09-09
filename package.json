@@ -7,6 +7,8 @@
     "dev:clean": "node -e \"try{require('fs').rmSync('.next',{recursive:true,force:true})}catch(e){}\" && next dev",
     "build": "next build",
     "start": "next start",
+    "start:live": "node scripts/chaos-server.mjs",
+    "dev:live": "node scripts/chaos-server.mjs --dev",
     "lint": "next lint",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
@@ -30,7 +32,7 @@
     "html2canvas-pro": "^2.0.0",
     "lucide-react": "^1.17.0",
     "msedge-tts": "^2.0.5",
-    "next": "^15.1.0",
+    "next": "15.5.21",
     "next-auth": "^5.0.0-beta.30",
     "next-intl": "^4.13.6",
     "partykit": "^0.0.115",
@@ -47,7 +49,8 @@
     "resend": "^6.9.2",
     "stockfish": "^18.0.7",
     "stripe": "^20.3.1",
-    "three": "^0.184.0"
+    "three": "^0.184.0",
+    "ws": "^8.21.3"
   },
   "browserslist": [
     "chrome >= 93",

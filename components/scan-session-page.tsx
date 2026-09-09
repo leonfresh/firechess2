@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { signIn } from "next-auth/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -28,6 +29,7 @@ import type { AnalyzeResponse } from "@/lib/types";
 import OpponentBattleCard from "@/components/opponent-battle-card";
 
 const REPORT_CACHE_KEY_PREFIX = "fc-last-report";
+const ModernReport = dynamic(() => import("@/components/modern-preview/report").then(m => m.ModernReport));
 
 type CachedReportEntry = {
   result: AnalyzeResponse;
@@ -112,8 +114,10 @@ function buildPartialResult(
 
 export function ScanSessionPage({
   initialScan,
+  legacy = false,
 }: {
   initialScan: PublicScanSessionPayload;
+  legacy?: boolean;
 }) {
   const { authenticated, plan, user, isAdmin } = useSession();
   const searchParams = useSearchParams();
@@ -748,6 +752,10 @@ export function ScanSessionPage({
       setReportMetaState("error");
     }
   };
+
+  if (!legacy && searchParams.get("view") !== "classic" && !isOpponentMode && scan.status === "ready" && scan.result) {
+    return <ModernReport key={scan.id} scan={scan} />;
+  }
 
   return (
     <>

@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { chaosRooms } from "@/lib/schema";
 import { eq } from "drizzle-orm";
+import { cleanState } from "@/lib/chaos-room-sync";
 
 export async function GET(
   _req: NextRequest,
@@ -48,7 +49,7 @@ export async function GET(
   return NextResponse.json({
     id: room.id,
     hostColor: room.hostColor,
-    chaosState: room.chaosState,
+    chaosState: cleanState(room.chaosState),
     moveHistory: room.moveHistory,
     createdAt: room.createdAt?.toISOString() ?? null,
   });

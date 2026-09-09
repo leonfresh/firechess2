@@ -7,7 +7,7 @@ import { Check } from "lucide-react";
  * up front without making visitors hunt for it. Links through to /pricing for
  * the full comparison + checkout. Static (no client JS).
  */
-const TIERS = [
+export const PRICING_TIERS = [
   {
     name: "Free",
     price: "$0",
@@ -72,7 +72,7 @@ export function PricingTeaser() {
         </div>
 
         <div className="mt-12 grid items-start gap-6 md:grid-cols-3">
-          {TIERS.map((tier) => (
+          {PRICING_TIERS.map((tier) => (
             <div
               key={tier.name}
               className={

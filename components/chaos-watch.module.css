@@ -1,0 +1,247 @@
+.dialog {
+  width: min(1020px, 96vw);
+  max-height: 94dvh;
+  padding: 0;
+  border: 1px solid #657387;
+  border-radius: 24px;
+  background: #223349;
+  color: #fff1cf;
+  box-shadow: 0 24px 80px #070e26aa;
+}
+.dialog::backdrop {
+  background: #071020bb;
+  backdrop-filter: blur(8px);
+}
+.shell {
+  padding: clamp(16px, 3vw, 30px);
+  max-width: 1040px;
+  margin: auto;
+  color: #fff1cf;
+  background: #223349;
+  border-radius: 24px;
+  font-family: system-ui, sans-serif;
+}
+.shell button,
+.shell a {
+  color: inherit;
+  border: 1px solid #61758a;
+  border-radius: 12px;
+  background: #314b60;
+  padding: 10px 14px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  min-height: 44px;
+}
+.shell button:hover {
+  background: #456579;
+}
+.shell button:focus-visible,
+.shell a:focus-visible {
+  outline: 3px solid #d4f86c;
+  outline-offset: 3px;
+}
+.shell button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.shell p {
+  color: #c0cddd;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.heading small {
+  letter-spacing: 0.2em;
+  font-weight: 900;
+  font-size: 10px;
+  color: #d4f86c;
+}
+.heading h2 {
+  font-size: clamp(23px, 4vw, 34px);
+  margin: 6px 0;
+  font-weight: 950;
+  letter-spacing: -1px;
+}
+.tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.tabs button[aria-pressed="true"] {
+  background: #d4f86c;
+  color: #223349;
+  border-color: #d4f86c;
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.list li > button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto 20px;
+  text-align: left;
+  gap: 18px;
+  align-items: center;
+  background: #1a2a40;
+  padding: 18px;
+}
+.list small {
+  display: block;
+  color: #acbfd0;
+  font-size: 11px;
+  margin: 4px 0;
+}
+.matchNames {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.empty {
+  padding: 35px 20px;
+  text-align: center;
+  background: #1a2a40;
+  border-radius: 16px;
+}
+.game {
+  display: grid;
+  grid-template-columns: minmax(0, 520px) minmax(190px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.board {
+  border: 7px solid #c6a06c;
+  border-radius: 10px;
+  box-shadow: 0 7px 0 #71573d;
+  overflow: hidden;
+  max-width: 534px;
+  box-sizing: content-box;
+  width: calc(100% - 14px);
+}
+.player {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 0;
+  overflow-wrap: anywhere;
+}
+.player span {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: #d4f86c;
+  font-weight: 800;
+}
+.status {
+  padding: 12px 16px;
+  margin: 14px 0;
+  background: #18273d;
+  border-radius: 12px;
+  color: #d4f86c;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+.controls {
+  text-align: center;
+  margin-top: 12px;
+}
+.controls > div {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.controls input {
+  width: 100%;
+  accent-color: #d4f86c;
+  margin: 12px 0;
+  min-height: 24px;
+}
+.controls small,
+.note {
+  font-size: 12px;
+  color: #b6c7d5;
+}
+.powers section {
+  border: 1px solid #4b6076;
+  background: #1a2a40;
+  padding: 14px;
+  border-radius: 16px;
+  margin-bottom: 12px;
+}
+.powers h3 {
+  margin: 0 0 12px;
+  font-weight: 900;
+}
+.powers details {
+  border-top: 1px solid #384c63;
+  padding: 12px 0;
+}
+.powers summary {
+  cursor: pointer;
+  font-weight: 750;
+}
+.powers summary small {
+  color: #bca4fa;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+.error {
+  background: #5b323c;
+  padding: 12px;
+  border-radius: 10px;
+}
+@media (max-width: 650px) {
+  .game {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .powers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .powers section {
+    padding: 10px;
+    min-width: 0;
+  }
+  .list li > button {
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+  }
+  .list li > button > span:last-child {
+    display: none;
+  }
+  .matchNames {
+    display: block;
+  }
+  .heading a {
+    font-size: 12px;
+  }
+  .player {
+    font-size: 13px;
+  }
+  .controls button {
+    padding: 9px 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shell * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

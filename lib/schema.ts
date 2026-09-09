@@ -971,3 +971,18 @@ export const blogPostViews = pgTable("blog_post_view", {
   /** Last view timestamp */
   lastViewedAt: timestamp("lastViewedAt", { mode: "date" }).defaultNow(),
 });
+
+/** Verified Discord Activity ladder. Results are written by chaos_archive_result; see migrations/chaos-career.sql. */
+export const chaosPlayers = pgTable('chaos_player', {
+  id: text('id').primaryKey(), name: text('name').notNull(),
+  rating: integer('rating').notNull().default(1200), games: integer('games').notNull().default(0),
+  wins: integer('wins').notNull().default(0), losses: integer('losses').notNull().default(0),
+  draws: integer('draws').notNull().default(0), peak: integer('peak').notNull().default(1200),
+});
+export const chaosMatches = pgTable('chaos_match', {
+  id: text('id').primaryKey(), roomId: text('room_id').notNull(), gameNumber: integer('game_number').notNull(),
+  hostId: text('host_id').notNull(), guestId: text('guest_id').notNull(), hostColor: text('host_color').notNull(),
+  winner: text('winner').notNull(), reason: text('reason').notNull(), rated: boolean('rated').notNull().default(false),
+  hostBefore: integer('host_before'), guestBefore: integer('guest_before'), hostDelta: integer('host_delta'), guestDelta: integer('guest_delta'),
+  endedAt: timestamp('ended_at',{withTimezone:true}).notNull().defaultNow(), record: jsonb('record').notNull(),
+});

@@ -2169,6 +2169,7 @@ export default function TrainPage() {
                 return (
                   <button
                     key={mode.id}
+                    id={`training-mode-${mode.id}`}
                     onClick={() => !actuallyDisabled && startMode(mode.id)}
                     disabled={actuallyDisabled}
                     className={`group relative overflow-hidden rounded-2xl border bg-gradient-to-br ${mode.gradient} p-6 text-left transition-all ${
