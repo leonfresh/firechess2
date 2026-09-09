@@ -27,6 +27,7 @@ import {
 } from "@/lib/scan-session";
 import type { AnalyzeResponse } from "@/lib/types";
 import OpponentBattleCard from "@/components/opponent-battle-card";
+import { ModernScanStatus } from "@/components/modern-preview/scan-status";
 
 const REPORT_CACHE_KEY_PREFIX = "fc-last-report";
 const ModernReport = dynamic(() => import("@/components/modern-preview/report").then(m => m.ModernReport));
@@ -753,8 +754,11 @@ export function ScanSessionPage({
     }
   };
 
-  if (!legacy && searchParams.get("view") !== "classic" && !isOpponentMode && scan.status === "ready" && scan.result) {
-    return <ModernReport key={scan.id} scan={scan} />;
+  if (!legacy && searchParams.get("view") !== "classic" && !isOpponentMode) {
+    if (scan.status === "ready" && scan.result) {
+      return <ModernReport key={scan.id} scan={scan} />;
+    }
+    return <ModernScanStatus scan={scan} progress={progress} perPhaseProgress={perPhaseProgress} sectionsReady={sectionsReady} isOwner={isOwner} retryState={regenerateState} onRetry={handleRegenerate} />;
   }
 
   return (
