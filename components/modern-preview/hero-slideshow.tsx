@@ -43,7 +43,7 @@ export function ProductPreview() {
   useEffect(()=>{const media=window.matchMedia("(prefers-reduced-motion: reduce)");const update=()=>setReduced(media.matches);update();media.addEventListener("change",update);return()=>media.removeEventListener("change",update);},[]);
   useEffect(()=>{if(paused||interacting||reduced)return;const timer=window.setInterval(()=>{if(document.visibilityState==="visible")setActive(v=>(v+1)%slides.length);},6500);return()=>window.clearInterval(timer);},[paused,interacting,reduced,active]);
   const slide=slides[active];
-  return <section className={s.productStage} aria-label="Product preview slideshow" aria-roledescription="carousel" onMouseEnter={()=>setInteracting(true)} onMouseLeave={e=>setInteracting(e.currentTarget.contains(document.activeElement))} onFocusCapture={()=>setInteracting(true)} onBlurCapture={e=>{if(!e.currentTarget.contains(e.relatedTarget as Node|null))setInteracting(false);}}>
+  return <section className={s.productStage} aria-label="Sample insights slideshow" aria-roledescription="carousel" onMouseEnter={()=>setInteracting(true)} onMouseLeave={e=>setInteracting(e.currentTarget.contains(document.activeElement))} onFocusCapture={()=>setInteracting(true)} onBlurCapture={e=>{if(!e.currentTarget.contains(e.relatedTarget as Node|null))setInteracting(false);}}>
     <div className={s.productCard}>
       <div className={s.productTop}><span><Flame size={15}/> YOUR GAME, UNDERSTOOD</span><span className={s.sampleLabel}>Sample insights</span></div>
       <div className={s.productHeading}><div><span className={s.eyebrow}>THE BIGGER PICTURE</span><h2>Small patterns.<br/>Big opportunities.</h2></div><span className={s.roundIcon}><Crosshair size={23}/></span></div>
@@ -52,7 +52,7 @@ export function ProductPreview() {
         <div className={s.heroGraphic}>{active===0?<PreviewBoard id="modern-hero" position={HERO_FEN} showBoardNotation={false} customArrows={[["e1","g1","#ff9b6688"]]}/>:active===1?<Radar/>:<Rating/>}</div>
         <div className={s.previewInsight}><span className={s.eyebrow}>{slide.label}</span><h3>{slide.title}</h3><p>{slide.text}</p><Link href={slide.href}>{slide.link} <ArrowUpRight size={15}/></Link></div>
       </div>
-      <div className={s.previewCardFooter}><span><span className={s.greenDot}/> {active===0?"Insights from your own games":"Illustrative preview"}</span><div className={s.slideControls}><span>{active+1} / 3</span>{!reduced&&<button aria-label={paused?"Play slideshow":"Pause slideshow"} onClick={()=>setPaused(v=>!v)}>{paused?<Play size={15}/>:<Pause size={15}/>}</button>}<button aria-label="Next preview" onClick={()=>{setActive(v=>(v+1)%slides.length);setPaused(true);}}><ArrowRight size={18}/></button></div></div>
+      <div className={s.previewCardFooter}><span><span className={s.greenDot}/> {active===0?"Insights from your own games":"Illustrative example"}</span><div className={s.slideControls}><span>{active+1} / 3</span>{!reduced&&<button aria-label={paused?"Play slideshow":"Pause slideshow"} onClick={()=>setPaused(v=>!v)}>{paused?<Play size={15}/>:<Pause size={15}/>}</button>}<button aria-label="Next example" onClick={()=>{setActive(v=>(v+1)%slides.length);setPaused(true);}}><ArrowRight size={18}/></button></div></div>
     </div>
     <div className={s.floatingInsight}><span className={s.floatingIcon}><Sparkles size={18}/></span><div><strong>Don’t just find it. Fix it.</strong><span>Every pattern has a next step.</span></div><Check size={18} className={s.green}/></div>
   </section>;
