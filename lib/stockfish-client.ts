@@ -455,6 +455,7 @@ const DEFAULT_POOL_SIZE =
 
 export class StockfishPool {
   private workers: StockfishClient[] = [];
+  private inFlight = new Map<string, Promise<LocalEngineEval | null>>();
   private evalCache = new Map<string, LocalEngineEval | null>();
   /** Tracks the highest depth evaluated for each FEN to avoid O(n) cache scans */
   private maxDepthPerFen = new Map<string, number>();
@@ -484,7 +485,25 @@ export class StockfishPool {
     return best;
   }
 
-  async evaluateFen(
+  evaluateFen(
+    fen: string,
+    depth = 10,
+    skillLevel?: number,
+  ): Promise<LocalEngineEval | null> {
+    const key = `${fen}|d${depth}|sk${skillLevel ?? "full"}`;
+    const pending = this.inFlight.get(key);
+    if (pending) return pending;
+
+    // Parallel scan sections often reach the same position before its first
+    // search completes. Share that work instead of occupying another worker.
+    const task = this.evaluateUnshared(fen, depth, skillLevel).finally(() => {
+      if (this.inFlight.get(key) === task) this.inFlight.delete(key);
+    });
+    this.inFlight.set(key, task);
+    return task;
+  }
+
+  private async evaluateUnshared(
     fen: string,
     depth = 10,
     skillLevel?: number,
@@ -587,6 +606,7 @@ export class StockfishPool {
   destroy(): void {
     for (const w of this.workers) w.destroy();
     this.workers = [];
+    this.inFlight.clear();
     this.evalCache.clear();
     this.maxDepthPerFen.clear();
   }
