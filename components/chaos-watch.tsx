@@ -318,6 +318,11 @@ export function ChaosWatch({
               Game archive
             </button>
           </nav>
+          {tab === "archive" && (
+            <p className={styles.note}>
+              Rated games count toward the ladder: both players must sign in through Discord before joining timed matchmaking and each make a move. Guest play, friend rooms and No rush games are casual and do not change ratings.
+            </p>
+          )}
         </>
       )}
       {error && (

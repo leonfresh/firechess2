@@ -433,6 +433,20 @@ export function ChaosLobby({
       {/* ── Search button / timer ── */}
       {!chatOnly && (
         <div className="flex flex-col items-center gap-3">
+          <section className="w-full rounded-xl border border-slate-500/40 bg-slate-900/60 p-4 text-left text-sm text-slate-200" aria-label="Rated game requirements">
+            <p className="font-bold text-white">
+              {unlimitedTime ? "No rush · Casual game" : "Want this game to count toward your rating?"}
+            </p>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              <li>Both players sign in through Discord before joining the match.</li>
+              <li>Use Find opponent with a timed clock.</li>
+              <li>Both players make at least one move, then finish the game.</li>
+            </ul>
+            <p className="mt-2 text-slate-300">
+              {unlimitedTime ? "Choose a timed clock to qualify for rated play. " : "A timed clock alone does not guarantee a rated game. "}
+              Guest play, friend rooms and No rush games are casual and do not change ratings.
+            </p>
+          </section>
           {searchState === "idle" && (
             <button
               type="button"
