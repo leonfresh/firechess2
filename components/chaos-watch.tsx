@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "./chessboard-compat";
 import { buildChaosCustomPieces } from "./chaos-pieces";
-import { expandVisual, type WatchFrame } from "@/lib/chaos-watch";
+import { describeWatchFrame, expandVisual, type WatchFrame } from "@/lib/chaos-watch";
 import { getAnomalyById } from "@/lib/chaos-anomalies";
 import type { MatchClock } from "@/lib/chaos-clock";
 import { ChaosHubIcon } from "./chaos-hub-icon";
@@ -192,14 +192,15 @@ export function ChaosWatch({
     return () => clearInterval(timer);
   }, []);
   useEffect(() => {
-    if (!auto) return;
-    const timer = setInterval(() => setIndex((i) => i + 1), 1000);
-    return () => clearInterval(timer);
-  }, [auto]);
+    if (!auto || !detail?.frames?.length) return;
+    if (index >= detail.frames.length - 1) {
+      setAuto(false);
+      return;
+    }
+    const timer = setTimeout(() => setIndex((i) => Math.min(i + 1, detail.frames!.length - 1)), 1000);
+    return () => clearTimeout(timer);
+  }, [auto, index, detail]);
   const frames = detail?.frames ?? [];
-  useEffect(() => {
-    if (index >= frames.length - 1) setAuto(false);
-  }, [index, frames.length]);
   useEffect(() => {
     if (!board.current) return;
     const observer = new ResizeObserver((entries) =>
@@ -399,7 +400,7 @@ export function ChaosWatch({
                 ? detail.result
                   ? `${detail.result.winner === "draw" ? "Draw" : detail.result.winner === "aborted" ? "No contest" : detail.result.winner + " wins"} · ${detail.result.reason}`
                   : detail.phase
-                : frame?.label}
+                : frame && describeWatchFrame(frame)}
               {deadline !== null && !detail.result && ` · ${deadline}s`}
             </div>
             {!selected.live && detail.result && (
@@ -425,6 +426,7 @@ export function ChaosWatch({
                   {frame && rendered ? (
                     <Chessboard
                       id="spectator-board"
+                      animationDuration={0}
                       position={frame.fen}
                       boardWidth={width}
                       boardOrientation={flipped ? "black" : "white"}
@@ -475,10 +477,13 @@ export function ChaosWatch({
                         ◀
                       </button>
                       <button
-                        disabled={index >= frames.length - 1 && !auto}
-                        onClick={() => setAuto((a) => !a)}
+                        disabled={frames.length < 2}
+                        onClick={() => {
+                          if (!auto && index >= frames.length - 1) setIndex(0);
+                          setAuto((a) => !a);
+                        }}
                       >
-                        {auto ? "Pause" : "Play"}
+                        {auto ? "Pause" : index >= frames.length - 1 ? "Play again" : "Play"}
                       </button>
                       <button
                         disabled={index >= frames.length - 1}
@@ -535,6 +540,20 @@ export function ChaosWatch({
                 </p>
               </div>
               <aside className={styles.powers}>
+                {!selected.live && frames.some(f => / (picked|chose) /.test(f.label)) && (
+                  <section>
+                    <h3>Pick history</h3>
+                    <ol>
+                      {frames.map((f, i) => / (picked|chose) /.test(f.label) && (
+                        <li key={i}>
+                          <button aria-current={index === i ? "step" : undefined} onClick={() => { setAuto(false); setIndex(i); }}>
+                            {describeWatchFrame(f).replace(/^(white|black)/, color => `${color === "white" ? detail.white : detail.black} (${color})`)}
+                          </button>
+                        </li>
+                      ))}
+                    </ol>
+                  </section>
+                )}
                 {rendered &&
                   (["white", "black"] as const).map((color) => {
                     const mods =
@@ -548,15 +567,19 @@ export function ChaosWatch({
                     );
                     return (
                       <section key={color}>
-                        <h3>{color === "white" ? "White" : "Black"} powers</h3>
+                        <h3>{color === "white" ? detail.white : detail.black} · {color === "white" ? "White" : "Black"}</h3>
+                        <small>Powers at this position</small>
                         {anomaly && (
-                          <p>
-                            <b>{anomaly.name}</b>
-                          </p>
+                          <div>
+                            <p><b>{anomaly.icon} {anomaly.name}</b> · Opening anomaly</p>
+                            <p>{anomaly.description}</p>
+                            {anomaly.trigger === "once-per-game" && <p>{(color === "white" ? rendered.state.playerAnomalyUsed : rendered.state.aiAnomalyUsed) === undefined ? "Ability usage was not recorded." : (color === "white" ? rendered.state.playerAnomalyUsed : rendered.state.aiAnomalyUsed) ? "Ability used" : "Ability available"}</p>}
+                          </div>
                         )}
-                        {!mods.length && <p>No powers drafted yet.</p>}
+                        {!anomaly && <p>{detail.legacy ? "Opening anomaly was not recorded for this position." : "No opening anomaly at this position."}</p>}
+                        {!mods.length && <p>No powers at this position.</p>}
                         {mods.map((m) => (
-                          <details key={m.id}>
+                          <details key={m.id} open>
                             <summary>
                               {m.name} <small>{m.tier}</small>
                             </summary>

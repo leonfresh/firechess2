@@ -10,3 +10,12 @@ test('replay records authoritative moves and power changes without adding chat o
 test('rematches reset replay timeline while the completed timeline stays in the archived game',()=>{let r=fresh();r=act(r,'host',{type:'resign'});const old=metadata(r).replayFrames;r=act(r,'host',{type:'rematch'});r=act(r,'guest',{type:'rematch'});assert.equal(metadata(r).replayFrames.length,1);assert.equal(metadata(r).replayFrames[0].fen,new Chess().fen());assert.ok(old.length>1);});
 test('legacy replays use recorded FENs for chaos moves instead of ordinary chess reconstruction',()=>{const fen='4k3/8/8/3B4/8/8/8/4K3 b - - 0 1';const f=archiveFrames({moves:[{from:'c3',to:'d5',fen,powers:{white:['archbishop'],black:[]}}],fen,state:{playerModifiers:[{id:'archbishop'}]}});assert.equal(f[0].fen,fen);assert.deepEqual(f[0].state.white,['archbishop']);assert.equal(f.at(-1).label,'Final position');});
 test('spectators cannot submit a move or chat',()=>{const r=fresh();assert.throws(()=>act(r,'spectator',{type:'chat',text:'hello'}));assert.throws(()=>act(r,'spectator',{type:'resign'}));});
+test('anomaly recordings identify the actual choice and preserve ability usage',()=>{let r=fresh();const frames=metadata(r).replayFrames;assert.match(frames[1].label,/white chose no anomaly/i);const s=visualState({...createSyncState(true),playerAnomaly:'strength',playerAnomalyUsed:true});assert.equal(s.playerAnomalyUsed,true);});
+test('anomaly picks are attached to the correct color, including a black host',()=>{
+ let r={id:'watch-test',hostId:'host',guestId:'guest',hostColor:'black',fen:new Chess().fen(),chaosState:createSyncState(true),status:'playing',moveHistory:[],timeControlSeconds:-1};
+ r.chaosState=startServerOpening(r,1000);r.chaosState._sync.opening.offers={host:['strength'],guest:['moon']};
+ r=act(r,'host',{type:'anomaly_pick',anomalyId:'strength'});r=act(r,'guest',{type:'anomaly_pick',anomalyId:'moon'});
+ const frames=metadata(r).replayFrames;assert.equal(frames[1].state.aiAnomaly,'strength');assert.equal(frames[1].state.playerAnomaly,null);assert.equal(frames[2].state.playerAnomaly,'moon');
+ const {describeWatchFrame}=require('../lib/chaos-watch.ts');const {ALL_ANOMALIES}=require('../lib/chaos-anomalies.ts');
+ assert.equal(describeWatchFrame({...frames[1],label:'black chose an anomaly'}),`black chose ${ALL_ANOMALIES.find(a=>a.id==='strength').name}`);
+});

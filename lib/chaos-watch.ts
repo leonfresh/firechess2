@@ -1,4 +1,5 @@
 import { ALL_MODIFIERS } from "./chaos-chess";
+import { ALL_ANOMALIES } from "./chaos-anomalies";
 // Explicit public projection: never serialize room metadata, chat, identities or offers.
 export function visualState(value: any) {
   const s = value ?? {};
@@ -8,6 +9,8 @@ export function visualState(value: any) {
     assignedSquares: s.assignedSquares ?? {},
     playerAnomaly: s.playerAnomaly ?? null,
     aiAnomaly: s.aiAnomaly ?? null,
+    playerAnomalyUsed: s.playerAnomalyUsed,
+    aiAnomalyUsed: s.aiAnomalyUsed,
     currentPhase: s.currentPhase ?? 0,
     playerNuclearCooldownUntil: s.playerNuclearCooldownUntil ?? 0,
     aiNuclearCooldownUntil: s.aiNuclearCooldownUntil ?? 0,
@@ -23,6 +26,12 @@ export type WatchFrame = {
   from?: string;
   to?: string;
 };
+export function describeWatchFrame(frame: WatchFrame) {
+  const choice = /^(white|black) chose an anomaly$/.exec(frame.label);
+  if (!choice) return frame.label;
+  const id = choice[1] === "white" ? frame.state.playerAnomaly : frame.state.aiAnomaly;
+  return `${choice[1]} chose ${ALL_ANOMALIES.find(a => a.id === id)?.name ?? (id ? id : "no anomaly")}`;
+}
 export function expandVisual(s: VisualState) {
   return {
     ...s,

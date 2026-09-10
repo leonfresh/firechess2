@@ -471,7 +471,7 @@ export function reduceCommand(room: SyncRoom, userId: string, command: any, now 
     const frames = meta.replayFrames ?? [{fen:room.fen,state:visualState(state),label:'Starting position'}];
     const replayFrom = message.lastMoveFrom ?? message.from, replayTo = message.lastMoveTo ?? message.to;
     const label = type === 'power_pick' ? `${color} picked ${ALL_MODIFIERS.find(m=>m.id===message.modifierId)?.name ?? 'a power'}`
-      : type === 'anomaly_pick' ? `${color} chose an anomaly`
+      : type === 'anomaly_pick' ? `${color} chose ${ALL_ANOMALIES.find(a => a.id === message.anomalyId)?.name ?? 'no anomaly'}`
       : replayFrom && replayTo ? `${color}: ${replayFrom} → ${replayTo}` : type.replaceAll('_',' ');
     meta.replayFrames = [...frames,{fen:patch.fen ?? room.fen,state:visualState(nextState),label,
       ...(replayFrom && replayTo ? {from:replayFrom,to:replayTo} : {})}];
