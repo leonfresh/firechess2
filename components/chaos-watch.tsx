@@ -18,6 +18,7 @@ type Entry = {
   winner?: string;
   reason?: string;
   rated?: boolean;
+  moveCount?: number | null;
 };
 type Detail = {
   id: string;
@@ -354,6 +355,11 @@ export function ChaosWatch({
                           ? new Date(g.date).toLocaleString()
                           : "Read-only spectator"}
                       </small>
+                      {tab === "archive" && (
+                        <small title="Full moves: one White and Black turn, including an unfinished final pair. Power picks are excluded.">
+                          {g.moveCount == null ? "Move count unavailable" : `${g.moveCount} ${g.moveCount === 1 ? "move" : "moves"}`}
+                        </small>
+                      )}
                     </span>
                     <span aria-hidden>↗</span>
                   </button>
