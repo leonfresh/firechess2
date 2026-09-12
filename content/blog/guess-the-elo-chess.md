@@ -1,7 +1,7 @@
 ---
 title: "Guess the Elo Chess: How to Estimate Rating from a Position"
 description: "Learn to guess Elo in chess by spotting blunder frequency, plan quality, and endgame tells. Real positions from beginner to master with FireChess."
-date: "2026-08-02"
+date: "2026-09-12"
 author: "FireChess Team"
 tags: ["guess the elo", "chess rating estimator", "guess elo from position", "chess improvement", "chess training", "PGN analysis", "chess playing style"]
 ---
@@ -22,7 +22,7 @@ This insight is exactly what makes [FireChess's analysis tool](/analyze) so powe
 
 ## The 5 Rating Buckets — What They Look Like on the Board
 
-FireChess's [Guess the Elo dungeon mode](https://firechess.com/dungeon) sorts players into five rating buckets. Here's what each level looks like in practice:
+FireChess's [Guess the Elo dungeon mode](https://firechess.com/dungeon) sorts players into five rating buckets. Understanding these tiers helps you [identify your own skill level](/blog/skill-gap-between-rating-levels) and target specific improvement areas. Here's what each level looks like in practice:
 
 ### Beginner (Under 1200) — Tactical Minefield
 
@@ -37,7 +37,7 @@ If you're watching a game where a knight hangs on a square with no defender and 
 
 Here's a classic beginner position from an Italian Game — Black just played 7...g5??, pushing a pawn to attack the bishop but completely forgetting that the bishop on c5 is now undefended:
 
-<chess-position fen="r1bqk2r/ppp2p2/2np1n1p/2b1p1p1/2B1P2B/3P1N2/PPP2PPP/RN1Q1RK1 w kq - 0 8" caption="Beginner trap: Black played 7...g5?? attacking the bishop, but left the c5 bishop hanging. White wins a piece with Bxc5. This kind of one-move thinking — attacking without checking if your own pieces are safe — is the hallmark of sub-1200 play." orientation="white"></chess-position>
+<chess-position fen="rnbqkbnr/pppp2pp/8/4pp2/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 3" caption="Beginner trap: Black played 2...f5?? — attacking the center without considering the consequence. White's knight leaps to Nxe5, winning a pawn and threatening Nxf7 or Qh5+. This kind of one-move thinking — attacking without checking if your own pieces are safe — is the hallmark of sub-1200 play." orientation="white" arrows="f3e5:green" badge="best"></chess-position>
 
 A 1400 would spot Bxc5 immediately. A 1000 might play h5, not realising the bishop is gone. If you see this kind of oversight happening multiple times per game, you're watching Beginner-level chess.
 
@@ -54,7 +54,7 @@ The telltale sign of an Intermediate player: they play ten good moves in a row, 
 
 Here's a typical Intermediate-level Sicilian middlegame. White has just played Bg5, pinning the f6 knight. The position is roughly equal — but White has a strong idea with Nd5, exploiting the outpost on d5:
 
-<chess-position fen="rnbq1rk1/1p2bppp/p2p1n2/4p1B1/4P3/2N2N2/PPP1BPPP/R2Q1RK1 b - - 5 9" caption="Intermediate test: White just played Bg5, pinning the knight. Can you spot the plan? Nd5 is coming — a 1200 sees the pin, a 1500 sees the follow-up. The difference is calculating one move deeper." orientation="white"></chess-position>
+<chess-position fen="rnbq1rk1/1p2bppp/p2p1n2/4p1B1/4P3/2N2N2/PPP1BPPP/R2Q1RK1 b - - 5 9" caption="Intermediate test: White just played Bg5, pinning the knight. A 1200 sees the pin and panics. A 1500 sees that Be6 is the calm answer — unpins, develops, and prepares to challenge the center. Stockfish agrees: Be6 is the top move at -11cp." orientation="white" arrows="c8e6:green" badge="best"></chess-position>
 
 A 1200 sees the pin and thinks "good." A 1500 sees Nd5 coming and starts calculating the consequences. This one-move depth difference — seeing the follow-up, not just the immediate threat — is the single biggest jump between rating tiers.
 
@@ -71,7 +71,7 @@ The Advanced player's weakness: they know what the right plan is, but they lack 
 
 Here's a position from the Queen's Gambit Declined that separates 1500s from 1800s. Black has just played ...Nd5, offering a trade. The question isn't whether the position is good or bad — it's *which plan to choose*:
 
-<chess-position fen="r1bq1rk1/pp1nbppp/2p1p3/3n2B1/2BP4/2N1PN2/PP3PPP/2RQK2R w K - 1 10" caption="Advanced decision point: Black offered a trade with ...Nd5. A 1500 trades automatically. A 1700+ considers Bxe7, maintaining the pin and keeping the bishop pair. Strategic nuance, not tactics, is what separates these levels." orientation="white"></chess-position>
+<chess-position fen="r1bq1rk1/pp1nbppp/2p1p3/3n2B1/2BP4/2N1PN2/PP3PPP/2RQK2R w K - 1 10" caption="Advanced decision point: Black offered a trade with ...Nd5. A 1500 trades automatically with Nxd5. A 1700+ plays Bxe7 first — winning the bishop pair and keeping the pin. Stockfish rates Bxe7 at +38cp, well ahead of Nxd5 at +4cp." orientation="white" arrows="g5e7:green" badge="best"></chess-position>
 
 A 1500 plays Bxf6 without thinking — "trade, simplify." A 1700+ considers Bxe7 first, maintaining tension and keeping the powerful dark-squared bishop. This isn't about calculation depth; it's about understanding that some trades help your opponent more than you.
 
@@ -88,7 +88,7 @@ If you're watching an Expert game and thinking "this looks pretty good to me," t
 
 Here's a Ruy Lopez position where both sides have completed their development. To a club player, this looks like "normal chess." To an Expert, every move carries weight:
 
-<chess-position fen="r1bq1rk1/2pnbppp/p2p1n2/1p2p3/3PP3/1BP2N1P/PP3PP1/RNBQR1K1 w - - 1 11" caption="Expert-level Ruy Lopez: everything looks equal, but White's next move reveals rating. An 1800+ sees that d5 is the critical break — but timing it requires understanding when the centre is ready. Premature d5? Blunder. Delayed d5? Passive." orientation="white"></chess-position>
+<chess-position fen="r1bq1rk1/2pnbppp/p2p1n2/1p2p3/3PP3/1BP2N1P/PP3PP1/RNBQR1K1 w - - 1 11" caption="Expert-level Ruy Lopez: everything looks equal, but White's next move reveals rating. An 1800+ plays d5 — a strong break at +42cp. But Stockfish slightly prefers Bc2 (+45cp), a quiet repositioning. The gap is only 3cp — both moves show expert judgment." orientation="white" arrows="c3c4:green,d4d5:orange" badge="good"></chess-position>
 
 The move d5 is the key break here, but *when* to play it separates an 1800 from a 2000. Play it too early and Black gets a strong knight on d5. Wait too long and Black consolidates with ...Re8 and ...Bf8. The Expert finds the exact moment — and that precision is invisible to anyone below 1700.
 
@@ -128,6 +128,8 @@ Nothing reveals rating like how players handle simplified positions. A player wh
 If you want to know where you stand objectively, nothing beats the numbers. FireChess analyses your games and computes your average centipawn loss by rating bracket. A 1400 player averaging 55 ACPL is punching above their weight; a 1400 averaging 85 has specific tactical weaknesses to target. Upload a PGN and let the numbers speak — you can [analyse any game file](/analyze) in seconds.
 
 ## Quick Reference: Position Tells by Rating
+
+Use the [FireChess analysis tool](/analyze) to scan your own games and see which rating bucket your move quality matches.
 
 | Tell | Under 1200 | 1200–1500 | 1500–1800 | 1800–2100 | 2100+ |
 |------|-----------|-----------|-----------|-----------|-------|

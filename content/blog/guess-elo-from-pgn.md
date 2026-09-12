@@ -1,7 +1,7 @@
 ---
 title: "Guess Elo from PGN: How to Estimate Chess Rating from Any Game File"
 description: "Guess elo from any PGN file using centipawn loss, blunder count, and opening depth. Real examples and benchmarks from 50,000+ analyzed games."
-date: "2026-08-02"
+date: "2026-09-12"
 author: "FireChess Team"
 tags: ["guess elo from pgn", "chess PGN analysis", "estimate chess rating", "centipawn loss by rating", "chess improvement", "chess time management", "chess endgame technique"]
 ---
@@ -38,7 +38,7 @@ Scroll through any PGN and ask one question: **how many moves would lose a game 
 
 Here, White took a knight that was poisoned — Black had a queen check coming. White's 22.Nxd5 was a mistake (losing a pawn), but 23.Qxd5 was a full-blown blunder (mate in 1). Seeing two evaluation swings within two moves tells you this game is likely under 1400.
 
-<chess-position fen="rnb2rk1/p1p1qpp1/1p2p2p/3n4/3P4/2N1PN2/PP3PPP/R2QKB1R w KQ - 0 10" caption="A Queen's Gambit Declined position — the kind of middlegame where rating shows in move quality. A 1400 might castle and drift, while a 1600+ player finds the concrete 10.cxd5, resolving the central tension at the right moment. Upload your games to FireChess at /analyze to see where your move quality drops." orientation="white"></chess-position>
+<chess-position fen="rnb2rk1/p1p1qpp1/1p2p2p/3n4/3P4/2N1PN2/PP3PPP/R2QKB1R w KQ - 0 10" caption="A Queen's Gambit Declined position — the kind of middlegame where rating shows in move quality. A 1400 might castle and drift, while a 1600+ player finds the concrete 10.Nxd5, resolving the central tension at the right moment. Stockfish agrees: Nxd5 (+8cp) tops the list. Upload your games to FireChess at /analyze to see where your move quality drops." orientation="white" arrows="c3d5:green" badge="best"></chess-position>
 
 Compare to a typical 1800+ PGN where the largest evaluation swing across 40 moves might be a 60-centipawn inaccuracy in a complex middlegame position. The difference is stark.
 
@@ -59,7 +59,7 @@ Open the PGN and count how many opening moves match standard theory. This is one
 
 **An 1800-rated player** in the same opening continues: `9.h3 Na5 10.Bc2 c5 11.d4 Qc7 12.Nbd2` — that's 12 book moves with clear positional understanding.
 
-<chess-position fen="r1bq1rk1/2pnbppp/p2p1n2/1p2p3/3PP3/1BP2N1P/PP3PP1/RNBQR1K1 w - - 1 11" caption="Ruy Lopez after 10...Nbd7 — a typical position where rating shows in the next move. A 1400 might play the natural Bg5 (trading bishops without a plan), while an 1800 plays the thematic 11.d4, striking at the center before Black consolidates." orientation="white"></chess-position>
+<chess-position fen="r1bq1rk1/2pnbppp/p2p1n2/1p2p3/3PP3/1BP2N1P/PP3PP1/RNBQR1K1 w - - 1 11" caption="Ruy Lopez after 10...Nbd7 — a typical position where rating shows in the next move. A 1400 might play the automatic Bg5 (+22cp), trading bishops without a plan. An 1800 finds c4 (+50cp, Stockfish's top choice) or Nbd2 (+47cp), building pressure before committing." orientation="white" arrows="c3c4:green,c1g5:orange" badge="best"></chess-position>
 
 The difference: the 1800 player doesn't just know the moves, they follow the *ideas* — maintaining the Maroczy bind structure, central control, and avoiding premature trades. Reading a PGN at move 12 already tells you which rating band you're dealing with.
 
@@ -77,7 +77,7 @@ Club players (1200–1800) often play identical middlegames but separate complet
 
 White's 34.Kd4?? walks into a pawn break that creates a passed pawn for Black. A 1700+ player would play 34.g3, maintaining the blockade. The difference is one bad king move in an otherwise equal endgame — but that one move drops 200 rating points' worth of technique.
 
-<chess-position fen="3r4/5pkp/5p2/8/8/5P2/5KPP/4R3 w - - 0 1" caption="A rook endgame where technique separates ratings. A 1500 might play the passive Kg1, but an 1800+ finds Re7, activating the rook behind Black's pawn chain. Endgame ACPL is one of the strongest rating predictors — check your own endgame accuracy on FireChess's analysis page." orientation="white"></chess-position>
+<chess-position fen="3r4/5pkp/5p2/8/8/5P2/5KPP/4R3 w - - 0 1" caption="A rook endgame where technique separates ratings. A 1500 might rush with Re7, but an 1800+ plays h3 first — a quiet waiting move (+19cp, Stockfish's top pick) that improves the pawn structure before activating the rook. Endgame ACPL is one of the strongest rating predictors — check your own endgame accuracy on FireChess's analysis page." orientation="white" arrows="h2h3:green,e1e7:orange" badge="best"></chess-position>
 
 **Clean endgame signals by rating:**
 
@@ -254,6 +254,8 @@ Cross-reference all six signals. When ACPL, blunder count, opening depth, endgam
 
 ## Real PGN Comparison: Two Ratings Side by Side
 
+Before diving into the comparison, make sure you understand [what centipawn loss means](/blog/what-is-centipawn-loss) — it's the single most important metric for estimating rating from a PGN.
+
 **Game A** (45 moves, estimated 1950):
 
 PGN excerpt from moves 38–42:
@@ -272,9 +274,11 @@ White trades into the same structure but forgets to calculate the pawn race — 
 
 Same material structure. Same basic idea. But one player calculated two moves deeper and got it right. That's the difference between a 1350 and a 1950 — and you can read it directly from the PGN.
 
-<chess-position fen="8/1p6/1P1k4/2p5/2P1K3/8/8/8 w - - 0 1" caption="A king and pawn endgame where the evaluation hinges on a single decision. White to move — Kf5 maintains opposition and wins, while Kd3 gives up the draw. Endgame positions like this appear in roughly 30% of club games that reach move 30." orientation="white"></chess-position>
+<chess-position fen="8/1p6/1P1k4/2p5/2P1K3/8/8/8 w - - 0 1" caption="A king and pawn endgame where knowing the opposition pattern matters. White to move — Kf5 is the key move, seizing the opposition. While this specific position is drawn with best play, positions like this appear in roughly 30% of club games that reach move 30 — and not knowing the pattern costs half-points every time." orientation="white" arrows="e4f5:green" badge="best"></chess-position>
 
 ## Limitations: When the PGN Tells a Different Story
+
+Even the best [chess analysis tools](/blog/free-chess-analysis-tools-2026) have blind spots. PGN-based rating estimation is an approximation, not a verdict.
 
 No single PGN analysis is perfect. Be aware of these caveats when you guess elo from a PGN:
 
