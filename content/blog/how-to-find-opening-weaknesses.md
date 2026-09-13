@@ -18,13 +18,13 @@ An opening leak is a move or position in your repertoire where you regularly dev
 
 Consider this position from the Exchange French:
 
-<chess-position fen="rnbqkbnr/ppp2ppp/8/3p4/3PP3/8/PPP2PPP/RNBQKBNR b KQkq - 0 3" caption="Exchange French after 1.e4 e6 2.d4 d5 3.exd5 exd5 — Black to move. If you always recapture immediately with 3...exd5 instead of inserting 3...Nf6 first, you're leaking evaluation every game." orientation="white"></chess-position>
+<chess-position fen="rnbqkbnr/ppp2ppp/8/3p4/3PP3/8/PPP2PPP/RNBQKBNR b KQkq - 0 3" arrows="d5e4:green" badge="best" caption="Exchange French after 1.e4 e6 2.d4 d5 3.exd5 exd5 — Black to move. If you always recapture immediately with 3...exd5 instead of inserting 3...Nf6 first, you're leaking evaluation every game." orientation="white"></chess-position>
 
 This FEN shows the position after 1.e4 e6 2.d4 d5 3.exd5 exd5. White has a symmetrical pawn structure but the extra tempo. If you've played this as Black and consistently develop your knight to e7 instead of f6, you're blocking your dark-squared bishop and conceding the center without a fight. An analysis of your last 15 French Defense games might show this exact pattern — 12 of them followed the same flawed plan.
 
 Or take a position from the [Caro-Kann Defense guide](/blog/caro-kann-defense-guide) Advance:
 
-<chess-position fen="rnbqkbnr/pp1ppppp/2p5/4P3/3P4/8/PPP2PPP/RNBQKBNR b KQkq - 0 3" caption="Caro-Kann Advance after 1.e4 c6 2.d4 d5 3.e5 — Black to move. The book move is 3...Bf5. Playing 3...c5 instead is a common leak that gives White a comfortable edge." orientation="black"></chess-position>
+<chess-position fen="rnbqkbnr/pp1ppppp/2p5/4P3/3P4/8/PPP2PPP/RNBQKBNR b KQkq - 0 3" arrows="d7d6:green" badge="best" caption="Caro-Kann Advance after 1.e4 c6 2.d4 d5 3.e5 — Black to move. The book move is 3...Bf5. Playing 3...c5 instead is a common leak that gives White a comfortable edge." orientation="black"></chess-position>
 
 After 1.e4 c6 2.d4 d5 3.e5, the book move is 3...Bf5. But if you've been playing 3...c5 instead, hoping to strike back in the center immediately, the engine gives White a comfortable edge after 4.dxc5 e6 5.Qg4. Checking your recent games might reveal you've played 3...c5 in 8 out of 10 Caro-Kann games — a textbook leak.
 
@@ -127,7 +127,7 @@ The traditional approach:
 
 **Concrete example:** You export your last 50 Italian Game games and notice that whenever you reach this position as Black:
 
-<chess-position fen="r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4" caption="Italian Game Giuoco Piano after 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 — White to move. If you always respond to 4.c3 with 4...d6 instead of the more flexible 4...Nf6, you're leaking evaluation in one of the most common openings." orientation="black"></chess-position>
+<chess-position fen="r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4" arrows="c2c3:green" badge="best" caption="Italian Game Giuoco Piano after 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 — White to move. If you always respond to 4.c3 with 4...d6 instead of the more flexible 4...Nf6, you're leaking evaluation in one of the most common openings." orientation="black"></chess-position>
 
 ...you consistently respond to 4.c3 with 4...d6 instead of the more flexible 4...Nf6. The engine shows that after 4...d6 5.d4 exd4 6.cxd4 Bb6, you're conceding the center for no compensating gain. This pattern shows up in 8 of your last 12 games — a clear leak.
 
@@ -406,11 +406,11 @@ After analyzing thousands of games through [FireChess scans](/analyze), certain 
 
 **Development order errors** are the most expensive leak type. In the Sicilian Najdorf — one of the [most popular openings at every level](/blog/most-played-openings-by-rating) — the difference between 6.Be2 and 6.Bg5 can cost you 0.5 pawns if you choose wrong:
 
-<chess-position fen="rnbqkb1r/1p2pppp/p2p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 0 6" caption="Sicilian Najdorf after 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 a6 — White to move. Many club players autopilot 6.Be2 here without considering 6.Bg5, 6.Be3, or 6.f3. Each leads to completely different middlegame plans, and picking the wrong one for the position is a recurring leak." orientation="white"></chess-position>
+<chess-position fen="rnbqkb1r/1p2pppp/p2p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 0 6" arrows="f2f3:green,f1e2:orange" badge="best" caption="Sicilian Najdorf after 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 a6 — White to move. Many club players autopilot 6.Be2 here without considering 6.Bg5, 6.Be3, or 6.f3. Each leads to completely different middlegame plans, and picking the wrong one for the position is a recurring leak." orientation="white"></chess-position>
 
 **Pawn structure mistakes** create permanent weaknesses. In the Queen's Gambit Declined — a cornerstone of [1.d4 repertoire building](/blog/queens-gambit-guide) — accepting an isolated queen's pawn without understanding the resulting dynamics is a leak that shows up in game after game:
 
-<chess-position fen="r1bq1rk1/pppnbppp/4pn2/3p2B1/2PP4/2N1PN2/PP3PPP/R2QKB1R w KQ - 3 7" caption="Queen's Gambit Declined Orthodox after 6...Nbd7 — White to move. If you play this as Black and always capture on c4 without a follow-up plan, you'll end up with an isolated d-pawn and no compensation. The leak isn't the capture itself — it's capturing without understanding the resulting middlegame." orientation="white"></chess-position>
+<chess-position fen="r1bq1rk1/pppnbppp/4pn2/3p2B1/2PP4/2N1PN2/PP3PPP/R2QKB1R w KQ - 3 7" arrows="f1d3:green" badge="best" caption="Queen's Gambit Declined Orthodox after 6...Nbd7 — White to move. If you play this as Black and always capture on c4 without a follow-up plan, you'll end up with an isolated d-pawn and no compensation. The leak isn't the capture itself — it's capturing without understanding the resulting middlegame." orientation="white"></chess-position>
 
 The five most common leak patterns across thousands of scanned games:
 
