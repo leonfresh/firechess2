@@ -1,7 +1,7 @@
 ---
 title: "Chess Thinking Process: How to Evaluate Positions and Find the Right Move"
 description: "Learn the chess thinking process to evaluate positions, find candidate moves, and cut your centipawn loss. Step-by-step with board examples."
-date: "2026-08-03"
+date: "2026-09-14"
 author: "FireChess Team"
 tags: ["chess improvement", "positional play", "calculation", "middlegame", "thinking process"]
 canonical: https://firechess.com/blog/chess-thinking-process
@@ -42,7 +42,7 @@ Every position has a character. Some are sharp and tactical — both kings are e
 
 Look at this position from the [Tarrasch Defense](/openings/tarrasch-defense):
 
-<chess-position fen="r1bqr1k1/pp2bpp1/2n2n1p/3p4/3N4/2N1B1P1/PP2PPBP/R2Q1RK1 w - - 2 12" caption="White to move. Material is equal, but piece activity tells the real story. Who stands better here, and what should White prioritize?" orientation="white"></chess-position>
+<chess-position fen="r1bqr1k1/pp2bpp1/2n2n1p/3p4/3N4/2N1B1P1/PP2PPBP/R2Q1RK1 w - - 2 12" caption="White to move. Material is equal, but piece activity tells the real story. Stockfish prefers a3 (+0.57), preparing to expand while maintaining the knight outpost on d4." orientation="white" arrows="a2a3:green" badge="best"></chess-position>
 
 **The evaluation checklist:**
 
@@ -76,7 +76,7 @@ The fastest method: **checks, captures, and threats** (CCT). This tactical scan 
 
 Here's a [Ruy Lopez](/openings/ruy-lopez) middlegame where White needs to choose a plan:
 
-<chess-position fen="r1bq1rk1/2pnbppp/p2p1n2/1p2p3/3PP3/1BP2N1P/PP3PP1/RNBQR1K1 w - - 1 11" caption="White to move in the Ruy Lopez. Three candidate moves compete: d5, a4, or Bc2. Which fits the position best?" orientation="white"></chess-position>
+<chess-position fen="r1bq1rk1/2pnbppp/p2p1n2/1p2p3/3PP3/1BP2N1P/PP3PP1/RNBQR1K1 w - - 1 11" caption="White to move in the Ruy Lopez. Stockfish prefers Bc2 (+0.53) as the best candidate. Karpov played the ambitious a4 (+0.43) — both are reasonable, but Bc2 keeps more flexibility." orientation="white" arrows="b3c2:green,a2a4:orange" badge="best"></chess-position>
 
 **Candidate 1: d4-d5** — Locks the center, gains space on the queenside, but closes the c1-h6 diagonal for White's dark-squared bishop. A committal decision.
 
@@ -106,7 +106,7 @@ But calculation without direction is wasted effort. You don't need to calculate 
 
 Here's a position where calculation is essential — the [Italian Game](/openings/italian-game) with an opportunity in the center:
 
-<chess-position fen="r1bq1rk1/bpp2ppp/p1np1n2/4p3/2B1P3/2PP1N2/PP1N1PPP/R1BQR1K1 w - - 2 9" caption="White to move. The Italian Game has reached a critical moment. Can White strike in the center with d4, or is it premature? Calculate carefully." orientation="white"></chess-position>
+<chess-position fen="r1bq1rk1/bpp2ppp/p1np1n2/4p3/2B1P3/2PP1N2/PP1N1PPP/R1BQR1K1 w - - 2 9" caption="White to move. The Italian Game has reached a critical moment. Stockfish says Nf1 (+0.29) or h3 (+0.25) are correct — d4 looks natural but Black refutes it with ...Nxe4!" orientation="white" arrows="d2d4:red,h2h3:green" badge="inaccuracy"></chess-position>
 
 **White's key candidate: d3-d4.** Let's calculate:
 
@@ -134,7 +134,7 @@ Every position has a "most important thing." Sometimes it's attack (your opponen
 
 Here's a [Queen's Gambit Declined](/openings/queens-gambit-declined) position where prophylaxis is the key:
 
-<chess-position fen="r1bq1rk1/pp1nbppp/2p1p3/3n2B1/2BP4/2N1PN2/PP3PPP/2RQK2R w K - 1 10" caption="White to move. Black has just played ...Nd5, hitting the Bg5. How should White respond — protect the bishop, exchange, or ignore the threat?" orientation="white"></chess-position>
+<chess-position fen="r1bq1rk1/pp1nbppp/2p1p3/3n2B1/2BP4/2N1PN2/PP3PPP/2RQK2R w K - 1 10" caption="White to move. Black has just played ...Nd5, hitting the Bg5. Stockfish prefers the immediate Bxe7 (+0.45) — simplifying is often the practical choice, even when the engine sees more ambitious options." orientation="white" arrows="g5e7:green,h2h4:orange" badge="best"></chess-position>
 
 **The demands of the position:** Black's last move (...Nd5) creates pressure on g5 and potentially on c3. White needs to decide how to handle this tension.
 
@@ -160,7 +160,7 @@ These factors don't show up in engine analysis, but they decide real games every
 
 ## How the Thinking Process Cuts Centipawn Loss
 
-Let's get concrete. The thinking process isn't abstract theory — it directly reduces your ACPL (average centipawn loss). Here's how each step maps to common mistake patterns:
+Let's get concrete. The thinking process isn't abstract theory — it directly reduces your [ACPL (average centipawn loss)](/blog/what-is-centipawn-loss). Here's how each step maps to common mistake patterns:
 
 <svg viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg" style="background:#0a0e1a;border-radius:12px;font-family:system-ui,sans-serif">
   <text x="300" y="30" fill="#f1f5f9" font-size="16" font-weight="bold" text-anchor="middle">Thinking Process Steps vs. ACPL Reduction</text>
@@ -280,7 +280,7 @@ This is where the thinking process saves even strong players. If you want to see
 
 Let's walk through the thinking process on a real move, start to finish. If you want to practice this on your own games, upload them to [FireChess's scanner](/analyze) and try the framework on each of your mistakes. Return to the IQP position:
 
-<chess-position fen="r1bqr1k1/pp2bpp1/2n2n1p/3p4/3N4/2N1B1P1/PP2PPBP/R2Q1RK1 w - - 2 12" caption="White to move. Apply the full thinking process: evaluate, find candidates, calculate, decide." orientation="white"></chess-position>
+<chess-position fen="r1bqr1k1/pp2bpp1/2n2n1p/3p4/3N4/2N1B1P1/PP2PPBP/R2Q1RK1 w - - 2 12" caption="White to move. Apply the full thinking process: evaluate, find candidates, calculate, decide. The engine confirms Qd2 or a3 as the strongest practical choices." orientation="white" arrows="d1c2:green,a2a3:orange" badge="best"></chess-position>
 
 **Step 1 — Evaluate:** White has a slight advantage. The d4 knight is strong, the bishop pair is nice, and the IQP gives central control. Black's position is solid but passive. The position is strategic — no immediate tactics.
 
