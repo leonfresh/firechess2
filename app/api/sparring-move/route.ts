@@ -5,15 +5,19 @@
  * against the user. Logic:
  *
  * 1. Fetch Lichess Explorer moves for the given rating bucket.
- * 2. If book moves exist (>= MIN_BOOK_GAMES total):
+ * 2. If that bucket is thin (< BROADEN_BELOW games), re-query with no rating
+ *    filter and use the wider set — flagged `broadened` so the client can say
+ *    so. The point is to keep drawing real human moves as deep as the database
+ *    goes instead of ending the book early.
+ * 3. If book moves exist (>= MIN_BOOK_GAMES total):
  *    a. Weight each move by games played (popularity sampling).
  *    b. Filter out outright blunders: any move whose eval drop is > blunderThreshold
  *       relative to the best engine move is discarded. This uses a quick depth-8
  *       Stockfish eval on the caller's side — but for the server route we just
  *       return the weighted candidates and let the client do the final blunder check.
  *    c. Return the weighted candidate list so the client can pick with blunder filter.
- * 3. If out of book: return { outOfBook: true } so the client switches to Stockfish
- *    at the appropriate ELO-equivalent depth.
+ * 4. If nothing is left: return { outOfBook: true } so the client switches to
+ *    Stockfish at the appropriate ELO-equivalent depth — silently, mid-game.
  *
  * GET /api/sparring-move?fen=<fen>&rating=<number>&sideToMove=<white|black>
  */
@@ -22,8 +26,15 @@ import { NextRequest, NextResponse } from "next/server";
 
 const LICHESS_EXPLORER = "https://explorer.lichess.org/lichess";
 
-/** Minimum total games across all moves before we consider a position "in book" */
-const MIN_BOOK_GAMES = 500;
+/**
+ * Minimum total games across all moves before we consider a position "in book".
+ * One game is enough — the opponent keeps playing real database moves for as
+ * long as the database has anything at all.
+ */
+const MIN_BOOK_GAMES = 1;
+
+/** Below this many games in the rating buckets, widen the search to all ratings */
+const BROADEN_BELOW = 10;
 
 /**
  * Map a target rating to Lichess rating buckets.
@@ -38,6 +49,43 @@ function ratingsForTarget(rating: number): string {
   if (rating < 2200) return "1800,2000,2200";
   if (rating < 2500) return "2000,2200,2500";
   return "2200,2500";
+}
+
+type ExplorerMove = {
+  uci: string;
+  san: string;
+  white: number;
+  draws: number;
+  black: number;
+  averageRating: number;
+};
+
+/** Returns null when the explorer can't be reached — distinct from "no games". */
+async function fetchExplorerMoves(
+  fen: string,
+  ratings: string | null,
+  headers: Record<string, string>,
+): Promise<ExplorerMove[] | null> {
+  const url = new URL(LICHESS_EXPLORER);
+  url.searchParams.set("variant", "standard");
+  url.searchParams.set("fen", fen);
+  url.searchParams.set("speeds", "bullet,blitz,rapid,classical");
+  if (ratings) url.searchParams.set("ratings", ratings);
+  url.searchParams.set("topGames", "0");
+  url.searchParams.set("recentGames", "0");
+  url.searchParams.set("moves", "20");
+
+  const res = await fetch(url.toString(), {
+    headers,
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!res.ok) return null;
+  const data = (await res.json()) as { moves?: ExplorerMove[] };
+  return data.moves ?? [];
+}
+
+function countGames(moves: ExplorerMove[]): number {
+  return moves.reduce((sum, m) => sum + (m.white + m.draws + m.black), 0);
 }
 
 /** Server-side cache */
@@ -63,55 +111,35 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(cached.data, { headers: { "X-Cache": "HIT" } });
   }
 
-  const url = new URL(LICHESS_EXPLORER);
-  url.searchParams.set("variant", "standard");
-  url.searchParams.set("fen", fen);
-  url.searchParams.set("speeds", "bullet,blitz,rapid,classical");
-  url.searchParams.set("ratings", ratings);
-  url.searchParams.set("topGames", "0");
-  url.searchParams.set("recentGames", "0");
-  url.searchParams.set("moves", "20");
-
   const headers: Record<string, string> = { Accept: "application/json" };
   const token = process.env.LICHESS_API_TOKEN;
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
   try {
-    const res = await fetch(url.toString(), {
-      headers,
-      signal: AbortSignal.timeout(10_000),
-    });
-
-    if (!res.ok) {
-      // Out-of-book or rate limited — signal client to use Stockfish
-      const result = { outOfBook: true, reason: `lichess_${res.status}` };
-      return NextResponse.json(result);
+    const bucketed = await fetchExplorerMoves(fen, ratings, headers);
+    if (bucketed === null) {
+      // Explorer unreachable or rate-limited — NOT cached, so a transient blip
+      // doesn't pin this position to Stockfish for the next 10 minutes.
+      return NextResponse.json({
+        outOfBook: true,
+        reason: "explorer_unavailable",
+      });
     }
 
-    const data = await res.json() as {
-      moves?: Array<{
-        uci: string;
-        san: string;
-        white: number;
-        draws: number;
-        black: number;
-        averageRating: number;
-      }>;
-      white?: number;
-      draws?: number;
-      black?: number;
-    };
+    let moves = bucketed;
+    let broadened = false;
+    if (countGames(bucketed) < BROADEN_BELOW) {
+      const wide = await fetchExplorerMoves(fen, null, headers);
+      if (wide && countGames(wide) > countGames(bucketed)) {
+        moves = wide;
+        broadened = true;
+      }
+    }
 
-    const moves = data.moves ?? [];
+    const totalGames = countGames(moves);
 
-    // Count total games across all moves
-    const totalGames = moves.reduce(
-      (sum, m) => sum + (m.white + m.draws + m.black),
-      0,
-    );
-
-    if (totalGames < MIN_BOOK_GAMES || moves.length === 0) {
-      const result = { outOfBook: true, reason: "insufficient_data", totalGames };
+    if (moves.length === 0 || totalGames < MIN_BOOK_GAMES) {
+      const result = { outOfBook: true, reason: "no_games", totalGames };
       cache.set(cacheKey, { data: result, ts: Date.now() });
       return NextResponse.json(result);
     }
@@ -140,13 +168,15 @@ export async function GET(request: NextRequest) {
       candidates,
       totalGames,
       targetRating: rating,
+      broadened,
     };
 
     cache.set(cacheKey, { data: result, ts: Date.now() });
     return NextResponse.json(result, { headers: { "X-Cache": "MISS" } });
   } catch (err) {
     const isTimeout = err instanceof Error && err.name === "TimeoutError";
-    // On network error, signal out-of-book so the client falls back to Stockfish
+    // On network error, signal out-of-book so the client falls through to
+    // Stockfish without interrupting the game.
     return NextResponse.json({
       outOfBook: true,
       reason: isTimeout ? "timeout" : "network_error",

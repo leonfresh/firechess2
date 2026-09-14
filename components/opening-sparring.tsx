@@ -17,8 +17,8 @@
  *  1. User picks their color, a target rating (e.g. 1800) and a mode.
  *  2. Each opponent turn: fetch /api/sparring-move, pick a move via weighted
  *     random sampling, validate it isn't a blunder with quick Stockfish eval.
- *  3. When book runs out or after move 20, offer to continue vs. Stockfish
- *     at the appropriate depth for the target rating.
+ *  3. The database is followed until a position has a single sample left; when
+ *     it runs dry the opponent hands over to Stockfish mid-game, silently.
  *  4. After the session, show a motif summary of what happened.
  */
 
@@ -69,6 +69,8 @@ type SparringMoveResponse =
       candidates: MoveCandidate[];
       totalGames: number;
       targetRating: number;
+      /** True when the rating buckets were too thin and any rating was used */
+      broadened?: boolean;
     };
 
 type Mode = "sparring" | "assist";
@@ -94,12 +96,7 @@ type MoveRecord = {
   engineTop?: number | null;
 };
 
-type Phase =
-  | "setup"
-  | "playing"
-  | "out-of-book-prompt"
-  | "stockfish"
-  | "gameover";
+type Phase = "setup" | "playing" | "stockfish" | "gameover";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                             */
@@ -354,6 +351,8 @@ export default function OpeningSparring({
   const [isOpponentThinking, setIsOpponentThinking] = useState(false);
   const [evalCp, setEvalCp] = useState<number | null>(null);
   const [bookMoveCount, setBookMoveCount] = useState(0);
+  /** True once the opponent has handed over from the database to Stockfish */
+  const [bookEnded, setBookEnded] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [promotionPending, setPromotionPending] = useState<{
     from: string;
@@ -436,122 +435,125 @@ export default function OpeningSparring({
   /*  Fetch & play opponent move                                           */
   /* ------------------------------------------------------------------ */
 
-  const playOpponentMove = useCallback(
-    async (currentFen: string, chess: Chess) => {
+  const playBookMove = useCallback(
+    async (currentFen: string, chess: Chess): Promise<boolean> => {
       setIsOpponentThinking(true);
       const sideToMove: Color = chess.turn() === "w" ? "white" : "black";
 
       try {
-        // 1. Try book move
+        // 1. Try a move from the Lichess database
         const res = await fetch(
           `/api/sparring-move?fen=${encodeURIComponent(currentFen)}&rating=${targetRating}&sideToMove=${sideToMove}`,
         );
         const data: SparringMoveResponse = await res.json();
 
-        if (!data.outOfBook && data.candidates.length > 0) {
-          // --- In-book phase ---
-          const candidates = data.candidates;
-          const totalGames = data.totalGames;
-          const threshold = blunderThreshold(targetRating);
+        if (data.outOfBook || data.candidates.length === 0) return false;
 
-          /**
-           * Protect any move that accounts for >= 12% of total games at this
-           * rating. If 20% of 1500-rated players really do hang a pawn here,
-           * the opponent should hang it 20% of the time — that's authentic.
-           * Only filter moves that are BOTH rarely played AND a big blunder.
-           */
-          const PROTECT_RATIO = 0.12;
+        // --- In database: pick a human move ---
+        const candidates = data.candidates;
+        const totalGames = data.totalGames;
+        const threshold = blunderThreshold(targetRating);
 
-          // Single multi-PV call — one Stockfish request covers all candidates
-          const engineLines = await stockfishPool.getTopMoves(
-            currentFen,
-            Math.min(candidates.length + 5, 20),
-            8,
-          );
+        /**
+         * Below SPARSE_SAMPLE games the position carries no frequency signal at
+         * all, so "12% of players hang a pawn here" means nothing — every move
+         * has to clear the engine blunder filter on its own merits. Above it,
+         * protect any move played in >= 12% of games: if 20% of 1500-rated
+         * players really do hang a pawn here, the opponent should too.
+         */
+        const SPARSE_SAMPLE = 50;
+        const PROTECT_RATIO = 0.12;
+        const sparse = totalGames < SPARSE_SAMPLE;
 
-          // Build UCI → engine cp map (cp from side-to-move's perspective)
-          const engineCpMap = new Map<string, number>();
-          for (const line of engineLines) {
-            if (line.bestMove) engineCpMap.set(line.bestMove, line.cp);
-          }
-          const bestEngineCp = engineLines[0]?.cp ?? null;
+        // Single multi-PV call — one Stockfish request covers all candidates
+        const engineLines = await stockfishPool.getTopMoves(
+          currentFen,
+          Math.min(candidates.length + 5, 20),
+          8,
+        );
 
-          const pool: MoveCandidate[] = [];
-          for (const candidate of candidates) {
-            const share = candidate.games / Math.max(1, totalGames);
-
-            // Always include heavily-played moves regardless of eval
-            if (share >= PROTECT_RATIO) {
-              pool.push(candidate);
-              continue;
-            }
-
-            // No engine data — accept anything with at least 3% of games
-            if (bestEngineCp === null) {
-              if (share >= 0.03) pool.push(candidate);
-              continue;
-            }
-
-            const moveCp = engineCpMap.get(candidate.uci);
-            if (moveCp === undefined) {
-              // Not in engine's top N — keep if it has at least 3% game share
-              if (share >= 0.03) pool.push(candidate);
-              continue;
-            }
-
-            // Filter only if it's a big blunder AND rarely played
-            const cpLoss = bestEngineCp - moveCp;
-            if (cpLoss <= threshold) pool.push(candidate);
-          }
-
-          // Always have something to pick from
-          const finalPool = pool.length > 0 ? pool : candidates.slice(0, 3);
-          const chosen = weightedPick(finalPool);
-
-          // Play the move
-          const move = chess.move(chosen.uci, { strict: false });
-          if (!move) {
-            // Shouldn't happen but fall back to Stockfish
-            setPhase("out-of-book-prompt");
-            setIsOpponentThinking(false);
-            return;
-          }
-
-          const newFen = chess.fen();
-          setFen(newFen);
-          setLastMove({ from: move.from, to: move.to });
-          setBookMoveCount((n) => n + 1);
-          setStatusMessage(
-            `Opponent played ${move.san} (${chosen.games.toLocaleString()} games, ${Math.round(chosen.winRate * 100)}% win rate)`,
-          );
-          setMoveHistory((prev) => [
-            ...prev,
-            {
-              san: move.san,
-              uci: chosen.uci,
-              fenBefore: currentFen,
-              fen: newFen,
-              byUser: false,
-              bookCandidate: chosen,
-            },
-          ]);
-
-          playSound(move.captured ? "capture" : "move");
-
-          // Quick async eval update for eval bar
-          evalPosition(newFen, 10).then((cp) => {
-            if (cp !== null) setEvalCp(cp);
-          });
-
-          if (chess.isGameOver()) {
-            setPhase("gameover");
-          }
-        } else {
-          // --- Out of book ---
-          setPhase("out-of-book-prompt");
+        // Build UCI → engine cp map (cp from side-to-move's perspective)
+        const engineCpMap = new Map<string, number>();
+        for (const line of engineLines) {
+          if (line.bestMove) engineCpMap.set(line.bestMove, line.cp);
         }
+        const bestEngineCp = engineLines[0]?.cp ?? null;
+
+        const pool: MoveCandidate[] = [];
+        for (const candidate of candidates) {
+          const share = candidate.games / Math.max(1, totalGames);
+
+          // Authentic frequency — only trusted when the sample can support it
+          if (!sparse && share >= PROTECT_RATIO) {
+            pool.push(candidate);
+            continue;
+          }
+
+          // No engine data for this list — only trust it on a real sample
+          if (bestEngineCp === null) {
+            if (!sparse && share >= 0.03) pool.push(candidate);
+            continue;
+          }
+
+          const moveCp = engineCpMap.get(candidate.uci);
+          if (moveCp === undefined) {
+            // Not in engine's top N — keep only on a real sample
+            if (!sparse && share >= 0.03) pool.push(candidate);
+            continue;
+          }
+
+          // Filter only if it's a big blunder AND rarely played
+          const cpLoss = bestEngineCp - moveCp;
+          if (cpLoss <= threshold) pool.push(candidate);
+        }
+
+        // Nothing human is playable here — hand over to Stockfish seamlessly
+        const finalPool = pool.length > 0 ? pool : sparse ? [] : candidates.slice(0, 3);
+        if (finalPool.length === 0) return false;
+
+        const chosen = weightedPick(finalPool);
+
+        // Play the move
+        const move = chess.move(chosen.uci, { strict: false });
+        if (!move) return false;
+
+        const newFen = chess.fen();
+        setFen(newFen);
+        setLastMove({ from: move.from, to: move.to });
+        setBookMoveCount((n) => n + 1);
+        const sampleNote = data.broadened
+          ? " · any rating"
+          : chosen.games < 25
+            ? " · thin sample"
+            : "";
+        setStatusMessage(
+          `Opponent played ${move.san} (${chosen.games.toLocaleString()} game${
+            chosen.games === 1 ? "" : "s"
+          }, ${Math.round(chosen.winRate * 100)}% win rate${sampleNote})`,
+        );
+        setMoveHistory((prev) => [
+          ...prev,
+          {
+            san: move.san,
+            uci: chosen.uci,
+            fenBefore: currentFen,
+            fen: newFen,
+            byUser: false,
+            bookCandidate: chosen,
+          },
+        ]);
+
+        playSound(move.captured ? "capture" : "move");
+
+        // Quick async eval update for eval bar
+        evalPosition(newFen, 10).then((cp) => {
+          if (cp !== null) setEvalCp(cp);
+        });
+
+        if (chess.isGameOver()) setPhase("gameover");
+        return true;
       } catch {
-        setPhase("out-of-book-prompt");
+        return false;
       } finally {
         setIsOpponentThinking(false);
       }
@@ -559,12 +561,13 @@ export default function OpeningSparring({
     [targetRating],
   );
 
+
   /* ------------------------------------------------------------------ */
   /*  Stockfish opponent move                                             */
   /* ------------------------------------------------------------------ */
 
   const playStockfishMove = useCallback(
-    async (currentFen: string, chess: Chess) => {
+    async (currentFen: string, chess: Chess, opts?: { handover?: boolean }) => {
       setIsOpponentThinking(true);
       const depth = ratingToDepth(targetRating);
 
@@ -584,7 +587,11 @@ export default function OpeningSparring({
         const newFen = chess.fen();
         setFen(newFen);
         setLastMove({ from: move.from, to: move.to });
-        setStatusMessage(`Stockfish (depth ${depth}) played ${move.san}`);
+        setStatusMessage(
+          opts?.handover
+            ? `The database thins out here — Stockfish takes over at depth ${depth} and plays ${move.san}.`
+            : `Stockfish (depth ${depth}) played ${move.san}`,
+        );
         setMoveHistory((prev) => [
           ...prev,
           {
@@ -618,13 +625,20 @@ export default function OpeningSparring({
 
   const triggerOpponentTurn = useCallback(
     (currentFen: string, chess: Chess, currentPhase: Phase) => {
-      if (currentPhase === "playing") {
-        playOpponentMove(currentFen, chess);
-      } else if (currentPhase === "stockfish") {
+      if (currentPhase === "stockfish") {
         playStockfishMove(currentFen, chess);
+        return;
       }
+      // Database first, Stockfish second — and the swap happens mid-game
+      // without a prompt. Thin samples and empty positions both fall through.
+      playBookMove(currentFen, chess).then((playedBook) => {
+        if (playedBook) return;
+        setBookEnded(true);
+        setPhase("stockfish");
+        playStockfishMove(currentFen, chess, { handover: true });
+      });
     },
-    [playOpponentMove, playStockfishMove],
+    [playBookMove, playStockfishMove, targetRating],
   );
 
   /* ------------------------------------------------------------------ */
@@ -976,6 +990,7 @@ export default function OpeningSparring({
     setLastMove(null);
     setEvalCp(0);
     setBookMoveCount(0);
+    setBookEnded(false);
     setSelectedSquare(null);
     setLegalMoves([]);
     setLastMoveInsight(null);
@@ -993,27 +1008,10 @@ export default function OpeningSparring({
     if (userColor === "black") {
       setStatusMessage("Opponent is thinking…");
       setTimeout(() => {
-        playOpponentMove(chess.fen(), chess);
+        triggerOpponentTurn(chess.fen(), chess, "playing");
       }, 300);
     }
-  }, [userColor, playOpponentMove]);
-
-  /* ------------------------------------------------------------------ */
-  /*  Continue with Stockfish                                             */
-  /* ------------------------------------------------------------------ */
-
-  const continueWithStockfish = useCallback(() => {
-    setPhase("stockfish");
-    setStatusMessage(
-      `Continuing with Stockfish (depth ${ratingToDepth(targetRating)})…`,
-    );
-    const chess = chessRef.current;
-    // If it's the opponent's turn, trigger immediately
-    const opponentTurn = chess.turn() !== (userColor === "white" ? "w" : "b");
-    if (opponentTurn) {
-      playStockfishMove(chess.fen(), chess);
-    }
-  }, [targetRating, userColor, playStockfishMove]);
+  }, [userColor, triggerOpponentTurn]);
 
   /* ------------------------------------------------------------------ */
   /*  Square highlights                                                  */
@@ -1176,7 +1174,7 @@ export default function OpeningSparring({
         value: "sparring",
         title: "Opening Sparring",
         blurb:
-          "Play it yourself against real Lichess book moves at your rating, then Stockfish when the book runs out.",
+          "Play it yourself against real Lichess database moves at your rating — down to the last sample — then Stockfish takes over mid-game.",
       },
       {
         value: "assist",
@@ -1209,8 +1207,9 @@ export default function OpeningSparring({
               <>
                 Play against real moves from millions of Lichess games, weighted by
                 how often they&apos;re played at your target rating and
-                blunder-filtered. When the opening book runs out, you can continue
-                against Stockfish at equivalent strength.
+                blunder-filtered. The opponent keeps drawing from the database
+                until a position has nothing left to sample, then Stockfish takes
+                over at equivalent strength — mid-game, no interruption.
               </>
             )}
           </p>
@@ -1331,38 +1330,6 @@ export default function OpeningSparring({
             className="w-full rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] py-3 font-semibold text-[#070608] shadow-[0_0_24px_rgba(255,90,31,0.25)] transition-all hover:brightness-110"
           >
             {assistMode ? "Start Engine Assist" : "Start Sparring"}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  /* ------------------------------------------------------------------ */
-  /*  Render: Out-of-book prompt                                          */
-  /* ------------------------------------------------------------------ */
-
-  if (phase === "out-of-book-prompt") {
-    return (
-      <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-6 px-4 py-16 text-center">
-        <div className="text-4xl">📖</div>
-        <h2 className="text-2xl text-[#f0edf2]">Opening book exhausted</h2>
-        <p className="max-w-sm text-sm leading-relaxed text-[#8d8696]">
-          After {bookMoveCount} book moves, this position has too few Lichess
-          games at the {targetRating} level to sample reliably. Continue with
-          Stockfish at equivalent strength (depth {ratingToDepth(targetRating)})?
-        </p>
-        <div className="flex gap-3">
-          <button
-            onClick={continueWithStockfish}
-            className="rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-6 py-2.5 font-semibold text-[#070608] shadow-[0_0_20px_rgba(255,90,31,0.22)] transition-all hover:brightness-110"
-          >
-            Continue with Stockfish
-          </button>
-          <button
-            onClick={() => setPhase("gameover")}
-            className="rounded-xl border border-[#1e1a24] bg-white/[0.03] px-6 py-2.5 font-semibold text-[#8d8696] transition-colors hover:border-[#ff5a1f]/25 hover:text-[#f0edf2]"
-          >
-            End Session
           </button>
         </div>
       </div>
@@ -1661,10 +1628,12 @@ export default function OpeningSparring({
             {phase === "stockfish" ? (
               <span className="text-[#ff8c42]">
                 Stockfish depth {ratingToDepth(targetRating)}
+                {bookEnded &&
+                  ` · database ran ${bookMoveCount} move${bookMoveCount === 1 ? "" : "s"}`}
               </span>
             ) : (
               <span className="text-[#ff8c42]">
-                Lichess book ({bookMoveCount} moves)
+                Lichess database ({bookMoveCount} moves)
               </span>
             )}
           </p>
@@ -1704,7 +1673,7 @@ export default function OpeningSparring({
             </div>
             <span className="text-sm text-[#8d8696]">
               Opponent ({targetRating}
-              {phase === "stockfish" ? " · SF" : " · Lichess DB"})
+              {phase === "stockfish" ? " · SF" : " · Database"})
             </span>
             {isOpponentThinking && (
               <span className="ml-1 animate-pulse text-xs text-[#ff8c42]">
