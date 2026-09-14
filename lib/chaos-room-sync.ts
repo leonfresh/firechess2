@@ -104,7 +104,7 @@ export function expireClock(room: SyncRoom, now = Date.now()) {
     chaosState: {...cleanState(room.chaosState), _sync: meta}, updatedAt: new Date(now) };
 }
 const stateTypes = new Set(["move", "chaos_move", "draft"]);
-const allowed = new Set([...stateTypes, "power_pick", "power_reroll", "ability", "join", "king_capture", "anomaly_pick", "draft_freeze", "resign", "draw-offer", "draw-accept", "draw-decline", "rematch", "chat"]);
+const allowed = new Set([...stateTypes, "power_pick", "power_reroll", "ability", "join", "king_capture", "kamikaze_king", "anomaly_pick", "draft_freeze", "resign", "draw-offer", "draw-accept", "draw-decline", "rematch", "chat"]);
 const ids = (mods: any[]) => mods.map(m => m.id).sort().join(",");
 
 
@@ -144,7 +144,7 @@ export function reduceCommand(room: SyncRoom, userId: string, command: any, now 
   const patch: Record<string, any> = {};
   let outgoing: Record<string, any> = { type };
   let nextState = state;
-  if (meta.draftProtocol === 2 && meta.draft && ["move", "chaos_move", "draft", "ability", "king_capture"].includes(type)) throw new SyncError(409, "Waiting for the power pick");
+  if (meta.draftProtocol === 2 && meta.draft && ["move", "chaos_move", "draft", "ability", "king_capture", "kamikaze_king"].includes(type)) throw new SyncError(409, "Waiting for the power pick");
   if (stateTypes.has(type)) {
     if (command.baseRevision !== old.stateRevision) throw new SyncError(409, "The board changed before this action was saved");
     if (room.status !== "playing") throw new SyncError(409, "This game is not playing");
@@ -386,6 +386,31 @@ export function reduceCommand(room: SyncRoom, userId: string, command: any, now 
     }];
     meta.result = {winner: color, reason: "King captured"};
     outgoing = {type:"game_over",winner:color,reason:"King Captured"};
+  } else if (type === "kamikaze_king") {
+    // A king that captures the Kamikaze Bishop is destroyed by the blast. The
+    // king stays on the board (chess.js rejects kingless FENs) — the game just ends.
+    if(room.status !== "playing" || command.baseRevision !== old.stateRevision) throw new SyncError(409,"The board changed");
+    if (!("host" in meta.picks) || !("guest" in meta.picks)) throw new SyncError(409,"Both opening choices must be saved first");
+    if(meta.frozenBy) throw new SyncError(409,"The board is frozen");
+    const game = new Chess(room.fen);
+    const mover = game.get(message.from), victim = game.get(message.to);
+    const enemyMods = side === "w" ? state.aiModifiers : state.playerModifiers;
+    const legalCapture = game.moves({verbose:true}).some(m => m.from === message.from && m.to === message.to && !!m.captured);
+    if(game.turn() !== side || mover?.type !== "k" || mover.color !== side || victim?.type !== "b" || victim.color === side
+       || !legalCapture || !enemyMods.some(m => m.id === "kamikaze-bishop")) throw new SyncError(400,"Invalid kamikaze king capture");
+    const afterCapture = new Chess(room.fen);
+    afterCapture.move({from: message.from, to: message.to});
+    patch.status = "finished"; meta.stateRevision++;
+    patch.fen = afterCapture.fen();
+    patch.lastMoveFrom = message.from; patch.lastMoveTo = message.to;
+    patch.moveHistory = [...(Array.isArray(room.moveHistory) ? room.moveHistory : []), {
+      from:message.from,to:message.to,color:side,moveNumber:game.moveNumber(),timestamp:now,fen:afterCapture.fen(),
+      kamikazeKing:true,
+      powers:{white:state.playerModifiers.map(m=>m.id),black:state.aiModifiers.map(m=>m.id)},
+    }];
+    const winner = side === "w" ? "black" : "white";
+    meta.result = {winner, reason: "Kamikaze King"};
+    outgoing = {type:"game_over",winner,reason:"Kamikaze King"};
   } else if (type === "anomaly_pick") {
     if (room.status !== "playing") throw new SyncError(409, "Room is not ready");
     if (meta.draftProtocol === 2 && message.anomalyId !== null && !meta.opening?.offers[actor].includes(message.anomalyId)) throw new SyncError(400, "Choose one of the offered anomalies");

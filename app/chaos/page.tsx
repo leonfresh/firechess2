@@ -106,6 +106,7 @@ import {
   computeChaosThreatPenalty,
   getChaosAttackedSquares,
   isKingUnderChaosAttack,
+  isKamikazeKingSuicide,
   computeChainedSquare,
   isChaosCheckmate,
   type ChaosMove,
@@ -4165,6 +4166,73 @@ export default function ChaosChessPage() {
     [],
   );
 
+  /* ── Kamikaze King: a king that takes a Kamikaze Bishop is destroyed ── */
+
+  /**
+   * End the game because a king captured a Kamikaze Bishop. chess.js can't hold
+   * a kingless board, so the blast is resolved as a loss for the mover instead
+   * of by removing the king.
+   */
+  const detonateKing = useCallback(
+    (moverColor: Color, square: string) => {
+      const winnerName: "white" | "black" = moverColor === "w" ? "black" : "white";
+      const youWin = winnerName === playerColor;
+      isAnimatingEndRef.current = true;
+      setLastMoveHighlight({
+        [square]: { backgroundColor: "rgba(255, 215, 0, 0.55)" },
+      });
+      triggerEffect("king-death", [square]);
+      playSound(youWin ? "airhorn" : "mario-death");
+      spawnPepe(youWin ? PEPE.gigachad : PEPE.gamercry);
+      setEventLog((prev) => [
+        ...prev,
+        {
+          type: "chaos",
+          message: youWin
+            ? "🧨 The enemy King took the Kamikaze Bishop — the blast took it with it. You win!"
+            : "🧨 Your King took the Kamikaze Bishop — the blast took it with it. You lose.",
+          icon: "🧨",
+          pepe: youWin ? PEPE.gigachad : PEPE.gamercry,
+        },
+      ]);
+      if (youWin) spawnPepe(PEPE.clap);
+      setTimeout(() => {
+        isAnimatingEndRef.current = false;
+        setGameResult(winnerName);
+        setGameStatus("game-over");
+        setEndReason("Kamikaze King");
+      }, KING_DEATH_POPUP_DELAY);
+    },
+    [playerColor, spawnPepe, triggerEffect],
+  );
+
+  /** True when this chaos move has the mover's king capturing a Kamikaze Bishop. */
+  const isChaosKamikazeKing = useCallback(
+    (
+      board: Chess,
+      cm: ChaosMove,
+      opponentMods: ChaosModifier[] | undefined,
+    ): boolean => {
+      if (cm.type !== "capture") return false;
+      const moverType = board.get(cm.from as any)?.type;
+      if (moverType !== "k") return false;
+      const targets =
+        cm.modifierId === "railgun"
+          ? [cm.to, ...(cm.sideEffects ?? [])]
+          : [cm.to];
+      const hitBishop = targets.some((sq) => {
+        const p = board.get(sq as any);
+        return p?.type === "b" && p.color !== board.turn();
+      });
+      return isKamikazeKingSuicide(
+        moverType,
+        hitBishop ? "b" : undefined,
+        opponentMods,
+      );
+    },
+    [],
+  );
+
   /* ── Check for game end ── */
   const checkGameEnd = useCallback(
     (g: Chess, captureAt?: string, captureFrom?: string) => {
@@ -5052,6 +5120,8 @@ export default function ChaosChessPage() {
             const scored: ScoredChaos[] = [];
 
             for (const cm of sample) {
+              // A king taking the Kamikaze Bishop loses the game outright
+              if (isChaosKamikazeKing(g, cm, cs.playerModifiers)) continue;
               const newGame = executeChaosMove(
                 g,
                 cm,
@@ -5299,6 +5369,7 @@ export default function ChaosChessPage() {
           );
           for (const chaosMove of aiChaosMoves) {
             if (chaosMove.type === "spawn" || chaosMove.pieceStays) continue; // skip spawn-only moves
+            if (isChaosKamikazeKing(g, chaosMove, cs.playerModifiers)) continue; // king suicide
             const execResult = executeChaosMove(
               g,
               chaosMove,
@@ -5937,6 +6008,23 @@ export default function ChaosChessPage() {
         });
 
         addMoveToLog(g, moveResult.san, moveResult.color);
+
+        // Kamikaze King: the AI's king took the bishop — it detonates, player wins.
+        if (
+          isKamikazeKingSuicide(
+            finalPieceAtFrom?.type,
+            moveResult.captured || undefined,
+            cs.playerModifiers,
+          )
+        ) {
+          const terminalGame = new Chess(g.fen());
+          setGame(terminalGame);
+          setSelectedSquare(null);
+          setLegalMoveSquares({});
+          setIsThinking(false);
+          detonateKing(finalPieceAtFrom?.color as Color, finalTo);
+          return;
+        }
 
         // Apply post-move chaos effects
         // Nuclear queen: suppress blast if still on cooldown
@@ -7418,6 +7506,15 @@ export default function ChaosChessPage() {
         );
         if (!newGame) return false;
 
+        // Kamikaze King via a chaos move (King Ascension and friends)
+        if (isChaosKamikazeKing(game, chaosMove, chaosState.aiModifiers)) {
+          setGame(new Chess(newGame.fen()));
+          setSelectedSquare(null);
+          setLegalMoveSquares({});
+          detonateKing(game.turn() as Color, to);
+          return true;
+        }
+
         // Trigger board effect based on the modifier used
         {
           const mid = chaosMove.modifierId;
@@ -7758,6 +7855,27 @@ export default function ChaosChessPage() {
       setLegalMoveSquares({});
 
       addMoveToLog(game, moveResult.san, moveResult.color);
+
+      // Kamikaze King: the king took the bishop, so the blast takes the king.
+      // chess.js can't hold a kingless board — the move simply ends the game.
+      if (
+        isKamikazeKingSuicide(
+          pieceAtFrom?.type,
+          moveResult.captured || undefined,
+          chaosState.aiModifiers,
+        )
+      ) {
+        if (gameMode !== "ai") {
+          // Server is authoritative in multiplayer — it validates and ends the game.
+          partySendRef.current?.({ type: "kamikaze_king", from, to });
+          return true;
+        }
+        setGame(new Chess(game.fen()));
+        setSelectedSquare(null);
+        setLegalMoveSquares({});
+        detonateKing(moveResult.color as Color, to);
+        return true;
+      }
 
       // Apply post-move chaos effects (collateral rook, nuclear queen, pawn fortress)
       // Nuclear queen: suppress blast until the cooldown expires.

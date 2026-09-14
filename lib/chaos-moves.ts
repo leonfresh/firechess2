@@ -2208,7 +2208,10 @@ export function computeChaosThreatPenalty(
   const hasNuclearQueen = opponentModifiers.some(
     (m) => m.id === "nuclear-queen",
   );
-  if (chaosMoves.length === 0 && !hasNuclearQueen) return 0;
+  // A reactive modifier like Kamikaze Bishop generates no chaos MOVES but still
+  // changes what captures are safe — it must not be short-circuited away here.
+  const hasKamikaze = opponentModifiers.some((m) => m.id === "kamikaze-bishop");
+  if (chaosMoves.length === 0 && !hasNuclearQueen && !hasKamikaze) return 0;
   const valFn =
     getCustomVal ?? ((_sq: string, type: string) => PIECE_VALUE_CP[type] ?? 0);
 
@@ -2307,7 +2310,6 @@ export function computeChaosThreatPenalty(
 
   // Kamikaze Bishop: if the AI captures a kamikaze bishop, its own piece explodes too.
   // Add a penalty equal to the capturing piece's value so the AI treats it like a trade.
-  const hasKamikaze = opponentModifiers.some((m) => m.id === "kamikaze-bishop");
   if (hasKamikaze && !hasNuclearQueen) {
     // Only need explicit handling when nuclear queen isn't already the dominant threat
     const aiColor = opponentColor === "w" ? "b" : "w";
@@ -2332,9 +2334,11 @@ export function computeChaosThreatPenalty(
             if (mv.to === sq && mv.flags.includes("c")) {
               const attacker = game.get(mv.from as any);
               if (attacker && attacker.color === aiCol) {
-                const attackerVal = valFn(mv.from, attacker.type, aiCol);
-                // Attacker also dies — full value loss
-                if (attackerVal > maxThreat) maxThreat = attackerVal;
+                // A king attacker doesn't just lose material — it loses the game.
+                const penalty = attacker.type === "k"
+                  ? 100000
+                  : valFn(mv.from, attacker.type, aiCol);
+                if (penalty > maxThreat) maxThreat = penalty;
               }
             }
           }
@@ -2449,8 +2453,11 @@ export function executeChaosMove(
       const captured = game.get(target);
       return captured?.type === "b" && captured.color !== piece.color;
     })) {
-      // The attacker also dies, including a stationary sniper or railgun.
-      tmp.remove(move.pieceStays ? move.from : move.to);
+      // The attacker also dies, including a stationary sniper or railgun — except
+      // a king, which the page turns into an immediate loss (kingless FENs are invalid).
+      if (piece.type !== "k") {
+        tmp.remove(move.pieceStays ? move.from : move.to);
+      }
     }
   }
 
@@ -2586,6 +2593,24 @@ function reviveRegicidePiece(game: Chess, color: Color, modifiers: ChaosModifier
 }
 
 /**
+ * A KING capturing a Kamikaze Bishop is destroyed by the blast. The board can't
+ * represent that (chess.js rejects kingless FENs), so instead of removing the
+ * king the caller ends the game with the capturing side losing. Every place
+ * that resolves a capture should check this before applying post-move effects.
+ */
+export function isKamikazeKingSuicide(
+  movingPieceType: PieceSymbol | undefined,
+  capturedType: PieceSymbol | undefined,
+  opponentModifiers?: ChaosModifier[],
+): boolean {
+  return (
+    movingPieceType === "k" &&
+    capturedType === "b" &&
+    !!opponentModifiers?.some((m) => m.id === "kamikaze-bishop")
+  );
+}
+
+/**
  * Apply side effects to a standard chess.js move result.
  * Call this after a normal move() to apply collateral/nuclear damage.
  * Returns a new Chess instance if modifications were made, null otherwise.
@@ -2668,9 +2693,12 @@ export function applyPostMoveEffects(
     capturedType === "b" &&
     opponentModifiers?.some((m) => m.id === "kamikaze-bishop")
   ) {
-    // Attacker (now at `to`) also dies
-    tmp.remove(to);
-    modified = true;
+    // Attacker (now at `to`) also dies — except a KING: chess.js rejects a
+    // kingless board, so the caller ends the game instead (isKamikazeKingSuicide).
+    if (movingPieceType !== "k") {
+      tmp.remove(to);
+      modified = true;
+    }
   }
 
   if (!modified) return null;

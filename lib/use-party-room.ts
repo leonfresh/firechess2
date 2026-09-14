@@ -120,6 +120,7 @@ export type PartyMessage =
   | { type: "clock_sync"; clock: import("./chaos-clock").MatchClock | null; base?: number; inc?: number; openingMove?: import("./chaos-room-sync").OpeningMove | null; serverNow?: number }
   | { type: "ability"; square: string; chaosState?: unknown }
   | { type: "king_capture"; from: string; to: string }
+  | { type: "kamikaze_king"; from: string; to: string }
   | { type: "game_over"; winner: "white" | "black" | "draw" | "aborted"; reason: string }
   | { type: "sync_error"; error: string; snapshot?: any }
   | { type: "sync_snapshot"; snapshot: any }
@@ -181,6 +182,22 @@ export function usePartyRoom(
     let timer: ReturnType<typeof setTimeout>;
     const queue: { id: string; message: PartyMessage; baseRevision: number | null }[] = [];
     const headers = () => ({ "Content-Type": "application/json", "X-Guest-Id": getGuestId(), ...chaosIdentityHeaders() });
+    // Chrome 109 (the last Windows 7 release) has AbortController, but not AbortSignal.any.
+    const fetchJson = async (path: string, options: RequestInit, timeoutMs: number) => {
+      const timeoutController = new AbortController();
+      const abort = () => timeoutController.abort();
+      controller.signal.addEventListener("abort", abort, { once: true });
+      if (controller.signal.aborted) abort();
+      const timeout = setTimeout(abort, timeoutMs);
+      try {
+        const res = await fetch(path, { ...options, signal: timeoutController.signal });
+        const data = await res.json();
+        return { res, data };
+      } finally {
+        clearTimeout(timeout);
+        controller.signal.removeEventListener("abort", abort);
+      }
+    };
     const consume = (data: any) => {
       if (stopped) return;
       const first = !initialized;
@@ -230,9 +247,7 @@ export function usePartyRoom(
             action: options?.body ? JSON.parse(options.body as string) : undefined }));
         });
       }
-      const res = await fetch(path, { ...options, headers: headers(), cache: "no-store",
-        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10_000)]) });
-      const data = await res.json();
+      const { res, data } = await fetchJson(path, { ...options, headers: headers(), cache: "no-store" }, 10_000);
       if (res.status >= 500) throw new Error(data.error || "Server unavailable");
       return { res, data };
     };
@@ -283,11 +298,10 @@ export function usePartyRoom(
       let liveOrigin: string | undefined, token: string | undefined;
       if (process.env.NEXT_PUBLIC_CHAOS_CLOUDFLARE_LIVE === "true") {
         try {
-          const res = await fetch(`/api/chaos/live-ticket?roomId=${encodeURIComponent(roomId)}`, {
-            headers: headers(), cache: "no-store", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(8000)]),
-          });
+          const { res, data: ticket } = await fetchJson(`/api/chaos/live-ticket?roomId=${encodeURIComponent(roomId)}`, {
+            headers: headers(), cache: "no-store",
+          }, 8000);
           if (!res.ok) throw new Error("Live credentials unavailable");
-          const ticket = await res.json();
           liveOrigin = ticket.origin; token = ticket.token;
         } catch {
           if (!stopped) reconnectTimer = setTimeout(connect, 10_000);
