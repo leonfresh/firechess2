@@ -19,6 +19,7 @@ type Entry = {
   reason?: string;
   rated?: boolean;
   moveCount?: number | null;
+  platform?: string;
 };
 type Detail = {
   id: string;
@@ -33,6 +34,8 @@ type Detail = {
   frame?: WatchFrame;
   frames?: WatchFrame[];
   legacy?: boolean;
+  moveCount?: number | null;
+  platform?: string;
   result?: { winner: string; reason: string };
 };
 const control = (base: number, inc: number) =>
@@ -320,7 +323,7 @@ export function ChaosWatch({
           </nav>
           {tab === "archive" && (
             <p className={styles.note}>
-              Rated games count toward the ladder: both players must sign in through Discord before joining timed matchmaking and each make a move. Guest play, friend rooms and No rush games are casual and do not change ratings.
+              Rated games count toward the ladder: both players must sign in with FireChess or Discord, join timed public matchmaking, and each make a move. A displayed username alone does not make a game rated. Guest play, friend rooms and No rush games are casual and do not change ratings.
             </p>
           )}
         </>
@@ -361,9 +364,12 @@ export function ChaosWatch({
                           : "Read-only spectator"}
                       </small>
                       {tab === "archive" && (
-                        <small title="Full moves: one White and Black turn, including an unfinished final pair. Power picks are excluded.">
-                          {g.moveCount == null ? "Move count unavailable" : `${g.moveCount} ${g.moveCount === 1 ? "move" : "moves"}`}
-                        </small>
+                        <span className={styles.archiveFacts}>
+                          <span title="Full moves: one White and Black turn, including an unfinished final pair. Power picks are excluded.">
+                            {g.moveCount == null ? "Move count unavailable" : `${g.moveCount} ${g.moveCount === 1 ? "move" : "moves"}`}
+                          </span>
+                          <span>{g.platform ?? "Platform unavailable"}</span>
+                        </span>
                       )}
                     </span>
                     <span aria-hidden>↗</span>
@@ -421,6 +427,14 @@ export function ChaosWatch({
                   : detail.result.winner + " wins"}{" "}
                 · {detail.result.reason}
               </p>
+            )}
+            {!selected.live && (
+              <div className={styles.archiveFacts}>
+                <span title="Total full moves in the game, including an unfinished final pair. Power picks are excluded.">
+                  {detail.moveCount == null ? "Move count unavailable" : `${detail.moveCount} ${detail.moveCount === 1 ? "move" : "moves"}`}
+                </span>
+                <span>{detail.platform ?? "Platform unavailable"}</span>
+              </div>
             )}
             <div className={styles.game}>
               <div>

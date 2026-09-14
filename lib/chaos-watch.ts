@@ -26,6 +26,16 @@ export type WatchFrame = {
   from?: string;
   to?: string;
 };
+/** Discord Activity requires a signed discord_ identity before play. Browser
+ * sessions and browser guests use the other identity formats. Return only the
+ * platform label; private account IDs must never enter the public response. */
+export function archivePlatform(hostId: unknown, guestId: unknown): string {
+  if (typeof hostId !== "string" || !hostId || typeof guestId !== "string" || !guestId)
+    return "Platform unavailable";
+  const hostDiscord = /^discord_\d{17,20}$/.test(hostId);
+  const guestDiscord = /^discord_\d{17,20}$/.test(guestId);
+  return hostDiscord && guestDiscord ? "Discord" : hostDiscord || guestDiscord ? "Discord + Website" : "Website";
+}
 export function describeWatchFrame(frame: WatchFrame) {
   const choice = /^(white|black) chose an anomaly$/.exec(frame.label);
   if (!choice) return frame.label;

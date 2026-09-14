@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { projectClock } from "@/lib/chaos-clock";
-import { visualState, archiveFrames } from "@/lib/chaos-watch";
+import { visualState, archiveFrames, archivePlatform } from "@/lib/chaos-watch";
 export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const headers = { "Cache-Control": "no-store" };
@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
     }
     if (matchId) {
       const data = await db.execute(
-        sql`select m.record,m.winner,m.reason,m.host_color,m.ended_at,m.rated,coalesce(h.name,'Guest player') as host,coalesce(g.name,'Guest player') as guest from chaos_match m left join chaos_player h on h.id=m.host_id left join chaos_player g on g.id=m.guest_id where m.id=${matchId} or m.room_id=${matchId} order by m.game_number desc limit 1`,
+        sql`select m.record,m.winner,m.reason,m.host_color,m.host_id,m.guest_id,m.ended_at,m.rated,coalesce(h.name,'Guest player') as host,coalesce(g.name,'Guest player') as guest from chaos_match m left join chaos_player h on h.id=m.host_id left join chaos_player g on g.id=m.guest_id where m.id=${matchId} or m.room_id=${matchId} order by m.game_number desc limit 1`,
       );
       const m = data.rows[0];
       if (!m)
@@ -91,6 +91,8 @@ export async function GET(req: NextRequest) {
           black: m.host_color === "black" ? m.host : m.guest,
           result: { winner: m.winner, reason: m.reason },
           rated: m.rated,
+          platform: archivePlatform(m.host_id, m.guest_id),
+          moveCount: Array.isArray(record.moves) ? Math.ceil(record.moves.length / 2) : null,
           endedAt: m.ended_at,
           frames: archiveFrames(record),
           legacy: !record.frames?.length,
@@ -114,7 +116,7 @@ export async function GET(req: NextRequest) {
    from chaos_room r left join chaos_player h on h.id=r."hostId" left join chaos_player g on g.id=r."guestId"
    where r.status='playing' and r."guestId" is not null and r."updatedAt">now()-interval '2 hours'
    order by r."updatedAt" desc,r.id desc limit 21 offset ${page * 20}`)
-      : await db.execute(sql`select m.id,m.host_color,m.winner,m.reason,m.rated,m.ended_at as date,
+      : await db.execute(sql`select m.id,m.host_color,m.host_id,m.guest_id,m.winner,m.reason,m.rated,m.ended_at as date,
    case when jsonb_typeof(m.record->'moves')='array' then (jsonb_array_length(m.record->'moves')+1)/2 else null end as move_count,
    m.record->'timeControlSeconds' as base,m.record->'incrementSeconds' as increment,
    coalesce(h.name,'Guest player') as host,coalesce(g.name,'Guest player') as guest
@@ -135,6 +137,7 @@ export async function GET(req: NextRequest) {
             reason: m.reason,
             rated: m.rated,
             moveCount: m.move_count,
+            ...(!live ? { platform: archivePlatform(m.host_id, m.guest_id) } : {}),
           })),
         hasMore: data.rows.length > 20,
       },
