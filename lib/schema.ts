@@ -467,9 +467,8 @@ export const chaosRooms = pgTable("chaos_room", {
 /* ------------------------------------------------------------------ */
 
 export const chaosPresence = pgTable("chaos_presence", {
-  userId: text("userId")
-    .primaryKey()
-    .references(() => users.id, { onDelete: "cascade" }),
+  // Shared identity: website accounts, Discord players, and guests.
+  userId: text("userId").primaryKey(),
   userName: text("userName").notNull().default("Anonymous"),
   userImage: text("userImage"),
   /** Timestamp of last heartbeat — stale after ~30s */

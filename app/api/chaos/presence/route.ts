@@ -7,17 +7,17 @@
  * A user is considered "online" if their lastSeen is within the past 60 seconds.
  */
 
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { getChaosUserId } from "@/lib/chaos-auth";
 import { db } from "@/lib/db";
-import { chaosPresence, users } from "@/lib/schema";
+import { chaosPresence, chaosPlayers, users } from "@/lib/schema";
 import { gte, eq } from "drizzle-orm";
 
 const ONLINE_THRESHOLD_MS = 60_000; // 60 seconds
 
-export async function POST() {
-  const session = await auth();
-  if (!session?.user?.id) {
+export async function POST(req: NextRequest) {
+  const userId = await getChaosUserId(req);
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -31,18 +31,19 @@ export async function POST() {
       image: users.image,
     })
     .from(users)
-    .where(eq(users.id, session.user.id))
+    .where(eq(users.id, userId))
     .limit(1);
 
+  const [player] = await db.select({name: chaosPlayers.name}).from(chaosPlayers).where(eq(chaosPlayers.id, userId)).limit(1);
   const displayName =
-    userRow?.chaosUsername ?? userRow?.name ?? session.user.name ?? "Anonymous";
-  const displayImage = userRow?.image ?? session.user.image ?? null;
+    userRow?.chaosUsername ?? userRow?.name ?? player?.name ?? "Guest player";
+  const displayImage = userRow?.image ?? null;
 
   // Upsert our presence
   await db
     .insert(chaosPresence)
     .values({
-      userId: session.user.id,
+      userId: userId,
       userName: displayName,
       userImage: displayImage,
       lastSeen: now,
@@ -56,7 +57,7 @@ export async function POST() {
       },
     });
 
-  // Count online users (lastSeen ≥ 30s ago)
+  // Count online users (lastSeen ≥ 60s ago)
   const cutoff = new Date(now.getTime() - ONLINE_THRESHOLD_MS);
   const onlineUsers = await db
     .select({

@@ -99,7 +99,7 @@ export function ChaosLobby({
 }: LobbyProps) {
   const {activity} = useChaosPresentation();
   /* ── State ── */
-  const [onlineCount, setOnlineCount] = useState(0);
+  const [onlineCount, setOnlineCount] = useState<number | null>(null);
   const [messages, setMessages] = useState<LobbyMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -143,6 +143,7 @@ export function ChaosLobby({
     try {
       const res = await fetch("/api/chaos/presence", {
         method: "POST",
+        headers: chaosHeaders(),
         credentials: "include",
       });
       if (res.ok) {
@@ -166,7 +167,6 @@ export function ChaosLobby({
       if (!res.ok) return;
       const data = await res.json();
       setMessages(data.messages);
-      setOnlineCount(data.onlineCount);
     } catch {
       // ignore
     }
@@ -427,7 +427,7 @@ export function ChaosLobby({
           <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
         </span>
         <span className="text-sm font-medium text-emerald-400">
-          {onlineCount} player{onlineCount !== 1 ? "s" : ""} online
+          {onlineCount === null ? "Checking who’s online…" : `${onlineCount} player${onlineCount !== 1 ? "s" : ""} online · including you`}
         </span>
       </div>
 
