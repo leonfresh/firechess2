@@ -139,3 +139,23 @@
 .chaosBannerAction{display:flex;align-items:center;gap:9px;margin-left:auto;color:var(--accent);font-size:14px;font-weight:650;white-space:nowrap}
 @media(max-width:600px){.chaosBanner{margin-top:18px;padding:16px;gap:12px;flex-wrap:wrap}.chaosBannerCopy{flex:1}.chaosBannerCopy strong{font-size:15px}.chaosBannerAction{margin-left:54px;font-size:13px}}
 @media(prefers-reduced-motion:reduce){.chaosBanner{transition:none}}
+
+/* Hero atmosphere stays behind the interactive preview and never intercepts input. */
+.previewAtmosphere{position:relative;isolation:isolate;min-width:0;width:100%;max-width:620px;justify-self:end;perspective:1100px}
+.previewDepth{position:relative;transform:rotateX(var(--tilt-x,0deg)) rotateY(var(--tilt-y,0deg));transition:transform .25s ease-out;transform-style:preserve-3d}
+.heroGlow{position:absolute;z-index:-1;inset:-18% -12%;pointer-events:none;background:radial-gradient(ellipse at 28% 32%,#ff793833,transparent 58%),radial-gradient(ellipse at 78% 68%,#a879ff30,transparent 55%);filter:blur(30px);opacity:.85}
+.heroGrid{position:absolute;z-index:-1;inset:-40px -20px;pointer-events:none;background-image:linear-gradient(#ffffff07 1px,transparent 1px),linear-gradient(90deg,#ffffff07 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse,#0008,transparent 70%);transform:rotate(-8deg)}
+@media(min-width:701px) and (prefers-reduced-motion:no-preference){
+  .heroGlow{animation:hero-glow-drift 12s ease-in-out infinite alternate}
+  .landingRoot [data-revealed=true]{animation:landing-reveal .65s cubic-bezier(.2,.65,.3,1) both}
+  .landingRoot [data-revealed=true] .step{animation:landing-reveal .65s cubic-bezier(.2,.65,.3,1) both}
+  .landingRoot [data-revealed=true] .step:nth-child(2){animation-delay:.1s}
+  .landingRoot [data-revealed=true] .step:nth-child(3){animation-delay:.2s}
+}
+@keyframes hero-glow-drift{from{transform:translate(-10px,-8px) scale(.96);opacity:.65}to{transform:translate(12px,10px) scale(1.05);opacity:1}}
+@keyframes landing-reveal{from{opacity:.35;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:700px){.previewAtmosphere{justify-self:center}.heroGlow{inset:-5%;filter:blur(22px);opacity:.65}.heroGrid{inset:0}.previewDepth{transform:none;transition:none}}
+@media(prefers-reduced-motion:reduce){.previewDepth{transform:none;transition:none}.heroGlow{animation:none}}
+/* Keep decorative glows inside the viewport without creating a scroll container. */
+.landingRoot{overflow-x:clip}
+@media(max-width:600px){.chaosBannerCopy{flex:1 1 calc(100% - 54px)}.chaosBannerAction{flex-basis:calc(100% - 54px)}}
