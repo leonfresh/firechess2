@@ -1318,7 +1318,7 @@ export default function CoachPage() {
       {/* ── Game header (hidden in cinematic) ── */}
       {!cinematic && gameInfo && (
         <div className="border-b border-white/[0.06] px-4 py-2.5 text-sm">
-          <div className="mx-auto flex max-w-7xl items-center justify-between">
+          <div className="mx-auto flex site-width items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
               <span className="font-semibold truncate">
                 {gameInfo.white}

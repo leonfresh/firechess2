@@ -58,7 +58,7 @@ export default function BlogPage() {
         }}
       />
       <div className="min-h-[80vh] px-4 py-12 sm:px-6">
-        <div className="mx-auto max-w-5xl">
+        <div className="mx-auto site-width">
           {/* Header */}
           <h1 className="text-4xl font-bold tracking-tight text-white">
             Chess Improvement Blog

@@ -126,7 +126,7 @@ export default function AnalyzePage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
-      <div className="mx-auto max-w-6xl px-4 py-10">
+      <div className="mx-auto site-width px-4 py-10">
         <div className="mb-8">
           <h1 className="text-3xl font-black tracking-tight text-white">PGN Analyzer</h1>
           <p className="mt-2 text-sm text-slate-400">Drop a PGN file or paste it below. Powered by Stockfish 18 in your browser.</p>

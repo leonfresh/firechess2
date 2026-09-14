@@ -68,7 +68,7 @@ export default function AdminLauncherPage() {
 
   return (
     <div className="min-h-screen px-4 pb-20 pt-8">
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="mx-auto site-width space-y-6">
         {/* Page header */}
         <div className="flex items-center gap-3">
           <Link

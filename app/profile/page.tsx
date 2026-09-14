@@ -822,7 +822,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8 px-4 py-10">
+    <div className="mx-auto site-width space-y-8 px-4 py-10">
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4">
         <div>

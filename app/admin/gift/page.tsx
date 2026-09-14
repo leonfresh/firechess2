@@ -127,7 +127,7 @@ export default function AdminGiftPage() {
 
   return (
     <div className="min-h-screen bg-[#0e0e0e] text-white p-8">
-      <div className="max-w-5xl mx-auto">
+      <div className="site-width mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold">Gift Links</h1>

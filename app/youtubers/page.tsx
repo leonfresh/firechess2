@@ -193,7 +193,7 @@ export default function YoutuberssPage() {
       </div>
 
       <div className="relative z-10 px-6 py-16 md:px-10">
-        <div className="mx-auto max-w-4xl space-y-20">
+        <div className="mx-auto site-width space-y-20">
 
           {/* Hero */}
           <header className="animate-fade-in-up space-y-6 text-center">

@@ -4156,7 +4156,7 @@ export default function DungeonPage() {
       {run.status === "event" && <DungeonParticles variant="void" />}
       {run.status === "rest" && <DungeonParticles variant="snow" />}
 
-      <div className="relative z-10 mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto site-width px-4 py-8 sm:px-6 lg:px-8">
         {/* Top bar */}
         <div className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-white/[0.06] bg-gradient-to-r from-white/[0.03] to-transparent p-4 backdrop-blur-sm">
           <div className="flex items-center gap-2">

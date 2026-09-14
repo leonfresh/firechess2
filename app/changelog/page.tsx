@@ -51,7 +51,7 @@ export default function ChangelogPage() {
   return (
     <div className="min-h-screen bg-[#030712]">
       <ChangelogSeenTracker />
-      <div className="mx-auto max-w-3xl px-5 py-16 md:px-10 md:py-24">
+      <div className="mx-auto site-width px-5 py-16 md:px-10 md:py-24">
         {/* Header */}
         <div className="mb-12 text-center">
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500/20 to-cyan-500/20 text-3xl shadow-lg">

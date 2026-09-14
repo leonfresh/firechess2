@@ -252,7 +252,7 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-5xl bg-slate-950 px-4 py-12 text-slate-300">
+    <div className="mx-auto min-h-screen site-width bg-slate-950 px-4 py-12 text-slate-300">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-white">Manage Users</h1>

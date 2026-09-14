@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { signOut } from "next-auth/react";
 import { ChevronDown, Coins, Flame, Menu, X } from "lucide-react";
 import { useSession } from "@/components/session-provider";
@@ -53,6 +53,17 @@ export function Navbar() {
     trigger.current = button;
     setOpen(current => current === label ? null : label);
   };
+  const hoverOpen = (label: string, event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== "mouse" || !window.matchMedia("(min-width: 951px) and (hover: hover)").matches) return;
+    trigger.current = event.currentTarget.querySelector<HTMLButtonElement>("button");
+    setOpen(label);
+  };
+  const hoverClose = (label: string, event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== "mouse") return;
+    // Keep a submenu available while someone is navigating its links by keyboard.
+    if (event.currentTarget.contains(document.activeElement)) return;
+    setOpen(current => current === label ? null : current);
+  };
   return <header ref={header} className={s.header} onBlur={event => {
     if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(null);
   }}>
@@ -62,7 +73,10 @@ export function Navbar() {
       <nav id="site-navigation" className={`${s.nav} ${mobile ? s.mobileOpen : ""}`} aria-label="Main navigation" onClick={event => {
         if ((event.target as HTMLElement).closest("a")) { setOpen(null); setMobile(false); }
       }}>
-        {navigationGroups.map(group => <div className={s.group} key={group.label}>
+        {navigationGroups.map(group => <div className={s.group} key={group.label}
+          onPointerEnter={event => hoverOpen(group.label, event)}
+          onPointerLeave={event => hoverClose(group.label, event)}
+          onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(current => current === group.label ? null : current); }}>
           <div className={s.groupLabel} data-active={group.links.some(([, href]) => active(href)) || undefined}>
             {group.href ? <Link href={group.href} aria-current={active(group.href) ? "page" : undefined}>{group.label}</Link> : null}
             <button aria-label={group.href ? `${group.label} menu` : "More"} aria-expanded={open === group.label} aria-controls={`nav-${group.label}`} onClick={event => toggle(group.label, event.currentTarget)}>{!group.href && "More"}<ChevronDown size={14} /></button>
@@ -74,7 +88,10 @@ export function Navbar() {
         </div>)}
         <Link className={s.direct} href="/newdashboard" aria-current={active("/newdashboard") || active("/dashboard") ? "page" : undefined}>Dashboard</Link>
         {(!authenticated || plan === "free") && <Link className={s.direct} href="/newpricing" aria-current={active("/newpricing") ? "page" : undefined}>{authenticated ? "Upgrade" : "Pricing"}</Link>}
-        <div className={`${s.group} ${s.account}`}>
+        <div className={`${s.group} ${s.account}`}
+          onPointerEnter={event => { if (authenticated) hoverOpen("account", event); }}
+          onPointerLeave={event => hoverClose("account", event)}
+          onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(current => current === "account" ? null : current); }}>
           {authenticated ? <>
             <button className={s.accountButton} aria-expanded={open === "account"} aria-controls="nav-account" onClick={event => toggle("account", event.currentTarget)}><span className={s.avatar}>{(user?.name || "U").slice(0, 1).toUpperCase()}</span>Account{unread > 0 && <span className={s.badge}>{Math.min(unread, 99)}</span>}<ChevronDown size={14} /></button>
             {open === "account" && <div id="nav-account" className={`${s.dropdown} ${s.accountDropdown}`}>

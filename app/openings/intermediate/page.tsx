@@ -86,7 +86,7 @@ export default function IntermediateOpeningsPage() {
   return (
     <>
       <JsonLd />
-      <div className="mx-auto max-w-4xl px-4 py-10 md:px-8 md:py-14">
+      <div className="mx-auto site-width px-4 py-10 md:px-8 md:py-14">
         {/* Breadcrumb */}
         <nav className="mb-6 flex items-center gap-2 text-xs text-stone-500">
           <Link href="/" className="hover:text-stone-300 transition-colors">

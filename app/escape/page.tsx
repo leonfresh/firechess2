@@ -788,7 +788,7 @@ export default function EscapeChessPage() {
         </div>
 
         {/* Difficulty selection */}
-        <div className="mx-auto max-w-3xl px-5 py-10">
+        <div className="mx-auto site-width px-5 py-10">
           <h2 className="mb-6 text-center text-sm font-bold uppercase tracking-widest text-slate-500">Choose Your Raid</h2>
           <div className="grid gap-4 sm:grid-cols-3">
             {(["scav", "pmc", "boss"] as RaidDifficulty[]).map((d) => {
@@ -991,7 +991,7 @@ export default function EscapeChessPage() {
 
       {/* Top HUD */}
       <div className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#030712]/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-2.5">
+        <div className="mx-auto flex site-width items-center gap-4 px-4 py-2.5">
           {/* Difficulty badge */}
           <span className={`shrink-0 text-xs font-black uppercase tracking-widest ${cfg.flavorColor}`}>{cfg.icon} {cfg.name}</span>
 
@@ -1032,7 +1032,7 @@ export default function EscapeChessPage() {
       </div>
 
       {/* Main layout */}
-      <div className="mx-auto flex max-w-6xl gap-4 px-4 py-4">
+      <div className="mx-auto flex site-width gap-4 px-4 py-4">
 
         {/* Left sidebar */}
         <aside className="hidden w-52 shrink-0 flex-col gap-3 lg:flex">

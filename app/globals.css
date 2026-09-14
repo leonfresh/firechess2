@@ -4,10 +4,20 @@
 
 :root {
   color-scheme: dark;
+  --site-width: 1440px;
   --bg-primary: #08070b;
   --accent-fire: #f97316;
   --accent-gold: #d4a657;
   --accent-crimson: #dc2626;
+}
+
+/* Shared page width; inner reading columns, forms and boards keep their own limits. */
+@layer utilities {
+  .site-width {
+    width: 100%;
+    max-width: var(--site-width);
+    min-width: 0;
+  }
 }
 
 /* Fullscreen lesson mode: hide site chrome so the lesson fits exactly 100vh */

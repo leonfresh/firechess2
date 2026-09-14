@@ -177,7 +177,7 @@ export default function TicketThreadPage() {
 
   return (
     <div className="min-h-screen bg-[#070608] text-white">
-      <div className="mx-auto max-w-2xl px-4 py-12 sm:py-16">
+      <div className="mx-auto site-width px-4 py-12 sm:py-16">
         {/* Back link + header */}
         <Link
           href="/support"

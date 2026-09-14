@@ -56,7 +56,7 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="mx-auto max-w-3xl px-6 py-16 md:px-10">
+    <div className="mx-auto site-width px-6 py-16 md:px-10">
       <FAQJsonLd
         questions={FAQ_ITEMS.map((f) => ({ question: f.q, answer: f.a }))}
       />

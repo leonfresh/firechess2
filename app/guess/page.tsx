@@ -731,7 +731,7 @@ export default function GuessTheMovePage() {
   if (!selectedGame) {
     return (
       <main className="min-h-screen bg-[#0a0a0f] pt-24 pb-16 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto site-width">
           {/* Header */}
           <div className="mb-10 text-center">
             <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl">
@@ -971,7 +971,7 @@ export default function GuessTheMovePage() {
   /* ────────────── Render: Game In Progress ────────────── */
   return (
     <main className="min-h-screen bg-[#0a0a0f] pt-20 pb-16 px-4 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto site-width">
         {/* Top bar */}
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <button

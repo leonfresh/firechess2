@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function ChaosPrivacyPage() {
   return (
-    <article className="mx-auto max-w-3xl px-6 py-16 text-sm leading-relaxed text-slate-300 [&_h2]:mb-3 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-white [&_section]:mt-8 [&_a]:text-emerald-400 [&_a]:underline">
+    <article className="mx-auto site-width px-6 py-16 text-sm leading-relaxed text-slate-300 [&_h2]:mb-3 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-white [&_section]:mt-8 [&_a]:text-emerald-400 [&_a]:underline">
       <p className="mb-3 text-emerald-400">FireChess · Discord Activity</p>
       <h1 className="text-3xl font-extrabold text-white">Chaos Chess Privacy Policy</h1>
       <p className="mt-3">Effective September 9, 2026</p>

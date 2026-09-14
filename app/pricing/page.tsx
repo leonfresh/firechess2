@@ -133,7 +133,7 @@ export default function PricingPage() {
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-6xl px-4 pb-24 pt-16 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto site-width px-4 pb-24 pt-16 sm:px-6 lg:px-8">
         {/* Hero */}
         <header className="mx-auto max-w-3xl text-center">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#ff5a1f]/20 bg-[#ff5a1f]/[0.08] px-4 py-1.5">

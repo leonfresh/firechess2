@@ -149,7 +149,7 @@ export default function AccountPage() {
 
   return (
     <div className="min-h-[80vh] px-4 py-12 sm:px-6">
-      <div className="mx-auto max-w-2xl">
+      <div className="mx-auto site-width">
         {/* ── Header ── */}
         <h1 className="text-3xl font-bold tracking-tight text-white">
           Account

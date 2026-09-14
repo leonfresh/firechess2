@@ -17,7 +17,7 @@ export default async function ReviewPage({
 
   return (
     <div className="min-h-screen bg-[#030712] text-white">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+      <div className="mx-auto site-width px-4 py-8 sm:px-6 sm:py-10">
         <ReviewPageClient initialPgn={initialPgn} />
       </div>
     </div>

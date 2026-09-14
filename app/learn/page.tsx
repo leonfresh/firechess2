@@ -1421,7 +1421,7 @@ function TextSlideView({
 
   if (slide.fen) {
     return (
-      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
+      <div className="mx-auto flex w-full site-width flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
         {/* Board — left on desktop, top on mobile */}
         <div className="w-full min-w-0 flex justify-center lg:w-[54%] lg:shrink-0">
           <LessonBoard
@@ -1467,7 +1467,7 @@ function TextSlideView({
 
   if (slide.photo) {
     return (
-      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
+      <div className="mx-auto flex w-full site-width flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
         {/* Photo — left on desktop */}
         <div className="w-full max-w-lg min-w-0 flex flex-col gap-2 lg:w-[46%] lg:shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1694,7 +1694,7 @@ function ReplaySlideView({
   const badge = slide.badges?.[idx] ?? autoBadge;
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
+    <div className="mx-auto flex w-full site-width flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
       {/* Board + controls — left on desktop */}
       <div className="w-full min-w-0 flex flex-col items-center gap-4 lg:w-[54%] lg:shrink-0">
         <LessonBoard
@@ -2082,7 +2082,7 @@ function LiveInteractSlide({
     );
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
+    <div className="mx-auto flex w-full site-width flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
       {/* Board — left on desktop */}
       <div className="w-full min-w-0 flex justify-center lg:w-[54%] lg:shrink-0">
         <LessonBoard
@@ -2361,7 +2361,7 @@ function InteractSlideView({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
+    <div className="mx-auto flex w-full site-width flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
       {/* Board — left on desktop */}
       <div className="w-full min-w-0 flex justify-center lg:w-[54%] lg:shrink-0">
         <LessonBoard
@@ -2542,7 +2542,7 @@ function ChoiceSlideView({
 
   if (slide.fen) {
     return (
-      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
+      <div className="mx-auto flex w-full site-width flex-col items-center gap-6 lg:h-full lg:flex-row lg:items-center lg:gap-10">
         {/* Board — left on desktop */}
         <div className="w-full min-w-0 flex justify-center lg:w-[54%] lg:shrink-0">
           <LessonBoard
@@ -3181,7 +3181,7 @@ function LearnPageInner() {
       {/* Content */}
       <div
         className={`${
-          phase === "lesson" ? "h-full" : "mx-auto max-w-6xl px-4 py-8 sm:px-6"
+          phase === "lesson" ? "h-full" : "mx-auto site-width px-4 py-8 sm:px-6"
         }`}
       >
         {phase === "catalog" && <LessonCatalog onSelect={handleSelect} />}

@@ -112,7 +112,7 @@ function ChaosCollectionInner() {
     <main className="min-h-screen bg-[#07090f] text-white">
       {/* Header */}
       <div className="border-b border-purple-500/20 bg-[#0a0f1a]/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between gap-4">
+        <div className="mx-auto site-width px-4 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link
               href="/chaos"
@@ -145,7 +145,7 @@ function ChaosCollectionInner() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className="mx-auto site-width px-4 py-8">
         {/* Stats bar */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>

@@ -1908,7 +1908,7 @@ export default function TrainPage() {
         <div className="animate-float-delayed absolute -right-32 top-40 h-80 w-80 rounded-full bg-cyan-500/[0.05] blur-[100px]" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-5xl px-5 py-12 md:px-10 md:py-16">
+      <div className="relative z-10 mx-auto site-width px-5 py-12 md:px-10 md:py-16">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>

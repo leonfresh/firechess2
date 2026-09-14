@@ -180,7 +180,7 @@ export default function AdminAffiliatesPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 px-4 py-10 text-white">
-      <div className="mx-auto max-w-6xl space-y-6">
+      <div className="mx-auto site-width space-y-6">
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>

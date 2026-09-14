@@ -81,7 +81,7 @@ export default async function CommunityProfilePage({
 
   return (
     <div className="min-h-screen bg-[#030712] text-white">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto site-width px-4 py-10 sm:px-6 lg:px-8">
         <header className="rounded-[2rem] border border-white/[0.08] bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(249,115,22,0.12),transparent_28%),rgba(255,255,255,0.025)] p-6 sm:p-8">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex items-center gap-4">

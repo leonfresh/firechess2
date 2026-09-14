@@ -54,7 +54,7 @@ export default async function CommunityHubPage({
 
   return (
     <div className="min-h-screen bg-[#030712] text-white">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto site-width px-4 py-10 sm:px-6 lg:px-8">
         {/* ─── Page Header ─── */}
         <header className="mb-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

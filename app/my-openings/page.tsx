@@ -2360,7 +2360,7 @@ function MyOpeningsInner() {
         <div className="absolute top-1/3 right-1/4 h-80 w-80 rounded-full bg-cyan-500/[0.04] blur-[90px]" />
         <div className="absolute bottom-1/4 left-1/3 h-64 w-64 rounded-full bg-blue-500/[0.04] blur-[80px]" />
       </div>
-      <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="relative mx-auto site-width px-4 py-10 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-3">

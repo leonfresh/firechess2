@@ -35,7 +35,7 @@ export default function ShopPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 pb-20 pt-24 sm:px-6">
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto site-width">
         <CoinShop />
       </div>
     </main>

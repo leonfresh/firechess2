@@ -94,7 +94,7 @@ export default async function BlogPostPage({ params }: Props) {
           { name: post.title, href: `/blog/${slug}` },
         ]}
       />
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto site-width">
         {/* Breadcrumb */}
         <Link
           href="/blog"

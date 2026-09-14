@@ -177,7 +177,7 @@ export default async function LegendsPage({
       {/* Hero */}
       <div className="relative overflow-hidden border-b border-white/[0.06]">
         <div className="absolute inset-0 bg-gradient-to-b from-violet-950/30 via-transparent to-transparent pointer-events-none" />
-        <div className="max-w-5xl mx-auto px-4 py-16 text-center relative">
+        <div className="site-width mx-auto px-4 py-16 text-center relative">
           <div className="text-5xl mb-4">�</div>
           <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight">
             Legends
@@ -227,7 +227,7 @@ export default async function LegendsPage({
       </div>
 
       {/* Content */}
-      <div className="max-w-5xl mx-auto px-4 py-12">
+      <div className="site-width mx-auto px-4 py-12">
         {games.length === 0 ? (
           <div className="text-center py-20 text-slate-500">
             No missions found. Check back soon!

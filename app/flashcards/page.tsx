@@ -102,7 +102,7 @@ export default function FlashcardsPage() {
         <div className="animate-float-delayed absolute -right-32 top-40 h-80 w-80 rounded-full bg-purple-500/[0.06] blur-[100px]" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+      <div className="relative z-10 mx-auto site-width px-4 py-8 sm:px-6 sm:py-12">
         <header className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white sm:text-3xl">🃏 Flashcards</h1>

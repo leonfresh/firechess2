@@ -379,7 +379,7 @@ export default function TutorPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 px-4 py-8 md:px-8 md:py-10">
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="site-width mx-auto space-y-6">
         {/* ── Header ── */}
         <div className="flex flex-wrap items-center gap-3">
           <div>

@@ -3276,7 +3276,7 @@ export default function RoastPage() {
 
         {/* ── LANDING PAGE HERO (only on choose-source) ── */}
         {pageState === "choose-source" && !analyzing && (
-          <div className="mx-auto max-w-3xl animate-fadeIn">
+          <div className="mx-auto site-width animate-fadeIn">
             {/* Hero section */}
             <div className="relative mb-10 text-center">
               {/* Background glow */}

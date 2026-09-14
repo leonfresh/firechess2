@@ -1313,7 +1313,7 @@ export default function PuzzlesPage() {
   /* ─────────────── Render ─────────────── */
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 px-4 py-10 md:px-8 md:py-14">
-      <div className="max-w-6xl mx-auto">
+      <div className="site-width mx-auto">
         {/* ── Hero header ── */}
         <div className="mb-8">
           <div className="mb-1.5">

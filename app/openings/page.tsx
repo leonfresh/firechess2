@@ -521,7 +521,7 @@ export default function OpeningsPage() {
   }, [activeCategory, difficultyFilter, search]);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+    <div className="mx-auto site-width px-4 py-12 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-extrabold text-white">

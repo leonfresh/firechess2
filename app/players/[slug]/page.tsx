@@ -145,7 +145,7 @@ export default async function PlayerPage({
     <>
       <PlayerJsonLd gm={gm} />
       <main className="min-h-screen bg-slate-950 text-slate-100">
-        <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto site-width px-4 py-12 sm:px-6 lg:px-8">
           {/* Breadcrumb */}
           <nav className="mb-8 flex items-center gap-2 text-sm text-slate-500">
             <Link href="/" className="hover:text-slate-300">

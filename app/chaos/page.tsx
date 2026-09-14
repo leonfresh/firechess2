@@ -9660,7 +9660,7 @@ export default function ChaosChessPage() {
     return (
       <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-gradient-to-b from-[#030712] via-[#0a0f1a] to-[#030712]">
         <ChaosParticles />
-        <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-4 py-8 text-center sm:py-14">
+        <div className="relative z-10 mx-auto flex site-width flex-col items-center px-4 py-8 text-center sm:py-14">
           {/* ── Hero ── */}
           <div className="mb-6 flex flex-col items-center sm:mb-10">
             <div className="mb-3 flex items-center gap-3 sm:mb-4">
@@ -10806,7 +10806,7 @@ export default function ChaosChessPage() {
           </div>
         )}
 
-        <div data-chaos-layout className="relative z-10 mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 px-3 py-3 sm:px-4 sm:py-4 lg:grid-cols-[1fr_280px] lg:gap-6 lg:px-8 lg:py-6">
+        <div data-chaos-layout className="relative z-10 mx-auto grid w-full site-width grid-cols-1 gap-4 px-3 py-3 sm:px-4 sm:py-4 lg:grid-cols-[1fr_280px] lg:gap-6 lg:px-8 lg:py-6">
           {/* ── Center: Board + Modifiers below ── */}
           <div className="flex flex-col items-center gap-2 sm:gap-3 min-w-0">
             {/* Header */}
