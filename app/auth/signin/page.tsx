@@ -3,6 +3,10 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 
+function chaosSignInReturn() {
+  return new URLSearchParams(window.location.search).get("callbackUrl") === "/api/chaos/website-login" ? "/api/chaos/website-login" : "/";
+}
+
 export default function SignInPage() {
   const [loading, setLoading] = useState<string | null>(null);
   const [email, setEmail] = useState("");
@@ -10,7 +14,7 @@ export default function SignInPage() {
 
   const handleSignIn = async (provider: string) => {
     setLoading(provider);
-    await signIn(provider, { callbackUrl: "/" });
+    await signIn(provider, { callbackUrl: chaosSignInReturn() });
   };
 
   const handleMagicLink = async (e: React.FormEvent) => {
@@ -18,7 +22,7 @@ export default function SignInPage() {
     if (!email.trim()) return;
     setLoading("resend");
     try {
-      await signIn("resend", { email: email.trim(), callbackUrl: "/", redirect: false });
+      await signIn("resend", { email: email.trim(), callbackUrl: chaosSignInReturn(), redirect: false });
       setEmailSent(true);
     } catch {
       // signIn may throw on network error

@@ -1,0 +1,9 @@
+.card { width: 100%; margin: 16px 0; padding: 16px; border: 1px solid #61758a; border-radius: 12px; background: #1a2a40; color: #fff1cf; text-align: left; }
+.heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.heading strong { font-size: 14px; overflow-wrap: anywhere; }
+.badge { flex-shrink: 0; border-radius: 6px; padding: 4px 8px; background: #374b61; color: #e0e8f1; font-size: 12px; font-weight: 800; }
+.badge[data-rated="true"] { background: #d4f86c; color: #223349; }
+.card p { margin: 10px 0; color: #c0cddd; font-size: 13px; line-height: 1.5; }
+.card small { display: block; color: #acbfd0; font-size: 12px; line-height: 1.5; }
+.card .signIn { display: inline-flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 10px 14px; border: 1px solid #d4f86c; border-radius: 8px; background: #d4f86c; color: #223349; font: inherit; font-size: 14px; font-weight: 800; text-decoration: none; cursor: pointer; }
+.signIn:focus-visible { outline: 3px solid white; outline-offset: 3px; }
