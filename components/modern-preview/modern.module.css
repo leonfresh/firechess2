@@ -127,3 +127,15 @@
   .landingRoot .productStage{width:100%;max-width:620px;justify-self:end}
 }
 @media(max-width:950px){.landingRoot .landingContainer{padding-inline:20px}}
+
+/* Direct homepage entry point for players looking for Chaos Chess. */
+.chaosBanner{display:flex;align-items:center;gap:16px;margin-top:24px;padding:18px 22px;border:1px solid #ff793845;border-radius:12px;background:linear-gradient(110deg,#ff793814,#a879ff0b);text-decoration:none;color:var(--text);transition:background .15s,border-color .15s}
+.chaosBanner:hover{border-color:var(--accent);background:#ff79381c}
+.chaosBanner:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.chaosBannerIcon{display:grid;place-items:center;flex-shrink:0;width:42px;height:42px;border-radius:10px;background:#ff79381a;color:var(--accent)}
+.chaosBannerCopy{display:grid;gap:4px;min-width:0}
+.chaosBannerCopy strong{font-size:16px;font-weight:650}
+.chaosBannerCopy>span{font-size:13px;line-height:1.5;color:var(--muted)}
+.chaosBannerAction{display:flex;align-items:center;gap:9px;margin-left:auto;color:var(--accent);font-size:14px;font-weight:650;white-space:nowrap}
+@media(max-width:600px){.chaosBanner{margin-top:18px;padding:16px;gap:12px;flex-wrap:wrap}.chaosBannerCopy{flex:1}.chaosBannerCopy strong{font-size:15px}.chaosBannerAction{margin-left:54px;font-size:13px}}
+@media(prefers-reduced-motion:reduce){.chaosBanner{transition:none}}

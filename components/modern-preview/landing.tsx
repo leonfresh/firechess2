@@ -21,6 +21,11 @@ export function ModernLanding() {
   return <div className={`${s.root} ${s.landingRoot}`}>
     <PreviewHeader />
     <div className={s.landingContainer}>
+      <Link href="/chaos" className={s.chaosBanner}>
+        <span className={s.chaosBannerIcon}><Zap size={22} aria-hidden="true" /></span>
+        <span className={s.chaosBannerCopy}><strong>Looking for Chaos Chess?</strong><span>Jump into a game with wild pieces and unexpected powers.</span></span>
+        <span className={s.chaosBannerAction}>Play Chaos Chess <ArrowRight size={18} aria-hidden="true" /></span>
+      </Link>
       <section className={s.hero}>
         <div className={s.heroCopy}><div className={s.heroEyebrow}><span className={s.greenDot} /> YOUR PERSONAL CHESS BREAKDOWN</div><h1>You play the games.<br />We find <span>your edge.</span></h1><p className={s.heroDescription}>Understand the mistakes you keep making.<br className={s.desktopBreak} /> Get a clear plan to turn them into your strengths.</p><ScanForm /><Link className={s.sampleLink} href="/report/8c8d499e-1f04-4121-aabc-71a818b98ce6"><span className={s.playCircle}><ArrowUpRight size={15} /></span>Take a look inside a report <span className={s.muted}>No scan needed</span></Link></div>
         <ProductPreview />
