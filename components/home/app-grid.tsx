@@ -16,6 +16,7 @@ const APPS: AppTile[] = [
   // Row 1 — Play
   { icon: "🎲", label: "Chaos Chess", href: "/chaos", desc: "Rule-breaking multiplayer chess", badge: "hot", color: "from-rose-600 to-rose-900" },
   { icon: "🤺", label: "Opening Sparring", href: "/sparring", desc: "Practice openings vs AI", badge: "new", color: "from-emerald-600 to-emerald-900" },
+  { icon: "🔥", label: "Engine Assist", href: "/assist", desc: "Play with the engine's line", badge: "new", color: "from-orange-600 to-orange-900" },
   { icon: "🧩", label: "Puzzles", href: "/puzzles", desc: "Tactics from your own games", color: "from-cyan-600 to-cyan-900" },
   { icon: "🏰", label: "Dungeon", href: "/dungeon", desc: "Roguelike chess survival", color: "from-violet-600 to-violet-900" },
   // Row 2 — Analyze

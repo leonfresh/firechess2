@@ -11,12 +11,19 @@ import type { LocalEngineLine } from "./stockfish-client";
 export function pvToSan(fen: string, pv: string[]): string[] {
   const san: string[] = [];
   const chess = new Chess(fen);
-  for (const uci of pv) {
-    const move = chess.move({
-      from: uci.slice(0, 2),
-      to: uci.slice(2, 4),
-      promotion: (uci[4] || undefined) as "q" | "r" | "b" | "n" | undefined,
-    });
+  for (const uci of pv ?? []) {
+    let move = null;
+    try {
+      move = chess.move({
+        from: uci.slice(0, 2),
+        to: uci.slice(2, 4),
+        promotion: (uci[4] || undefined) as "q" | "r" | "b" | "n" | undefined,
+      });
+    } catch {
+      // chess.js throws on illegal moves — e.g. a PV computed for a DIFFERENT
+      // position than `fen`. Never let a stale line take down a render.
+      break;
+    }
     if (!move) break;
     san.push(move.san);
   }
@@ -33,12 +40,18 @@ export function formatEval(line: LocalEngineLine): string {
 /** Apply the first `count` UCI plies to a FEN and return the resulting FEN. */
 export function applyPv(fen: string, pv: string[], count: number): string {
   const chess = new Chess(fen);
-  for (const uci of pv.slice(0, count)) {
-    const move = chess.move({
-      from: uci.slice(0, 2),
-      to: uci.slice(2, 4),
-      promotion: (uci[4] || undefined) as "q" | "r" | "b" | "n" | undefined,
-    });
+  for (const uci of (pv ?? []).slice(0, count)) {
+    let move = null;
+    try {
+      move = chess.move({
+        from: uci.slice(0, 2),
+        to: uci.slice(2, 4),
+        promotion: (uci[4] || undefined) as "q" | "r" | "b" | "n" | undefined,
+      });
+    } catch {
+      // Same guard as pvToSan — a PV from another position must not throw.
+      break;
+    }
     if (!move) break;
   }
   return chess.fen();

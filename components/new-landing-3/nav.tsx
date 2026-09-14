@@ -44,6 +44,7 @@ const MENUS: Menu[] = [
       { href: "/puzzles", label: "Puzzles & Drills", icon: "🎯" },
       { href: "/daily", label: "Daily Routine", icon: "📅" },
       { href: "/sparring", label: "Opening Sparring", icon: "⚔️" },
+      { href: "/assist", label: "Engine Assist", icon: "🔥" },
       { href: "/dungeon", label: "Dungeon Tactics", icon: "🗡️" },
       { href: "/guess", label: "Guess the Move", icon: "🧩" },
     ],

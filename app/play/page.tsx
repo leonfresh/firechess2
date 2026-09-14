@@ -10,6 +10,7 @@ const games = [
   { title: "Chaos Chess", href: "/chaos", icon: Zap, tag: "Expect the unexpected", text: "Explore a chess variant with unusual pieces and game-changing surprises." },
   { title: "Roast the Elo", href: "/roast", icon: Flame, tag: "Make your call", text: "Watch the game, read the mistakes and put your rating intuition to the test." },
   { title: "Sparring", href: "/sparring", icon: Swords, tag: "Find your opponent", text: "Put your ideas into practice on the board in a sparring session." },
+  { title: "Engine Assist", href: "/assist", icon: Flame, tag: "See what the engine sees", text: "Play with the engine's line in front of you, and see what your chess looks like without it." },
   { title: "Daily Challenge", href: "/daily", icon: Trophy, tag: "A reason to come back", text: "Drop in for today's chess challenge and keep your practice moving." },
 ];
 

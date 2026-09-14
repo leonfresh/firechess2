@@ -5,7 +5,7 @@ import {
   TriangleAlert, TrendingUp, Clapperboard, Crown, BookA, Trophy,
   Coins, GraduationCap, Video, Newspaper, Info, ListChecks,
   LifeBuoy, MessageSquare, UserRound, CreditCard, FolderOpen,
-  Users, Handshake, Gift, LogOut, Ellipsis, LayoutDashboard, type LucideIcon,
+  Users, Handshake, Gift, LogOut, Ellipsis, LayoutDashboard, Sparkles, type LucideIcon,
 } from "lucide-react";
 import { navigationGroups } from "./site-navigation";
 import s from "./site-navigation.module.css";
@@ -17,7 +17,7 @@ const icons = {
   "/analyze": FileCode2, "/analysis": Grid2X2, "/review": History,
   "/my-openings": BookOpen, "/openings": Compass,
   "/newtraining": Target, "/train": Dumbbell, "/daily": CalendarDays,
-  "/puzzles": Puzzle, "/sparring": Swords, "/play": Gamepad2,
+  "/puzzles": Puzzle, "/sparring": Swords, "/assist": Sparkles, "/play": Gamepad2,
   "/guess": CircleHelp, "/dungeon": Castle, "/chaos": Zap, "/roast": Flame,
   "/tactics": Crosshair, "/endgames": Flag, "/positions": MapPin,
   "/time-controls": Timer, "/mistakes": TriangleAlert, "/improve": TrendingUp,

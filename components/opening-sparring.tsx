@@ -1,10 +1,20 @@
 "use client";
 
 /**
- * Opening Sparring — play against weighted Lichess database moves.
+ * Opening Sparring + Engine Assist.
+ *
+ * Two modes share one game loop:
+ *
+ *  - "sparring": play against weighted Lichess database moves.
+ *  - "assist": the same opponent, plus an Engine Assist panel you can open on
+ *    your turn to see what the engine would play against the opponent's last
+ *    move (top 3 lines + arrow). Every move is logged assisted or solo, and the
+ *    summary splits your accuracy — the honest answer to "how much of my chess
+ *    is me?". Solo moves are still ranked against the engine's top lines, which
+ *    is where the "you matched the engine 4/11 times unaided" stat comes from.
  *
  * Flow:
- *  1. User picks their color and a target rating (e.g. 1800).
+ *  1. User picks their color, a target rating (e.g. 1800) and a mode.
  *  2. Each opponent turn: fetch /api/sparring-move, pick a move via weighted
  *     random sampling, validate it isn't a blunder with quick Stockfish eval.
  *  3. When book runs out or after move 20, offer to continue vs. Stockfish
@@ -16,9 +26,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "@/components/chessboard-compat";
 import { EvalBar } from "@/components/eval-bar";
+import { EngineAssistPanel } from "@/components/engine-assist-panel";
+import { MoveBadge } from "@/components/move-badge";
 import { playSound } from "@/lib/sounds";
-import { stockfishPool } from "@/lib/stockfish-client";
-import { useBoardSize } from "@/lib/use-board-size";
+import { stockfishPool, type LocalEngineLine } from "@/lib/stockfish-client";
+import {
+  classifyMoveQuality,
+  MOVE_CLASSIFICATION_BORDER,
+  MOVE_CLASSIFICATION_BG,
+  MOVE_CLASSIFICATION_COLORS,
+  MOVE_CLASSIFICATION_LABELS,
+  type MoveClassification,
+} from "@/lib/move-quality";
 import { explainMoves } from "@/lib/position-explainer";
 import {
   useBoardTheme,
@@ -52,6 +71,8 @@ type SparringMoveResponse =
       targetRating: number;
     };
 
+type Mode = "sparring" | "assist";
+
 type MoveRecord = {
   san: string;
   uci: string;
@@ -64,6 +85,13 @@ type MoveRecord = {
   evalAfter?: number;
   bestMoveUci?: string | null;
   bookCandidate?: MoveCandidate | null;
+  /** Canonical classification (undefined when evals were unavailable) */
+  quality?: MoveClassification;
+  /** Assist mode: was the engine panel open/used during this turn? */
+  assisted?: boolean;
+  /** Assist mode: 1-based rank of the played move in the pre-move top lines.
+   *  null = lines were known but the move wasn't in them, undefined = unknown. */
+  engineTop?: number | null;
 };
 
 type Phase =
@@ -125,6 +153,41 @@ function fmtCp(cp: number): string {
   return (cp / 100).toFixed(2);
 }
 
+/* ---------------------------- Assist tuning ---------------------------- */
+
+/** Engine lines shown in the assist panel */
+const ASSIST_LINES = 3;
+/** Assist search depth — fast enough to prefetch while the user is thinking */
+const ASSIST_DEPTH = 12;
+/** Peek budget choices in setup (null = unlimited, the default) */
+const PEEK_BUDGETS: Array<{ label: string; value: number | null }> = [
+  { label: "Unlimited", value: null },
+  { label: "5 peeks", value: 5 },
+  { label: "3 peeks", value: 3 },
+  { label: "1 peek", value: 1 },
+];
+/** A move counts as "ignoring the engine" when it drops this much with the panel open */
+const IGNORED_ENGINE_CP = 90;
+/**
+ * Minimum analysed moves per bucket before we put a rating estimate on screen.
+ * Two moves cannot support a strength claim — below this the card says so.
+ */
+const MIN_SAMPLE_MOVES = 5;
+
+/**
+ * Coarse strength read from the average centipawn loss of ONE game.
+ * Anchors (ACPL → rating, published accuracy bands): ~110→800, ~70→1200,
+ * ~45→1600, ~32→2000, fitted as rating ≈ 5370 − 2239·log10(cpl), clamped.
+ * One game is a tiny sample: the assisted-vs-solo DELTA is the signal, the
+ * absolute number is a rough band.
+ */
+function estimateStrengthFromCpLoss(avgCpLoss: number | null): number | null {
+  if (avgCpLoss === null) return null;
+  const cpl = Math.max(8, avgCpLoss);
+  const rating = 5370 - 2239 * Math.log10(cpl);
+  return Math.round(Math.min(2400, Math.max(400, rating)));
+}
+
 /** Evaluate a position and return cp from sideToMove's perspective */
 async function evalPosition(
   fen: string,
@@ -140,70 +203,40 @@ async function evalPosition(
 }
 
 /* ------------------------------------------------------------------ */
-/*  Move quality system (matches Guess the Move page)                  */
+/*  Move quality                                                       */
 /* ------------------------------------------------------------------ */
 
-type MoveQuality =
-  | "best"
-  | "excellent"
-  | "good"
-  | "inaccuracy"
-  | "mistake"
-  | "blunder";
-
-function classifyByCpLoss(cpLoss: number): MoveQuality {
-  if (cpLoss <= 5) return "best";
-  if (cpLoss <= 15) return "excellent";
-  if (cpLoss <= 40) return "good";
-  if (cpLoss <= 90) return "inaccuracy";
-  if (cpLoss <= 200) return "mistake";
-  return "blunder";
+/**
+ * Canonical classifier (lib/move-quality.ts) — same language as /coach,
+ * /daily and the report page. Falls back to null when evals are missing.
+ */
+function classifyRecord(args: {
+  cpLoss: number | undefined;
+  isBestMove: boolean;
+  evalBeforeMover: number | undefined;
+  evalAfterMover: number | undefined;
+  fenBefore: string;
+  moveUci: string;
+  moveIndex: number;
+}): MoveClassification | null {
+  const { cpLoss, isBestMove, evalBeforeMover, evalAfterMover } = args;
+  if (cpLoss === undefined || evalBeforeMover === undefined || evalAfterMover === undefined) {
+    return null;
+  }
+  try {
+    return classifyMoveQuality({
+      cpLoss,
+      isBestMove,
+      evalBeforeMover,
+      evalAfterMover,
+      fenBefore: args.fenBefore,
+      moveUci: args.moveUci,
+      moveIndex: args.moveIndex,
+    });
+  } catch {
+    return null;
+  }
 }
-
-const QUALITY_EMOJI: Record<MoveQuality, string> = {
-  best: "✅",
-  excellent: "💎",
-  good: "👍",
-  inaccuracy: "⚠️",
-  mistake: "❌",
-  blunder: "💀",
-};
-
-const QUALITY_COLOR: Record<MoveQuality, string> = {
-  best: "text-emerald-400",
-  excellent: "text-cyan-400",
-  good: "text-green-400",
-  inaccuracy: "text-amber-400",
-  mistake: "text-orange-400",
-  blunder: "text-red-400",
-};
-
-const QUALITY_BG: Record<MoveQuality, string> = {
-  best: "bg-emerald-500/[0.08] border-emerald-500/20",
-  excellent: "bg-cyan-500/[0.08] border-cyan-500/20",
-  good: "bg-green-500/[0.08] border-green-500/20",
-  inaccuracy: "bg-amber-500/[0.08] border-amber-500/20",
-  mistake: "bg-orange-500/[0.08] border-orange-500/20",
-  blunder: "bg-red-500/[0.08] border-red-500/20",
-};
-
-const QUALITY_LABEL: Record<MoveQuality, string> = {
-  best: "Best",
-  excellent: "Excellent",
-  good: "Good",
-  inaccuracy: "Inaccuracy",
-  mistake: "Mistake",
-  blunder: "Blunder",
-};
-
-const QUALITY_BG_SOLID: Record<MoveQuality, string> = {
-  best: "rgba(16,185,129,0.90)",
-  excellent: "rgba(6,182,212,0.90)",
-  good: "rgba(34,197,94,0.90)",
-  inaccuracy: "rgba(245,158,11,0.90)",
-  mistake: "rgba(249,115,22,0.90)",
-  blunder: "rgba(239,68,68,0.90)",
-};
 
 /** Themes that are genuinely instructive for the player (excludes metadata like phase, check, etc.) */
 const COACHING_THEMES = new Set([
@@ -296,11 +329,18 @@ function computeSessionMotifs(
 /*  Main component                                                       */
 /* ------------------------------------------------------------------ */
 
-export default function OpeningSparring() {
+export default function OpeningSparring({
+  initialMode = "sparring",
+}: {
+  initialMode?: Mode;
+} = {}) {
   // ----- setup state -----
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [userColor, setUserColor] = useState<Color>("white");
   const [targetRating, setTargetRating] = useState(1500);
+  const [peekBudget, setPeekBudget] = useState<number | null>(null);
   const [phase, setPhase] = useState<Phase>("setup");
+  const assistMode = mode === "assist";
 
   // ----- game state -----
   const chessRef = useRef(new Chess());
@@ -320,15 +360,37 @@ export default function OpeningSparring() {
     to: string;
   } | null>(null);
 
-  /** Quality badge for the piece on the last user move's destination square */
+  // ----- engine-assist state -----
+  const [assistOpen, setAssistOpen] = useState(false);
+  /**
+   * Engine lines are stored WITH the FEN they were computed for — a line list
+   * is only ever rendered against its own position (a PV from another position
+   * is illegal on the board and would throw).
+   */
+  const [assistLines, setAssistLines] = useState<{
+    fen: string;
+    lines: LocalEngineLine[];
+  } | null>(null);
+  const [assistLoading, setAssistLoading] = useState(false);
+  const [previewUci, setPreviewUci] = useState<string | null>(null);
+  const [peeksUsed, setPeeksUsed] = useState(0);
+  /** Pre-analysed lines per FEN — powers instant peeks + unaided move ranking */
+  const linesCacheRef = useRef(new Map<string, LocalEngineLine[]>());
+  /** Set while the engine panel has been open at any point during this turn */
+  const assistedThisTurnRef = useRef(false);
+
+  /** Lines that belong to the position currently on the board */
+  const currentLines = assistLines?.fen === fen ? assistLines.lines : null;
+
+  /** Classification for the piece badge on the last user move's destination */
   const [pieceBadge, setPieceBadge] = useState<{
     square: string;
-    quality: MoveQuality;
+    quality: MoveClassification;
   } | null>(null);
 
   /** Coaching insight for the most recent user move */
   const [lastMoveInsight, setLastMoveInsight] = useState<{
-    quality: MoveQuality;
+    quality: MoveClassification | null;
     cpLoss: number;
     headline: string;
     coaching: string;
@@ -340,7 +402,35 @@ export default function OpeningSparring() {
   const boardTheme = useBoardTheme();
   const showCoords = useShowCoordinates();
   const customPieces = useCustomPieces();
-  const { ref: containerRef, size: boardSize } = useBoardSize(460);
+
+  /* ------------------------------------------------------------------ */
+  /*  Responsive board sizing — measures the flexible stage, not the     */
+  /*  fixed-px board div (circular measurement leaves it stuck).         */
+  /* ------------------------------------------------------------------ */
+
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [boardSize, setBoardSize] = useState(480);
+
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const update = () => {
+      const vw = window.innerWidth;
+      const vh = window.visualViewport?.height ?? window.innerHeight;
+      const avail = el.clientWidth - 36; // eval bar 24 + gap 12
+      // reserve navbar + page header + player rows + paddings
+      const byHeight = vh - (vw >= 1024 ? 300 : 330);
+      setBoardSize(Math.max(280, Math.min(avail, byHeight)));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, [phase, mode]);
 
   /* ------------------------------------------------------------------ */
   /*  Fetch & play opponent move                                           */
@@ -538,6 +628,87 @@ export default function OpeningSparring() {
   );
 
   /* ------------------------------------------------------------------ */
+  /*  Engine assist                                                       */
+  /* ------------------------------------------------------------------ */
+
+  const isUserTurn =
+    (phase === "playing" || phase === "stockfish") &&
+    chessRef.current.turn() === (userColor === "white" ? "w" : "b") &&
+    !isOpponentThinking &&
+    !chessRef.current.isGameOver();
+
+  const peeksLeft =
+    peekBudget === null ? null : Math.max(0, peekBudget - peeksUsed);
+  const canPeek = peeksLeft === null || peeksLeft > 0;
+
+  /**
+   * Pre-analyse the user's position the moment the turn lands, so a peek is
+   * instant (like a second monitor) and every move — peeked or not — can be
+   * ranked against the engine's top lines afterwards.
+   */
+  useEffect(() => {
+    if (!assistMode) return;
+    if (phase !== "playing" && phase !== "stockfish") return;
+    if (!isUserTurn) return;
+    const currentFen = fen;
+    const cached = linesCacheRef.current.get(currentFen);
+    if (cached) {
+      setAssistLines({ fen: currentFen, lines: cached });
+      return;
+    }
+    let cancelled = false;
+    setAssistLoading(true);
+    stockfishPool
+      .getTopMoves(currentFen, ASSIST_LINES, ASSIST_DEPTH)
+      .then((lines) => {
+        // Cache even if the turn already moved on — the analysis is still valid
+        // for this FEN and the next visit should be instant.
+        linesCacheRef.current.set(currentFen, lines);
+        if (cancelled) return;
+        setAssistLines({ fen: currentFen, lines });
+      })
+      .catch(() => {
+        /* degrade quietly — the panel shows "no lines" */
+      })
+      .finally(() => {
+        if (!cancelled) setAssistLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [assistMode, fen, isUserTurn, phase]);
+
+  /** A turn that begins with the panel still open counts as assisted. */
+  useEffect(() => {
+    if (!assistMode) return;
+    if (isUserTurn && assistOpen) assistedThisTurnRef.current = true;
+  }, [assistMode, isUserTurn, assistOpen, fen]);
+
+  /** Default the board arrow to the engine's first choice once lines land. */
+  useEffect(() => {
+    if (!assistOpen || previewUci) return;
+    const first = currentLines?.[0]?.bestMove;
+    if (first) setPreviewUci(first);
+  }, [assistOpen, currentLines, previewUci]);
+
+  const handleAssistToggle = useCallback(() => {
+    if (assistOpen) {
+      setAssistOpen(false);
+      setPreviewUci(null);
+      return;
+    }
+    if (!canPeek) return;
+    setAssistOpen(true);
+    setPreviewUci(currentLines?.[0]?.bestMove ?? null);
+    setPeeksUsed((n) => n + 1);
+    assistedThisTurnRef.current = true;
+  }, [assistOpen, canPeek, currentLines]);
+
+  const handleSelectLine = useCallback((uci: string) => {
+    setPreviewUci((prev) => (prev === uci ? null : uci));
+  }, []);
+
+  /* ------------------------------------------------------------------ */
   /*  Handle user move                                                    */
   /* ------------------------------------------------------------------ */
 
@@ -549,6 +720,9 @@ export default function OpeningSparring() {
 
       // Clear previous move badge when starting a new move
       setPieceBadge(null);
+
+      /** Read BEFORE the reset below — decides assisted vs solo for this move */
+      const assistedTurn = assistedThisTurnRef.current;
 
       // Capture FEN before the move for eval comparison
       const prevFen = chess.fen();
@@ -570,6 +744,11 @@ export default function OpeningSparring() {
       const newFen = chess.fen();
       setFen(newFen);
       setLastMove({ from: move.from, to: move.to });
+      // The peek was for THIS turn only — close the panel before any await, so
+      // the UI never shows the previous position's lines next to a new board.
+      assistedThisTurnRef.current = false;
+      setAssistOpen(false);
+      setPreviewUci(null);
       playSound(move.captured ? "capture" : "move");
       if (chess.inCheck()) playSound("check");
 
@@ -578,6 +757,21 @@ export default function OpeningSparring() {
       let evalBefore: number | undefined;
       let evalAfter: number | undefined;
       let bestMoveUci: string | null = null;
+      let quality: MoveClassification | null = null;
+
+      // Assist bookkeeping — was the engine panel used this turn, and where
+      // does the played move rank in the pre-move top lines?
+      const preLines = linesCacheRef.current.get(prevFen) ?? null;
+      const rankedAt = preLines
+        ? preLines.findIndex((l) => l.bestMove === uci)
+        : -1;
+      const engineTop: number | null | undefined = preLines
+        ? rankedAt >= 0
+          ? rankedAt + 1
+          : null
+        : undefined;
+      const assisted = assistedTurn;
+      const moveIndex = moveHistory.length;
 
       try {
         const [beforeResult, afterResult] = await Promise.all([
@@ -592,6 +786,16 @@ export default function OpeningSparring() {
           // Negate evalAfter because after the move it's opponent's turn — cp flips perspective
           cpLoss = Math.max(0, evalBefore - -evalAfter);
 
+          quality = classifyRecord({
+            cpLoss,
+            isBestMove: !!bestMoveUci && bestMoveUci === uci,
+            evalBeforeMover: evalBefore,
+            evalAfterMover: -evalAfter,
+            fenBefore: prevFen,
+            moveUci: uci,
+            moveIndex,
+          });
+
           // Synchronous coaching insight (pure chess.js — no extra Stockfish calls)
           try {
             const insight = explainMoves(
@@ -602,7 +806,6 @@ export default function OpeningSparring() {
               evalBefore,
               evalAfter,
             );
-            const quality = classifyByCpLoss(cpLoss);
             const coachingThemes = insight.played.themes.filter((t) =>
               COACHING_THEMES.has(t),
             );
@@ -634,7 +837,7 @@ export default function OpeningSparring() {
             /* not critical */
           }
           // Set quality badge regardless of whether coaching insight succeeded
-          setPieceBadge({ square: move.to, quality: classifyByCpLoss(cpLoss) });
+          if (quality) setPieceBadge({ square: move.to, quality });
         }
       } catch {
         // Not critical
@@ -657,6 +860,9 @@ export default function OpeningSparring() {
           evalBefore,
           evalAfter,
           bestMoveUci,
+          quality: quality ?? undefined,
+          assisted,
+          engineTop,
         },
       ]);
 
@@ -774,6 +980,12 @@ export default function OpeningSparring() {
     setLegalMoves([]);
     setLastMoveInsight(null);
     setPieceBadge(null);
+    setAssistOpen(false);
+    setAssistLines(null);
+    setPreviewUci(null);
+    setPeeksUsed(0);
+    linesCacheRef.current.clear();
+    assistedThisTurnRef.current = false;
     setStatusMessage("Game started — your move!");
     setPhase("playing");
 
@@ -829,13 +1041,27 @@ export default function OpeningSparring() {
   }
 
   /* ------------------------------------------------------------------ */
-  /*  Eval bar value (white-relative)                                    */
+  /*  Eval bar value (white-relative) & assist arrow                     */
   /* ------------------------------------------------------------------ */
 
   // evalCp is already stored as white-relative (evalPosition() converts it)
   const evalBarCp = evalCp ?? 0;
 
-  // Chess.com-style round badge on the destination square via customSquareRenderer
+  /** Arrow for the assist line the user selected (defaults to the top line) */
+  const assistArrows = useMemo(() => {
+    if (
+      !assistMode ||
+      !assistOpen ||
+      !previewUci ||
+      previewUci.length < 4 ||
+      !currentLines
+    ) {
+      return [] as string[][];
+    }
+    return [[previewUci.slice(0, 2), previewUci.slice(2, 4), "rgba(255, 140, 66, 0.75)"]];
+  }, [assistMode, assistOpen, previewUci, currentLines]);
+
+  // Round badge on the piece that just moved, via customSquareRenderer
   const customSquareRenderer = useMemo(() => {
     return ((props: any) => {
       const sq = props?.square as string | undefined;
@@ -844,13 +1070,7 @@ export default function OpeningSparring() {
         <div style={props?.style} className="relative h-full w-full">
           {props?.children}
           {showBadge && pieceBadge && (
-            <span
-              className="pointer-events-none absolute -right-0.5 -top-0.5 z-[40] flex h-5 w-5 items-center justify-center rounded-full text-[11px] shadow-lg"
-              style={{ backgroundColor: QUALITY_BG_SOLID[pieceBadge.quality] }}
-              title={QUALITY_LABEL[pieceBadge.quality]}
-            >
-              {QUALITY_EMOJI[pieceBadge.quality]}
-            </span>
+            <MoveBadge classification={pieceBadge.quality} variant="corner" />
           )}
         </div>
       );
@@ -862,37 +1082,175 @@ export default function OpeningSparring() {
   /* ------------------------------------------------------------------ */
 
   const userMoves = moveHistory.filter((m) => m.byUser);
+  const evaledUserMoves = userMoves.filter((m) => m.cpLoss !== undefined);
   const avgCpLoss =
-    userMoves.length > 0 && userMoves.some((m) => m.cpLoss !== undefined)
+    evaledUserMoves.length > 0
       ? Math.round(
-          userMoves.reduce((s, m) => s + (m.cpLoss ?? 0), 0) /
-            userMoves.filter((m) => m.cpLoss !== undefined).length,
+          evaledUserMoves.reduce((s, m) => s + (m.cpLoss ?? 0), 0) /
+            evaledUserMoves.length,
         )
       : null;
+
+  const avgOf = (moves: MoveRecord[]): number | null => {
+    const evaled = moves.filter((m) => m.cpLoss !== undefined);
+    if (evaled.length === 0) return null;
+    return Math.round(
+      evaled.reduce((s, m) => s + (m.cpLoss ?? 0), 0) / evaled.length,
+    );
+  };
+
+  /**
+   * Assisted vs solo split — the point of the mode. Only moves where the
+   * engine's top lines for that position were known count towards "matched",
+   * so the rate never pretends to know something it doesn't.
+   */
+  const assistSummary = (() => {
+    const assisted = evaledUserMoves.filter((m) => m.assisted);
+    const solo = evaledUserMoves.filter((m) => !m.assisted);
+    const hits = (moves: MoveRecord[]) => {
+      const known = moves.filter((m) => m.engineTop !== undefined);
+      return {
+        known: known.length,
+        top1: known.filter((m) => m.engineTop === 1).length,
+        top3: known.filter((m) => m.engineTop !== null && m.engineTop !== undefined)
+          .length,
+      };
+    };
+    const ignored = assisted.filter((m) => (m.cpLoss ?? 0) >= IGNORED_ENGINE_CP);
+    const assistedAvg = avgOf(assisted);
+    const soloAvg = avgOf(solo);
+    const assistedEnough = assisted.length >= MIN_SAMPLE_MOVES;
+    const soloEnough = solo.length >= MIN_SAMPLE_MOVES;
+    const assistedRating = assistedEnough
+      ? estimateStrengthFromCpLoss(assistedAvg)
+      : null;
+    const soloRating = soloEnough ? estimateStrengthFromCpLoss(soloAvg) : null;
+    return {
+      assistedCount: assisted.length,
+      soloCount: solo.length,
+      assistedAvg,
+      soloAvg,
+      assistedRating,
+      soloRating,
+      assistedEnough,
+      soloEnough,
+      delta:
+        assistedRating !== null && soloRating !== null
+          ? assistedRating - soloRating
+          : null,
+      assistedHits: hits(assisted),
+      soloHits: hits(solo),
+      ignoredCount: ignored.length,
+      ignoredLoss: ignored.reduce((s, m) => s + (m.cpLoss ?? 0), 0),
+    };
+  })();
+
+  const MOVE_QUALITY_ORDER: MoveClassification[] = [
+    "brilliant",
+    "best",
+    "book",
+    "good",
+    "inaccuracy",
+    "mistake",
+    "blunder",
+  ];
+
+  const moveQualityCounts = (() => {
+    const counts = new Map<MoveClassification, number>();
+    for (const m of evaledUserMoves) {
+      if (!m.quality) continue;
+      counts.set(m.quality, (counts.get(m.quality) ?? 0) + 1);
+    }
+    return counts;
+  })();
+
+  const sessionMotifs = phase === "gameover" ? computeSessionMotifs(moveHistory) : [];
 
   /* ------------------------------------------------------------------ */
   /*  Render: Setup                                                      */
   /* ------------------------------------------------------------------ */
 
   if (phase === "setup") {
+    const modes: Array<{ value: Mode; title: string; blurb: string }> = [
+      {
+        value: "sparring",
+        title: "Opening Sparring",
+        blurb:
+          "Play it yourself against real Lichess book moves at your rating, then Stockfish when the book runs out.",
+      },
+      {
+        value: "assist",
+        title: "Engine Assist",
+        blurb:
+          "The same opponent — but you may look at the engine's reply to every move. Assisted and solo moves are logged separately.",
+      },
+    ];
+
     return (
-      <div className="flex flex-col items-center gap-8 py-10 px-4">
-        <div className="text-center max-w-lg">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Opening Sparring
+      <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:py-12">
+        <div className="mb-6 text-center">
+          <div className="mb-2 flex items-center justify-center gap-2">
+            <span className="h-3.5 w-1 rounded-full bg-gradient-to-b from-[#ff5a1f] to-[#ff8c42] shadow-[0_0_12px_rgba(255,90,31,0.35)]" />
+            <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-[#ff8c42]">
+              {assistMode ? "Engine Assist" : "Sparring"}
+            </span>
+          </div>
+          <h1 className="text-[1.65rem] tracking-[-0.02em] text-[#f0edf2] sm:text-3xl">
+            {assistMode ? "See what the engine sees" : "Opening Sparring"}
           </h1>
-          <p className="text-zinc-400 text-sm">
-            Play against real moves from millions of Lichess games. The opponent
-            picks moves weighted by how often they&apos;re played at your target
-            rating, filtered to avoid outright blunders. When the opening book
-            runs out, you can continue against Stockfish at equivalent strength.
+          <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-[#8d8696]">
+            {assistMode ? (
+              <>
+                Everyone has wondered what the engine would play here. Find out —
+                and then find out what your chess looks like when you stop asking.
+                Your moves are split into assisted and solo in the summary.
+              </>
+            ) : (
+              <>
+                Play against real moves from millions of Lichess games, weighted by
+                how often they&apos;re played at your target rating and
+                blunder-filtered. When the opening book runs out, you can continue
+                against Stockfish at equivalent strength.
+              </>
+            )}
           </p>
         </div>
 
-        <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-sm flex flex-col gap-6">
+        <div className="flex flex-col gap-6 rounded-2xl border border-[#1e1a24] bg-[#121015]/70 p-6 backdrop-blur-xl [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)] sm:p-8">
+          {/* Mode */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-[#f0edf2]">
+              Mode
+            </label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {modes.map((m) => (
+                <button
+                  key={m.value}
+                  onClick={() => setMode(m.value)}
+                  className={`rounded-xl border p-4 text-left transition-all ${
+                    mode === m.value
+                      ? "border-[#ff5a1f]/40 bg-[#ff5a1f]/[0.08] shadow-[0_0_20px_rgba(255,90,31,0.12)]"
+                      : "border-[#1e1a24] bg-white/[0.02] hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.05]"
+                  }`}
+                >
+                  <div
+                    className={`text-sm font-semibold ${
+                      mode === m.value ? "text-[#ff8c42]" : "text-[#f0edf2]"
+                    }`}
+                  >
+                    {m.title}
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-[#8d8696]">
+                    {m.blurb}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Color */}
           <div>
-            <label className="text-zinc-300 text-sm font-medium mb-2 block">
+            <label className="mb-2 block text-sm font-medium text-[#f0edf2]">
               Play as
             </label>
             <div className="flex gap-3">
@@ -900,10 +1258,10 @@ export default function OpeningSparring() {
                 <button
                   key={c}
                   onClick={() => setUserColor(c)}
-                  className={`flex-1 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
+                  className={`flex-1 rounded-xl border py-2.5 text-sm font-medium transition-all ${
                     userColor === c
-                      ? "border-blue-500 bg-blue-500/20 text-blue-300"
-                      : "border-zinc-600 bg-zinc-800 text-zinc-400 hover:border-zinc-500"
+                      ? "border-[#ff5a1f]/40 bg-[#ff5a1f]/[0.08] text-[#ff8c42]"
+                      : "border-[#1e1a24] bg-white/[0.02] text-[#8d8696] hover:border-[#ff5a1f]/25 hover:text-[#f0edf2]"
                   }`}
                 >
                   {c === "white" ? "♙ White" : "♟ Black"}
@@ -914,9 +1272,9 @@ export default function OpeningSparring() {
 
           {/* Rating */}
           <div>
-            <label className="text-zinc-300 text-sm font-medium mb-1 block">
+            <label className="mb-1 block text-sm font-medium text-[#f0edf2]">
               Opponent rating:{" "}
-              <span className="text-white font-bold">{targetRating}</span>
+              <span className="font-bold text-[#ff8c42]">{targetRating}</span>
             </label>
             <input
               type="range"
@@ -925,26 +1283,54 @@ export default function OpeningSparring() {
               step={50}
               value={targetRating}
               onChange={(e) => setTargetRating(Number(e.target.value))}
-              className="w-full accent-blue-500"
+              className="w-full accent-[#ff5a1f]"
             />
-            <div className="flex justify-between text-xs text-zinc-500 mt-1">
+            <div className="mt-1 flex justify-between text-xs text-[#565061]">
               <span>600</span>
               <span>1200</span>
               <span>1600</span>
               <span>2000</span>
               <span>2800</span>
             </div>
-            <p className="text-zinc-500 text-xs mt-2">
-              Book phase uses Lichess games near this rating. Stockfish phase
-              uses depth {ratingToDepth(targetRating)}.
+            <p className="mt-2 text-xs text-[#565061]">
+              Book phase samples Lichess games near this rating. Stockfish phase
+              runs at depth {ratingToDepth(targetRating)}.
             </p>
           </div>
 
+          {/* Assist options */}
+          {assistMode && (
+            <div>
+              <label className="mb-2 block text-sm font-medium text-[#f0edf2]">
+                Peeks per game
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {PEEK_BUDGETS.map((b) => (
+                  <button
+                    key={b.label}
+                    onClick={() => setPeekBudget(b.value)}
+                    className={`rounded-full border px-4 py-1.5 text-xs font-medium transition-all ${
+                      peekBudget === b.value
+                        ? "border-[#ff5a1f]/40 bg-[#ff5a1f]/[0.08] text-[#ff8c42]"
+                        : "border-[#1e1a24] bg-white/[0.02] text-[#8d8696] hover:border-[#ff5a1f]/25 hover:text-[#f0edf2]"
+                    }`}
+                  >
+                    {b.label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-[#565061]">
+                Unlimited is the full experience. A budget turns peeking into a
+                decision — you have to know when you actually need it.
+              </p>
+            </div>
+          )}
+
           <button
             onClick={startGame}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-colors"
+            className="w-full rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] py-3 font-semibold text-[#070608] shadow-[0_0_24px_rgba(255,90,31,0.25)] transition-all hover:brightness-110"
           >
-            Start Sparring
+            {assistMode ? "Start Engine Assist" : "Start Sparring"}
           </button>
         </div>
       </div>
@@ -957,27 +1343,24 @@ export default function OpeningSparring() {
 
   if (phase === "out-of-book-prompt") {
     return (
-      <div className="flex flex-col items-center justify-center gap-6 py-16 px-4 text-center">
+      <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-6 px-4 py-16 text-center">
         <div className="text-4xl">📖</div>
-        <h2 className="text-2xl font-bold text-white">
-          Opening book exhausted
-        </h2>
-        <p className="text-zinc-400 max-w-sm text-sm">
+        <h2 className="text-2xl text-[#f0edf2]">Opening book exhausted</h2>
+        <p className="max-w-sm text-sm leading-relaxed text-[#8d8696]">
           After {bookMoveCount} book moves, this position has too few Lichess
           games at the {targetRating} level to sample reliably. Continue with
-          Stockfish at equivalent strength (depth {ratingToDepth(targetRating)}
-          )?
+          Stockfish at equivalent strength (depth {ratingToDepth(targetRating)})?
         </p>
         <div className="flex gap-3">
           <button
             onClick={continueWithStockfish}
-            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-colors"
+            className="rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-6 py-2.5 font-semibold text-[#070608] shadow-[0_0_20px_rgba(255,90,31,0.22)] transition-all hover:brightness-110"
           >
             Continue with Stockfish
           </button>
           <button
             onClick={() => setPhase("gameover")}
-            className="px-6 py-2.5 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 font-semibold rounded-xl transition-colors"
+            className="rounded-xl border border-[#1e1a24] bg-white/[0.03] px-6 py-2.5 font-semibold text-[#8d8696] transition-colors hover:border-[#ff5a1f]/25 hover:text-[#f0edf2]"
           >
             End Session
           </button>
@@ -996,150 +1379,241 @@ export default function OpeningSparring() {
     if (chess.isCheckmate()) {
       result =
         chess.turn() === (userColor === "white" ? "w" : "b")
-          ? "You lost on time / checkmate"
-          : "You won by checkmate!";
+          ? "Checkmate — you lost"
+          : "Checkmate — you won";
     } else if (chess.isDraw()) {
       result = "Draw";
     }
 
     return (
-      <div className="flex flex-col items-center gap-6 py-10 px-4">
-        <h2 className="text-2xl font-bold text-white">{result}</h2>
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-8">
+        <h2 className="text-2xl tracking-[-0.02em] text-[#f0edf2]">{result}</h2>
 
-        <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-5 w-full max-w-md">
-          <h3 className="text-zinc-300 font-semibold mb-3">Session Summary</h3>
-          <div className="grid grid-cols-3 gap-3 mb-4">
-            <div className="bg-zinc-800 rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-white">
-                {moveHistory.length}
-              </div>
-              <div className="text-xs text-zinc-500 mt-1">Total moves</div>
+        {/* Headline stats */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { value: String(moveHistory.length), label: "Total moves", tone: "text-[#f0edf2]" },
+            { value: String(bookMoveCount), label: "Book moves", tone: "text-[#f0edf2]" },
+            {
+              value: avgCpLoss !== null ? fmtCp(avgCpLoss) : "—",
+              label: "Avg loss / move",
+              tone: "text-[#ff8c42]",
+            },
+          ].map((s) => (
+            <div
+              key={s.label}
+              className="rounded-xl border border-[#1e1a24] bg-[#121015]/70 p-3 text-center backdrop-blur-xl [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)]"
+            >
+              <div className={`text-2xl font-bold ${s.tone}`}>{s.value}</div>
+              <div className="mt-1 text-xs text-[#565061]">{s.label}</div>
             </div>
-            <div className="bg-zinc-800 rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-blue-400">
-                {bookMoveCount}
-              </div>
-              <div className="text-xs text-zinc-500 mt-1">Book moves</div>
+          ))}
+        </div>
+
+        {/* Assist split — the point of the mode */}
+        {assistMode && (
+          <div className="rounded-2xl border border-[#1e1a24] bg-[#121015]/70 p-6 backdrop-blur-xl [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)]">
+            <div className="mb-1 flex items-center gap-2">
+              <span className="h-3.5 w-1 rounded-full bg-gradient-to-b from-[#ff5a1f] to-[#ff8c42] shadow-[0_0_12px_rgba(255,90,31,0.35)]" />
+              <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-[#ff8c42]">
+                What the engine was worth
+              </span>
             </div>
-            <div className="bg-zinc-800 rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-amber-400">
-                {avgCpLoss !== null ? fmtCp(avgCpLoss) : "—"}
+            <p className="mb-5 max-w-xl text-sm leading-relaxed text-[#8d8696]">
+              {assistSummary.assistedCount === 0
+                ? "You never opened the engine panel — this game was entirely your own chess."
+                : assistSummary.soloCount === 0
+                  ? "Every move you made this game was made with the engine open. Play one without peeking to see the difference."
+                  : `Across ${assistSummary.assistedCount + assistSummary.soloCount} analysed moves, here is what changed when you looked.`}
+            </p>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] p-4">
+                <div className="text-xs uppercase tracking-[0.14em] text-[#ff8c42]">
+                  Assisted
+                </div>
+                <div className="mt-2 text-2xl font-bold text-[#f0edf2]">
+                  {assistSummary.assistedRating !== null
+                    ? `~${assistSummary.assistedRating}`
+                    : "—"}
+                </div>
+                <div className="mt-1 text-xs text-[#8d8696]">
+                  {assistSummary.assistedCount} move
+                  {assistSummary.assistedCount === 1 ? "" : "s"}
+                  {assistSummary.assistedAvg !== null &&
+                    ` · ${fmtCp(assistSummary.assistedAvg)} loss/move`}
+                </div>
+                {!assistSummary.assistedEnough && (
+                  <div className="mt-1 text-[11px] text-[#565061]">
+                    {MIN_SAMPLE_MOVES - assistSummary.assistedCount} more assisted
+                    move{MIN_SAMPLE_MOVES - assistSummary.assistedCount === 1 ? "" : "s"}{" "}
+                    needed for an estimate
+                  </div>
+                )}
+                {assistSummary.assistedHits.known > 0 && (
+                  <div className="mt-2 text-xs text-[#565061]">
+                    matched the top line {assistSummary.assistedHits.top1}/
+                    {assistSummary.assistedHits.known}
+                  </div>
+                )}
               </div>
-              <div className="text-xs text-zinc-500 mt-1">Avg loss</div>
+
+              <div className="rounded-xl border border-[#1e1a24] bg-white/[0.02] p-4">
+                <div className="text-xs uppercase tracking-[0.14em] text-[#8d8696]">
+                  Solo
+                </div>
+                <div className="mt-2 text-2xl font-bold text-[#f0edf2]">
+                  {assistSummary.soloRating !== null
+                    ? `~${assistSummary.soloRating}`
+                    : "—"}
+                </div>
+                <div className="mt-1 text-xs text-[#8d8696]">
+                  {assistSummary.soloCount} move
+                  {assistSummary.soloCount === 1 ? "" : "s"}
+                  {assistSummary.soloAvg !== null &&
+                    ` · ${fmtCp(assistSummary.soloAvg)} loss/move`}
+                </div>
+                {!assistSummary.soloEnough && (
+                  <div className="mt-1 text-[11px] text-[#565061]">
+                    {MIN_SAMPLE_MOVES - assistSummary.soloCount} more solo move
+                    {MIN_SAMPLE_MOVES - assistSummary.soloCount === 1 ? "" : "s"}{" "}
+                    needed for an estimate
+                  </div>
+                )}
+                {assistSummary.soloHits.known > 0 && (
+                  <div className="mt-2 text-xs text-[#565061]">
+                    matched the top line {assistSummary.soloHits.top1}/
+                    {assistSummary.soloHits.known} on your own
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {assistSummary.delta === null ? (
+              assistSummary.assistedCount > 0 &&
+              assistSummary.soloCount > 0 && (
+                <div className="mt-4 rounded-xl border border-[#1e1a24] bg-white/[0.02] p-4 text-sm text-[#8d8696]">
+                  Keep going — the comparison needs {MIN_SAMPLE_MOVES}+ assisted and{" "}
+                  {MIN_SAMPLE_MOVES}+ solo moves before it means anything.
+                </div>
+              )
+            ) : assistSummary.delta !== 0 ? (
+              <div className="mt-4 rounded-xl border border-[#1e1a24] bg-white/[0.02] p-4 text-sm text-[#f0edf2]">
+                The engine was worth{" "}
+                <span className="font-bold text-[#ff8c42]">
+                  {assistSummary.delta > 0 ? "+" : ""}
+                  {assistSummary.delta}
+                </span>{" "}
+                rating in this game.
+                <span className="mt-1 block text-xs text-[#565061]">
+                  Single-game estimate from average loss per move — a rough band,
+                  not a rating. The gap between the two numbers is the signal.
+                </span>
+              </div>
+            ) : null}
+
+            {assistSummary.ignoredCount > 0 && (
+              <div className="mt-3 rounded-xl border border-[#1e1a24] bg-white/[0.02] p-4 text-sm text-[#8d8696]">
+                You saw the engine&apos;s move and played something else{" "}
+                <span className="font-semibold text-[#f0edf2]">
+                  {assistSummary.ignoredCount}×
+                </span>{" "}
+                — {fmtCp(assistSummary.ignoredLoss)} pawns of eval.
+              </div>
+            )}
+
+            {peeksUsed > 0 && (
+              <div className="mt-3 text-xs text-[#565061]">
+                {peeksUsed} peek{peeksUsed === 1 ? "" : "s"} used
+                {peekBudget !== null && ` of ${peekBudget}`}.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Move quality */}
+        {moveQualityCounts.size > 0 && (
+          <div className="rounded-2xl border border-[#1e1a24] bg-[#121015]/70 p-5 backdrop-blur-xl [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)]">
+            <div className="mb-3 text-xs uppercase tracking-[0.14em] text-[#565061]">
+              Move quality
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {MOVE_QUALITY_ORDER.filter((k) => (moveQualityCounts.get(k) ?? 0) > 0).map(
+                (k) => (
+                  <span key={k} className="flex items-center gap-1.5">
+                    <MoveBadge classification={k} />
+                    <span className="text-sm font-semibold text-[#f0edf2]">
+                      {moveQualityCounts.get(k)}
+                    </span>
+                  </span>
+                ),
+              )}
             </div>
           </div>
+        )}
 
-          {/* Move quality distribution */}
-          {(() => {
-            const counts = {
-              best: 0,
-              excellent: 0,
-              good: 0,
-              inaccuracy: 0,
-              mistake: 0,
-              blunder: 0,
-            } as Record<MoveQuality, number>;
-            const evaled = userMoves.filter((m) => m.cpLoss !== undefined);
-            for (const m of evaled) counts[classifyByCpLoss(m.cpLoss!)]++;
-            if (evaled.length === 0) return null;
-            const entries = (
-              [
-                "best",
-                "excellent",
-                "good",
-                "inaccuracy",
-                "mistake",
-                "blunder",
-              ] as MoveQuality[]
-            ).filter((k) => counts[k] > 0);
-            return (
-              <div className="mt-3">
-                <div className="text-xs text-zinc-500 mb-2">Move quality</div>
-                <div className="flex gap-1">
-                  {entries.map((k) => (
-                    <div
-                      key={k}
-                      className={`flex-1 rounded-lg px-1 py-2 text-center border ${QUALITY_BG[k]}`}
-                    >
-                      <div
-                        className={`text-base font-bold leading-none ${QUALITY_COLOR[k]}`}
-                      >
-                        {counts[k]}
-                      </div>
-                      <div className="text-zinc-500 text-[9px] mt-1 leading-none truncate">
-                        {QUALITY_LABEL[k]}
-                      </div>
-                    </div>
-                  ))}
+        {/* Motifs */}
+        {sessionMotifs.length > 0 && (
+          <div className="rounded-2xl border border-[#1e1a24] bg-[#121015]/70 p-5 backdrop-blur-xl [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)]">
+            <div className="mb-3 text-xs text-[#8d8696]">
+              Recurring patterns in your play
+            </div>
+            <div className="flex flex-col gap-1.5">
+              {sessionMotifs.map((m) => (
+                <div
+                  key={m.name}
+                  className="flex items-center gap-2 rounded-lg bg-white/[0.03] px-3 py-2"
+                >
+                  <span className="text-base">
+                    {COACHING_THEME_ICONS[m.name] ?? "🔍"}
+                  </span>
+                  <span className="flex-1 text-sm text-[#f0edf2]">{m.name}</span>
+                  <span className="text-xs text-[#565061]">{m.count}×</span>
+                  <span className="ml-1 text-xs text-[#ff8c42]">
+                    &minus;{fmtCp(m.avgCpLoss)}
+                  </span>
                 </div>
-              </div>
-            );
-          })()}
+              ))}
+            </div>
+          </div>
+        )}
 
-          {/* Positional motifs detected during the session */}
-          {(() => {
-            const motifs = computeSessionMotifs(moveHistory);
-            if (motifs.length === 0) return null;
-            return (
-              <div className="mt-4">
-                <div className="text-xs text-zinc-400 font-medium mb-2">
-                  Recurring patterns in your play
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  {motifs.map((m) => (
-                    <div
-                      key={m.name}
-                      className="flex items-center gap-2 bg-zinc-800/60 rounded-lg px-3 py-2"
-                    >
-                      <span className="text-base">
-                        {COACHING_THEME_ICONS[m.name] ?? "🔍"}
-                      </span>
-                      <span className="text-sm text-zinc-300 flex-1">
-                        {m.name}
-                      </span>
-                      <span className="text-xs text-zinc-500">{m.count}×</span>
-                      <span className="text-xs text-orange-400 ml-1">
-                        &minus;{fmtCp(m.avgCpLoss)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Move list */}
-          <div className="max-h-48 overflow-y-auto space-y-1">
+        {/* Move list */}
+        <div className="max-h-80 overflow-y-auto rounded-2xl border border-[#1e1a24] bg-[#121015]/70 p-4 backdrop-blur-xl [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)]">
+          <div className="flex flex-col gap-1">
             {moveHistory.map((m, i) => {
               const moveNum = Math.floor(i / 2) + 1;
               const isWhiteMove = i % 2 === 0;
-              const quality =
-                m.cpLoss !== undefined ? classifyByCpLoss(m.cpLoss) : null;
               return (
-                <div
-                  key={i}
-                  className="flex items-center gap-2 px-2 py-1 rounded text-sm"
-                >
+                <div key={i} className="flex items-center gap-2 rounded px-2 py-1 text-sm">
                   {isWhiteMove && (
-                    <span className="text-zinc-500 w-6 text-right shrink-0">
+                    <span className="w-6 shrink-0 text-right text-[#565061]">
                       {moveNum}.
                     </span>
                   )}
                   <span
-                    className={`font-mono ${m.byUser ? "text-white" : "text-zinc-400"}`}
+                    className={`font-mono ${m.byUser ? "text-[#f0edf2]" : "text-[#8d8696]"}`}
                   >
                     {m.san}
                   </span>
-                  {m.byUser && quality && (
+                  {m.byUser && m.assisted && (
                     <span
-                      className={`text-xs ml-auto ${QUALITY_COLOR[quality]}`}
+                      className="rounded-full bg-[#ff5a1f]/[0.12] px-2 py-0.5 text-[10px] text-[#ff8c42]"
+                      title="This move was made with the engine panel open"
                     >
-                      {QUALITY_EMOJI[quality]} {QUALITY_LABEL[quality]}
-                      {m.cpLoss !== undefined && ` −${fmtCp(m.cpLoss)}`}
+                      assisted
+                    </span>
+                  )}
+                  {m.byUser && m.quality && (
+                    <span className="ml-auto flex items-center gap-2">
+                      <span className="text-xs text-[#565061]">
+                        {m.cpLoss !== undefined && `−${fmtCp(m.cpLoss)}`}
+                      </span>
+                      <MoveBadge classification={m.quality} />
                     </span>
                   )}
                   {!m.byUser && m.bookCandidate && (
-                    <span className="text-xs text-zinc-600 ml-auto">
+                    <span className="ml-auto text-xs text-[#565061]">
                       {m.bookCandidate.games.toLocaleString()} games
                     </span>
                   )}
@@ -1152,13 +1626,13 @@ export default function OpeningSparring() {
         <div className="flex gap-3">
           <button
             onClick={() => setPhase("setup")}
-            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-colors"
+            className="rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-6 py-2.5 font-semibold text-[#070608] shadow-[0_0_20px_rgba(255,90,31,0.22)] transition-all hover:brightness-110"
           >
             New Game
           </button>
           <button
             onClick={startGame}
-            className="px-6 py-2.5 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 font-semibold rounded-xl transition-colors"
+            className="rounded-xl border border-[#1e1a24] bg-white/[0.03] px-6 py-2.5 font-semibold text-[#8d8696] transition-colors hover:border-[#ff5a1f]/25 hover:text-[#f0edf2]"
           >
             Rematch
           </button>
@@ -1171,182 +1645,273 @@ export default function OpeningSparring() {
   /*  Render: Playing / Stockfish                                        */
   /* ------------------------------------------------------------------ */
 
-  const isUserTurn =
-    !isOpponentThinking &&
-    chessRef.current.turn() === (userColor === "white" ? "w" : "b") &&
-    !chessRef.current.isGameOver();
-
   return (
-    <div className="flex flex-col items-center gap-3 py-4 px-3 sm:px-4">
+    <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 lg:py-6">
       {/* Header */}
-      <div className="flex items-center justify-between w-full max-w-[540px]">
-        <div>
-          <h1 className="text-xl font-bold text-white">Opening Sparring</h1>
-          <p className="text-xs text-zinc-500">
-            vs {targetRating} •{" "}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="mb-1 flex items-center gap-2">
+            <span className="h-3.5 w-1 rounded-full bg-gradient-to-b from-[#ff5a1f] to-[#ff8c42] shadow-[0_0_12px_rgba(255,90,31,0.35)]" />
+            <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-[#ff8c42]">
+              {assistMode ? "Engine Assist" : "Opening Sparring"}
+            </span>
+          </div>
+          <p className="text-xs text-[#8d8696]">
+            vs <span className="text-[#f0edf2]">{targetRating}</span> ·{" "}
             {phase === "stockfish" ? (
-              <span className="text-amber-400">
+              <span className="text-[#ff8c42]">
                 Stockfish depth {ratingToDepth(targetRating)}
               </span>
             ) : (
-              <span className="text-blue-400">
-                Lichess Book ({bookMoveCount} moves)
+              <span className="text-[#ff8c42]">
+                Lichess book ({bookMoveCount} moves)
               </span>
             )}
           </p>
         </div>
-        <button
-          onClick={() => setPhase("gameover")}
-          className="text-xs text-zinc-500 hover:text-zinc-300 border border-zinc-700 rounded-lg px-3 py-1.5 transition-colors"
-        >
-          ✕ End
-        </button>
-      </div>
-
-      {/* Opponent indicator */}
-      <div className="flex items-center gap-2 w-full max-w-[540px]">
-        <div className="w-7 h-7 rounded-full bg-zinc-700 flex items-center justify-center text-sm">
-          {userColor === "white" ? "♟" : "♙"}
-        </div>
-        <span className="text-sm text-zinc-400">
-          Opponent ({targetRating}
-          {phase === "stockfish" ? " · SF" : " · Lichess DB"})
-        </span>
-        {isOpponentThinking && (
-          <span className="text-xs text-blue-400 animate-pulse ml-1">
-            thinking…
-          </span>
-        )}
-      </div>
-
-      {/* Board + eval bar — ref here so useBoardSize measures this container */}
-      <div
-        ref={containerRef}
-        className="relative mx-auto flex w-full max-w-[540px] shrink-0 items-start gap-2 sm:gap-3"
-      >
-        <EvalBar evalCp={evalBarCp} height={boardSize} />
-        <div
-          className="relative shrink-0"
-          style={{ width: boardSize, height: boardSize }}
-        >
-          <Chessboard
-            position={fen}
-            boardOrientation={userColor}
-            boardWidth={boardSize}
-            onPieceDrop={handlePieceDrop}
-            onSquareClick={handleSquareClick}
-            customSquareStyles={customSquareStyles}
-            customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-            customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
-            customPieces={customPieces}
-            showBoardNotation={showCoords}
-            customSquare={customSquareRenderer}
-          />
-        </div>
-      </div>
-
-      {/* User indicator */}
-      <div className="flex items-center gap-2 w-full max-w-[540px]">
-        <div className="w-7 h-7 rounded-full bg-zinc-800 border border-zinc-600 flex items-center justify-center text-sm">
-          {userColor === "white" ? "♙" : "♟"}
-        </div>
-        <span className="text-sm text-zinc-300 font-medium">You</span>
-        {isUserTurn && (
-          <span className="text-xs text-green-400 ml-1">your turn</span>
-        )}
-      </div>
-
-      {/* Last-move coaching insight */}
-      {lastMoveInsight && (
-        <div
-          className={`w-full max-w-[540px] border rounded-xl p-3 ${QUALITY_BG[lastMoveInsight.quality]}`}
-        >
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-base">
-              {QUALITY_EMOJI[lastMoveInsight.quality]}
-            </span>
-            <span
-              className={`text-sm font-semibold ${QUALITY_COLOR[lastMoveInsight.quality]}`}
-            >
-              {QUALITY_LABEL[lastMoveInsight.quality]}
-            </span>
-            {lastMoveInsight.cpLoss > 0 && (
-              <span className="text-xs text-zinc-500">
-                &minus;{fmtCp(lastMoveInsight.cpLoss)}
+        <div className="flex items-center gap-2">
+          {assistMode && (
+            <span className="rounded-full border border-[#1e1a24] bg-white/[0.02] px-3 py-1.5 text-[11px] text-[#8d8696]">
+              assisted{" "}
+              <span className="font-semibold text-[#ff8c42]">
+                {assistSummary.assistedCount}
+              </span>{" "}
+              · solo{" "}
+              <span className="font-semibold text-[#f0edf2]">
+                {assistSummary.soloCount}
               </span>
-            )}
-            {lastMoveInsight.bestMoveSan && (
-              <span className="text-xs text-zinc-500 ml-auto">
-                Best:{" "}
-                <span className="text-zinc-300 font-mono">
-                  {lastMoveInsight.bestMoveSan}
-                </span>
+            </span>
+          )}
+          <button
+            onClick={() => setPhase("gameover")}
+            className="rounded-lg border border-[#1e1a24] px-3 py-1.5 text-xs text-[#8d8696] transition-colors hover:border-[#ff5a1f]/25 hover:text-[#ff8c42]"
+          >
+            End
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+        {/* Board stage */}
+        <div ref={stageRef} className="flex w-full flex-col items-center gap-2.5">
+          {/* Opponent row */}
+          <div
+            className="flex w-full items-center gap-2"
+            style={{ maxWidth: boardSize + 36 }}
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#1e1a24] bg-[#121015] text-sm">
+              {userColor === "white" ? "♟" : "♙"}
+            </div>
+            <span className="text-sm text-[#8d8696]">
+              Opponent ({targetRating}
+              {phase === "stockfish" ? " · SF" : " · Lichess DB"})
+            </span>
+            {isOpponentThinking && (
+              <span className="ml-1 animate-pulse text-xs text-[#ff8c42]">
+                thinking…
               </span>
             )}
           </div>
-          {lastMoveInsight.headline && (
-            <p className="text-xs text-zinc-400 mt-1.5 leading-relaxed">
-              {lastMoveInsight.headline}
-            </p>
+
+          {/* Board + eval bar */}
+          <div className="flex items-start gap-3">
+            <EvalBar evalCp={evalBarCp} height={boardSize} />
+            <div
+              className="relative shrink-0"
+              style={{ width: boardSize, height: boardSize }}
+            >
+              <Chessboard
+                position={fen}
+                boardOrientation={userColor}
+                boardWidth={boardSize}
+                onPieceDrop={handlePieceDrop}
+                onSquareClick={handleSquareClick}
+                customSquareStyles={customSquareStyles}
+                customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+                customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                customPieces={customPieces}
+                showBoardNotation={showCoords}
+                customSquare={customSquareRenderer}
+                customArrows={assistArrows}
+              />
+            </div>
+          </div>
+
+          {/* User row */}
+          <div
+            className="flex w-full items-center gap-2"
+            style={{ maxWidth: boardSize + 36 }}
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#1e1a24] bg-[#1a1620] text-sm">
+              {userColor === "white" ? "♙" : "♟"}
+            </div>
+            <span className="text-sm font-medium text-[#f0edf2]">You</span>
+            {isUserTurn && (
+              <span className="ml-1 text-xs text-emerald-300">your turn</span>
+            )}
+          </div>
+        </div>
+
+        {/* Right rail */}
+        <aside className="flex w-full flex-col gap-3">
+          {assistMode && (
+            <EngineAssistPanel
+              fen={fen}
+              open={assistOpen}
+              lines={currentLines}
+              loading={assistLoading}
+              depth={ASSIST_DEPTH}
+              peeksUsed={peeksUsed}
+              peekBudget={peekBudget}
+              activeUci={previewUci}
+              onToggle={handleAssistToggle}
+              onSelectLine={handleSelectLine}
+            />
           )}
-          {lastMoveInsight.coaching && (
-            <p className="text-xs text-zinc-500 mt-1 italic leading-relaxed">
-              {lastMoveInsight.coaching}
-            </p>
-          )}
-          {lastMoveInsight.themes.length > 0 && (
-            <div className="flex gap-1 flex-wrap mt-2">
-              {lastMoveInsight.themes.slice(0, 3).map((t) => (
-                <span
-                  key={t}
-                  className="text-[10px] bg-zinc-800/80 text-zinc-400 rounded-full px-2 py-0.5"
-                >
-                  {COACHING_THEME_ICONS[t] ? `${COACHING_THEME_ICONS[t]} ` : ""}
-                  {t}
-                </span>
-              ))}
+
+          {/* Last-move coaching insight */}
+          {lastMoveInsight && (
+            <div
+              className={`rounded-xl border p-4 ${
+                lastMoveInsight.quality
+                  ? `${MOVE_CLASSIFICATION_BORDER[lastMoveInsight.quality]} ${MOVE_CLASSIFICATION_BG[lastMoveInsight.quality]}`
+                  : "border-[#1e1a24] bg-white/[0.02]"
+              }`}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                {lastMoveInsight.quality && (
+                  <MoveBadge classification={lastMoveInsight.quality} />
+                )}
+                {lastMoveInsight.cpLoss > 0 && (
+                  <span className="text-xs text-[#565061]">
+                    &minus;{fmtCp(lastMoveInsight.cpLoss)}
+                  </span>
+                )}
+                {lastMoveInsight.bestMoveSan && (
+                  <span className="ml-auto text-xs text-[#565061]">
+                    Best:{" "}
+                    <span className="font-mono text-[#f0edf2]">
+                      {lastMoveInsight.bestMoveSan}
+                    </span>
+                  </span>
+                )}
+              </div>
+              {lastMoveInsight.headline && (
+                <p className="mt-2 text-xs leading-relaxed text-[#8d8696]">
+                  {lastMoveInsight.headline}
+                </p>
+              )}
+              {lastMoveInsight.coaching && (
+                <p className="mt-1 text-xs italic leading-relaxed text-[#565061]">
+                  {lastMoveInsight.coaching}
+                </p>
+              )}
+              {lastMoveInsight.themes.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {lastMoveInsight.themes.slice(0, 3).map((t) => (
+                    <span
+                      key={t}
+                      className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] text-[#8d8696]"
+                    >
+                      {COACHING_THEME_ICONS[t] ? `${COACHING_THEME_ICONS[t]} ` : ""}
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
 
-      {/* Status bar */}
-      {statusMessage && (
-        <div className="w-full max-w-[540px] text-xs text-zinc-500 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2">
-          {statusMessage}
-        </div>
-      )}
+          {/* Status bar */}
+          {statusMessage && (
+            <div className="rounded-xl border border-[#1e1a24] bg-[#121015]/70 px-3 py-2 text-xs text-[#8d8696] backdrop-blur-xl">
+              {statusMessage}
+            </div>
+          )}
 
-      {/* Move list */}
-      {moveHistory.length > 0 && (
-        <div className="w-full max-w-[540px] bg-zinc-900 border border-zinc-800 rounded-xl p-3">
-          <div className="flex gap-1 flex-wrap">
-            {moveHistory.slice(-12).map((m, i) => {
-              const absIdx =
-                moveHistory.length - Math.min(12, moveHistory.length) + i;
-              const moveNum = Math.floor(absIdx / 2) + 1;
-              const isWhite = absIdx % 2 === 0;
-              return (
-                <span
-                  key={absIdx}
-                  className="inline-flex items-baseline gap-0.5 text-xs font-mono"
-                >
-                  {isWhite && (
-                    <span className="text-zinc-600 mr-0.5">{moveNum}.</span>
-                  )}
-                  <span className={m.byUser ? "text-white" : "text-zinc-400"}>
-                    {m.san}
-                  </span>
-                  {m.byUser && m.cpLoss !== undefined && (
+          {/* Move list */}
+          {moveHistory.length > 0 && (
+            <div className="rounded-xl border border-[#1e1a24] bg-[#121015]/70 p-3 backdrop-blur-xl [box-shadow:inset_0_1px_0_rgba(255,255,255,0.03)]">
+              <div className="flex flex-wrap gap-x-2 gap-y-1">
+                {moveHistory.slice(-16).map((m, i) => {
+                  const absIdx =
+                    moveHistory.length - Math.min(16, moveHistory.length) + i;
+                  const moveNum = Math.floor(absIdx / 2) + 1;
+                  const isWhite = absIdx % 2 === 0;
+                  return (
                     <span
-                      className={`text-[9px] ${QUALITY_COLOR[classifyByCpLoss(m.cpLoss)]}`}
+                      key={absIdx}
+                      className="inline-flex items-baseline gap-1 text-xs font-mono"
                     >
-                      {QUALITY_EMOJI[classifyByCpLoss(m.cpLoss)]}
+                      {isWhite && (
+                        <span className="mr-0.5 text-[#565061]">{moveNum}.</span>
+                      )}
+                      <span
+                        className={m.byUser ? "text-[#f0edf2]" : "text-[#8d8696]"}
+                      >
+                        {m.san}
+                      </span>
+                      {m.byUser && m.assisted && (
+                        <span
+                          className="text-[9px] text-[#ff8c42]"
+                          title="Assisted move"
+                        >
+                          ▣
+                        </span>
+                      )}
                     </span>
-                  )}{" "}
-                </span>
-              );
-            })}
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Running tally */}
+          {assistMode && evaledUserMoves.length > 0 && (
+            <div className="rounded-xl border border-[#1e1a24] bg-white/[0.02] px-3 py-2 text-[11px] text-[#565061]">
+              avg loss — assisted{" "}
+              <span className="text-[#ff8c42]">
+                {assistSummary.assistedAvg !== null
+                  ? fmtCp(assistSummary.assistedAvg)
+                  : "—"}
+              </span>{" "}
+              · solo{" "}
+              <span className="text-[#f0edf2]">
+                {assistSummary.soloAvg !== null ? fmtCp(assistSummary.soloAvg) : "—"}
+              </span>
+            </div>
+          )}
+        </aside>
+      </div>
+
+      {/* Promotion picker */}
+      {promotionPending && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070608]/80 backdrop-blur-sm">
+          <div className="rounded-2xl border border-[#1e1a24] bg-[#121015] p-5 text-center">
+            <div className="mb-3 text-sm text-[#8d8696]">Promote to</div>
+            <div className="flex gap-2">
+              {(["q", "r", "b", "n"] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => {
+                    const pending = promotionPending;
+                    setPromotionPending(null);
+                    handleUserMove(pending.from, pending.to, p);
+                  }}
+                  className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#1e1a24] bg-white/[0.03] text-2xl transition-colors hover:border-[#ff5a1f]/40 hover:bg-[#ff5a1f]/[0.08]"
+                >
+                  {userColor === "white"
+                    ? { q: "♕", r: "♖", b: "♗", n: "♘" }[p]
+                    : { q: "♛", r: "♜", b: "♝", n: "♞" }[p]}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setPromotionPending(null)}
+              className="mt-3 text-xs text-[#565061] hover:text-[#8d8696]"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
