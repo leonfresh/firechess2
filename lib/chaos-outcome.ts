@@ -1,6 +1,29 @@
 import { Chess, type Color, type Square } from 'chess.js';
 import type { ChaosState } from './chaos-chess';
-import { getChaosMoves, getChaosAttackedSquares, computeChainedSquare } from './chaos-moves';
+import { getChaosMoves, getChaosAttackedSquares, computeChainedSquare, type ChaosMove } from './chaos-moves';
+
+/** Validate a terminal capture before chess.js is asked to reload a kingless FEN. */
+export function getKingCaptureMove(game: Chess, state: ChaosState, side: Color, from: string, to: string): ChaosMove | null {
+  if (!/^[a-h][1-8]$/.test(from) || !/^[a-h][1-8]$/.test(to) || game.turn() !== side) return null;
+  const target = game.get(to as Square);
+  if (game.get(from as Square)?.color !== side || target?.type !== 'k' || target.color === side || blockedMove(game,state,side,from,to)) return null;
+  const owner = side === 'w' ? 'player' : 'ai', enemy = side === 'w' ? 'ai' : 'player';
+  const own = state[`${owner}Modifiers`], other = state[`${enemy}Modifiers`];
+  const normal = game.moves({verbose:true});
+  if (other.some(m => m.id === 'forced-en-passant') && normal.some(m => m.flags.includes('e'))) return null;
+  const special = getChaosMoves(game,own,side,state.assignedSquares,other,{
+    playerAnomaly:state[`${owner}Anomaly`], moonUnlocked:game.moveNumber() >= 10,
+    strengthMode:state[`${owner}Anomaly`] === 'strength' && !state[`${owner}AnomalyUsed`],
+  }).find(m => m.from === from && m.to === to && m.type === 'capture');
+  if (special) return special;
+  const move = normal.find(m => m.from === from && m.to === to && m.captured === 'k');
+  if (!move) return null;
+  const after = new Chess(game.fen());
+  after.move(move);
+  const king = after.board().flat().find(p => p?.type === 'k' && p.color === side)?.square;
+  if (!king || getChaosAttackedSquares(after,other,side === 'w' ? 'b' : 'w',state.assignedSquares).has(king)) return null;
+  return {from:from as Square,to:to as Square,type:'capture',modifierId:'standard',label:'King captured'};
+}
 
 export function blockedMove(game: Chess, state: ChaosState, color: Color, from: string, to: string): string | null {
   const own = color === 'w' ? 'player' : 'ai', enemy = color === 'w' ? 'ai' : 'player';

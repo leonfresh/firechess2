@@ -1,5 +1,6 @@
 "use client";
 import {buildChaosCustomPieces, SINGLE_PIECE_MODIFIERS} from "@/components/chaos-pieces";
+import { getKingCaptureMove } from "@/lib/chaos-outcome";
 import { chaosIdentityHeaders } from '@/lib/chaos-client-identity';
 import { CHAOS_TIME_CONTROLS, projectClock, timeControl as resolveTimeControl, type MatchClock } from "@/lib/chaos-clock";
 
@@ -4900,6 +4901,26 @@ export default function ChaosChessPage() {
       cs: ChaosState,
       onComplete?: (finalGame: Chess, finalCs: ChaosState) => void,
     ) => {
+      // A captured king ends the game before evaluation can reload a kingless FEN.
+      const aiSide = playerColor === "white" ? "b" : "w";
+      if (g.turn() === aiSide) {
+        const royalTarget = g.board().flat().find(p => p?.type === "k" && p.color !== aiSide)?.square;
+        if (royalTarget) {
+          const serverState = toServerChaosState(cs, playerColor);
+          for (const piece of g.board().flat()) {
+            if (!piece || piece.color !== aiSide) continue;
+            const capture = getKingCaptureMove(g, serverState, aiSide, piece.square, royalTarget);
+            if (!capture) continue;
+            const terminal = new Chess(g.fen());
+            if (!capture.pieceStays) terminal.remove(capture.from);
+            terminal.remove(capture.to);
+            if (!capture.pieceStays) terminal.put(capture.spawnPiece ?? {type:piece.type,color:aiSide},capture.to);
+            setIsThinking(false);
+            checkGameEnd(terminal, capture.to, capture.from);
+            return;
+          }
+        }
+      }
       if (g.isGameOver()) {
         // chess.js says game over, but if AI has chaos escape moves the game continues
         const aiColorForEscape = playerColor === "white" ? "b" : "w";
@@ -5031,12 +5052,6 @@ export default function ChaosChessPage() {
             const scored: ScoredChaos[] = [];
 
             for (const cm of sample) {
-              // King-capture via chaos move — declare instant win for AI
-              const targetAtChaosTo = g.get(cm.to as any);
-              if (targetAtChaosTo?.type === "k") {
-                scored.push({ move: cm, eval: 1_000_000, game: g });
-                continue;
-              }
               const newGame = executeChaosMove(
                 g,
                 cm,
@@ -7326,6 +7341,43 @@ export default function ChaosChessPage() {
         }
       }
 
+      // King-capture via chaos move — chess.js rejects kingless FENs so we must
+      // intercept and declare the win before calling executeChaosMove.
+      const targetPieceAtTo = game.get(to as any);
+      if (targetPieceAtTo?.type === "k") {
+        if (!getKingCaptureMove(game, toServerChaosState(chaosState, playerColor), game.turn(), from, to)) return false;
+        if (gameMode !== "ai") {
+          partySendRef.current?.({ type: "king_capture", from, to });
+          return true;
+        }
+        // Let the board animation play before showing game-over popup
+        isAnimatingEndRef.current = true;
+        setLastMoveHighlight({
+          [from]: { backgroundColor: "rgba(220,38,38,0.4)" },
+          [to]: { backgroundColor: "rgba(255,215,0,0.55)" },
+        });
+        triggerEffect("king-death", [to]);
+        playSound("airhorn");
+        spawnPepe(PEPE.gigachad);
+        setTimeout(() => {
+          isAnimatingEndRef.current = false;
+          setGameResult(playerColor);
+          setGameStatus("game-over");
+          setEndReason("King Captured");
+          setEventLog((prev) => [
+            ...prev,
+            {
+              type: "chaos",
+              message: `👑 You captured the enemy King!`,
+              icon: "👑",
+              pepe: PEPE.gigachad,
+            },
+          ]);
+          spawnPepe(PEPE.clap);
+        }, KING_DEATH_POPUP_DELAY);
+        return true;
+      }
+
       // First check if this is a chaos move
       const chaosMove = activeChaosMoves.find(
         (m) => m.from === from && m.to === to,
@@ -7355,39 +7407,6 @@ export default function ChaosChessPage() {
           isKingMoveChaosUnsafe(game, from, to)
         ) {
           return false;
-        }
-
-        // King-capture via chaos move — chess.js rejects kingless FENs so we must
-        // intercept and declare the win before calling executeChaosMove.
-        const targetPieceAtTo = game.get(chaosMove.to as any);
-        if (targetPieceAtTo?.type === "k") {
-          if (gameMode !== "ai") partySendRef.current?.({ type: "king_capture", from, to });
-          // Let the board animation play before showing game-over popup
-          isAnimatingEndRef.current = true;
-          setLastMoveHighlight({
-            [from]: { backgroundColor: "rgba(220,38,38,0.4)" },
-            [to]: { backgroundColor: "rgba(255,215,0,0.55)" },
-          });
-          triggerEffect("king-death", [to]);
-          playSound("airhorn");
-          spawnPepe(PEPE.gigachad);
-          setTimeout(() => {
-            isAnimatingEndRef.current = false;
-            setGameResult(playerColor);
-            setGameStatus("game-over");
-            setEndReason("King Captured");
-            setEventLog((prev) => [
-              ...prev,
-              {
-                type: "chaos",
-                message: `👑 You captured the enemy King!`,
-                icon: "👑",
-                pepe: PEPE.gigachad,
-              },
-            ]);
-            spawnPepe(PEPE.clap);
-          }, KING_DEATH_POPUP_DELAY);
-          return true;
         }
 
         const newGame = executeChaosMove(

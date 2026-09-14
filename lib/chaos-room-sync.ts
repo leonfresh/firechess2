@@ -3,7 +3,7 @@ import { Chess } from "chess.js";
 import { ALL_MODIFIERS, createChaosState, updateTrackedPieces, NUCLEAR_QUEEN_COOLDOWN_TURNS, type ChaosState } from "./chaos-chess";
 import { getChaosMoves, executeChaosMove, applyPostMoveEffects } from "./chaos-moves";
 import { ALL_ANOMALIES, rollAnomalyChoices } from "./chaos-anomalies";
-import { blockedMove, chaosOutcome } from "./chaos-outcome";
+import { blockedMove, chaosOutcome, getKingCaptureMove } from "./chaos-outcome";
 import { projectClock, type MatchClock } from "./chaos-clock";
 import { DRAFT_DURATION_MS, draftChoices, applyServerDraft, type ServerDraft } from "./chaos-server-draft";
 
@@ -372,13 +372,18 @@ export function reduceCommand(room: SyncRoom, userId: string, command: any, now 
     outgoing = { type, square: message.square, chaosState: nextState };
   } else if (type === "king_capture") {
     if(room.status !== "playing" || command.baseRevision !== old.stateRevision) throw new SyncError(409,"The board changed");
+    if (!("host" in meta.picks) || !("guest" in meta.picks)) throw new SyncError(409,"Both opening choices must be saved first");
     const game = new Chess(room.fen);
-    const own = color === "white" ? state.playerModifiers : state.aiModifiers;
-    const other = color === "white" ? state.aiModifiers : state.playerModifiers;
-    const anomaly = color === "white" ? state.playerAnomaly : state.aiAnomaly;
-    const legal = getChaosMoves(game,own,side,state.assignedSquares,other,{playerAnomaly:anomaly}).some(m=>m.from===message.from&&m.to===message.to);
-    if(meta.frozenBy || game.turn() !== side || game.get(message.to)?.type !== "k" || game.get(message.to)?.color === side || !legal || blockedMove(game,state,side,message.from,message.to)) throw new SyncError(400,"Invalid king capture");
+    const capture = getKingCaptureMove(game,state,side,message.from,message.to);
+    if(meta.frozenBy || !capture) throw new SyncError(400,"Invalid king capture");
     patch.status = "finished"; meta.stateRevision++;
+    patch.lastMoveFrom = capture.from; patch.lastMoveTo = capture.to;
+    // Keep the last loadable board; the result and final capture are persisted
+    // separately because chess.js rejects a board with a missing king.
+    patch.moveHistory = [...(Array.isArray(room.moveHistory) ? room.moveHistory : []), {
+      from:capture.from,to:capture.to,color:side,fen:room.fen,kingCapture:true,
+      powers:{white:state.playerModifiers.map(m=>m.id),black:state.aiModifiers.map(m=>m.id)},
+    }];
     meta.result = {winner: color, reason: "King captured"};
     outgoing = {type:"game_over",winner:color,reason:"King Captured"};
   } else if (type === "anomaly_pick") {
@@ -475,7 +480,8 @@ export function reduceCommand(room: SyncRoom, userId: string, command: any, now 
   if (meta.stateRevision !== old.stateRevision) {
     const frames = meta.replayFrames ?? [{fen:room.fen,state:visualState(state),label:'Starting position'}];
     const replayFrom = message.lastMoveFrom ?? message.from, replayTo = message.lastMoveTo ?? message.to;
-    const label = type === 'power_pick' ? `${color} picked ${ALL_MODIFIERS.find(m=>m.id===message.modifierId)?.name ?? 'a power'}`
+    const label = type === 'king_capture' ? `${color} captured the king: ${replayFrom} → ${replayTo}`
+      : type === 'power_pick' ? `${color} picked ${ALL_MODIFIERS.find(m=>m.id===message.modifierId)?.name ?? 'a power'}`
       : type === 'anomaly_pick' ? `${color} chose ${ALL_ANOMALIES.find(a => a.id === message.anomalyId)?.name ?? 'no anomaly'}`
       : replayFrom && replayTo ? `${color}: ${replayFrom} → ${replayTo}` : type.replaceAll('_',' ');
     meta.replayFrames = [...frames,{fen:patch.fen ?? room.fen,state:visualState(nextState),label,
