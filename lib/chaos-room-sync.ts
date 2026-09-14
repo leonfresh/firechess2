@@ -205,11 +205,16 @@ export function reduceCommand(room: SyncRoom, userId: string, command: any, now 
       const activated = !used && anomaly === "lovers" && before.get(to)?.color === side;
       if (!legal && !chaosLegal && !activated) throw new SyncError(400, "Move is not enabled by this piece's powers");
       const candidates: Chess[] = [];
+      // Reproduce the client's random revival choice, while the move executor
+      // still validates the empty back-rank square and highest-value piece type.
+      const regicideSquare = before.get(from)?.type === "k" && before.get(to)?.color !== side && ownMods.some(m => m.id === "king-wrath")
+        ? after.board().flat().find(p => p && p.color === side && p.type !== "k" && p.square[1] === (side === "w" ? "1" : "8") && (!before.get(p.square) || p.square === from))?.square
+        : undefined;
       for (const option of chaosOptions) {
         const promoted = after.get(to);
         const chosen: typeof option = option.promotionChoice && promoted?.color === side && ["q", "r", "b", "n"].includes(promoted.type)
           ? { ...option, spawnPiece: { type: promoted.type, color: side } } : option;
-        const executed = executeChaosMove(before, chosen, ownMods, enemyMods, side === "w" ? state.playerNuclearCooldownUntil : state.aiNuclearCooldownUntil);
+        const executed = executeChaosMove(before, chosen, ownMods, enemyMods, side === "w" ? state.playerNuclearCooldownUntil : state.aiNuclearCooldownUntil, regicideSquare);
         if (executed) candidates.push(executed);
       }
       if (legal) {
@@ -217,7 +222,7 @@ export function reduceCommand(room: SyncRoom, userId: string, command: any, now 
         const result = normal.move({ from, to, promotion: after.get(to)?.type });
         const cooldown = color === "white" ? state.playerNuclearCooldownUntil : state.aiNuclearCooldownUntil;
         const effective = before.moveNumber() >= (cooldown ?? 0) ? ownMods : ownMods.filter(m => m.id !== "nuclear-queen");
-        const post = result.captured ? applyPostMoveEffects(normal, from, to, true, result.piece, side, effective, enemyMods, result.captured) ?? normal : normal;
+        const post = result.captured ? applyPostMoveEffects(normal, from, to, true, result.piece, side, effective, enemyMods, result.captured, regicideSquare) ?? normal : normal;
         if (anomaly === "death" && result.captured && result.captured !== "p" && !post.get(from)) post.put({type:"p", color:side},from);
         candidates.push(post);
       }

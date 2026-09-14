@@ -32,6 +32,12 @@ export function describeWatchFrame(frame: WatchFrame) {
   const id = choice[1] === "white" ? frame.state.playerAnomaly : frame.state.aiAnomaly;
   return `${choice[1]} chose ${ALL_ANOMALIES.find(a => a.id === id)?.name ?? (id ? id : "no anomaly")}`;
 }
+export function describeWatchAnomaly(frame: WatchFrame): string | null {
+  const choice = /^(white|black) chose an anomaly$/.exec(frame.label);
+  if (!choice) return null;
+  const id = choice[1] === "white" ? frame.state.playerAnomaly : frame.state.aiAnomaly;
+  return ALL_ANOMALIES.find(a => a.id === id)?.description ?? null;
+}
 export function expandVisual(s: VisualState) {
   return {
     ...s,

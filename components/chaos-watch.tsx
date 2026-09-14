@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "./chessboard-compat";
 import { buildChaosCustomPieces } from "./chaos-pieces";
-import { describeWatchFrame, expandVisual, type WatchFrame } from "@/lib/chaos-watch";
+import { describeWatchFrame, describeWatchAnomaly, expandVisual, type WatchFrame } from "@/lib/chaos-watch";
 import { getAnomalyById } from "@/lib/chaos-anomalies";
 import type { MatchClock } from "@/lib/chaos-clock";
 import { ChaosHubIcon } from "./chaos-hub-icon";
@@ -560,6 +560,7 @@ export function ChaosWatch({
                           <button aria-current={index === i ? "step" : undefined} onClick={() => { setAuto(false); setIndex(i); }}>
                             {describeWatchFrame(f).replace(/^(white|black)/, color => `${color === "white" ? detail.white : detail.black} (${color})`)}
                           </button>
+                          {describeWatchAnomaly(f) && <p>{describeWatchAnomaly(f)}</p>}
                         </li>
                       ))}
                     </ol>
@@ -584,6 +585,7 @@ export function ChaosWatch({
                           <div>
                             <p><b>{anomaly.icon} {anomaly.name}</b> · Opening anomaly</p>
                             <p>{anomaly.description}</p>
+                            <p>{anomaly.trigger === "passive" ? "Passive effect · applies to this player's side." : anomaly.trigger === "draft-modifier" ? "Draft effect · changes this player's power choices." : anomaly.trigger === "fen-mod" ? "Starting position effect · applied before play begins." : "Activated ability · usable once per game."}</p>
                             {anomaly.trigger === "once-per-game" && <p>{(color === "white" ? rendered.state.playerAnomalyUsed : rendered.state.aiAnomalyUsed) === undefined ? "Ability usage was not recorded." : (color === "white" ? rendered.state.playerAnomalyUsed : rendered.state.aiAnomalyUsed) ? "Ability used" : "Ability available"}</p>}
                           </div>
                         )}

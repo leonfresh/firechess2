@@ -2378,6 +2378,7 @@ export function executeChaosMove(
   modifiers: ChaosModifier[],
   opponentModifiers?: ChaosModifier[],
   nuclearCooldownUntil = 0,
+  regicideSquare?: Square,
 ): Chess | null {
   const piece = game.get(move.from);
   if (!piece) return null;
@@ -2465,6 +2466,10 @@ export function executeChaosMove(
       const collateral = getCollateralSquare(game, move.from, target);
       if (collateral) tmp.remove(collateral);
     }
+  }
+
+  if (move.type === "capture" && piece.type === "k" && game.get(move.to)?.color !== piece.color) {
+    reviveRegicidePiece(tmp, piece.color, modifiers, regicideSquare);
   }
 
   // Check for nuclear queen
@@ -2568,6 +2573,18 @@ function getMostValuableCapturedPiece(
   return null;
 }
 
+function reviveRegicidePiece(game: Chess, color: Color, modifiers: ChaosModifier[], preferredSquare?: Square): boolean {
+  if (!modifiers.some(m => m.id === "king-wrath")) return false;
+  const type = getMostValuableCapturedPiece(game, color, modifiers);
+  if (!type) return false;
+  const rank = color === "w" ? "1" : "8";
+  const empties = FILES.map(f => `${f}${rank}` as Square).filter(s => !game.get(s));
+  if (!empties.length) return false;
+  const chosen = preferredSquare && empties.includes(preferredSquare)
+    ? preferredSquare : empties[Math.floor(Math.random() * empties.length)];
+  return game.put({ type, color }, chosen);
+}
+
 /**
  * Apply side effects to a standard chess.js move result.
  * Call this after a normal move() to apply collateral/nuclear damage.
@@ -2585,6 +2602,7 @@ export function applyPostMoveEffects(
   opponentModifiers?: ChaosModifier[],
   /** The type of the captured piece (needed for Pawn Fortress check) */
   capturedType?: PieceSymbol,
+  regicideSquare?: Square,
 ): Chess | null {
   let modified = false;
   const fen = game.fen();
@@ -2641,18 +2659,7 @@ export function applyPostMoveEffects(
     movingPieceType === "k" &&
     modifiers.some((m) => m.id === "king-wrath")
   ) {
-    const revivedType = getMostValuableCapturedPiece(tmp, color, modifiers);
-    if (revivedType) {
-      const backRank = color === "w" ? "1" : "8";
-      const empties = FILES.map((f) => `${f}${backRank}` as Square).filter(
-        (s) => !tmp.get(s),
-      );
-      if (empties.length > 0) {
-        const chosen = empties[Math.floor(Math.random() * empties.length)];
-        tmp.put({ type: revivedType, color }, chosen);
-        modified = true;
-      }
-    }
+    modified = reviveRegicidePiece(tmp, color, modifiers, regicideSquare) || modified;
   }
 
   // Kamikaze Bishop — mutual kill: both the bishop and its attacker die, no area blast
