@@ -4,10 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { signOut } from "next-auth/react";
-import { ChevronDown, Coins, Flame, Menu, X } from "lucide-react";
+import { ChevronDown, Flame, Menu, X } from "lucide-react";
 import { useSession } from "@/components/session-provider";
 import { useCoinBalance } from "@/lib/use-coins";
 import { navigationGroups } from "./site-navigation";
+import { NavigationIcon } from "./navigation-icon";
 import s from "./site-navigation.module.css";
 
 export function Navbar() {
@@ -78,16 +79,16 @@ export function Navbar() {
           onPointerLeave={event => hoverClose(group.label, event)}
           onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(current => current === group.label ? null : current); }}>
           <div className={s.groupLabel} data-active={group.links.some(([, href]) => active(href)) || undefined}>
-            {group.href ? <Link href={group.href} aria-current={active(group.href) ? "page" : undefined}>{group.label}</Link> : null}
-            <button aria-label={group.href ? `${group.label} menu` : "More"} aria-expanded={open === group.label} aria-controls={`nav-${group.label}`} onClick={event => toggle(group.label, event.currentTarget)}>{!group.href && "More"}<ChevronDown size={14} /></button>
+            {group.href ? <Link href={group.href} aria-current={active(group.href) ? "page" : undefined}><NavigationIcon href={group.href} compact />{group.label}</Link> : null}
+            <button aria-label={group.href ? `${group.label} menu` : "More"} aria-expanded={open === group.label} aria-controls={`nav-${group.label}`} onClick={event => toggle(group.label, event.currentTarget)}>{!group.href && <><NavigationIcon href="more" compact />More</>}<ChevronDown size={14} /></button>
           </div>
           {open === group.label && <div id={`nav-${group.label}`} className={`${s.dropdown} ${group.label === "More" ? s.wide : ""}`}>
             <span className={s.menuCaption}>{group.label === "More" ? "Learn, explore & connect" : `Explore ${group.label.toLowerCase()}`}</span>
-            <div className={s.links}>{group.links.map(([label, href]) => <Link key={href} prefetch={false} href={href} aria-current={active(href) ? "page" : undefined}>{label}</Link>)}</div>
+            <div className={s.links}>{group.links.map(([label, href]) => <Link key={href} prefetch={false} href={href} aria-current={active(href) ? "page" : undefined}><NavigationIcon href={href} /><span>{label}</span></Link>)}</div>
           </div>}
         </div>)}
-        <Link className={s.direct} href="/newdashboard" aria-current={active("/newdashboard") || active("/dashboard") ? "page" : undefined}>Dashboard</Link>
-        {(!authenticated || plan === "free") && <Link className={s.direct} href="/newpricing" aria-current={active("/newpricing") ? "page" : undefined}>{authenticated ? "Upgrade" : "Pricing"}</Link>}
+        <Link className={s.direct} href="/newdashboard" aria-current={active("/newdashboard") || active("/dashboard") ? "page" : undefined}><NavigationIcon href="/newdashboard" compact />Dashboard</Link>
+        {(!authenticated || plan === "free") && <Link className={s.direct} href="/newpricing" aria-current={active("/newpricing") ? "page" : undefined}><NavigationIcon href="/newpricing" compact />{authenticated ? "Upgrade" : "Pricing"}</Link>}
         <div className={`${s.group} ${s.account}`}
           onPointerEnter={event => { if (authenticated) hoverOpen("account", event); }}
           onPointerLeave={event => hoverClose("account", event)}
@@ -97,11 +98,11 @@ export function Navbar() {
             {open === "account" && <div id="nav-account" className={`${s.dropdown} ${s.accountDropdown}`}>
               <span className={s.menuCaption}>{plan === "free" ? "Free plan" : plan === "lifetime" ? "Lifetime member" : "Pro member"}</span>
               <div className={s.links}>
-                <Link href="/profile">My profile</Link><Link href="/account">Account & billing</Link><Link href="/dashboard">Saved reports & management</Link>
-                <Link href="/shop"><Coins size={15} /> {balance.toLocaleString()} coins · Shop</Link>
-                <Link href={isAdmin ? "/admin/feedback" : "/support"}>Support {unread > 0 ? `(${unread} unread)` : ""}</Link>
-                {isAdmin && <><Link href="/admin/users">Manage users</Link><Link href="/admin/affiliates">Affiliates</Link><Link href="/admin/gift">Gift access</Link></>}
-                <button onClick={() => void signOut({ callbackUrl: "/" })}>Sign out</button>
+                <Link href="/profile"><NavigationIcon href="/profile" />My profile</Link><Link href="/account"><NavigationIcon href="/account" />Account & billing</Link><Link href="/dashboard"><NavigationIcon href="/dashboard" />Saved reports & management</Link>
+                <Link href="/shop"><NavigationIcon href="/shop" /> {balance.toLocaleString()} coins · Shop</Link>
+                <Link href={isAdmin ? "/admin/feedback" : "/support"}><NavigationIcon href="/support" />Support {unread > 0 ? `(${unread} unread)` : ""}</Link>
+                {isAdmin && <><Link href="/admin/users"><NavigationIcon href="/admin/users" />Manage users</Link><Link href="/admin/affiliates"><NavigationIcon href="/admin/affiliates" />Affiliates</Link><Link href="/admin/gift"><NavigationIcon href="/admin/gift" />Gift access</Link></>}
+                <button onClick={() => void signOut({ callbackUrl: "/" })}><NavigationIcon href="sign-out" />Sign out</button>
               </div>
             </div>}
           </> : <Link className={s.signIn} href="/auth/signin">{loading ? "Account" : "Sign in"}</Link>}

@@ -9,3 +9,14 @@
 .groupLabel>button[aria-expanded=true]>svg,.accountButton[aria-expanded=true]>svg{transform:rotate(180deg)}
 @media(prefers-reduced-motion:reduce){.groupLabel>button>svg,.accountButton>svg{transition:none}}
 @media(max-width:400px){.wide .links{grid-template-columns:1fr}}
+
+/* Consistent icon tiles make dropdown destinations easy to scan. */
+.itemIcon{display:grid;place-items:center;flex:0 0 28px;width:28px;height:28px;border-radius:7px;background:#ffffff06;color:#95a7c0;transition:color .15s,background .15s}
+.links>a,.links>button{gap:10px;line-height:1.4;min-width:0}
+.links>a:hover .itemIcon,.links>button:hover .itemIcon,.links>a:focus-visible .itemIcon,.links>button:focus-visible .itemIcon,.links>a[aria-current=page] .itemIcon{color:#ffad75;background:#ff79381a}
+@media(max-width:600px){.wide .links{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.itemIcon{transition:none}}
+.rootIcon{display:inline-flex;flex:0 0 auto;color:inherit;opacity:.85}
+.groupLabel>a,.direct{display:flex;align-items:center;gap:7px;white-space:nowrap}
+/* Tighten spacing on smaller desktop screens to accommodate the root icons. */
+@media(min-width:951px) and (max-width:1100px){.inner{gap:16px;padding-inline:20px}.nav{gap:3px}.account{margin-left:5px}.brand{font-size:21px}}
