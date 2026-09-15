@@ -28,7 +28,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const guide = OPENING_GUIDES.find((g) => g.id === slug);
-  if (!guide) return {};
+  // Bail in metadata resolution too: it settles before the response shell is
+  // flushed, so an unknown slug gets a real 404 even where the not-found render
+  // is streamed (Vercel streams this route; `next start` does not, which is why
+  // the soft 404 only ever reproduced in production).
+  if (!guide) notFound();
 
   const title = `${guide.name} — Chess Opening Guide (ECO ${guide.eco})`;
   const description = `Learn the ${guide.name} (${guide.moves}). ${guide.tagline} Discover key ideas, plans for both sides, common traps, and critical positions.`;
