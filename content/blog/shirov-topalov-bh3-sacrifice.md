@@ -1,7 +1,7 @@
 ---
-title: "47...Bh3!!: Shirov's Immortal Bishop Sacrifice vs Topalov"
-description: "Shirov's 47...Bh3!! is called the greatest endgame move ever. Full game analysis with boards, engine eval, and why it still stuns grandmasters."
-date: 2026-09-15
+title: "Shirov vs Topalov 1998: The Immortal Bh3!! Bishop Sacrifice"
+description: "Shirov's 47...Bh3!! is the greatest endgame move ever played. Full analysis with interactive boards, engine eval, and why it forced Topalov to resign."
+date: 2026-09-16
 author: "FireChess Team"
 tags: ["shirov topalov bh3", "greatest chess moves", "famous chess games", "endgame sacrifice", "chess brilliancy", "zugzwang"]
 ---
