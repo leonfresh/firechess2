@@ -4,7 +4,7 @@ description: "Domina el Gambito de Dama desde la configuracion hasta el final �
 date: "2026-07-12"
 author: "FireChess Team"
 tags: ["aperturas de ajedrez", "gambito de dama", "jugadores de club", "aperturas d4", "mejora en ajedrez", "repertorio de aperturas", "qgd", "qga"]
-canonical: https://firechess.com/es/blog/queens-gambit-guide
+canonical: https://www.firechess.com/es/blog/queens-gambit-guide
 ---
 
 El Gambito de Dama — 1.d4 d5 2.c4 — es una de las aperturas mas antiguas, respetadas y efectivas del ajedrez. Ha sido jugada por cada campeon mundial desde Steinitz hasta Carlsen, y por buena razon: desafia el centro Negro inmediatamente sin comprometerse a un plan de ataque arriesgado.

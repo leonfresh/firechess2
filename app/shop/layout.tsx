@@ -8,10 +8,10 @@ export const metadata: Metadata = {
     title: "Coin Shop — Board Themes & Piece Sets | FireChess",
     description:
       "Spend coins on custom board themes and piece sets. Personalize your chess experience.",
-    url: "https://firechess.com/shop",
+    url: "https://www.firechess.com/shop",
     type: "website",
   },
-  alternates: { canonical: "https://firechess.com/shop" },
+  alternates: { canonical: "https://www.firechess.com/shop" },
 };
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {

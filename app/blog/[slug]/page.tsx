@@ -28,12 +28,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const languages: Record<string, string> = {};
   for (const loc of availableLocales) {
     if (loc === "en") {
-      languages[loc] = `https://firechess.com/blog/${slug}`;
+      languages[loc] = `https://www.firechess.com/blog/${slug}`;
     } else {
-      languages[loc] = `https://firechess.com/${loc}/blog/${slug}`;
+      languages[loc] = `https://www.firechess.com/${loc}/blog/${slug}`;
     }
   }
-  languages["x-default"] = `https://firechess.com/blog/${slug}`;
+  languages["x-default"] = `https://www.firechess.com/blog/${slug}`;
 
   return {
     title: `${post.title} | FireChess Blog`,
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       tags: post.tags,
       images: [
         {
-          url: `https://firechess.com/api/og?title=${encodeURIComponent(post.title)}&slug=${encodeURIComponent(slug)}`,
+          url: `https://www.firechess.com/api/og?title=${encodeURIComponent(post.title)}&slug=${encodeURIComponent(slug)}`,
           width: 1200,
           height: 630,
           alt: post.title,
@@ -58,10 +58,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: "summary_large_image",
       title: post.title,
       description: post.description,
-      images: [`https://firechess.com/api/og?title=${encodeURIComponent(post.title)}&slug=${encodeURIComponent(slug)}`],
+      images: [`https://www.firechess.com/api/og?title=${encodeURIComponent(post.title)}&slug=${encodeURIComponent(slug)}`],
     },
     alternates: {
-      canonical: `https://firechess.com/blog/${slug}`,
+      canonical: `https://www.firechess.com/blog/${slug}`,
       languages,
     },
   };
@@ -83,7 +83,7 @@ export default async function BlogPostPage({ params }: Props) {
       <ArticleJsonLd
         title={post.title}
         description={post.description}
-        url={`https://firechess.com/blog/${slug}`}
+        url={`https://www.firechess.com/blog/${slug}`}
         datePublished={post.date}
         author={post.author}
       />

@@ -4,7 +4,7 @@ description: "Что на самом деле означает ваша шахм
 date: "2026-07-25"
 author: "FireChess Team"
 tags: ["анализ", "основы", "потеря-пешек"]
-canonical: https://firechess.com/ru/blog/chess-accuracy-score-explained
+canonical: https://www.firechess.com/ru/blog/chess-accuracy-score-explained
 ---
 
 Вы заканчиваете партию, и отчёт точности показывает 94.2%. Это хорошо? Отлично? И почему у вашего соперника 91.7%, хотя он проиграл?

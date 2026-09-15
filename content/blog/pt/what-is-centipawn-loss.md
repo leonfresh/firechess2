@@ -4,7 +4,7 @@ description: "A perda média de peões-centavos (ACPL) mede a qualidade dos lanc
 date: "2026-07-26"
 author: "FireChess Team"
 tags: ["análise", "fundamentos", "melhoria", "perda-de-peões-centavos"]
-canonical: https://firechess.com/pt/blog/what-is-centipawn-loss
+canonical: https://www.firechess.com/pt/blog/what-is-centipawn-loss
 ---
 
 Você acabou de terminar uma partida intensa de 45 minutos. Abre o tabuleiro de análise, roda o motor e lá está: **"Perda Média de Peões-Centavos: 72."**

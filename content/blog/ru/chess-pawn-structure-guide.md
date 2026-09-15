@@ -4,7 +4,7 @@ description: "Освойте пешечную структуру в шахмат
 date: "2026-07-29"
 author: "FireChess Team"
 tags: ["pawn-structure", "strategy", "middlegame", "endgame", "fundamentals"]
-canonical: https://firechess.com/ru/blog/chess-pawn-structure-guide
+canonical: https://www.firechess.com/ru/blog/chess-pawn-structure-guide
 ---
 
 Пешечная структура — это скелет вашей позиции. Каждая фигура, которую вы ставите, каждый план, который вы строите, каждый размен, который вы рассматриваете — всё проистекает из пешек. Однако большинство клубных игроков относятся к пешкам как к чему второстепенному, продвигая их когда «кажется правильным», и удивляются, почему их фигуры становятся пассивными, король — незащищённым, а рейтинг — застывшим.

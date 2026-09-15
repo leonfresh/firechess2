@@ -6,12 +6,12 @@ export const metadata: Metadata = {
   title: "Chess Time Controls — Bullet, Blitz, Rapid & Classical Guides",
   description:
     "How to play well in every time format: bullet (1+0, 2+1), blitz (3+0, 5+0), rapid (10+0, 15+10), and classical (30+0, 90+30). Tips, mistakes, opening advice, and improvement plans.",
-  alternates: { canonical: "https://firechess.com/time-controls" },
+  alternates: { canonical: "https://www.firechess.com/time-controls" },
   openGraph: {
     title: "Chess Time Control Guides | FireChess",
     description:
       "Master bullet, blitz, rapid, and classical chess — with format-specific tips, common mistakes, and improvement plans for each time control.",
-    url: "https://firechess.com/time-controls",
+    url: "https://www.firechess.com/time-controls",
     type: "website",
   },
   twitter: {
@@ -53,7 +53,7 @@ const FORMAT_COLORS: Record<
 };
 
 function JsonLd() {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
   const url = `${base}/time-controls`;
 
   const breadcrumb = {

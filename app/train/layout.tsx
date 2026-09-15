@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "Weakness Trainer | FireChess",
     description:
       "Targeted chess training based on your real game mistakes. Drill openings, tactics, endgames, and positional play.",
-    url: "https://firechess.com/train",
+    url: "https://www.firechess.com/train",
     type: "website",
   },
   twitter: {
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     description:
       "Targeted chess training based on your real game mistakes.",
   },
-  alternates: { canonical: "https://firechess.com/train" },
+  alternates: { canonical: "https://www.firechess.com/train" },
 };
 
 export default function TrainLayout({ children }: { children: React.ReactNode }) {

@@ -24,11 +24,11 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: `https://firechess.com/endgames/${guide.id}` },
+    alternates: { canonical: `https://www.firechess.com/endgames/${guide.id}` },
     openGraph: {
       title: `${guide.name} | FireChess Endgame Guide`,
       description,
-      url: `https://firechess.com/endgames/${guide.id}`,
+      url: `https://www.firechess.com/endgames/${guide.id}`,
       type: "article",
     },
     twitter: {
@@ -40,7 +40,7 @@ export async function generateMetadata({
 }
 
 function EndgameJsonLd({ guide }: { guide: EndgameGuide }) {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
   const url = `${base}/endgames/${guide.id}`;
 
   const article = {

@@ -4,7 +4,7 @@ description: "Lerne, deine Schachpartien wie ein 2000+ Spieler zu analysieren. S
 date: "2026-07-24"
 author: "FireChess Team"
 tags: ["analysis", "improvement", "game-review", "study-routine"]
-canonical: https://firechess.com/de/blog/how-to-review-chess-games
+canonical: https://www.firechess.com/de/blog/how-to-review-chess-games
 ---
 
 Du hast gerade eine Partie verloren, von der du dachtest, du gewinnst sie. Du weißt, du solltest sie analysieren — jeder Trainer sagt es, jeder Verbesserungsguide listet es als Schritt eins auf. Aber wenn du das Analysebrett öffnest, starrst du auf die Stellung nach Zug 30 und denkst: *und jetzt?*

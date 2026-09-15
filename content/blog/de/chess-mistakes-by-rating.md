@@ -4,7 +4,7 @@ description: "Sieh die exakten Patzer, Ungenauigkeiten und Gewohnheiten, die Spi
 date: "2026-07-29"
 author: "FireChess Team"
 tags: ["improvement", "mistakes", "rating", "tactics", "blunders"]
-canonical: https://firechess.com/de/blog/chess-mistakes-by-rating
+canonical: https://www.firechess.com/de/blog/chess-mistakes-by-rating
 ---
 
 Jede Wertungsstufe hat einen charakteristischen Fehler. Ein 900-Spieler läuft ins Scholars-Matt. Ein 1300-Spieler verfehlt das Griechische Geschenk-Opfer. Ein 1600-Spieler tauscht in ein verlorenes Endspiel, ohne es zu merken. Das sind keine zufälligen Fehler — es sind Muster — und [jedes hat eine spezifische Lösung](/blog/stop-repeating-chess-mistakes). Sie sind über Tausende von Partien bemerkenswert konsistent.

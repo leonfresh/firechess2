@@ -43,7 +43,7 @@ export async function generateMetadata({
       title: `${post.title} | FireChess Community`,
       description: post.prompt,
       type: "article",
-      url: `https://firechess.com/community/${post.slug}`,
+      url: `https://www.firechess.com/community/${post.slug}`,
     },
     twitter: {
       card: "summary_large_image",

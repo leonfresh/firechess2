@@ -7,12 +7,12 @@ export const metadata: Metadata = {
   title: "Chess Endgame Guides — Master King, Rook, and Pawn Endings",
   description:
     "Essential chess endgame theory: king and pawn endings, rook endgames (Lucena & Philidor), bishop vs knight, queen endgames, and knight endings. Step-by-step guides with FEN examples.",
-  alternates: { canonical: "https://firechess.com/endgames" },
+  alternates: { canonical: "https://www.firechess.com/endgames" },
   openGraph: {
     title: "Chess Endgame Guides | FireChess",
     description:
       "Master king-pawn endings, rook endgames, bishop vs knight, queen endgames, and knight endings with clear theory, key positions, and FEN examples.",
-    url: "https://firechess.com/endgames",
+    url: "https://www.firechess.com/endgames",
     type: "website",
   },
   twitter: {
@@ -32,7 +32,7 @@ const DIFFICULTY_COLORS: Record<string, { badge: string }> = {
 };
 
 function JsonLd() {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
   const url = `${base}/endgames`;
 
   const breadcrumb = {

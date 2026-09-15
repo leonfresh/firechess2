@@ -4,7 +4,7 @@ description: "Освойте ферзевый гамбит от расстано
 date: "2026-07-12"
 author: "FireChess Team"
 tags: ["chess openings", "queens gambit", "club players", "d4 openings", "chess improvement", "opening repertoire", "qgd", "qga"]
-canonical: https://firechess.com/ru/blog/queens-gambit-guide
+canonical: https://www.firechess.com/ru/blog/queens-gambit-guide
 ---
 
 Ферзевый гамбит — 1.d4 d5 2.c4 — один из старейших, наиболее уважаемых и эффективных дебютов в шахматах. Его played каждый чемпион мира от Стейница до Карлсена, и не зря: он immediately бросает вызов центру чёрных, не связывая себя рискованным атакующим планом.

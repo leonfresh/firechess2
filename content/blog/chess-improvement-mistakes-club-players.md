@@ -4,7 +4,7 @@ description: "The 7 chess improvement mistakes keeping you under 1600. See what'
 date: "2026-08-22"
 author: "FireChess Team"
 tags: ["chess improvement", "club players", "rating", "tactics", "study habits"]
-canonical: https://firechess.com/blog/chess-improvement-mistakes-club-players
+canonical: https://www.firechess.com/blog/chess-improvement-mistakes-club-players
 ---
 
 # Chess Improvement Mistakes: 7 Things Keeping You Under 1600

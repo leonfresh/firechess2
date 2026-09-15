@@ -8,14 +8,14 @@ export const metadata: Metadata = {
     title: "Chess Coach — Instructional Game Narration | FireChess",
     description:
       "Move-by-move chess coaching with Stockfish analysis. Understand every tactic, pattern, and positional idea as they happen.",
-    url: "https://firechess.com/coach",
+    url: "https://www.firechess.com/coach",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "Chess Coach — Instructional Game Narration | FireChess",
   },
-  alternates: { canonical: "https://firechess.com/coach" },
+  alternates: { canonical: "https://www.firechess.com/coach" },
 };
 
 export default function CoachLayout({

@@ -40,6 +40,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: "https://firechess.com/sitemap.xml",
+    sitemap: "https://www.firechess.com/sitemap.xml",
   };
 }

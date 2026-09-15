@@ -10,7 +10,7 @@ tags:
   - intermediate
   - chess improvement
   - blindfold
-canonical: https://firechess.com/pt/blog/chess-visualisation-training-3-moves-ahead
+canonical: https://www.firechess.com/pt/blog/chess-visualisation-training-3-moves-ahead
 ---
 
 # Treinamento de Visualizacao no Xadrez — Como Ver 3 Lances a Frente e Construir Visao de Tabuleiro

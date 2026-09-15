@@ -139,7 +139,7 @@ export function OpeningEmbedButton({
   const [open, setOpen] = useState(false);
 
   const iframeCode = `<iframe
-  src="https://firechess.com/embed/opening/${slug}"
+  src="https://www.firechess.com/embed/opening/${slug}"
   width="400"
   height="500"
   frameborder="0"

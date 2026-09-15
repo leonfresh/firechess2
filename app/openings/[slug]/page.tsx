@@ -10,6 +10,16 @@ export function generateStaticParams() {
   return OPENING_GUIDES.map((g) => ({ slug: g.id }));
 }
 
+/**
+ * Reject unknown slugs at the router level. Without this, `notFound()` inside the
+ * streamed render fires AFTER the 200 status has been sent (this route has a
+ * loading.tsx, so it streams) — every junk /openings/<anything> URL answered
+ * HTTP 200 with an empty body: a soft 404 that Google can index, wasting crawl
+ * budget and diluting the real guides. The other [slug] routes 404 correctly
+ * precisely because they have no loading.tsx.
+ */
+export const dynamicParams = false;
+
 /* ── Per-page metadata ── */
 export async function generateMetadata({
   params,
@@ -29,7 +39,7 @@ export async function generateMetadata({
     openGraph: {
       title: `${guide.name} | FireChess Opening Guide`,
       description,
-      url: `https://firechess.com/openings/${guide.id}`,
+      url: `https://www.firechess.com/openings/${guide.id}`,
       type: "article",
     },
     twitter: {
@@ -37,13 +47,13 @@ export async function generateMetadata({
       title: `${guide.name} Chess Opening Guide`,
       description,
     },
-    alternates: { canonical: `https://firechess.com/openings/${guide.id}` },
+    alternates: { canonical: `https://www.firechess.com/openings/${guide.id}` },
   };
 }
 
 /* ── JSON-LD structured data ── */
 function OpeningJsonLd({ guide }: { guide: OpeningGuide }) {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
   const url = `${base}/openings/${guide.id}`;
 
   const article = {

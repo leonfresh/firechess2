@@ -4,7 +4,7 @@ description: "Aprenda o que perda media de centopea significa no xadrez, como o 
 date: "2026-08-14"
 author: "FireChess Team"
 tags: ["centipawn loss", "chess improvement", "game analysis", "ACPL", "move quality"]
-canonical: https://firechess.com/pt/blog/average-centipawn-loss-guide
+canonical: https://www.firechess.com/pt/blog/average-centipawn-loss-guide
 ---
 
 Voce acabou de jogar uma partida de 40 lances e o motor diz que seu ACPL foi 67. Isso e bom? Ruim? Medio para seu rating? A maioria dos jogadores de clube ve numeros de perda de centopea na sua tela de analise e nao faz ideia do que significam — so sabem que menor e melhor. Mas entender o ACPL e uma das formas mais rapidas de diagnosticar exatamente onde suas partidas erram, porque divide cada lance em uma nota de qualidade mensuravel.

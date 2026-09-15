@@ -4,7 +4,7 @@ description: "Chaos Chess ist eine roguelike Schachvariante, in der du alle 5 Z�
 date: "2026-06-30"
 author: "FireChess Team"
 tags: ["chaos chess", "chaos chess spielen", "schachvarianten", "roguelike schach", "chaos chess regeln", "chaos chess strategie", "chaos chess figurenwerte"]
-canonical: https://firechess.com/de/blog/how-to-play-chaos-chess
+canonical: https://www.firechess.com/de/blog/how-to-play-chaos-chess
 ---
 
 Wenn du nach **Chaos Chess** gesucht hast, hast du wahrscheinlich einen Screenshot eines Schachbretts mit einem Drachen darauf gesehen und gedacht „Moment, was passiert hier gerade." Verständlich. Lass uns das beheben.

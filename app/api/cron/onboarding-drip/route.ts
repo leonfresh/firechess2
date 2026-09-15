@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
   const resendKey = process.env.AUTH_RESEND_KEY;
   const from = process.env.AUTH_RESEND_FROM ?? "FireChess <noreply@firechess.com>";
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://firechess.com";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.firechess.com";
 
   if (!resendKey) {
     return NextResponse.json({ error: "No RESEND key configured" }, { status: 500 });

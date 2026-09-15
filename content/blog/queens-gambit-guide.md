@@ -4,7 +4,7 @@ description: "Master the Queen's Gambit from setup to endgame — covers QGA, QG
 date: "2026-07-12"
 author: "FireChess Team"
 tags: ["chess openings", "queens gambit", "club players", "d4 openings", "chess improvement", "opening repertoire", "qgd", "qga"]
-canonical: https://firechess.com/blog/queens-gambit-guide
+canonical: https://www.firechess.com/blog/queens-gambit-guide
 ---
 
 The Queen's Gambit — 1.d4 d5 2.c4 — is one of the oldest, most respected, and most effective openings in chess. It's been played by every world champion from Steinitz to Carlsen, and for good reason: it challenges Black's centre immediately without committing to a risky attacking plan.

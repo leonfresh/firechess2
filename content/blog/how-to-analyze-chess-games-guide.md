@@ -4,7 +4,7 @@ description: "Learn how to analyze your chess games with a structured 6-step pro
 date: "2026-08-09"
 author: "FireChess Team"
 tags: ["game analysis", "chess improvement", "club players", "study methods", "blunders"]
-canonical: https://firechess.com/blog/how-to-analyze-chess-games-guide
+canonical: https://www.firechess.com/blog/how-to-analyze-chess-games-guide
 ---
 
 # How to Analyze Your Chess Games: A Club Player's Step-by-Step Guide

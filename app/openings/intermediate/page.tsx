@@ -6,12 +6,12 @@ export const metadata: Metadata = {
   title: "Intermediate Chess Openings — Build a Serious Repertoire",
   description:
     "Intermediate chess openings including the Sicilian Defense, King's Gambit, Ruy López, French Defense and more. Deepen your repertoire with rich strategic ideas.",
-  alternates: { canonical: "https://firechess.com/openings/intermediate" },
+  alternates: { canonical: "https://www.firechess.com/openings/intermediate" },
   openGraph: {
     title: "Intermediate Chess Openings | FireChess",
     description:
       "Level up with intermediate openings. Covers Sicilian, Ruy Lopez, French, King's Gambit, Queen's Indian and more. Ideal for players rated 1200–1800.",
-    url: "https://firechess.com/openings/intermediate",
+    url: "https://www.firechess.com/openings/intermediate",
     type: "website",
   },
   twitter: {
@@ -28,7 +28,7 @@ const ECO_BADGE =
   "rounded border border-white/10 bg-white/[0.05] px-2 py-0.5 font-mono text-xs text-stone-400";
 
 function JsonLd() {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
   const url = `${base}/openings/intermediate`;
 
   const breadcrumb = {

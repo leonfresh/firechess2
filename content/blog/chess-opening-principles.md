@@ -4,7 +4,7 @@ description: "The 7 chess opening principles club players violate most. Real pos
 date: "2026-07-25"
 author: "FireChess Team"
 tags: ["openings", "fundamentals", "improvement", "principles", "club-players"]
-canonical: https://firechess.com/blog/chess-opening-principles
+canonical: https://www.firechess.com/blog/chess-opening-principles
 ---
 
 You know the feeling. You're 8 moves into a game, and something already feels wrong. Your opponent has pieces pointed at your king, your rooks are staring at each other across an empty board, and you're not sure where things went wrong.

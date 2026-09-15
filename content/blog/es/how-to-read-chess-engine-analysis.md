@@ -4,7 +4,7 @@ description: "Aprende a leer el analisis de motor de ajedrez — puntuaciones de
 date: "2026-07-27"
 author: "FireChess Team"
 tags: ["analisis", "mejora", "motor", "stockfish", "fundamentos"]
-canonical: https://firechess.com/es/blog/how-to-read-chess-engine-analysis
+canonical: https://www.firechess.com/es/blog/how-to-read-chess-engine-analysis
 ---
 
 Acabas de subir una partida a FireChess en [/analyze](/analyze). Las lineas del motor se iluminan. Un numero parpadea: **+1.8**. Una flecha senala de e2 a e4. La lista de movimientos muestra **"depth 22"** junto a una secuencia de movimientos que no entiendes.

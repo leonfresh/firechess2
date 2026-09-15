@@ -301,7 +301,7 @@ export default function AdminAffiliatesPage() {
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(
-                            `https://firechess.com/?ref=${a.refSlug}`,
+                            `https://www.firechess.com/?ref=${a.refSlug}`,
                           );
                         }}
                         className="mt-0.5 flex items-center gap-1 rounded bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 font-mono text-[11px] text-violet-400 hover:bg-violet-500/20 transition-colors"

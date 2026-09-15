@@ -4,7 +4,7 @@ description: "Wie lange dauert es, gut im Schach zu werden? Realistische Zeitlei
 date: "2026-07-30"
 author: "FireChess Team"
 tags: ["improvement", "rating", "study-methods", "beginner", "timeline"]
-canonical: https://firechess.com/de/blog/how-long-to-get-good-at-chess
+canonical: https://www.firechess.com/de/blog/how-long-to-get-good-at-chess
 ---
 
 Jeder Schachspieler stellt dieselbe Frage: *Wie lange, bis ich wirklich gut bin?* Die ehrliche Antwort ist, dass „gut" auf jeder Stufe etwas anderes bedeutet — und die Zeitleiste hängt fast ausschließlich davon ab, *wie* du lernst, nicht nur wie viel. Ein Spieler, der seine eigenen Partien mit einem Motor analysiert, verbessert sich dreimal schneller als einer, der nur Blitz spielt. Das wissen wir, weil FireChess-Scans das Muster immer wieder zeigen: Spieler, die aktiv ihren [Centipawn-Verlust](/blog/what-is-centipawn-loss) analysieren, verbessern sich doppelt so schnell wie diejenigen, die es nicht tun.

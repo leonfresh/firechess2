@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "Changelog — What's New | FireChess",
     description:
       "Latest FireChess features, improvements, bug fixes, and design updates.",
-    url: "https://firechess.com/changelog",
+    url: "https://www.firechess.com/changelog",
     type: "website",
   },
   twitter: {
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     description:
       "Latest FireChess features, improvements, and updates.",
   },
-  alternates: { canonical: "https://firechess.com/changelog" },
+  alternates: { canonical: "https://www.firechess.com/changelog" },
 };
 
 export default function ChangelogLayout({ children }: { children: React.ReactNode }) {

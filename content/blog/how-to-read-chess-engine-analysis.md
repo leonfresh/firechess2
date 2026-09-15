@@ -4,7 +4,7 @@ description: "Learn to read chess engine analysis — eval scores, depth, princi
 date: "2026-08-22"
 author: "FireChess Team"
 tags: ["analysis", "improvement", "engine", "stockfish", "fundamentals"]
-canonical: https://firechess.com/blog/how-to-read-chess-engine-analysis
+canonical: https://www.firechess.com/blog/how-to-read-chess-engine-analysis
 ---
 
 You've just uploaded a game to FireChess at [/analyze](/analyze). The engine lines light up. A number flashes: **+1.8**. An arrow points from e2 to e4. The move list shows **"depth 22"** next to a sequence of moves you don't understand.

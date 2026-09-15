@@ -4,7 +4,7 @@ description: "Track your chess improvement with ACPL, accuracy, puzzle ratings, 
 date: "2026-08-05"
 author: "FireChess Team"
 tags: ["improvement", "analysis", "centipawn-loss", "accuracy", "fundamentals"]
-canonical: https://firechess.com/blog/chess-improvement-metrics-to-track
+canonical: https://www.firechess.com/blog/chess-improvement-metrics-to-track
 ---
 
 You study openings. You solve tactics puzzles. You play rapid games and review them afterward. But three months later, your rating has barely moved.

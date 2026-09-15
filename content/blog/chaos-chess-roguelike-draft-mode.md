@@ -219,7 +219,7 @@ Chaos Chess isn't just a casual sandbox. It has a full **ELO rating system** sta
 
 There are five time controls — Unlimited through Bullet, Blitz, and Rapid — and clocks keep running through the draft phases. Fast drafters have an edge.
 
-The **Chaos Chess Leaderboard** at [firechess.com/leaderboard/chaos](https://firechess.com/leaderboard/chaos) tracks the top 50 players with rating tier badges. The tiers mirror the modifier rarities: 1200 is Challenger, 1600 is Expert, 2000+ is Master tier.
+The **Chaos Chess Leaderboard** at [firechess.com/leaderboard/chaos](https://www.firechess.com/leaderboard/chaos) tracks the top 50 players with rating tier badges. The tiers mirror the modifier rarities: 1200 is Challenger, 1600 is Expert, 2000+ is Master tier.
 
 ## Why Draft Modes Work
 
@@ -311,7 +311,7 @@ Stockfish evaluates positions using standard chess rules, so it can't directly r
 
 ## Try It
 
-Chaos Chess is live at [firechess.com/chaos](https://firechess.com/chaos). No account required for solo play against Stockfish. For rated multiplayer you'll need to sign in, but that takes 10 seconds with a magic link.
+Chaos Chess is live at [firechess.com/chaos](https://www.firechess.com/chaos). No account required for solo play against Stockfish. For rated multiplayer you'll need to sign in, but that takes 10 seconds with a magic link.
 
 If you've ever felt like chess needed a shake-up but didn't want to abandon the game you love — this is for you.
 

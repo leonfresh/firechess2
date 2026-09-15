@@ -4,7 +4,7 @@ description: "Meistere die Schach-Bauernstruktur mit 8 Schlüsselmustern. Echte 
 date: "2026-07-29"
 author: "FireChess Team"
 tags: ["pawn-structure", "strategy", "middlegame", "endgame", "fundamentals"]
-canonical: https://firechess.com/de/blog/chess-pawn-structure-guide
+canonical: https://www.firechess.com/de/blog/chess-pawn-structure-guide
 ---
 
 Deine Bauernstruktur ist das Skelett deiner Stellung. Jede Figur, die du platzierst, jeder Plan, den du machst, jeder Abtausch, den du in Betracht ziehst — alles fließt aus den Bauern. Doch die meisten Vereinsspieler behandeln Bauern als Nachgedanken, schieben sie wann immer sie sich „richtig anfühlen" und fragen sich, warum ihre Figuren passiv werden, der König unsicher ist und die Wertung feststeckt.

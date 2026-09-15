@@ -24,12 +24,12 @@ export async function generateMetadata({
     title,
     description,
     alternates: {
-      canonical: `https://firechess.com/mistakes/${m.id}`,
+      canonical: `https://www.firechess.com/mistakes/${m.id}`,
     },
     openGraph: {
       title: `${m.name} | Chess Mistake Guide — FireChess`,
       description,
-      url: `https://firechess.com/mistakes/${m.id}`,
+      url: `https://www.firechess.com/mistakes/${m.id}`,
       type: "article",
     },
     twitter: {
@@ -41,7 +41,7 @@ export async function generateMetadata({
 }
 
 function MistakeJsonLd({ m }: { m: ChessMistake }) {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
   const url = `${base}/mistakes/${m.id}`;
 
   const article = {

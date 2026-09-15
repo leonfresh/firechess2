@@ -4,7 +4,7 @@ description: "Пошаговое руководство по подготовк�
 date: "2026-08-13"
 author: "FireChess Team"
 tags: ["tournament preparation", "chess improvement", "club players", "game analysis", "opening preparation"]
-canonical: https://firechess.com/ru/blog/how-to-prepare-for-chess-tournament
+canonical: https://www.firechess.com/ru/blog/how-to-prepare-for-chess-tournament
 ---
 
 Вы зарегистрировались на турнир. Maybe это ваш первый оффлайн-турнир, или maybe вы played десяток, но never чувствовали properly подготовленным. В любом случае, один и тот же вопрос hits: **что я actually должен делать перед первым туром?**

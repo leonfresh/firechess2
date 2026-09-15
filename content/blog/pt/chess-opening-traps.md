@@ -4,7 +4,7 @@ description: "Aprenda as 5 armadilhas de abertura de xadrez em que jogadores de 
 date: "2026-07-26"
 author: "FireChess Team"
 tags: ["aberturas", "armadilhas", "táticas", "iniciante", "melhoria"]
-canonical: https://firechess.com/pt/blog/chess-opening-traps
+canonical: https://www.firechess.com/pt/blog/chess-opening-traps
 ---
 
 Você estudou suas aberturas. Você conhece os primeiros dez lances da Italiana de cor. Então no lance quatro, seu oponente joga algo estranho — um salto de cavalo que não parece certo, um avanço de peão que parece fraco — e você pensa: *"Isso é um erro. Vou punir."*

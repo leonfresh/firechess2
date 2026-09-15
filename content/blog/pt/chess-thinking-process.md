@@ -4,7 +4,7 @@ description: "Aprenda o processo de pensamento no xadrez para avaliar posicoes, 
 date: "2026-08-03"
 author: "FireChess Team"
 tags: ["chess improvement", "positional play", "calculation", "middlegame", "thinking process"]
-canonical: https://firechess.com/pt/blog/chess-thinking-process
+canonical: https://www.firechess.com/pt/blog/chess-thinking-process
 ---
 
 # Processo de Pensamento no Xadrez: Como Avaliar Posicoes e Encontrar o Lance Certo

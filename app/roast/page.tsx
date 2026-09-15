@@ -5104,7 +5104,7 @@ export default function RoastPage() {
                         const diff = selectedBracket !== null ? Math.abs(selectedBracket - getEloBracketIdx(game.avgElo)) : 99;
                         const emoji = diff === 0 ? "🎯" : diff === 1 ? "🔥" : "💀";
                         const tweet = `${emoji} Roast the Elo — I guessed ${bracket?.label ?? "?"} and the real Elo was ${game.avgElo}!\n\n💀 ${blunders} blunders · ❌ ${mistakes} mistakes\n\n🐸 Can you do better?`;
-                        const url = game.id ? `https://firechess.com/roast?game=${game.id}` : "https://firechess.com/roast";
+                        const url = game.id ? `https://www.firechess.com/roast?game=${game.id}` : "https://www.firechess.com/roast";
                         return `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweet)}&url=${encodeURIComponent(url)}`;
                       })()}
                       target="_blank"
@@ -5125,7 +5125,7 @@ export default function RoastPage() {
                           `💀 ${blunders} blunders · ❌ ${mistakes} mistakes · ⚠️ ${inaccuracies} inaccuracies`,
                           `🐸 Try it yourself:`,
                         ].join("\n");
-                        const url = game.id ? `https://firechess.com/roast?game=${game.id}` : "https://firechess.com/roast";
+                        const url = game.id ? `https://www.firechess.com/roast?game=${game.id}` : "https://www.firechess.com/roast";
                         // Use native share on mobile, clipboard fallback on desktop
                         if (typeof navigator.share === "function") {
                           try {
@@ -5152,7 +5152,7 @@ export default function RoastPage() {
                     {game.id && (
                       <button
                         onClick={() => {
-                          const url = `https://firechess.com/roast?game=${game.id}`;
+                          const url = `https://www.firechess.com/roast?game=${game.id}`;
                           navigator.clipboard.writeText(url).then(() => {
                             setShareText("Link copied!");
                             setTimeout(() => setShareText(null), 2000);

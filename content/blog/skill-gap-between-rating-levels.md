@@ -4,7 +4,7 @@ description: "Use ACPL and accuracy data to find the exact skill gaps between ch
 date: "2026-08-11"
 author: "FireChess Team"
 tags: ["improvement", "centipawn-loss", "accuracy", "rating", "analysis"]
-canonical: https://firechess.com/blog/skill-gap-between-rating-levels
+canonical: https://www.firechess.com/blog/skill-gap-between-rating-levels
 ---
 
 You've probably heard the advice: "study tactics to get past 1200," "learn endgames to reach 1600," "work on calculation for 1800." It sounds logical. It's also vague enough to be useless. *Which* tactics? *Which* endgames? And how do you know that's actually what's holding you back?

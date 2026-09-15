@@ -12,7 +12,7 @@ import { GM_PROFILES } from "@/lib/gm-profiles";
 import { GLOSSARY_TERMS } from "@/lib/chess-glossary";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
 
   const blogPosts = getAllPosts().map((post) => ({
     url: `${base}/blog/${post.slug}`,

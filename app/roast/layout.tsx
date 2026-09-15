@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "Guess the Elo — Chess Roast Mode | FireChess",
     description:
       "Watch real games and guess the Elo. Get hilarious roast commentary on blunders and brilliant moves.",
-    url: "https://firechess.com/roast",
+    url: "https://www.firechess.com/roast",
     type: "website",
   },
   twitter: {
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     description:
       "Guess the Elo and get roasted. A fun way to train your chess intuition.",
   },
-  alternates: { canonical: "https://firechess.com/roast" },
+  alternates: { canonical: "https://www.firechess.com/roast" },
 };
 
 export default function RoastLayout({ children }: { children: React.ReactNode }) {

@@ -310,6 +310,6 @@ A: Yes. Every tree view generates a shareable link. You can send the full tree o
 
 ## Try It
 
-My Opening Tree is at [firechess.com/my-openings](https://firechess.com/my-openings). It's free to use — enter any Lichess username and the tree builds in under 30 seconds. Chess.com support is included too. Browse the full [openings database](/openings/) for every opening in our catalog, or learn a systematic approach to [finding your opening weaknesses](/blog/how-to-find-opening-weaknesses/).
+My Opening Tree is at [firechess.com/my-openings](https://www.firechess.com/my-openings). It's free to use — enter any Lichess username and the tree builds in under 30 seconds. Chess.com support is included too. Browse the full [openings database](/openings/) for every opening in our catalog, or learn a systematic approach to [finding your opening weaknesses](/blog/how-to-find-opening-weaknesses/).
 
 If you've wanted a clearer picture of your actual opening repertoire — not the one you *think* you play, but the one you actually play — this is it.

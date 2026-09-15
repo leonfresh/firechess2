@@ -1255,7 +1255,7 @@ function ShareOnXButton({
     `See my full report:`,
   );
   const url = encodeURIComponent(
-    typeof window !== "undefined" ? window.location.href : "https://firechess.com",
+    typeof window !== "undefined" ? window.location.href : "https://www.firechess.com",
   );
   return (
     <a

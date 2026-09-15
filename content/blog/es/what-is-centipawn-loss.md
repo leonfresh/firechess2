@@ -4,7 +4,7 @@ description: "El promedio de pérdida de centipeones (ACPL) mide la calidad de l
 date: "2026-07-26"
 author: "FireChess Team"
 tags: ["análisis", "fundamentos", "mejora", "pérdida-centipeones"]
-canonical: https://firechess.com/es/blog/what-is-centipawn-loss
+canonical: https://www.firechess.com/es/blog/what-is-centipawn-loss
 ---
 
 Acabas de terminar una partida intensa de 45 minutos. Abres el tablero de análisis, ejecutas el motor y ahí está: **"Pérdida promedio de centipeones: 72."**

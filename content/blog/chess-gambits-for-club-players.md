@@ -4,7 +4,7 @@ description: "Learn 5 practical chess gambits for club players. Sound sacrifices
 date: "2026-08-01"
 author: "FireChess Team"
 tags: ["openings", "gambits", "improvement", "tactics", "club-players"]
-canonical: https://firechess.com/blog/chess-gambits-for-club-players
+canonical: https://www.firechess.com/blog/chess-gambits-for-club-players
 ---
 
 You're White. You've played 1.e4, your opponent replied 1...c5 — the Sicilian Defense. You know the theory says the Sicilian leads to complex, double-edged positions, but you also know that your opponent probably has more prep than you in the main lines. What if you could sidestep all that theory, sacrifice a pawn, and get a direct attack?

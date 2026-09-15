@@ -10,7 +10,7 @@ tags:
   - intermediate
   - chess improvement
   - blindfold
-canonical: https://firechess.com/ru/blog/chess-visualisation-training-3-moves-ahead
+canonical: https://www.firechess.com/ru/blog/chess-visualisation-training-3-moves-ahead
 ---
 
 # Тренировка визуализации в шахматах — Как видеть на 3 хода вперёд и развить зрение доски

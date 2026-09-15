@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     title: "Chaos Chess — Free Online Chess Variant with Power-ups",
     description:
       "Draft permanent piece power-ups every 5 turns. Knooks, ghost rooks, nuclear queens. Play free vs AI or friends — no download needed.",
-    url: "https://firechess.com/chaos",
+    url: "https://www.firechess.com/chaos",
     siteName: "FireChess",
     type: "website",
     locale: "en_US",
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
       "Both players draft permanent piece power-ups every 5 turns. Free to play vs AI or friends.",
   },
   alternates: {
-    canonical: "https://firechess.com/chaos",
+    canonical: "https://www.firechess.com/chaos",
   },
 };
 

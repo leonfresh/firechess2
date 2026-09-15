@@ -24,11 +24,11 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: `https://firechess.com/players/${gm.id}` },
+    alternates: { canonical: `https://www.firechess.com/players/${gm.id}` },
     openGraph: {
       title: `${gm.name} | FireChess Player Profiles`,
       description,
-      url: `https://firechess.com/players/${gm.id}`,
+      url: `https://www.firechess.com/players/${gm.id}`,
       type: "article",
     },
     twitter: {
@@ -40,7 +40,7 @@ export async function generateMetadata({
 }
 
 function PlayerJsonLd({ gm }: { gm: GmProfile }) {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
   const url = `${base}/players/${gm.id}`;
 
   const article = {

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "YouTube Creator Partnership | FireChess",
     description:
       "Get free FireChess Pro for your channel. Analyze games on stream, give viewers a promo code, and earn 30% recurring commission.",
-    url: "https://firechess.com/youtubers",
+    url: "https://www.firechess.com/youtubers",
     type: "website",
   },
   twitter: {
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
       "Get free FireChess Pro for your channel. Analyze games on stream, give viewers a promo code, and earn 30% recurring commission.",
   },
   alternates: {
-    canonical: "https://firechess.com/youtubers",
+    canonical: "https://www.firechess.com/youtubers",
   },
 };
 

@@ -4,7 +4,7 @@ description: "Le Chaos Chess est une variante roguelike des échecs où vous cho
 date: "2026-06-30"
 author: "FireChess Team"
 tags: ["chaos chess", "comment jouer au chaos chess", "variantes d'échecs", "échecs roguelike", "règles du chaos chess", "stratégie chaos chess", "valeurs des pièces chaos chess"]
-canonical: https://firechess.com/fr/blog/how-to-play-chaos-chess
+canonical: https://www.firechess.com/fr/blog/how-to-play-chaos-chess
 ---
 
 Si vous avez cherché **Chaos Chess**, vous avez probablement vu une capture d'écran d'un échiquier avec un dragon dessus et pensé « attendez, qu'est-ce qui se passe ici ». Normal. Corrigeons ça.

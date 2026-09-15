@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   const from =
     process.env.AUTH_RESEND_FROM ?? "FireChess <noreply@firechess.com>";
   const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL ?? "https://firechess.com";
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://www.firechess.com";
 
   // Generate an unsubscribe token so we can build a one-click link.
   const unsubscribeToken = crypto.randomUUID();
@@ -185,7 +185,7 @@ function htmlPage(title: string, body: string): string {
 <div class="card">
   <h1>🔥 ${title}</h1>
   <p>${body}</p>
-  <a href="https://firechess.com">Back to FireChess</a>
+  <a href="https://www.firechess.com">Back to FireChess</a>
 </div>
 </body></html>`;
 }

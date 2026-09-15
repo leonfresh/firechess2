@@ -4,7 +4,7 @@ description: "Que signifie réellement votre score de précision aux échecs ? C
 date: "2026-07-25"
 author: "FireChess Team"
 tags: ["analyse", "fondamentaux", "perte-centipions"]
-canonical: https://firechess.com/fr/blog/chess-accuracy-score-explained
+canonical: https://www.firechess.com/fr/blog/chess-accuracy-score-explained
 ---
 
 Vous terminez une partie et le rapport de précision indique 94,2%. C'est bien ? Excellent ? Et pourquoi votre adversaire affiche 91,7% alors qu'il a perdu ?

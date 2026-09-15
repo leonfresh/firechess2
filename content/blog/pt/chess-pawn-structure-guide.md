@@ -4,7 +4,7 @@ description: "Domine a estrutura de peoes no xadrez com 8 padroes essenciais. Ve
 date: "2026-07-29"
 author: "FireChess Team"
 tags: ["pawn-structure", "strategy", "middlegame", "endgame", "fundamentals"]
-canonical: https://firechess.com/pt/blog/chess-pawn-structure-guide
+canonical: https://www.firechess.com/pt/blog/chess-pawn-structure-guide
 ---
 
 A estrutura de peoes da sua partida de xadrez e o esqueleto da sua posicao. Cada peca que voce coloca, cada plano que voce faz, cada troca que voce considera — tudo flui a partir dos peoes. No entanto, a maioria dos jogadores de clube trata os peoes como reflexoes tardias, avancando-os sempre que "parece certo" e se perguntando por que suas pecas acabam passivas, seu rei inseguro e seu rating travado.

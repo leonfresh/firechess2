@@ -4,7 +4,7 @@ description: "Aprenda a ler a analise de motor de xadrez — pontuacoes de avali
 date: "2026-07-27"
 author: "FireChess Team"
 tags: ["analysis", "improvement", "engine", "stockfish", "fundamentals"]
-canonical: https://firechess.com/pt/blog/how-to-read-chess-engine-analysis
+canonical: https://www.firechess.com/pt/blog/how-to-read-chess-engine-analysis
 ---
 
 Voce acabou de enviar uma partida para a FireChess em [/analyze](/analyze). As linhas do motor se acendem. Um numero pisca: **+1.8**. Uma seta aponta de e2 para e4. A lista de lances mostra **"depth 22"** ao lado de uma sequencia de lances que voce nao entende.

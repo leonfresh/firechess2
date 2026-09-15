@@ -4,7 +4,7 @@ description: "Научитесь анализировать свои шахма�
 date: "2026-07-24"
 author: "FireChess Team"
 tags: ["analysis", "improvement", "game-review", "study-routine"]
-canonical: https://firechess.com/ru/blog/how-to-review-chess-games
+canonical: https://www.firechess.com/ru/blog/how-to-review-chess-games
 ---
 
 Вы только что проиграли партию, в которой чувствовали, что побеждаете. Вы знаете, что должны её разобрать — каждый тренер говорит об этом, каждое руководство по улучшению ставит это первым шагом. Но когда вы открываете аналитическую доску, вы смотрите на позицию после 30-го хода и думаете: *и что теперь?*

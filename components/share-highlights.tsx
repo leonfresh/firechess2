@@ -59,7 +59,7 @@ export function ShareHighlights({ reportId, result, reportMeta }: {
 
   if (cards.length === 0) return null;
 
-  const shareUrl = `https://firechess.com/report/${reportId}`;
+  const shareUrl = `https://www.firechess.com/report/${reportId}`;
   const shareText = reportMeta?.vibeTitle
     ? `My FireChess report: "${reportMeta.vibeTitle}" — ${(reportMeta.estimatedAccuracy ?? 0).toFixed(0)}% accuracy across ${result?.gamesAnalyzed ?? 0} games`
     : `My FireChess chess analysis report`;
@@ -174,10 +174,10 @@ export function ShareHighlights({ reportId, result, reportMeta }: {
         <p className="text-[11px] font-semibold uppercase tracking-wider text-[#565061] mb-2">Embed on your site</p>
         <div className="flex items-center gap-2">
           <code className="flex-1 rounded-lg border border-[#1e1a24] bg-black/30 px-3 py-2 text-[11px] font-mono text-[#8d8696] break-all select-all">
-            {`<iframe src="https://firechess.com/embed/report/${reportId}" width="400" height="380" frameborder="0" loading="lazy"></iframe>`}
+            {`<iframe src="https://www.firechess.com/embed/report/${reportId}" width="400" height="380" frameborder="0" loading="lazy"></iframe>`}
           </code>
           <button type="button" onClick={async () => {
-            const code = `<iframe src="https://firechess.com/embed/report/${reportId}" width="400" height="380" frameborder="0" loading="lazy"></iframe>`;
+            const code = `<iframe src="https://www.firechess.com/embed/report/${reportId}" width="400" height="380" frameborder="0" loading="lazy"></iframe>`;
             try { await navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {}
           }}
             className="shrink-0 rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.05] px-3 py-2 text-[11px] font-semibold text-[#f0edf2] hover:bg-[#1e1a24] transition-colors">

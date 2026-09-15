@@ -297,7 +297,7 @@ Here's a practical plan to make the London System a permanent, high-scoring part
 
 - **Day 8-9**: Study the London vs 1...d5 (main line with the e4 plan). Practice against a computer at your level.
 - **Day 10-11**: Study the London vs the KID setup (...g6, ...Bg7). Practice the h4-h5 attack.
-- **Day 12-14**: Play 15 rapid games. After each game, analyse with the [FireChess analysis tool](https://firechess.com/) to check your London setup accuracy and find improvements.
+- **Day 12-14**: Play 15 rapid games. After each game, analyse with the [FireChess analysis tool](https://www.firechess.com/) to check your London setup accuracy and find improvements.
 
 ### Week 3: Learn the Traps and Jobava
 
@@ -323,7 +323,7 @@ Remember these key takeaways:
 - **Use the Jobava for variety**: 1.d4 Nf6 2.Nc3 d5 3.Bf4 when you want sharper positions
 - **Study the endgames**: the London's characteristic pawn structure leads to distinct endgame patterns that you can learn faster than your opponents
 
-Ready to put your London System into practice? Use the [FireChess analysis tool](https://firechess.com/) to analyse your games and track your opening accuracy with our [chess accuracy score](/blog/chess-accuracy-score-explained). And check out our guides on [chess middlegame strategy](/blog/chess-middlegame-strategy-finding-a-plan), [essential chess tactics](/blog/chess-tactics-every-player-should-know), and [how to analyse your chess games effectively](/blog/how-to-analyze-chess-games) to round out your game.
+Ready to put your London System into practice? Use the [FireChess analysis tool](https://www.firechess.com/) to analyse your games and track your opening accuracy with our [chess accuracy score](/blog/chess-accuracy-score-explained). And check out our guides on [chess middlegame strategy](/blog/chess-middlegame-strategy-finding-a-plan), [essential chess tactics](/blog/chess-tactics-every-player-should-know), and [how to analyse your chess games effectively](/blog/how-to-analyze-chess-games) to round out your game.
 
 The London System is waiting. Learn it, play it, and watch your rating climb.
 

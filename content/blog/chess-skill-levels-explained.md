@@ -4,7 +4,7 @@ description: "What really changes as you climb the chess rating ladder? We break
 date: "2026-08-10"
 author: "FireChess Team"
 tags: ["chess improvement", "rating", "skill levels", "club players"]
-canonical: https://firechess.com/blog/chess-skill-levels-explained
+canonical: https://www.firechess.com/blog/chess-skill-levels-explained
 ---
 
 Every club player has stared at a higher-rated opponent's game and thought: "What do they see that I don't?" The gap between 1200 and 1800 isn't just a number — it's a completely different way of processing the chessboard. A 1200 sees pieces. A 1500 sees patterns. An 1800 sees plans. A 2000 sees all of it and still calculates three moves deeper than you.

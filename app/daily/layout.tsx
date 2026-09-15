@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description:
     "A short daily training session tailored to your weaknesses — puzzles and drills drawn from your own games. Build a streak and improve every day.",
   robots: { index: false, follow: false },
-  alternates: { canonical: "https://firechess.com/daily" },
+  alternates: { canonical: "https://www.firechess.com/daily" },
 };
 
 export default function DailyLayout({

@@ -4,7 +4,7 @@ description: "От Torpedo Pawns до Nuclear Queen и Railgun — мы ранж
 date: "2026-07-16"
 author: "FireChess Team"
 tags: ["chaos chess", "модификаторы шахмат", "шахматная стратегия", "torpedo pawns", "nuclear queen", "the amazon", "рейтинг chaos chess", "шахматные вариации", "chaos режим"]
-canonical: https://firechess.com/ru/blog/best-chaos-chess-modifiers-ranked
+canonical: https://www.firechess.com/ru/blog/best-chaos-chess-modifiers-ranked
 ---
 
 Chaos Chess — самое захватывающее событие в шахматах с тех пор, как кто-то решил, что слоны должны оставаться на своём цвете. Идея проста: вы играете в стандартные шахматы, но каждые несколько ходов вам предлагают модификатор — rule-breaking power-up, который меняет то, как ваши фигуры ходят, рубят или даже умирают.

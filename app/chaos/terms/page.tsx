@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Chaos Chess Terms of Service",
   description: "Terms for playing the Chaos Chess Discord Activity operated by FireChess.",
-  alternates: { canonical: "https://firechess.com/chaos/terms" },
+  alternates: { canonical: "https://www.firechess.com/chaos/terms" },
 };
 
 export default function ChaosTermsPage() {

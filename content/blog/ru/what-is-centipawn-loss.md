@@ -4,7 +4,7 @@ description: "Средняя потеря пешек (ACPL) измеряет к�
 date: "2026-07-26"
 author: "FireChess Team"
 tags: ["анализ", "основы", "улучшение", "потеря-пешек"]
-canonical: https://firechess.com/ru/blog/what-is-centipawn-loss
+canonical: https://www.firechess.com/ru/blog/what-is-centipawn-loss
 ---
 
 Вы только что закончили упорную 45-минутную партию. Вы открываете аналитическую доску, запускаете движок, и вот оно: **«Средняя потеря пешек: 72».**

@@ -4,7 +4,7 @@ description: "Aprende a revisar tus partidas de ajedrez como un jugador de 2000+
 date: "2026-07-24"
 author: "FireChess Team"
 tags: ["analisis", "mejora", "revision-de-partida", "rutina-de-estudio"]
-canonical: https://firechess.com/es/blog/how-to-review-chess-games
+canonical: https://www.firechess.com/es/blog/how-to-review-chess-games
 ---
 
 Acabas de perder una partida que sentias que estabas ganando. Sabes que deberias revisarla — todo entrenador lo dice, toda guia de mejora lo lista como paso uno. Pero cuando abres el tablero de analisis, te quedas mirando la posicion despues del movimiento 30 y piensas: *¿y ahora que?*

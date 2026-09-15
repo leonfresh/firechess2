@@ -4,7 +4,7 @@ description: "Domina la estructura de peones en ajedrez con 8 patrones clave. Po
 date: "2026-07-29"
 author: "FireChess Team"
 tags: ["estructura-de-peones", "estrategia", "medio-juego", "final", "fundamentos"]
-canonical: https://firechess.com/es/blog/chess-pawn-structure-guide
+canonical: https://www.firechess.com/es/blog/chess-pawn-structure-guide
 ---
 
 La estructura de peones en tu partida de ajedrez es el esqueleto de tu posicion. Cada pieza que colocas, cada plan que haces, cada cambio que consideras — todo fluye desde los peones. Sin embargo, la mayoria de los jugadores de club tratan a los peones como un pensamiento posterior, moviendolos cuando les "parece correcto" y preguntandose por que sus piezas terminan pasivas, su rey inseguro y su rating estancado.

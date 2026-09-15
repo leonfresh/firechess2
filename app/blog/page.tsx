@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     title: "Chess Improvement Blog | FireChess",
     description:
       "Tips, guides, and analysis techniques to improve your chess — openings, tactics, endgames, and engine analysis.",
-    url: "https://firechess.com/blog",
+    url: "https://www.firechess.com/blog",
     type: "website",
   },
   twitter: {
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     description:
       "Guides, tips, and analysis techniques to level up your chess.",
   },
-  alternates: { canonical: "https://firechess.com/blog" },
+  alternates: { canonical: "https://www.firechess.com/blog" },
 };
 
 export default function BlogPage() {
@@ -45,13 +45,13 @@ export default function BlogPage() {
             name: "Chess Improvement Blog | FireChess",
             description:
               "Tips, guides, and analysis techniques to improve your chess.",
-            url: "https://firechess.com/blog",
+            url: "https://www.firechess.com/blog",
             publisher: {
               "@type": "Organization",
               name: "FireChess",
               logo: {
                 "@type": "ImageObject",
-                url: "https://firechess.com/firechess-logo.png",
+                url: "https://www.firechess.com/firechess-logo.png",
               },
             },
           }),

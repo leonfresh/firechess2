@@ -4,7 +4,7 @@ description: "Domine o Gambito da Dama da configuracao ao final — cobre QGA, Q
 date: "2026-07-12"
 author: "FireChess Team"
 tags: ["chess openings", "queens gambit", "club players", "d4 openings", "chess improvement", "opening repertoire", "qgd", "qga"]
-canonical: https://firechess.com/pt/blog/queens-gambit-guide
+canonical: https://www.firechess.com/pt/blog/queens-gambit-guide
 ---
 
 O Gambito da Dama — 1.d4 d5 2.c4 — e uma das aberturas mais antigas, respeitadas e eficazes do xadrez. Foi jogado por todos os campeoes mundiais de Steinitz a Carlsen, e com boa razao: desafia o centro Preto imediatamente sem se comprometer com um plano de ataque arriscado.

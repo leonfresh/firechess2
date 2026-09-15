@@ -4,7 +4,7 @@ description: "Увидьте exact зевки, неточности и прив�
 date: "2026-07-29"
 author: "FireChess Team"
 tags: ["improvement", "mistakes", "rating", "tactics", "blunders"]
-canonical: https://firechess.com/ru/blog/chess-mistakes-by-rating
+canonical: https://www.firechess.com/ru/blog/chess-mistakes-by-rating
 ---
 
 У каждого рейтингового диапазона есть signature ошибка. Игрок 900 входит в мат на 4 хода. 1300 пропускает жертву греческого дара. 1600 разменивается в проигранное окончание, не осознавая этого. Это не случайные ошибки — это паттерны — и [у каждого есть конкретное исправление](/blog/stop-repeating-chess-mistakes). Они remarkably consistent across thousands партий.

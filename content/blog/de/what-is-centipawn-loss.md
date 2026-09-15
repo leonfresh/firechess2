@@ -4,7 +4,7 @@ description: "Der durchschnittliche Centipawn-Verlust (ACPL) misst die Zuggquali
 date: "2026-07-26"
 author: "FireChess Team"
 tags: ["analyse", "grundlagen", "verbesserung", "centipawn-verlust"]
-canonical: https://firechess.com/de/blog/what-is-centipawn-loss
+canonical: https://www.firechess.com/de/blog/what-is-centipawn-loss
 ---
 
 Du hast gerade ein hart erkämpftes 45-minütiges Spiel beendet. Du öffnest das Analysebrett, startest die Engine, und da steht es: **„Durchschnittlicher Centipawn-Verlust: 72."**

@@ -4,7 +4,7 @@ description: "Ve los graves, imprecisiones y habitos exactos que atrapan a jugad
 date: "2026-07-29"
 author: "FireChess Team"
 tags: ["mejora", "errores", "rating", "tacticas", "graves"]
-canonical: https://firechess.com/es/blog/chess-mistakes-by-rating
+canonical: https://www.firechess.com/es/blog/chess-mistakes-by-rating
 ---
 
 Cada banda de rating tiene un error distintivo. Un jugador de 900 cae en el Mate del Escolar. Un jugador de 1300 pierde el sacrificio del Griego. Un jugador de 1600 cambia a un final perdido sin darse cuenta. Estos no son errores aleatorios — son patrones — y [cada uno tiene una solucion especifica](/blog/stop-repeating-chess-mistakes). Son notablemente consistentes en miles de partidas.

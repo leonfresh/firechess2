@@ -321,4 +321,4 @@ All of these are available free online. The best way to find your favourite is t
 
 ---
 
-*If you are looking to improve at standard chess alongside playing variants, FireChess also offers a [free game analysis tool](https://firechess.com) that scans your chess.com or Lichess games for repeated patterns and missed tactics — no account required.*
+*If you are looking to improve at standard chess alongside playing variants, FireChess also offers a [free game analysis tool](https://www.firechess.com) that scans your chess.com or Lichess games for repeated patterns and missed tactics — no account required.*

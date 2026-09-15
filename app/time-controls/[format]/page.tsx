@@ -23,12 +23,12 @@ export async function generateMetadata({
     title,
     description,
     alternates: {
-      canonical: `https://firechess.com/time-controls/${tc.id}`,
+      canonical: `https://www.firechess.com/time-controls/${tc.id}`,
     },
     openGraph: {
       title: `${tc.name} Chess Guide | FireChess`,
       description,
-      url: `https://firechess.com/time-controls/${tc.id}`,
+      url: `https://www.firechess.com/time-controls/${tc.id}`,
       type: "article",
     },
     twitter: {
@@ -40,7 +40,7 @@ export async function generateMetadata({
 }
 
 function TimeControlJsonLd({ tc }: { tc: TimeControlGuide }) {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
   const url = `${base}/time-controls/${tc.id}`;
 
   const article = {

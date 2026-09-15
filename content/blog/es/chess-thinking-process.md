@@ -4,7 +4,7 @@ description: "Aprende el proceso de pensamiento en ajedrez para evaluar posicion
 date: "2026-08-03"
 author: "FireChess Team"
 tags: ["mejora en ajedrez", "juego posicional", "calculo", "medio juego", "proceso de pensamiento"]
-canonical: https://firechess.com/es/blog/chess-thinking-process
+canonical: https://www.firechess.com/es/blog/chess-thinking-process
 ---
 
 # Proceso de Pensamiento en Ajedrez: Como Evaluar Posiciones y Encontrar el Movimiento Correcto

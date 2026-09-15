@@ -22,7 +22,7 @@ This insight is exactly what makes [FireChess's analysis tool](/analyze) so powe
 
 ## The 5 Rating Buckets — What They Look Like on the Board
 
-FireChess's [Guess the Elo dungeon mode](https://firechess.com/dungeon) sorts players into five rating buckets. Understanding these tiers helps you [identify your own skill level](/blog/skill-gap-between-rating-levels) and target specific improvement areas. Here's what each level looks like in practice:
+FireChess's [Guess the Elo dungeon mode](https://www.firechess.com/dungeon) sorts players into five rating buckets. Understanding these tiers helps you [identify your own skill level](/blog/skill-gap-between-rating-levels) and target specific improvement areas. Here's what each level looks like in practice:
 
 ### Beginner (Under 1200) — Tactical Minefield
 
@@ -109,7 +109,7 @@ Developing a "rating eye" is a skill you can actively train. Here's how:
 
 ### Q: Use FireChess's Guess the Elo Dungeon Mode
 
-The [Guess the Elo dungeon](https://firechess.com/dungeon) mode on FireChess is built explicitly for this. You see a position from a real Lichess game, watch the last few moves replay, and choose from the five rating buckets. The feedback is immediate — you see how close you were to the actual rating, and over time you develop intuition for what different rating levels look like.
+The [Guess the Elo dungeon](https://www.firechess.com/dungeon) mode on FireChess is built explicitly for this. You see a position from a real Lichess game, watch the last few moves replay, and choose from the five rating buckets. The feedback is immediate — you see how close you were to the actual rating, and over time you develop intuition for what different rating levels look like.
 
 ### Q: Look for Blunder Density First
 
@@ -303,7 +303,7 @@ Training yourself to guess the Elo isn't just a party trick — it changes how y
 - **Calibrate your opponent** — "they just made an 1800-level plan, I need to be precise"
 - **Track your improvement** — "my middlegame looks more like 1600 than 1400 now"
 
-FireChess's [Chaos Chess](https://firechess.com/chaos) and [Dungeon modes](https://firechess.com/dungeon) both offer Elo-related challenges that train this skill naturally. The more you practice rating estimation, the more you internalise what good chess looks like — and that translates directly to better moves in your own games.
+FireChess's [Chaos Chess](https://www.firechess.com/chaos) and [Dungeon modes](https://www.firechess.com/dungeon) both offer Elo-related challenges that train this skill naturally. The more you practice rating estimation, the more you internalise what good chess looks like — and that translates directly to better moves in your own games.
 
 Pair this with regular [PGN analysis](/analyze) to get the full picture: rating estimation trains your intuition, while engine-backed analysis gives you the cold, hard data. They're two sides of the same improvement coin.
 
@@ -311,7 +311,7 @@ Pair this with regular [PGN analysis](/analyze) to get the full picture: rating 
 
 ### Q: Can you really guess a player's Elo rating accurately just from watching a few moves?
 
-Yes — within a range of about 200–300 points, which is precise enough to be useful. The key is that you're not guessing a single number; you're placing the player into one of the five broad buckets (Under 1200, 1200–1500, 1500–1800, 1800–2100, 2100+). Studies of the [Guess the Elo format on YouTube](https://firechess.com/dungeon) show that experienced guessers land in the correct bucket roughly 70% of the time. The accuracy drops when a player has an unusually lopsided skill profile — for instance, a 1600 with master-level endgame technique but 1200-level opening knowledge — which is why cross-referencing multiple signals (blunder rate, plan coherence, endgame quality) is essential.
+Yes — within a range of about 200–300 points, which is precise enough to be useful. The key is that you're not guessing a single number; you're placing the player into one of the five broad buckets (Under 1200, 1200–1500, 1500–1800, 1800–2100, 2100+). Studies of the [Guess the Elo format on YouTube](https://www.firechess.com/dungeon) show that experienced guessers land in the correct bucket roughly 70% of the time. The accuracy drops when a player has an unusually lopsided skill profile — for instance, a 1600 with master-level endgame technique but 1200-level opening knowledge — which is why cross-referencing multiple signals (blunder rate, plan coherence, endgame quality) is essential.
 
 ### Q: What's the single strongest signal for guessing Elo from a PGN file?
 

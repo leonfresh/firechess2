@@ -10,7 +10,7 @@ tags:
   - intermediate
   - chess improvement
   - blindfold
-canonical: https://firechess.com/de/blog/chess-visualisation-training-3-moves-ahead
+canonical: https://www.firechess.com/de/blog/chess-visualisation-training-3-moves-ahead
 ---
 
 # Schach-Visualisationstraining — Wie man 3 Züge voraussieht und Brettvision aufbaut

@@ -64,7 +64,7 @@ Some highlights:
 
 The anomalies were fine-tuned with Stockfish integration so the AI correctly evaluates your anomaly-powered moves — earlier versions had a "Stockfish blindness" bug where the engine ignored anomaly moves when choosing defences, which is now fixed.
 
-If you play Chaos Chess regularly, the Opening Anomalies add a roguelike layer that keeps every game fresh. [Start a Chaos game](https://firechess.com/chaos) and try The Emperor for an experience that feels closer to a king-of-the-hill brawl than standard chess.
+If you play Chaos Chess regularly, the Opening Anomalies add a roguelike layer that keeps every game fresh. [Start a Chaos game](https://www.firechess.com/chaos) and try The Emperor for an experience that feels closer to a king-of-the-hill brawl than standard chess.
 
 ## Unified Reports: One Scan for Everything
 
@@ -77,7 +77,7 @@ One of the most requested UX improvements landed in version 28 (May 2026): **Uni
 
 Each scan now opens on a dedicated report page (`/report/[id]`) with a cleaner card-based layout inspired by the [Community](/community) posts. Free users can preview the first 9 tactics, endgames, and time-management examples, with the rest locked behind Pro. The report also caches between sessions — refreshing the page reuses your saved result instead of regenerating it.
 
-For club players building a study plan, this is a significant quality-of-life win. [Start a unified scan](https://firechess.com/) with your Lichess or Chess.com username and get your full report in seconds.
+For club players building a study plan, this is a significant quality-of-life win. [Start a unified scan](https://www.firechess.com/) with your Lichess or Chess.com username and get your full report in seconds.
 
 ## Magic Link Sign-in & Lifetime Plan
 
@@ -237,13 +237,13 @@ Chaos Chess uses the same board and piece movement rules as standard chess — w
 
 ## Start Using the New Features
 
-The best way to experience everything FireChess now offers is to [scan your games](https://firechess.com/) — it's free, takes seconds, and needs no account. From there:
+The best way to experience everything FireChess now offers is to [scan your games](https://www.firechess.com/) — it's free, takes seconds, and needs no account. From there:
 
-- Try **[Daily Training](https://firechess.com/daily)** for 5 minutes every day — drill your actual mistakes, not generic puzzles.
-- **[Roast an Elo](https://firechess.com/roast)** for the entertainment value (and the learning) — see how harsh Stockfish can be about a 600-rated game.
-- **[Play Chaos Chess](https://firechess.com/chaos)** with Opening Anomalies if you want a completely fresh take on the game — try The Emperor for a king-leaping brawl.
-- **[Analyse your games](https://firechess.com/analyze)** with the new unified reports — one scan covers openings, tactics, endgames, and time management.
-- **[Check your reports](https://firechess.com/)** and see if your accuracy is trending up over time.
+- Try **[Daily Training](https://www.firechess.com/daily)** for 5 minutes every day — drill your actual mistakes, not generic puzzles.
+- **[Roast an Elo](https://www.firechess.com/roast)** for the entertainment value (and the learning) — see how harsh Stockfish can be about a 600-rated game.
+- **[Play Chaos Chess](https://www.firechess.com/chaos)** with Opening Anomalies if you want a completely fresh take on the game — try The Emperor for a king-leaping brawl.
+- **[Analyse your games](https://www.firechess.com/analyze)** with the new unified reports — one scan covers openings, tactics, endgames, and time management.
+- **[Check your reports](https://www.firechess.com/)** and see if your accuracy is trending up over time.
 
 **Related reading:**
 

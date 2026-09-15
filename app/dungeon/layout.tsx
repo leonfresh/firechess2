@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "Puzzle Dungeon — Roguelike Chess Puzzles | FireChess",
     description:
       "A roguelike chess puzzle mode. Solve increasingly difficult tactical puzzles and see how deep you can go.",
-    url: "https://firechess.com/dungeon",
+    url: "https://www.firechess.com/dungeon",
     type: "website",
   },
   twitter: {
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     description:
       "Roguelike chess puzzles. Solve tactics, earn rewards, and go deeper.",
   },
-  alternates: { canonical: "https://firechess.com/dungeon" },
+  alternates: { canonical: "https://www.firechess.com/dungeon" },
 };
 
 export default function DungeonLayout({ children }: { children: React.ReactNode }) {

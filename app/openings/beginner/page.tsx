@@ -6,12 +6,12 @@ export const metadata: Metadata = {
   title: "Best Chess Openings for Beginners — Easy to Learn & Win",
   description:
     "The best beginner chess openings: Italian Game, London System, Scandinavian, Queen's Gambit and more. Simple principles, clear plans, and common traps explained.",
-  alternates: { canonical: "https://firechess.com/openings/beginner" },
+  alternates: { canonical: "https://www.firechess.com/openings/beginner" },
   openGraph: {
     title: "Best Chess Openings for Beginners | FireChess",
     description:
       "Master beginner-friendly chess openings with clear ideas and plans for both sides. Includes Italian Game, London System, Queen's Gambit and more.",
-    url: "https://firechess.com/openings/beginner",
+    url: "https://www.firechess.com/openings/beginner",
     type: "website",
   },
   twitter: {
@@ -28,7 +28,7 @@ const ECO_BADGE =
   "rounded border border-white/10 bg-white/[0.05] px-2 py-0.5 font-mono text-xs text-stone-400";
 
 function JsonLd() {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
   const url = `${base}/openings/beginner`;
 
   const breadcrumb = {

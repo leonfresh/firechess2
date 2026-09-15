@@ -4,7 +4,7 @@ description: "Stop chess tilt and blunders with proven psychology. Learn the 5 t
 date: "2026-09-15"
 author: "FireChess Team"
 tags: ["chess psychology", "tilting", "blunders", "improvement", "mental game"]
-canonical: https://firechess.com/blog/chess-psychology-tilting
+canonical: https://www.firechess.com/blog/chess-psychology-tilting
 ---
 
 You're up a piece. Your position is winning. Then your opponent plays a cheap trick you should have seen — and suddenly you're down a rook. Your heart rate spikes. You play the next move in 3 seconds instead of 30. Then the next one in 2. By move 30, you've blundered twice more and resigned a game you were winning five moves ago.

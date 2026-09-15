@@ -4,7 +4,7 @@ description: "The exact blunders and habits that trap players from 800 to 1800. 
 date: "2026-07-29"
 author: "FireChess Team"
 tags: ["improvement", "mistakes", "rating", "tactics", "blunders"]
-canonical: https://firechess.com/blog/chess-mistakes-by-rating
+canonical: https://www.firechess.com/blog/chess-mistakes-by-rating
 ---
 
 Every rating band has a signature mistake. A 900-rated player walks into Scholar's Mate. A 1300 player misses the Greek Gift sacrifice. A 1600 player trades into a lost endgame without realising it. These aren't random errors — they're patterns — and [each one has a specific fix](/blog/stop-repeating-chess-mistakes). They're remarkably consistent across thousands of games.

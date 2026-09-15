@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description:
     "View your saved analysis reports, track improvement over time, and review your chess strengths and weaknesses on your personal FireChess dashboard.",
   robots: { index: false, follow: false },
-  alternates: { canonical: "https://firechess.com/dashboard" },
+  alternates: { canonical: "https://www.firechess.com/dashboard" },
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

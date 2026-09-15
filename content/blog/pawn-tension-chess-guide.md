@@ -4,7 +4,7 @@ description: "Learn when to maintain pawn tension, when to capture, and when to 
 date: "2026-08-11"
 author: "FireChess Team"
 tags: ["pawn-structure", "middlegame", "strategy", "chess-fundamentals", "club-players"]
-canonical: https://firechess.com/blog/pawn-tension-chess-guide
+canonical: https://www.firechess.com/blog/pawn-tension-chess-guide
 ---
 
 # Pawn Tension in Chess: When to Capture and When to Wait

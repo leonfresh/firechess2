@@ -27,12 +27,12 @@ export async function generateMetadata({
     title,
     description,
     alternates: {
-      canonical: `https://firechess.com/positions/${m.id}`,
+      canonical: `https://www.firechess.com/positions/${m.id}`,
     },
     openGraph: {
       title: `${m.name} | Chess Positional Guide — FireChess`,
       description,
-      url: `https://firechess.com/positions/${m.id}`,
+      url: `https://www.firechess.com/positions/${m.id}`,
       type: "article",
     },
     twitter: {
@@ -44,7 +44,7 @@ export async function generateMetadata({
 }
 
 function PositionJsonLd({ m }: { m: PositionalMotif }) {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
   const url = `${base}/positions/${m.id}`;
 
   const article = {

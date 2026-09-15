@@ -4,7 +4,7 @@ description: "Von Torpedo-Bauern bis Nuklear-Dame und Railgun — wir ranken all
 date: "2026-07-16"
 author: "FireChess Team"
 tags: ["chaos chess", "schach modifikatoren", "schach strategie", "torpedo bauern", "nuklear dame", "die amazon", "chaos chess ranking", "schachvarianten", "chaos modus"]
-canonical: https://firechess.com/de/blog/best-chaos-chess-modifiers-ranked
+canonical: https://www.firechess.com/de/blog/best-chaos-chess-modifiers-ranked
 ---
 
 Chaos Chess ist das Aufregendste, was dem Schach passiert ist, seit jemand entschied, dass Läufer auf ihrer eigenen Farbe bleiben sollten. Die Prämisse ist einfach: Du spielst Standard-Schach, aber alle paar Züge wird dir ein Modifikator angeboten — ein regelbrechendes Power-Up, das ändert, wie sich deine Figuren bewegen, schlagen oder sogar sterben.

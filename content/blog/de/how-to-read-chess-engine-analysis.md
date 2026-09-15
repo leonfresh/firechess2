@@ -4,7 +4,7 @@ description: "Lerne, Schach-Motoranalysen zu lesen — Bewertungswerte, Tiefe, H
 date: "2026-07-27"
 author: "FireChess Team"
 tags: ["analysis", "improvement", "engine", "stockfish", "fundamentals"]
-canonical: https://firechess.com/de/blog/how-to-read-chess-engine-analysis
+canonical: https://www.firechess.com/de/blog/how-to-read-chess-engine-analysis
 ---
 
 Du hast gerade eine Partie auf FireChess unter [/analyze](/analyze) hochgeladen. Die Motorvarianten leuchten auf. Eine Zahl blinkt: **+1.8**. Ein Pfeil zeigt von e2 nach e4. Die Zugliste zeigt **„Tiefe 22"** neben einer Zugsequenz, die du nicht verstehst.

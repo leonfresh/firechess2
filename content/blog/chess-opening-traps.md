@@ -4,7 +4,7 @@ description: "Learn the 5 chess opening traps club players fall for most — wit
 date: "2026-07-26"
 author: "FireChess Team"
 tags: ["openings", "traps", "tactics", "beginner", "improvement"]
-canonical: https://firechess.com/blog/chess-opening-traps
+canonical: https://www.firechess.com/blog/chess-opening-traps
 ---
 
 You've studied your openings. You know the first ten moves of the Italian Game by heart. Then on move four, your opponent plays something weird — a knight jump that doesn't look right, a pawn push that seems unsound — and you think: *"That's a mistake. I'll punish it."*

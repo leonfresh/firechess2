@@ -4,7 +4,7 @@ description: "Lerne den Schach-Denkprozess, um Stellungen zu bewerten, Kandidate
 date: "2026-08-03"
 author: "FireChess Team"
 tags: ["chess improvement", "positional play", "calculation", "middlegame", "thinking process"]
-canonical: https://firechess.com/de/blog/chess-thinking-process
+canonical: https://www.firechess.com/de/blog/chess-thinking-process
 ---
 
 # Schach-Denkprozess: Wie man Stellungen bewertet und den richtigen Zug findet

@@ -4,7 +4,7 @@ description: "Узнайте, что значит средний centipawn loss 
 date: "2026-08-14"
 author: "FireChess Team"
 tags: ["centipawn loss", "chess improvement", "game analysis", "ACPL", "move quality"]
-canonical: https://firechess.com/ru/blog/average-centipawn-loss-guide
+canonical: https://www.firechess.com/ru/blog/average-centipawn-loss-guide
 ---
 
 Вы только что сыграли 40-ходовую партию, и движок говорит, что ваш ACPL — 67. Это хорошо? Плохо? Средне для вашего рейтинга? Most клубных игроков видят числа centipawn loss на экране анализа и не имеют понятия, что они значат — they просто знают, что ниже лучше. Но понимание ACPL — one из fastest способов диагностировать exactly, где ваши партии идут не так, потому что оно breaks каждый ход на измеримую качественную оценку.

@@ -4,7 +4,7 @@ description: "Aprende las 5 trampas de apertura en las que más caen los jugador
 date: "2026-07-26"
 author: "FireChess Team"
 tags: ["aperturas", "trampas", "tácticas", "principiante", "mejora"]
-canonical: https://firechess.com/es/blog/chess-opening-traps
+canonical: https://www.firechess.com/es/blog/chess-opening-traps
 ---
 
 Has estudiado tus aperturas. Conoces las primeras diez jugadas de la Apertura Italiana de memoria. Luego en la jugada cuatro, tu oponente juega algo raro —un salto de caballo que no se ve bien, un avance de peón que parece insostenible— y piensas: *"Eso es un error. Lo castigaré."*

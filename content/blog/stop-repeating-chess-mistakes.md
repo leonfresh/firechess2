@@ -4,7 +4,7 @@ description: "Learn how to find and fix the chess mistakes you keep making. Use 
 date: "2026-08-06"
 author: "FireChess Team"
 tags: ["improvement", "game analysis", "mistakes", "patterns", "centipawn loss"]
-canonical: https://firechess.com/blog/stop-repeating-chess-mistakes
+canonical: https://www.firechess.com/blog/stop-repeating-chess-mistakes
 ---
 
 You lost another game. The same way you lost the last one. And the one before that.

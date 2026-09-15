@@ -4,7 +4,7 @@ description: "Quanto tempo para ficar bom no xadrez? Linhas do tempo realistas d
 date: "2026-07-30"
 author: "FireChess Team"
 tags: ["improvement", "rating", "study-methods", "beginner", "timeline"]
-canonical: https://firechess.com/pt/blog/how-long-to-get-good-at-chess
+canonical: https://www.firechess.com/pt/blog/how-long-to-get-good-at-chess
 ---
 
 Todo jogador de xadrez faz a mesma pergunta: *quanto tempo ate eu ficar realmente bom?* A resposta honesta e que "bom" significa algo diferente em cada estagio — e a linha do tempo depende quase inteiramente de *como* voce estuda, nao apenas de quanto. Um jogador que revisa suas proprias partidas com um motor melhora tres vezes mais rapido do que um que so joga blitz. Sabemos disso porque os escaneamentos da FireChess mostram o padrao repetidamente: jogadores que analisam ativamente sua [perda de centopea](/blog/what-is-centipawn-loss) melhoram ao dobro da taxa daqueles que nao fazem isso.

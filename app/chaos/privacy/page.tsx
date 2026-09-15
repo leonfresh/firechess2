@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Chaos Chess Privacy Policy",
   description: "How FireChess handles data when you play the Chaos Chess Discord Activity.",
-  alternates: { canonical: "https://firechess.com/chaos/privacy" },
+  alternates: { canonical: "https://www.firechess.com/chaos/privacy" },
 };
 
 export default function ChaosPrivacyPage() {

@@ -4,7 +4,7 @@ description: "Научитесь читать анализ шахматного 
 date: "2026-07-27"
 author: "FireChess Team"
 tags: ["analysis", "improvement", "engine", "stockfish", "fundamentals"]
-canonical: https://firechess.com/ru/blog/how-to-read-chess-engine-analysis
+canonical: https://www.firechess.com/ru/blog/how-to-read-chess-engine-analysis
 ---
 
 Вы только что загрузили партию в FireChess на [/analyze](/analyze). Линии движка загораются. Число мигает: **+1.8**. Стрелка указывает от e2 к e4. Список ходов показывает **«depth 22»** рядом с последовательностью ходов, которую вы не понимаете.

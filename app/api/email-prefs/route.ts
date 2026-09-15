@@ -55,7 +55,7 @@ function htmlPage(title: string, body: string) {
 <div class="card">
   <h1>🔥 ${title}</h1>
   <p>${body}</p>
-  <a href="https://firechess.com">Back to FireChess</a>
+  <a href="https://www.firechess.com">Back to FireChess</a>
 </div>
 </body></html>`;
 }

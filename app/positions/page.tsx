@@ -6,12 +6,12 @@ export const metadata: Metadata = {
   title: "Chess Positional Concepts — Master Structure, Pieces & Plans",
   description:
     "Learn essential chess positional motifs: isolated pawns, passed pawns, outposts, open files, bishop pair, weak squares, pawn majorities, and king activity. With GM quotes and clear explanations.",
-  alternates: { canonical: "https://firechess.com/positions" },
+  alternates: { canonical: "https://www.firechess.com/positions" },
   openGraph: {
     title: "Chess Positional Concepts | FireChess",
     description:
       "Master positional chess: isolated pawns, outposts, open files, bishop pair, weak squares, and more — with GM quotes from Kasparov, Fischer, Nimzowitsch, Capablanca.",
-    url: "https://firechess.com/positions",
+    url: "https://www.firechess.com/positions",
     type: "website",
   },
   twitter: {
@@ -62,7 +62,7 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 };
 
 function JsonLd() {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
   const url = `${base}/positions`;
 
   const breadcrumb = {

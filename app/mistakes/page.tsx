@@ -6,12 +6,12 @@ export const metadata: Metadata = {
   title: "Common Chess Mistakes — How to Stop Losing to Avoidable Errors",
   description:
     "The most common chess mistakes at every level: hanging pieces, back rank blunders, slow development, king safety neglect, passive pieces, and more. How to recognize and fix each one.",
-  alternates: { canonical: "https://firechess.com/mistakes" },
+  alternates: { canonical: "https://www.firechess.com/mistakes" },
   openGraph: {
     title: "Common Chess Mistakes & How to Fix Them | FireChess",
     description:
       "Hanging pieces, back rank mates, premature attacks, passive pieces — find what's costing you the most Elo and exactly how to fix it.",
-    url: "https://firechess.com/mistakes",
+    url: "https://www.firechess.com/mistakes",
     type: "website",
   },
   twitter: {
@@ -62,7 +62,7 @@ const CATEGORY_COLORS: Record<
 };
 
 function JsonLd() {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
   const url = `${base}/mistakes`;
 
   const breadcrumb = {

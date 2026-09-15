@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "Guess the Move — Play Through GM Games | FireChess",
     description:
       "Test your intuition by guessing GM moves. Score points and learn from the best players in history.",
-    url: "https://firechess.com/guess",
+    url: "https://www.firechess.com/guess",
     type: "website",
   },
   twitter: {
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     description:
       "Guess GM moves and learn from the best players in history.",
   },
-  alternates: { canonical: "https://firechess.com/guess" },
+  alternates: { canonical: "https://www.firechess.com/guess" },
 };
 
 export default function GuessLayout({ children }: { children: React.ReactNode }) {

@@ -30,7 +30,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://firechess.com"),
+  metadataBase: new URL("https://www.firechess.com"),
   title: {
     default: "FireChess - Free Chess Analysis & Opening Leak Scanner",
     template: "%s | FireChess",
@@ -68,11 +68,11 @@ export const metadata: Metadata = {
     title: "FireChess - Free Chess Analysis & Opening Leak Scanner",
     description:
       "Scan your Lichess & Chess.com games for repeated mistakes, missed tactics, and endgame blunders. Powered by Stockfish 18 — free, fast, private.",
-    url: "https://firechess.com",
+    url: "https://www.firechess.com",
     siteName: "FireChess",
     type: "website",
     locale: "en_US",
-    images: [{ url: "https://firechess.com/opengraph-image", width: 1200, height: 630 }],
+    images: [{ url: "https://www.firechess.com/opengraph-image", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
@@ -94,14 +94,14 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://firechess.com",
+    canonical: "https://www.firechess.com",
     languages: {
-      en: "https://firechess.com",
-      es: "https://firechess.com/es",
-      de: "https://firechess.com/de",
-      fr: "https://firechess.com/fr",
-      pt: "https://firechess.com/pt",
-      ru: "https://firechess.com/ru",
+      en: "https://www.firechess.com",
+      es: "https://www.firechess.com/es",
+      de: "https://www.firechess.com/de",
+      fr: "https://www.firechess.com/fr",
+      pt: "https://www.firechess.com/pt",
+      ru: "https://www.firechess.com/ru",
     },
   },
   manifest: "/manifest.webmanifest",

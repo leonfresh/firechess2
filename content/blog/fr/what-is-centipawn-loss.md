@@ -4,7 +4,7 @@ description: "La perte moyenne de centipions (ACPL) mesure la qualité des coups
 date: "2026-07-26"
 author: "FireChess Team"
 tags: ["analyse", "fondamentaux", "progression", "perte-centipions"]
-canonical: https://firechess.com/fr/blog/what-is-centipawn-loss
+canonical: https://www.firechess.com/fr/blog/what-is-centipawn-loss
 ---
 
 Vous venez de terminer une partie disputée de 45 minutes. Vous ouvrez le plateau d'analyse, lancez le moteur, et le voilà : **« Perte moyenne de centipions : 72. »**

@@ -24,11 +24,11 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: `https://firechess.com/tactics/${tactic.id}` },
+    alternates: { canonical: `https://www.firechess.com/tactics/${tactic.id}` },
     openGraph: {
       title: `${tactic.name} Chess Tactic | FireChess`,
       description,
-      url: `https://firechess.com/tactics/${tactic.id}`,
+      url: `https://www.firechess.com/tactics/${tactic.id}`,
       type: "article",
     },
     twitter: {
@@ -40,7 +40,7 @@ export async function generateMetadata({
 }
 
 function TacticJsonLd({ tactic }: { tactic: TacticMotif }) {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
   const url = `${base}/tactics/${tactic.id}`;
 
   const article = {

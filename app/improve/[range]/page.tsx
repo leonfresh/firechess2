@@ -23,12 +23,12 @@ export async function generateMetadata({
     title,
     description,
     alternates: {
-      canonical: `https://firechess.com/improve/${g.id}`,
+      canonical: `https://www.firechess.com/improve/${g.id}`,
     },
     openGraph: {
       title: `${g.title} Chess Improvement Guide | FireChess`,
       description,
-      url: `https://firechess.com/improve/${g.id}`,
+      url: `https://www.firechess.com/improve/${g.id}`,
       type: "article",
     },
     twitter: {
@@ -40,7 +40,7 @@ export async function generateMetadata({
 }
 
 function ImproveJsonLd({ g }: { g: RatingGuide }) {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
   const url = `${base}/improve/${g.id}`;
 
   const article = {

@@ -11,18 +11,18 @@ export const metadata: Metadata = {
   title: "Chess Glossary — Every Chess Term Explained Simply",
   description:
     "The complete chess glossary: clear definitions of every chess term from fork and pin to zugzwang, fianchetto, and Elo rating. Learn chess vocabulary with examples.",
-  alternates: { canonical: "https://firechess.com/glossary" },
+  alternates: { canonical: "https://www.firechess.com/glossary" },
   openGraph: {
     title: "Chess Glossary — Every Chess Term Explained | FireChess",
     description:
       "Clear definitions of chess terms: fork, pin, skewer, zugzwang, fianchetto, en passant, and more — each with examples and why it matters for your game.",
-    url: "https://firechess.com/glossary",
+    url: "https://www.firechess.com/glossary",
     type: "website",
   },
 };
 
 function IndexJsonLd() {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
 
   const breadcrumb = {
     "@context": "https://schema.org",

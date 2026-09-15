@@ -6,12 +6,12 @@ export const metadata: Metadata = {
   title: "How to Improve at Chess — Rating Guides from 400 to 2000",
   description:
     "Step-by-step chess improvement guides for every rating bracket: 400-800, 800-1000, 1000-1200, 1200-1500, 1500-1800, 1800-2000. What to study, how to practice, and how long it takes.",
-  alternates: { canonical: "https://firechess.com/improve" },
+  alternates: { canonical: "https://www.firechess.com/improve" },
   openGraph: {
     title: "How to Improve at Chess — Rating Guides | FireChess",
     description:
       "Structured chess improvement guides for every rating range — what to study, common errors, weekly plans, and realistic timelines.",
-    url: "https://firechess.com/improve",
+    url: "https://www.firechess.com/improve",
     type: "website",
   },
   twitter: {
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 };
 
 function JsonLd() {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
   const url = `${base}/improve`;
 
   const breadcrumb = {

@@ -4,7 +4,7 @@ description: "Master rook endgames with proven techniques — Lucena, Philidor, 
 date: "2026-08-08"
 author: "FireChess Team"
 tags: ["rook endgames", "endgame strategy", "chess improvement", "endgame patterns", "club players"]
-canonical: https://firechess.com/blog/rook-endgames-guide-club-players
+canonical: https://www.firechess.com/blog/rook-endgames-guide-club-players
 ---
 
 # Rook Endgames Guide: 5 Positions Every Club Player Must Master

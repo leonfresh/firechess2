@@ -4,7 +4,7 @@ description: "Des Torpedo Pawns à la Nuclear Queen et au Railgun — nous class
 date: "2026-07-16"
 author: "FireChess Team"
 tags: ["chaos chess", "modificateurs d'échecs", "stratégie d'échecs", "torpedo pawns", "nuclear queen", "the amazon", "classement chaos chess", "variantes d'échecs", "mode chaos"]
-canonical: https://firechess.com/fr/blog/best-chaos-chess-modifiers-ranked
+canonical: https://www.firechess.com/fr/blog/best-chaos-chess-modifiers-ranked
 ---
 
 Le Chaos Chess est la chose la plus excitante arrivée aux échecs depuis que quelqu'un a décidé que les fous devaient rester sur leur propre couleur. Le principe est simple : vous jouez aux échecs standard, mais tous les quelques tours on vous propose un modificateur — un pouvoir qui casse les règles et change comment vos pièces se déplacent, capturent, ou même meurent.

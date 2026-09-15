@@ -4,7 +4,7 @@ description: "Veja os lances graves, imprecisoes e habitos exatos que prendem jo
 date: "2026-07-29"
 author: "FireChess Team"
 tags: ["improvement", "mistakes", "rating", "tactics", "blunders"]
-canonical: https://firechess.com/pt/blog/chess-mistakes-by-rating
+canonical: https://www.firechess.com/pt/blog/chess-mistakes-by-rating
 ---
 
 Cada faixa de rating tem um erro caracteristico. Um jogador 900 cai no Mate do Erudito. Um jogador 1300 perde o Grego Gift sacrificio. Um jogador 1600 troca para um final perdido sem perceber. Esses nao sao erros aleatorios — sao padroes — e [cada um tem uma solucao especifica](/blog/stop-repeating-chess-mistakes). Sao notavelmente consistentes atraves de milhares de partidas.

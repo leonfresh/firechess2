@@ -4,7 +4,7 @@ description: "Complete guide to average centipawn loss (ACPL) ranges by chess ra
 date: "2026-07-05"
 author: "FireChess Team"
 tags: ["analysis", "fundamentals", "improvement", "centipawn-loss"]
-canonical: https://firechess.com/blog/average-centipawn-loss-by-rating
+canonical: https://www.firechess.com/blog/average-centipawn-loss-by-rating
 ---
 
 You just played 10 rapid games and your average centipawn loss (ACPL) was 65. Is that good? Bad? Average? The answer depends entirely on your rating — and knowing what's normal for your level is the first step to actually using centipawn loss to improve.

@@ -4,7 +4,7 @@ description: "Positional mistakes silently drain rating points from club players
 date: "2026-09-14"
 author: "FireChess Team"
 tags: ["positional-chess", "improvement", "middlegame", "pawn-structure", "analysis"]
-canonical: https://firechess.com/blog/positional-mistakes-chess
+canonical: https://www.firechess.com/blog/positional-mistakes-chess
 ---
 
 You blundered a piece last game. You know it, you felt it, and your engine confirmed it with a red **?? Blunder** badge. That's an easy fix — just don't leave pieces hanging.

@@ -4,7 +4,7 @@ description: "Learn what average centipawn loss means in chess, how ACPL is calc
 date: "2026-08-14"
 author: "FireChess Team"
 tags: ["centipawn loss", "chess improvement", "game analysis", "ACPL", "move quality"]
-canonical: https://firechess.com/blog/average-centipawn-loss-guide
+canonical: https://www.firechess.com/blog/average-centipawn-loss-guide
 ---
 
 You just played a 40-move game and the engine says your ACPL was 67. Is that good? Bad? Average for your rating? Most club players see centipawn loss numbers on their analysis screen and have no idea what they mean — they just know lower is better. But understanding ACPL is one of the fastest ways to diagnose exactly where your games go wrong, because it breaks every single move into a measurable quality grade.

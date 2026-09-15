@@ -4,7 +4,7 @@ description: "Lernen Sie die 5 Eröffnungsfallen, in die Vereinsspieler am häuf
 date: "2026-07-26"
 author: "FireChess Team"
 tags: ["Eröffnungen", "Fallen", "Taktik", "Anfänger", "Verbesserung"]
-canonical: https://firechess.com/de/blog/chess-opening-traps
+canonical: https://www.firechess.com/de/blog/chess-opening-traps
 ---
 
 Sie haben Ihre Eröffnungen studiert. Sie kennen die ersten züge der Italienischen Partie auswendig. Dann spielt Ihr Gegner im vierten Zug etwas Seltsames — einen Springerzug, der nicht richtig aussieht, einen Bauernvorstoß, der unsolid wirkt — und Sie denken: *„Das ist ein Fehler. Ich bestrafe ihn."*

@@ -57,12 +57,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const meta = LOCALE_META[locale];
   if (!meta) return {};
 
-  const languages: Record<string, string> = { en: "https://firechess.com/blog" };
+  const languages: Record<string, string> = { en: "https://www.firechess.com/blog" };
   for (const loc of getSupportedLocales()) {
     if (loc === "en") continue;
-    languages[loc] = `https://firechess.com/${loc}/blog`;
+    languages[loc] = `https://www.firechess.com/${loc}/blog`;
   }
-  languages["x-default"] = "https://firechess.com/blog";
+  languages["x-default"] = "https://www.firechess.com/blog";
 
   return {
     title: meta.title,
@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: `${meta.title} | FireChess`,
       description: meta.description,
-      url: `https://firechess.com/${locale}/blog`,
+      url: `https://www.firechess.com/${locale}/blog`,
       type: "website",
       locale: locale,
     },
@@ -80,7 +80,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: meta.description,
     },
     alternates: {
-      canonical: `https://firechess.com/${locale}/blog`,
+      canonical: `https://www.firechess.com/${locale}/blog`,
       languages,
     },
   };

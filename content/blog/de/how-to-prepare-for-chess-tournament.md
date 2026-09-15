@@ -4,7 +4,7 @@ description: "Schritt-für-Schritt-Vorbereitungsguide für Schachturniere. Eröf
 date: "2026-08-13"
 author: "FireChess Team"
 tags: ["tournament preparation", "chess improvement", "club players", "game analysis", "opening preparation"]
-canonical: https://firechess.com/de/blog/how-to-prepare-for-chess-tournament
+canonical: https://www.firechess.com/de/blog/how-to-prepare-for-chess-tournament
 ---
 
 Du hast dich für ein Turnier angemeldet. Vielleicht ist es dein erstes OTB-Event, oder vielleicht hast du ein Dutzend gespielt, aber dich nie richtig vorbereitet gefühlt. In beiden Fällen trifft dieselbe Frage: **Was sollte ich tatsächlich vor der ersten Runde tun?**

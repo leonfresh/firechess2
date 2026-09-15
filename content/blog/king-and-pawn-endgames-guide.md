@@ -4,7 +4,7 @@ description: "Master king and pawn endgames with this guide covering opposition,
 date: "2026-07-29"
 author: "FireChess Team"
 tags: ["endgames", "fundamentals", "improvement", "king-and-pawn", "technique"]
-canonical: https://firechess.com/blog/king-and-pawn-endgames-guide
+canonical: https://www.firechess.com/blog/king-and-pawn-endgames-guide
 ---
 
 You've outplayed your opponent in the middlegame. You're up a pawn. The queens come off the board. And then — somehow — you draw. Or worse, you lose. Sound familiar?

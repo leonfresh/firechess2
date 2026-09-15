@@ -4,7 +4,7 @@ description: "Was bedeutet dein Schach-Genauigkeits-Score eigentlich? Wie er ber
 date: "2026-07-25"
 author: "FireChess Team"
 tags: ["analyse", "grundlagen", "centipawn-verlust"]
-canonical: https://firechess.com/de/blog/chess-accuracy-score-explained
+canonical: https://www.firechess.com/de/blog/chess-accuracy-score-explained
 ---
 
 Du beendest ein Spiel und der Genauigkeitsbericht sagt 94,2%. Ist das gut? Großartig? Und warum zeigt dein Gegner 91,7%, obwohl er verloren hat?

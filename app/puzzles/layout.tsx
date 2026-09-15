@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "Puzzle Trainer | FireChess",
     description:
       "Sharpen your tactical vision with over 3 million Lichess puzzles filtered by rating and motif.",
-    url: "https://firechess.com/puzzles",
+    url: "https://www.firechess.com/puzzles",
     type: "website",
   },
   twitter: {
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
       "Sharpen your tactical vision with over 3 million Lichess puzzles filtered by rating and motif.",
   },
   alternates: {
-    canonical: "https://firechess.com/puzzles",
+    canonical: "https://www.firechess.com/puzzles",
   },
 };
 

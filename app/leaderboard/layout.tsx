@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "Leaderboard — Top Analysis Scores | FireChess",
     description:
       "See who has the highest chess analysis scores. Compare your accuracy with players worldwide.",
-    url: "https://firechess.com/leaderboard",
+    url: "https://www.firechess.com/leaderboard",
     type: "website",
   },
   twitter: {
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     description:
       "Top chess analysis scores. Compare your accuracy with players worldwide.",
   },
-  alternates: { canonical: "https://firechess.com/leaderboard" },
+  alternates: { canonical: "https://www.firechess.com/leaderboard" },
 };
 
 export default function LeaderboardLayout({ children }: { children: React.ReactNode }) {

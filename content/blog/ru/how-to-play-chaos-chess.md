@@ -4,7 +4,7 @@ description: "Chaos Chess — это рогалик-вариация шахма�
 date: "2026-06-30"
 author: "FireChess Team"
 tags: ["chaos chess", "как играть в chaos chess", "шахматные вариации", "рогалик шахматы", "правила chaos chess", "стратегия chaos chess", "стоимость фигур chaos chess"]
-canonical: https://firechess.com/ru/blog/how-to-play-chaos-chess
+canonical: https://www.firechess.com/ru/blog/how-to-play-chaos-chess
 ---
 
 Если вы искали **Chaos Chess**, вы, вероятно, видели скриншот шахматной доски с драконом и подумали «подождите, что здесь происходит». Справедливо. Давайте разберёмся.

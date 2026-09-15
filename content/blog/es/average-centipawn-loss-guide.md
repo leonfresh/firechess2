@@ -4,7 +4,7 @@ description: "Aprende que significa la perdida promedio de centipeones en ajedre
 date: "2026-08-14"
 author: "FireChess Team"
 tags: ["perdida de centipeones", "mejora en ajedrez", "analisis de partidas", "ACPL", "calidad de movimiento"]
-canonical: https://firechess.com/es/blog/average-centipawn-loss-guide
+canonical: https://www.firechess.com/es/blog/average-centipawn-loss-guide
 ---
 
 Acabas de jugar una partida de 40 movimientos y el motor dice que tu ACPL fue 67. ¿Es bueno? ¿Malo? ¿Promedio para tu rating? La mayoria de los jugadores de club ven numeros de perdida de centipeones en su pantalla de analisis y no tienen idea de que significan — solo saben que menor es mejor. Pero entender el ACPL es una de las formas mas rapidas de diagnosticar exactamente donde van mal tus partidas, porque desglosa cada movimiento individual en una calificacion de calidad medible.

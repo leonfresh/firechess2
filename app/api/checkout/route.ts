@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
   // Read ?ref= affiliate cookie (set by RefTracker client component)
   const refSlug = req.cookies.get("fc_ref")?.value ?? null;
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://firechess.com";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.firechess.com";
 
   if (isLifetime) {
     // One-time payment for lifetime Pro

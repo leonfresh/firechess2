@@ -6,7 +6,7 @@
  * link back to firechess.com for the full analysis.
  *
  * Usage:
- *   <iframe src="https://firechess.com/embed/opening/italian-game"
+ *   <iframe src="https://www.firechess.com/embed/opening/italian-game"
  *           width="400" height="520" frameborder="0" loading="lazy"></iframe>
  */
 
@@ -234,7 +234,7 @@ export default async function EmbedOpeningPage({ params }: Props) {
 
       {/* Footer CTA */}
       <a
-        href={`https://firechess.com/openings/${guide.id}`}
+        href={`https://www.firechess.com/openings/${guide.id}`}
         target="_blank"
         rel="noopener noreferrer"
         style={{

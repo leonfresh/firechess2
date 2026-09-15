@@ -8,10 +8,10 @@ export const metadata: Metadata = {
     title: "Feedback | FireChess",
     description:
       "Share feedback, report bugs, or suggest features for FireChess.",
-    url: "https://firechess.com/feedback",
+    url: "https://www.firechess.com/feedback",
     type: "website",
   },
-  alternates: { canonical: "https://firechess.com/feedback" },
+  alternates: { canonical: "https://www.firechess.com/feedback" },
 };
 
 export default function FeedbackLayout({ children }: { children: React.ReactNode }) {

@@ -6,12 +6,12 @@ export const metadata: Metadata = {
   title: "Advanced Chess Openings — Master-Level Theory & Sharp Lines",
   description:
     "Advanced chess openings including the Sicilian Najdorf, King's Indian Defense, Grünfeld, and modern systems. Deep theory, sharp variations, and high-level traps.",
-  alternates: { canonical: "https://firechess.com/openings/advanced" },
+  alternates: { canonical: "https://www.firechess.com/openings/advanced" },
   openGraph: {
     title: "Advanced Chess Openings | FireChess",
     description:
       "Master-level openings with deep theory and sharp lines. Najdorf, King's Indian, Grünfeld, Dragon and more — for players rated 1800+.",
-    url: "https://firechess.com/openings/advanced",
+    url: "https://www.firechess.com/openings/advanced",
     type: "website",
   },
   twitter: {
@@ -27,7 +27,7 @@ const ECO_BADGE =
   "rounded border border-white/10 bg-white/[0.05] px-2 py-0.5 font-mono text-xs text-stone-400";
 
 function JsonLd() {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
   const url = `${base}/openings/advanced`;
 
   const breadcrumb = {

@@ -4,7 +4,7 @@ description: "Chess accuracy benchmarks by rating level — from 800 to 2000+. L
 date: "2026-08-12"
 author: "FireChess Team"
 tags: ["accuracy", "centipawn-loss", "rating-improvement", "game-analysis", "elo"]
-canonical: https://firechess.com/blog/chess-accuracy-by-rating-guide
+canonical: https://www.firechess.com/blog/chess-accuracy-by-rating-guide
 ---
 
 # Chess Accuracy by Rating: What ACPL & Accuracy Scores Really Mean

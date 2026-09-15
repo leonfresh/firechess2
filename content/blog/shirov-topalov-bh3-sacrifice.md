@@ -248,20 +248,20 @@ What makes Shirov's sacrifice unique is the **purity of the idea**. For more fam
 
 ## See the Complete Game
 
-You can [play through the complete Shirov vs Topalov 1998 game on FireChess](https://firechess.com/games/shirov-topalov-1998) with our interactive board. It's one of the most-visited famous games on our site — and now you know why that bishop on h3 is so special.
+You can [play through the complete Shirov vs Topalov 1998 game on FireChess](https://www.firechess.com/games/shirov-topalov-1998) with our interactive board. It's one of the most-visited famous games on our site — and now you know why that bishop on h3 is so special.
 
 ### More Chess Improvement Resources
 
-- **[Analyze Your Own Games Free](https://firechess.com/)** — FireChess scans your Lichess or Chess.com games with Stockfish 18 to find tactical patterns you miss
-- **[Chess Endgame Patterns Club Players Miss](https://firechess.com/blog/endgame-patterns-club-players-miss)** — The zugzwang and king-activity patterns that win games
-- **[Average Centipawn Loss by Rating](https://firechess.com/blog/average-centipawn-loss-by-rating)** — Benchmark your accuracy against players at your level
-- **[Guess the Elo](https://firechess.com/roast)** — Test your positional judgment against real games, learn [how to estimate rating from any PGN](/blog/guess-elo-from-pgn), or read our [guide to estimating rating from positions](/blog/guess-the-elo-chess)
+- **[Analyze Your Own Games Free](https://www.firechess.com/)** — FireChess scans your Lichess or Chess.com games with Stockfish 18 to find tactical patterns you miss
+- **[Chess Endgame Patterns Club Players Miss](https://www.firechess.com/blog/endgame-patterns-club-players-miss)** — The zugzwang and king-activity patterns that win games
+- **[Average Centipawn Loss by Rating](https://www.firechess.com/blog/average-centipawn-loss-by-rating)** — Benchmark your accuracy against players at your level
+- **[Guess the Elo](https://www.firechess.com/roast)** — Test your positional judgment against real games, learn [how to estimate rating from any PGN](/blog/guess-elo-from-pgn), or read our [guide to estimating rating from positions](/blog/guess-the-elo-chess)
 
 ### Other Famous Sacrifices on FireChess
 
-- **The Game of the Century** — [Byrne vs Fischer, 1956](https://firechess.com/games/game-of-the-century)
-- **Kasparov's Immortal** — [Kasparov vs Topalov, 1999](https://firechess.com/games/kasparov-immortal-1999)
-- **The Immortal Zugzwang Game** — [Sämisch vs Nimzowitsch, 1923](https://firechess.com/games/immortal-zugzwang)
+- **The Game of the Century** — [Byrne vs Fischer, 1956](https://www.firechess.com/games/game-of-the-century)
+- **Kasparov's Immortal** — [Kasparov vs Topalov, 1999](https://www.firechess.com/games/kasparov-immortal-1999)
+- **The Immortal Zugzwang Game** — [Sämisch vs Nimzowitsch, 1923](https://www.firechess.com/games/immortal-zugzwang)
 
 ## Frequently Asked Questions
 

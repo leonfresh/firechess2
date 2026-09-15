@@ -7,18 +7,18 @@ export const metadata: Metadata = {
   title: "Chess Grandmasters — Playing Styles, Openings & Career Profiles",
   description:
     "Explore in-depth profiles of the world's greatest chess grandmasters. Learn their opening repertoires, playing styles, career highlights, and the lessons you can apply to your own game.",
-  alternates: { canonical: "https://firechess.com/players" },
+  alternates: { canonical: "https://www.firechess.com/players" },
   openGraph: {
     title: "Chess Grandmaster Profiles | FireChess",
     description:
       "In-depth profiles of Magnus Carlsen, Kasparov, Fischer, Tal, Karpov, Capablanca, Polgar, and more — opening repertoires, style analysis, and lessons to improve your chess.",
-    url: "https://firechess.com/players",
+    url: "https://www.firechess.com/players",
     type: "website",
   },
 };
 
 function IndexJsonLd() {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
 
   const breadcrumb = {
     "@context": "https://schema.org",

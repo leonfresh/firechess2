@@ -4,7 +4,7 @@ description: "Centipawn loss (ACPL) measures chess move quality. See ACPL benchm
 date: "2026-09-13"
 author: "FireChess Team"
 tags: ["analysis", "fundamentals", "improvement", "centipawn-loss"]
-canonical: https://firechess.com/blog/what-is-centipawn-loss
+canonical: https://www.firechess.com/blog/what-is-centipawn-loss
 ---
 
 You've just finished a hard-fought 45-minute game. You open the analysis board, run the engine, and there it is: **"Average Centipawn Loss: 72."**

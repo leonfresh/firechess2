@@ -12,7 +12,7 @@ It's one of the most debated questions in online chess. Both platforms have mill
 
 In this deep-dive comparison, we'll look at every feature that matters for improvement: analysis depth, puzzle quality, learning tools, opening preparation, game review, community, mobile experience, and price. By the end, you'll know exactly which platform fits your improvement journey.
 
-Let me be upfront: this is FireChess's blog, and we're a smaller platform. But that lets us give you an honest, unbiased comparison — we're not competing with either Lichess or Chess.com. Our goal is to help you make the right choice, and if neither platform covers a specific need (like [Chaos Chess](https://firechess.com/chaos) or certain [analysis features](https://firechess.com/analysis)), we'll mention that too.
+Let me be upfront: this is FireChess's blog, and we're a smaller platform. But that lets us give you an honest, unbiased comparison — we're not competing with either Lichess or Chess.com. Our goal is to help you make the right choice, and if neither platform covers a specific need (like [Chaos Chess](https://www.firechess.com/chaos) or certain [analysis features](https://www.firechess.com/analysis)), we'll mention that too.
 
 ## The Big Picture: Two Philosophies of Chess Online
 
@@ -217,10 +217,10 @@ Lichess is funded by voluntary Patron donations, which unlock cosmetic features 
 
 As a FireChess reader, you might wonder where we fit in. We built FireChess to complement both platforms — not to replace them. Here's what FireChess offers that neither Lichess nor Chess.com has:
 
-- **[Chaos Chess](https://firechess.com/chaos)** — a unique variant with power-ups and random events that trains adaptability
-- **[Game Roast](https://firechess.com/roast)** — AI-generated brutally honest analysis that's both educational and entertaining
-- **[Centipawn Loss Analysis](https://firechess.com/blog/what-is-centipawn-loss)** — detailed accuracy metrics and ACPL breakdowns
-- **[Opening Explorer](https://firechess.com/analysis)** — clean, fast opening exploration without the clutter
+- **[Chaos Chess](https://www.firechess.com/chaos)** — a unique variant with power-ups and random events that trains adaptability
+- **[Game Roast](https://www.firechess.com/roast)** — AI-generated brutally honest analysis that's both educational and entertaining
+- **[Centipawn Loss Analysis](https://www.firechess.com/blog/what-is-centipawn-loss)** — detailed accuracy metrics and ACPL breakdowns
+- **[Opening Explorer](https://www.firechess.com/analysis)** — clean, fast opening exploration without the clutter
 
 We think of FireChess as the third tool in your improvement toolkit. Use Lichess or Chess.com for playing games and deep engine analysis, and use FireChess when you want a different perspective on your play.
 
@@ -240,7 +240,7 @@ Use Lichess for additional puzzle practice (unlimited) and to explore the openin
 
 **Use both platforms.** Play your serious rated games on Chess.com (better matchmaking), but analyze them on Lichess (deeper, free analysis). Use Lichess Studies to build your opening repertoire, and Chess.com lessons to fill gaps in your positional understanding.
 
-This is also the range where you should start tracking your **average centipawn loss (ACPL)** — FireChess's blog has a [detailed guide](https://firechess.com/blog/what-is-centipawn-loss) on how to use ACPL to measure your improvement.
+This is also the range where you should start tracking your **average centipawn loss (ACPL)** — FireChess's blog has a [detailed guide](https://www.firechess.com/blog/what-is-centipawn-loss) on how to use ACPL to measure your improvement.
 
 ### 1500–2000 (Advanced)
 
@@ -264,7 +264,7 @@ After comparing every major feature across both platforms, here's our honest tak
 
 **Use both if:** you're serious about improvement. Lichess for analysis, puzzles, and opening study. Chess.com for playing, structured lessons, and the larger community. This is the most effective combination.
 
-**And add FireChess** when you want to [analyze your games](https://firechess.com/analysis) with a different approach, play [Chaos Chess](https://firechess.com/chaos) to train adaptability, or just get a [good roast](https://firechess.com/roast) after a tough loss.
+**And add FireChess** when you want to [analyze your games](https://www.firechess.com/analysis) with a different approach, play [Chaos Chess](https://www.firechess.com/chaos) to train adaptability, or just get a [good roast](https://www.firechess.com/roast) after a tough loss.
 
 The best platform is the one you'll actually use consistently. Pick the one that fits your learning style, set a schedule, and stick with it. Ten minutes of focused training every day beats three hours once a week — regardless of which platform you choose.
 
@@ -302,4 +302,4 @@ Happy improving, and we'll see you on the board.
 
 ---
 
-*Want to see how your current platform stacks up for your specific needs? Try [FireChess's analysis tools](https://firechess.com/analysis) for a different perspective on your game.*
+*Want to see how your current platform stacks up for your specific needs? Try [FireChess's analysis tools](https://www.firechess.com/analysis) for a different perspective on your game.*

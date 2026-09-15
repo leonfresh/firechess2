@@ -4,7 +4,7 @@ description: "¿Cuanto tiempo para ser bueno en ajedrez? Cronogramas realistas d
 date: "2026-07-30"
 author: "FireChess Team"
 tags: ["mejora", "rating", "metodos-de-estudio", "principiante", "cronograma"]
-canonical: https://firechess.com/es/blog/how-long-to-get-good-at-chess
+canonical: https://www.firechess.com/es/blog/how-long-to-get-good-at-chess
 ---
 
 Todo jugador de ajedrez hace la misma pregunta: *¿cuanto tiempo hasta que sea realmente bueno?* La respuesta honesta es que "bueno" significa algo diferente en cada etapa — y el cronograma depende casi enteramente de *como* estudias, no solo de cuanto. Un jugador que revisa sus propias partidas con un motor mejora tres veces mas rapido que uno que solo juega blitz. Lo sabemos porque los escaneos de FireChess muestran el patron una y otra vez: jugadores que analizan activamente su [perdida de centipeones](/blog/what-is-centipawn-loss) mejoran al doble de la tasa que los que no lo hacen.

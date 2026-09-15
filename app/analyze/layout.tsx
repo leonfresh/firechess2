@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "Analyze Game — PGN Chess Analyzer | FireChess",
     description:
       "Paste any PGN for instant move-by-move analysis with Stockfish 18. Find blunders, inaccuracies, and missed tactics.",
-    url: "https://firechess.com/analyze",
+    url: "https://www.firechess.com/analyze",
     type: "website",
   },
   twitter: {
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     description:
       "Instant move-by-move chess analysis with Stockfish 18.",
   },
-  alternates: { canonical: "https://firechess.com/analyze" },
+  alternates: { canonical: "https://www.firechess.com/analyze" },
 };
 
 export default function AnalyzeLayout({ children }: { children: React.ReactNode }) {

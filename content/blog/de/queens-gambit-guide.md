@@ -4,7 +4,7 @@ description: "Meistere das Damengambit von der Aufstellung bis zum Endspiel — 
 date: "2026-07-12"
 author: "FireChess Team"
 tags: ["chess openings", "queens gambit", "club players", "d4 openings", "chess improvement", "opening repertoire", "qgd", "qga"]
-canonical: https://firechess.com/de/blog/queens-gambit-guide
+canonical: https://www.firechess.com/de/blog/queens-gambit-guide
 ---
 
 Das Damengambit — 1.d4 d5 2.c4 — ist eine der ältesten, angesehensten und effektivsten Eröffnungen im Schach. Es wurde von jedem Weltmeister von Steinitz bis Carlsen gespielt, und das aus gutem Grund: Es fordert das Zentrum von Schwarz sofort heraus, ohne sich auf einen riskanten Angriffsplan festzulegen.

@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Terms of Service",
   description: "FireChess terms of service — rules and conditions for using our platform.",
-  alternates: { canonical: "https://firechess.com/terms" },
+  alternates: { canonical: "https://www.firechess.com/terms" },
 };
 
 export default function TermsPage() {

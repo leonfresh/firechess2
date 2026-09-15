@@ -4,7 +4,7 @@ description: "Изучите шахматный мыслительный про�
 date: "2026-08-03"
 author: "FireChess Team"
 tags: ["chess improvement", "positional play", "calculation", "middlegame", "thinking process"]
-canonical: https://firechess.com/ru/blog/chess-thinking-process
+canonical: https://www.firechess.com/ru/blog/chess-thinking-process
 ---
 
 # Шахматный мыслительный процесс: Как оценивать позиции и находить правильный ход

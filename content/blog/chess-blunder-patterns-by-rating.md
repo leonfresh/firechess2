@@ -4,7 +4,7 @@ description: "Discover the 7 types of chess blunders by rating level. See real p
 date: "2026-08-11"
 author: "FireChess Team"
 tags: ["blunders", "rating improvement", "centipawn loss", "chess mistakes", "club players"]
-canonical: https://firechess.com/blog/chess-blunder-patterns-by-rating
+canonical: https://www.firechess.com/blog/chess-blunder-patterns-by-rating
 ---
 
 # Chess Blunder Patterns by Rating: What Your Mistakes Reveal About Your Level

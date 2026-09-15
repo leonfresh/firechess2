@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     title: "About FireChess — Free Chess Analysis Tool",
     description:
       "Free chess analysis with opening leak scanning, puzzle dungeon, Guess the Elo, weakness trainer, and more — powered by Stockfish 18.",
-    url: "https://firechess.com/about",
+    url: "https://www.firechess.com/about",
     type: "website",
   },
   twitter: {
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     description:
       "Free chess analysis platform with 10+ features. Powered by Stockfish 18.",
   },
-  alternates: { canonical: "https://firechess.com/about" },
+  alternates: { canonical: "https://www.firechess.com/about" },
 };
 
 export default function AboutPage() {

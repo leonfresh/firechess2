@@ -75,7 +75,7 @@ export async function generateMetadata({
     openGraph: {
       title: `${username}'s Chess Analysis — ${scan.reportMeta?.vibeTitle ?? "Full Report"} | FireChess`,
       description,
-      url: `https://firechess.com/report/${id}`,
+      url: `https://www.firechess.com/report/${id}`,
       type: "article",
     },
     twitter: {
@@ -83,7 +83,7 @@ export async function generateMetadata({
       title: `${username}'s Chess Report`,
       description,
     },
-    alternates: { canonical: `https://firechess.com/report/${id}` },
+    alternates: { canonical: `https://www.firechess.com/report/${id}` },
     robots: {
       index: shouldIndex,
       follow: true,

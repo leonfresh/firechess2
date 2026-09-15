@@ -4,7 +4,7 @@ description: "Master chess pattern recognition to spot forks, pins, skewers, and
 date: "2026-08-01"
 author: "FireChess Team"
 tags: ["chess-tactics", "pattern-recognition", "chess-improvement", "chess-training"]
-canonical: https://firechess.com/blog/chess-pattern-recognition
+canonical: https://www.firechess.com/blog/chess-pattern-recognition
 ---
 
 # Chess Pattern Recognition: How to Train Your Brain to See Tactics Faster

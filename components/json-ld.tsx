@@ -9,8 +9,8 @@ export function OrganizationJsonLd() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "FireChess",
-    url: "https://firechess.com",
-    logo: "https://firechess.com/firechess-logo.png",
+    url: "https://www.firechess.com",
+    logo: "https://www.firechess.com/firechess-logo.png",
     sameAs: [
       "https://github.com/leonfresh/firechess2",
       "https://discord.gg/YS8fc4FtEk",
@@ -33,7 +33,7 @@ export function WebApplicationJsonLd() {
     "@context": "https://schema.org",
     "@type": "WebApplication",
     name: "FireChess",
-    url: "https://firechess.com",
+    url: "https://www.firechess.com",
     applicationCategory: "GameApplication",
     operatingSystem: "Any",
     browserRequirements: "Requires JavaScript, WebAssembly, SharedArrayBuffer",
@@ -55,7 +55,7 @@ export function WebApplicationJsonLd() {
         description: "Unlimited games, depth 22 analysis, full reports",
       },
     ],
-    screenshot: "https://firechess.com/og-image.png",
+    screenshot: "https://www.firechess.com/og-image.png",
     featureList: [
       "Opening leak detection",
       "Missed tactics analysis",
@@ -90,7 +90,7 @@ export function BreadcrumbJsonLd({
       "@type": "ListItem",
       position: i + 1,
       name: item.name,
-      item: `https://firechess.com${item.href}`,
+      item: `https://www.firechess.com${item.href}`,
     })),
   };
 
@@ -161,7 +161,7 @@ export function ArticleJsonLd({
       name: "FireChess",
       logo: {
         "@type": "ImageObject",
-        url: "https://firechess.com/firechess-logo.png",
+        url: "https://www.firechess.com/firechess-logo.png",
       },
     },
     ...(image && {
@@ -190,7 +190,7 @@ export function WebSiteJsonLd() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "FireChess",
-    url: "https://firechess.com",
+    url: "https://www.firechess.com",
     description:
       "Free chess analysis tool — scan your games for opening leaks, missed tactics, and endgame blunders.",
     publisher: {
@@ -202,7 +202,7 @@ export function WebSiteJsonLd() {
       target: {
         "@type": "EntryPoint",
         urlTemplate:
-          "https://firechess.com/search?q={search_term_string}",
+          "https://www.firechess.com/search?q={search_term_string}",
       },
       "query-input": "required name=search_term_string",
     },

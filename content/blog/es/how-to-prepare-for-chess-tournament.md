@@ -4,7 +4,7 @@ description: "Guia paso a paso de preparacion para torneo de ajedrez para jugado
 date: "2026-08-13"
 author: "FireChess Team"
 tags: ["preparacion de torneo", "mejora en ajedrez", "jugadores de club", "analisis de partidas", "preparacion de aperturas"]
-canonical: https://firechess.com/es/blog/how-to-prepare-for-chess-tournament
+canonical: https://www.firechess.com/es/blog/how-to-prepare-for-chess-tournament
 ---
 
 Te has inscrito en un torneo. Quizas es tu primer evento OTB, o quizas has jugado una docena pero nunca te sentiste adecuadamente preparado. De cualquier forma, la misma pregunta golpea: **¿que debo realmente hacer antes de la primera ronda?**

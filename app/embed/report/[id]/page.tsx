@@ -24,7 +24,7 @@ export default async function EmbedReportPage({ params }: { params: Promise<{ id
   const topTag = meta?.topTag ?? "";
   const biggestTactic = r.missedTactics?.reduce?.((a: any, b: any) => (b.cpLoss > a.cpLoss ? b : a), r.missedTactics[0]);
 
-  const shareUrl = `https://firechess.com/report/${id}`;
+  const shareUrl = `https://www.firechess.com/report/${id}`;
   const bg = "#0a0a0a";
   const cardBg = "#111113";
   const border = "#1f1f22";

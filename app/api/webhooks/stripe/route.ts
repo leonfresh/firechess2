@@ -43,7 +43,7 @@ async function notifyAffiliateSale({
       from: process.env.AUTH_RESEND_FROM ?? "FireChess <noreply@firechess.com>",
       to: "leon@firechess.com",
       subject: `[FireChess] Affiliate ${label} — ${affiliateName} earned ${commission}`,
-      text: `${label} via affiliate: ${affiliateName}\nPlan: ${planType}\nSale: ${amount}\nCommission owed: ${commission}\n\nView: https://firechess.com/admin/affiliates`,
+      text: `${label} via affiliate: ${affiliateName}\nPlan: ${planType}\nSale: ${amount}\nCommission owed: ${commission}\n\nView: https://www.firechess.com/admin/affiliates`,
     });
     // Notify the creator if they have an email on file
     if (affiliateEmail) {

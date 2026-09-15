@@ -7,12 +7,12 @@ export const metadata: Metadata = {
   title: "Chess Tactics — Patterns Every Player Must Know",
   description:
     "Master essential chess tactical patterns: pins, forks, skewers, discovered attacks, back-rank mates, and more. Interactive guides with examples and FEN positions.",
-  alternates: { canonical: "https://firechess.com/tactics" },
+  alternates: { canonical: "https://www.firechess.com/tactics" },
   openGraph: {
     title: "Chess Tactics Guide | FireChess",
     description:
       "Learn every essential chess tactic — pins, forks, skewers, discovered attacks, back-rank mates, smothered mates, zwischenzug, deflection, and interference.",
-    url: "https://firechess.com/tactics",
+    url: "https://www.firechess.com/tactics",
     type: "website",
   },
   twitter: {
@@ -45,7 +45,7 @@ const FREQ_LABEL: Record<string, string> = {
 };
 
 function JsonLd() {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
   const url = `${base}/tactics`;
 
   const breadcrumb = {

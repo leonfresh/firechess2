@@ -6,12 +6,12 @@ export const metadata: Metadata = {
   title: "Famous Chess Games — The Greatest Games Ever Played",
   description:
     "Explore 25 of the most famous chess games in history — the Immortal Game, Opera Game, Game of the Century, Kasparov's Immortal, and more. Each with an interactive board and full analysis.",
-  alternates: { canonical: "https://firechess.com/games" },
+  alternates: { canonical: "https://www.firechess.com/games" },
   openGraph: {
     title: "Famous Chess Games | FireChess",
     description:
       "25 of the greatest chess games ever played — interactive boards, full stories, tactical themes, and analysis. From Morphy to Carlsen.",
-    url: "https://firechess.com/games",
+    url: "https://www.firechess.com/games",
     type: "website",
   },
   twitter: {
@@ -44,7 +44,7 @@ const ERA_COLORS: Record<string, { badge: string; dot: string }> = {
 const ERA_ORDER = ["romantic", "classical", "modern", "contemporary"];
 
 function JsonLd() {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
   const url = `${base}/games`;
 
   const breadcrumb = {

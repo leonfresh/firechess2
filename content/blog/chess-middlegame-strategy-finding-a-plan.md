@@ -4,7 +4,7 @@ description: "Don't know what to do after the opening? A practical framework for
 date: "2026-03-01"
 author: "FireChess Team"
 tags: ["strategy", "improvement"]
-canonical: https://firechess.com/blog/chess-middlegame-strategy-finding-a-plan
+canonical: https://www.firechess.com/blog/chess-middlegame-strategy-finding-a-plan
 ---
 
 The opening is over. You've developed your pieces, castled your king, and now... you have no idea what to do. You shuffle a rook back and forth, move a knight to a random square, and slowly watch your position deteriorate. This is the "what now?" problem, and it's the most common issue for players between 1200 and 1800.

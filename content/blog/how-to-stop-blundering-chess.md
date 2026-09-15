@@ -4,7 +4,7 @@ description: "Blunders cost chess rating points. Learn the 6 blunder types, a 5-
 date: "2026-07-28"
 author: "FireChess Team"
 tags: ["improvement", "tactics", "blunders", "game analysis", "beginner"]
-canonical: https://firechess.com/blog/how-to-stop-blundering-chess
+canonical: https://www.firechess.com/blog/how-to-stop-blundering-chess
 ---
 
 Every chess player blunders. Magnus Carlsen blunders. But the difference between a 1200 and a 1900 isn't that the 1900 never blunders — it's that they blunder less frequently and in fewer types of situations.

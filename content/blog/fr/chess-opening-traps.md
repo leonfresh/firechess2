@@ -4,7 +4,7 @@ description: "Découvrez les 5 pièges d'ouverture les plus courants en club —
 date: "2026-07-26"
 author: "FireChess Team"
 tags: ["ouvertures", "pièges", "tactiques", "débutant", "progression"]
-canonical: https://firechess.com/fr/blog/chess-opening-traps
+canonical: https://www.firechess.com/fr/blog/chess-opening-traps
 ---
 
 Vous avez étudié vos ouvertures. Vous connaissez les dix premiers coups de la Partie italienne par cœur. Puis au quatrième coup, votre adversaire joue quelque chose d'étrange — un saut de cavalier qui semble incorrect, un push de pion qui paraît douteux — et vous pensez : *« C'est une erreur. Je vais la punir. »*

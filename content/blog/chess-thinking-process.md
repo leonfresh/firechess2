@@ -4,7 +4,7 @@ description: "Learn the chess thinking process to evaluate positions, find candi
 date: "2026-09-14"
 author: "FireChess Team"
 tags: ["chess improvement", "positional play", "calculation", "middlegame", "thinking process"]
-canonical: https://firechess.com/blog/chess-thinking-process
+canonical: https://www.firechess.com/blog/chess-thinking-process
 ---
 
 # Chess Thinking Process: How to Evaluate Positions and Find the Right Move

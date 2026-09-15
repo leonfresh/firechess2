@@ -4,7 +4,7 @@ description: "Learn how to analyze your chess games with a proven 5-step process
 date: "2026-07-24"
 author: "FireChess Team"
 tags: ["analysis", "improvement", "game-review", "study-methods", "centipawn-loss"]
-canonical: https://firechess.com/blog/how-to-analyze-chess-games
+canonical: https://www.firechess.com/blog/how-to-analyze-chess-games
 ---
 
 Most chess players analyze their games wrong. They plug a game into an engine, scroll through the moves, see where the evaluation changed, think "oh, I should have played that," and move on. Two weeks later, they make the exact same mistake.

@@ -4,7 +4,7 @@ description: "How long to get good at chess? Realistic timelines from 0 to 2000+
 date: "2026-07-30"
 author: "FireChess Team"
 tags: ["improvement", "rating", "study-methods", "beginner", "timeline"]
-canonical: https://firechess.com/blog/how-long-to-get-good-at-chess
+canonical: https://www.firechess.com/blog/how-long-to-get-good-at-chess
 ---
 
 Every chess player asks the same question: *how long until I'm actually good?* The honest answer is that "good" means something different at every stage — and the timeline depends almost entirely on *how* you study, not just how much. A player who reviews their own games with an engine improves three times faster than one who only plays blitz. We know this because FireChess scans show the pattern over and over: players who actively analyze their [centipawn loss](/blog/what-is-centipawn-loss) improve at double the rate of those who don't.

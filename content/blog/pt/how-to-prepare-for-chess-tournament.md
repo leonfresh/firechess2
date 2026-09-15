@@ -4,7 +4,7 @@ description: "Guia passo a passo de preparacao para torneio de xadrez para jogad
 date: "2026-08-13"
 author: "FireChess Team"
 tags: ["tournament preparation", "chess improvement", "club players", "game analysis", "opening preparation"]
-canonical: https://firechess.com/pt/blog/how-to-prepare-for-chess-tournament
+canonical: https://www.firechess.com/pt/blog/how-to-prepare-for-chess-tournament
 ---
 
 Voce se inscreveu em um torneio. Talvez seja seu primeiro evento OTB, ou talvez ja jogou uma duzia mas nunca se sentiu propriamente preparado. De qualquer forma, a mesma pergunta chega: **o que eu realmente devo fazer antes da primeira rodada?**

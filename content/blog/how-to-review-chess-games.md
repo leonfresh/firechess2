@@ -4,7 +4,7 @@ description: "Learn how to review your chess games like a 2000+ rated player. St
 date: "2026-07-24"
 author: "FireChess Team"
 tags: ["analysis", "improvement", "game-review", "study-routine"]
-canonical: https://firechess.com/blog/how-to-review-chess-games
+canonical: https://www.firechess.com/blog/how-to-review-chess-games
 ---
 
 You just lost a game you felt you were winning. You know you should review it — every coach says so, every improvement guide lists it as step one. But when you open the analysis board, you stare at the position after move 30 and think: *now what?*

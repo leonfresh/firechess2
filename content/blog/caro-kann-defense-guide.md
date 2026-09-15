@@ -4,7 +4,7 @@ description: "Master the Caro-Kann Defense (1.e4 c6) — the solid, reliable ope
 date: "2026-08-14"
 author: "FireChess Team"
 tags: ["caro-kann", "openings", "defense", "1.e4", "chess-strategy"]
-canonical: https://firechess.com/blog/caro-kann-defense-guide
+canonical: https://www.firechess.com/blog/caro-kann-defense-guide
 ---
 
 # Caro-Kann Defense: The Complete Guide for Club Players

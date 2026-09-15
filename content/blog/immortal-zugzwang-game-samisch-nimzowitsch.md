@@ -225,11 +225,11 @@ The most instructive aspect of this game for club players is Sämisch's resignat
 
 ## Internal Links
 
-- **[Shirov vs Topalov 1998: The Bh3!! Sacrifice](https://firechess.com/blog/shirov-topalov-bh3-sacrifice)** — Another famous game where zugzwang decided the outcome, this time through an endgame sacrifice
-- **[Play through the Immortal Zugzwang on FireChess](https://firechess.com/games/immortal-zugzwang)** — Interactive board with complete game notation
-- **[Kasparov's Immortal Game](https://firechess.com/games/kasparov-immortal-1999)** — The famous Kasparov vs Topalov rook sacrifice at Wijk aan Zee 1999
-- **[Chess Brilliant Move Explained](https://firechess.com/blog/chess-brilliant-move-explained)** — How engines evaluate brilliant moves and sacrifices
-- **[Chess Accuracy Score Explained](https://firechess.com/blog/chess-accuracy-score-explained)** — Understanding centipawn loss and positional evaluation
+- **[Shirov vs Topalov 1998: The Bh3!! Sacrifice](https://www.firechess.com/blog/shirov-topalov-bh3-sacrifice)** — Another famous game where zugzwang decided the outcome, this time through an endgame sacrifice
+- **[Play through the Immortal Zugzwang on FireChess](https://www.firechess.com/games/immortal-zugzwang)** — Interactive board with complete game notation
+- **[Kasparov's Immortal Game](https://www.firechess.com/games/kasparov-immortal-1999)** — The famous Kasparov vs Topalov rook sacrifice at Wijk aan Zee 1999
+- **[Chess Brilliant Move Explained](https://www.firechess.com/blog/chess-brilliant-move-explained)** — How engines evaluate brilliant moves and sacrifices
+- **[Chess Accuracy Score Explained](https://www.firechess.com/blog/chess-accuracy-score-explained)** — Understanding centipawn loss and positional evaluation
 
 ## Summary
 
@@ -265,4 +265,4 @@ Study Nimzowitsch's core principles from *My System*: restraint (prevent your op
 
 ---
 
-*Want to analyze your own games for zugzwang patterns and positional weaknesses? Upload your PGN to the [FireChess Game Analyzer](https://firechess.com/analyze) and get instant positional evaluation with Stockfish 17.*
+*Want to analyze your own games for zugzwang patterns and positional weaknesses? Upload your PGN to the [FireChess Game Analyzer](https://www.firechess.com/analyze) and get instant positional evaluation with Stockfish 17.*

@@ -10,7 +10,7 @@ tags:
   - intermedio
   - mejora en ajedrez
   - ciegas
-canonical: https://firechess.com/es/blog/chess-visualisation-training-3-moves-ahead
+canonical: https://www.firechess.com/es/blog/chess-visualisation-training-3-moves-ahead
 ---
 
 # Entrenamiento de Visualizacion en Ajedrez — Como Ver 3 Movimientos Adelante y Construir Vision de Tablero

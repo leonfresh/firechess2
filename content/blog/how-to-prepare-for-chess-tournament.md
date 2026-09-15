@@ -4,7 +4,7 @@ description: "Step-by-step chess tournament preparation guide for club players. 
 date: "2026-08-13"
 author: "FireChess Team"
 tags: ["tournament preparation", "chess improvement", "club players", "game analysis", "opening preparation"]
-canonical: https://firechess.com/blog/how-to-prepare-for-chess-tournament
+canonical: https://www.firechess.com/blog/how-to-prepare-for-chess-tournament
 ---
 
 You've registered for a tournament. Maybe it's your first OTB event, or maybe you've played a dozen but never felt properly prepared. Either way, the same question hits: **what should I actually do before the first round?**

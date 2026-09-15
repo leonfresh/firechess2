@@ -4,7 +4,7 @@ description: "Lerne, was durchschnittlicher Centipawn-Verlust im Schach bedeutet
 date: "2026-08-14"
 author: "FireChess Team"
 tags: ["centipawn loss", "chess improvement", "game analysis", "ACPL", "move quality"]
-canonical: https://firechess.com/de/blog/average-centipawn-loss-guide
+canonical: https://www.firechess.com/de/blog/average-centipawn-loss-guide
 ---
 
 Du hast gerade eine 40-Zug-Partie gespielt und der Motor sagt, dein ACPL war 67. Ist das gut? Schlecht? Durchschnittlich für deine Wertung? Die meisten Vereinsspieler sehen Centipawn-Verlust-Zahlen auf ihrem Analysebildschirm und haben keine Ahnung, was sie bedeuten — sie wissen nur, dass niedriger besser ist. Aber ACPL zu verstehen ist einer der schnellsten Wege, genau zu diagnostizieren, wo deine Partien schiefgehen, weil er jeden einzelnen Zug in eine messbare Qualitätsnote aufteilt.

@@ -4,7 +4,7 @@ description: "Aprenda como revisar suas partidas de xadrez como um jogador 2000+
 date: "2026-07-24"
 author: "FireChess Team"
 tags: ["analysis", "improvement", "game-review", "study-routine"]
-canonical: https://firechess.com/pt/blog/how-to-review-chess-games
+canonical: https://www.firechess.com/pt/blog/how-to-review-chess-games
 ---
 
 Voce acabou de perder uma partida que sentia que estava vencendo. Sabe que deveria revisa-la — todo treinador diz isso, todo guia de melhoria lista como passo um. Mas quando voce abre o tabuleiro de analise, fica encarando a posicao apos o lance 30 e pensa: *e agora?*

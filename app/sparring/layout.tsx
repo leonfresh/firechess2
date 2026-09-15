@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "Opening Sparring | FireChess",
     description:
       "Spar against real human moves from millions of Lichess games, filtered by rating and blunder-checked before play.",
-    url: "https://firechess.com/sparring",
+    url: "https://www.firechess.com/sparring",
     type: "website",
   },
   twitter: {
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     description:
       "Play against weighted Lichess book moves at your target rating, then continue with Stockfish when the book runs out.",
   },
-  alternates: { canonical: "https://firechess.com/sparring" },
+  alternates: { canonical: "https://www.firechess.com/sparring" },
 };
 
 export default function SparringLayout({ children }: { children: React.ReactNode }) {

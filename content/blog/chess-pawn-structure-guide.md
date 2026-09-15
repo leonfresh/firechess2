@@ -4,7 +4,7 @@ description: "Master chess pawn structure with 8 key patterns. See real position
 date: "2026-07-29"
 author: "FireChess Team"
 tags: ["pawn-structure", "strategy", "middlegame", "endgame", "fundamentals"]
-canonical: https://firechess.com/blog/chess-pawn-structure-guide
+canonical: https://www.firechess.com/blog/chess-pawn-structure-guide
 ---
 
 Your chess pawn structure is the skeleton of your position. Every piece you place, every plan you make, every trade you consider — it all flows from the pawns. Yet most club players treat pawns as afterthoughts, pushing them whenever they "feel right" and wondering why their pieces end up passive, their king unsafe, and their rating stuck.

@@ -26,11 +26,11 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: `https://firechess.com/glossary/${term.id}` },
+    alternates: { canonical: `https://www.firechess.com/glossary/${term.id}` },
     openGraph: {
       title: `${term.term} — Chess Glossary | FireChess`,
       description,
-      url: `https://firechess.com/glossary/${term.id}`,
+      url: `https://www.firechess.com/glossary/${term.id}`,
       type: "article",
     },
     twitter: {
@@ -42,7 +42,7 @@ export async function generateMetadata({
 }
 
 function TermJsonLd({ term }: { term: GlossaryTerm }) {
-  const base = "https://firechess.com";
+  const base = "https://www.firechess.com";
   const url = `${base}/glossary/${term.id}`;
 
   const article = {

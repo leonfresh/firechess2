@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "FireChess Pricing — Free & Pro Plans",
     description:
       "Compare Free and Pro plans. Unlock unlimited scans, deeper analysis, full reports, and more.",
-    url: "https://firechess.com/pricing",
+    url: "https://www.firechess.com/pricing",
     type: "website",
   },
   twitter: {
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     description:
       "Compare Free and Pro plans. Unlimited scans, deeper analysis, full reports.",
   },
-  alternates: { canonical: "https://firechess.com/pricing" },
+  alternates: { canonical: "https://www.firechess.com/pricing" },
 };
 
 export default function PricingLayout({ children }: { children: React.ReactNode }) {
