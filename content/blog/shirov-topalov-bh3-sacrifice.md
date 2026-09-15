@@ -1,7 +1,7 @@
 ---
-title: "Shirov vs Topalov 1998: The Immortal Bh3!! Sacrifice"
-description: "Shirov vs Topalov 1998: the legendary 47...Bh3!! sacrifice explained. Full analysis with board diagrams, engine eval, and why Kasparov was stunned."
-date: 2026-09-13
+title: "47...Bh3!!: Shirov's Immortal Bishop Sacrifice vs Topalov"
+description: "Shirov's 47...Bh3!! is called the greatest endgame move ever. Full game analysis with boards, engine eval, and why it still stuns grandmasters."
+date: 2026-09-15
 author: "FireChess Team"
 tags: ["shirov topalov bh3", "greatest chess moves", "famous chess games", "endgame sacrifice", "chess brilliancy", "zugzwang"]
 ---
@@ -282,6 +282,10 @@ In 1998, engines like Fritz and Rebel relied heavily on material counting. A bis
 ### Q: What are the key themes to learn from the Shirov-Topalov endgame?
 
 Four major endgame principles emerge: (1) **King activity trumps material** — in endgames, an active king can be worth more than a minor piece; (2) **Count tempi, not material** — in king-and-pawn races, the side whose king arrives first wins regardless of material; (3) **Opposite-colored bishops favor the attacker** — the defending bishop cannot contest threats on its opposite color; (4) **Static evaluations lie** — always calculate concretely in king-and-pawn endgames rather than trusting material count.
+
+### Q: What is Shirov's bishop sacrifice against Topalov?
+
+Shirov's bishop sacrifice (47...Bh3!!) occurred in his 1998 game against Topalov at Linares. Shirov gave up his bishop for zero material — it was attacked by two pawns and defended by none — solely to gain one tempo in a king march to e4. The sacrifice forced a zugzwang that decided the game. Modern engines evaluate it at roughly -5.0 for Black, but in 1998 every engine called it a blunder. It is widely regarded as the greatest endgame move in chess history. [Scan your own endgames on FireChess](/analyze) to see how your sacrifice judgment compares.
 
 ### Q: Has a bishop sacrifice like 47...Bh3!! been played in other grandmaster games?
 
