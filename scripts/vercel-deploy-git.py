@@ -42,15 +42,20 @@ def api(url, method="GET", body=None):
 proj = api(f"https://api.vercel.com/v9/projects/{PROJECT_ID}?teamId={TEAM_ID}")
 print("ignoreCommand:", proj.get("commandForIgnoringBuildStep"))
 
+body = {
+    "name": "firechess2",
+    "project": PROJECT_ID,
+    "gitSource": {"type": "github", "ref": ref, "repoId": REPO_ID},
+}
+# 'preview' is not an accepted target value (production | staging | custom env);
+# a non-production branch preview is simply a deploy with no target.
+if target != "preview":
+    body["target"] = target
+
 d = api(
     f"https://api.vercel.com/v13/deployments?teamId={TEAM_ID}&forceNew=1",
     method="POST",
-    body={
-        "name": "firechess2",
-        "project": PROJECT_ID,
-        "target": target,
-        "gitSource": {"type": "github", "ref": ref, "repoId": REPO_ID},
-    },
+    body=body,
 )
 dep_id = d.get("id")
 print(f"created deployment {dep_id} state={d.get('state')} commit={(d.get('meta') or {}).get('githubCommitSha','')[:8]}")
