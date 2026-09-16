@@ -64,9 +64,10 @@ print(f"  url: https://{d.get('url')}")
 for _ in range(60):
     time.sleep(15)
     cur = api(f"https://api.vercel.com/v13/deployments/{dep_id}?teamId={TEAM_ID}")
-    state = cur.get("state")
+    # The single-deployment endpoint reports readyState; the list endpoint uses state.
+    state = cur.get("readyState") or cur.get("state") or "UNKNOWN"
     print(f"  [{time.strftime('%H:%M:%S')}] {state}")
     if state in {"READY", "ERROR", "CANCELED"}:
-        ready = cur.get("readyState") or state
-        print(f"final: {ready}  https://{cur.get('url')}")
-        break
+        print(f"final: {state}  https://{cur.get('url')}")
+        raise SystemExit(0 if state == "READY" else 1)
+raise SystemExit(2)  # never resolved: treat as failure, not success
