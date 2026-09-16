@@ -7,7 +7,7 @@ const sql=neon(process.env.DATABASE_URL),base=process.env.CHAOS_TEST_ORIGIN||'ht
 if(process.argv.includes('--cleanup')){if(existsSync(file)){const f=JSON.parse(readFileSync(file));await sql`delete from chaos_match where room_id=${f.roomId}`;await sql`delete from chaos_room where id=${f.roomId}`;for(const id of [f.host,f.guest])await sql`delete from chaos_player where id=${id}`;unlinkSync(file);}console.log('Watchtower fixtures removed.');process.exit();}
 const host='guest_'+randomUUID(),guest='guest_'+randomUUID();
 async function request(path,user,body){const r=await fetch(base+path,{method:body?'POST':'GET',headers:{...(user?{'X-Guest-Id':user}:{}),'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});const d=await r.json();assert.equal(r.status,200,JSON.stringify(d));return d;}
-let fixture;
+let fixture,timedRoom;
 try{
  await sql`insert into chaos_player(id,name) values(${host},'Watchtower QA White'),(${guest},'Watchtower QA Black')`;
  const room=await request('/api/chaos/create',host,{draftProtocol:2,hostColor:'white',timeControlSeconds:-1,incrementSeconds:0});
@@ -19,8 +19,10 @@ try{
  await send(host,{type:'chat',text:'WATCH_PRIVATE_CHAT_MUST_NOT_LEAK'});
  let live=await request('/api/chaos/watch?room='+room.roomId);
  assert.equal(live.frame.fen,state.snapshot.fen);assert.equal(live.white,'Watchtower QA White');assert.equal(live.black,'Watchtower QA Black');
+ assert.equal(live.clock,null,'A No rush room must not invent a clock');
  const safe=JSON.stringify(live);for(const secret of [host,guest,room.roomCode,'WATCH_PRIVATE_CHAT_MUST_NOT_LEAK','offers','receipts'])assert.ok(!safe.includes(secret),secret);
  const listing=await request('/api/chaos/watch?tab=live');assert.ok(listing.games.some(g=>g.id===room.roomId));
+ assert.ok(!listing.games.some(g=>g.clock),'No rush games must not report clocks in the listing');
  const denied=await fetch(base+'/api/chaos/sync',{method:'POST',headers:{'Content-Type':'application/json','X-Guest-Id':'guest_'+randomUUID()},body:JSON.stringify({roomId:room.roomId,id:randomUUID(),baseRevision:state.stateRevision,message:{type:'resign'}})});assert.equal(denied.status,403);
  await send(host,{type:'resign'});
  const archive=await request('/api/chaos/watch?match='+encodeURIComponent(room.roomId+':0'));
@@ -29,7 +31,39 @@ try{
  await send(host,{type:'rematch'});await send(guest,{type:'rematch'});await move(guest,'d4');await move(host,'d5');
  live=await request('/api/chaos/watch?room='+room.roomId);assert.equal(live.gameNumber,1);assert.equal(live.white,'Watchtower QA Black');
  const retained=await request('/api/chaos/watch?match='+encodeURIComponent(room.roomId+':0'));assert.deepEqual(retained.frames,archive.frames);
- console.log('PASS: public friend room listing, live board, chat/identity redaction, spectator denial, durable replay, rematch colors and separate archive.');
- console.log(JSON.stringify({roomId:room.roomId,matchId:room.roomId+':0'}));
- if(!process.argv.includes('--keep')){await sql`delete from chaos_match where room_id=${room.roomId}`;await sql`delete from chaos_room where id=${room.roomId}`;for(const id of [host,guest])await sql`delete from chaos_player where id=${id}`;unlinkSync(file);}
-}catch(e){if(fixture){await sql`delete from chaos_match where room_id=${fixture.roomId}`;await sql`delete from chaos_room where id=${fixture.roomId}`;}for(const id of [host,guest])await sql`delete from chaos_player where id=${id}`;if(existsSync(file))unlinkSync(file);throw e;}
+ const timed=await request('/api/chaos/create',host,{draftProtocol:2,hostColor:'white',timeControlSeconds:300,incrementSeconds:3});timedRoom=timed.roomId;
+ await request('/api/chaos/join',guest,{roomCode:timed.roomCode});
+ let tState=await request('/api/chaos/sync?roomId='+timed.roomId,host);
+ const sendTimed=async(user,message)=>tState=await request('/api/chaos/sync',user,{roomId:timed.roomId,id:randomUUID(),baseRevision:tState.stateRevision,message});
+ const moveTimed=async(user,san)=>{const g=new Chess(tState.snapshot.fen),m=g.move(san);await sendTimed(user,{type:'move',fen:g.fen(),lastMoveFrom:m.from,lastMoveTo:m.to,chaosState:tState.snapshot.chaosState});};
+ await sendTimed(host,{type:'anomaly_pick',anomalyId:null});await sendTimed(guest,{type:'anomaly_pick',anomalyId:null});
+ await moveTimed(host,'e4');
+ const seeded=await request('/api/chaos/watch?room='+timed.roomId);
+ assert.equal(seeded.base,300);assert.equal(seeded.increment,3);
+ assert.ok(seeded.clock,'A timed game must hand spectators a projected clock');
+ assert.equal(seeded.clock.active,'b','Black is on the move after 1.e4');
+ assert.equal(seeded.clock.w,300000,'The resting clock holds its full 5:00');
+ assert.ok(seeded.clock.b<300000&&seeded.clock.b>297000,'The moving clock must run down');
+ await new Promise(r=>setTimeout(r,1500));
+ const ticking=await request('/api/chaos/watch?room='+timed.roomId);
+ assert.ok(ticking.clock.b<seeded.clock.b-1000,'The moving clock must tick down between polls');
+ assert.equal(ticking.clock.w,300000,'The resting clock must not move');
+ await moveTimed(guest,'e5');
+ const banked=await request('/api/chaos/watch?room='+timed.roomId);
+ assert.equal(banked.clock.active,'w','White is on the move after 1.e4 e5');
+ assert.ok(banked.clock.b>300500,'Black must bank the +3s increment');
+ assert.ok(banked.clock.b<304000,'No double increment');
+ const timedList=await request('/api/chaos/watch?tab=live');
+ const timedRow=timedList.games.find(g=>g.id===timed.roomId);
+ assert.ok(timedRow&&timedRow.clock,'The live listing must carry the running clocks too');
+ assert.equal(timedRow.clock.active,'w');
+ assert.ok(typeof timedList.serverNow==='number','The listing must disclose its server clock anchor');
+ assert.ok(!JSON.stringify(timedList).includes(host),'The listing must stay redacted');
+ await sendTimed(host,{type:'resign'});
+ const timedArchive=await request('/api/chaos/watch?match='+encodeURIComponent(timed.roomId+':0'));
+ assert.equal(timedArchive.base,300);assert.equal(timedArchive.increment,3);
+ assert.ok(timedArchive.frames.some(f=>f.from==='e2'),'The timed game records its moves');
+ console.log('PASS: public friend room listing, live board, chat/identity redaction, spectator denial, durable replay, rematch colors, separate archive, and running clocks in live detail plus listing.');
+ console.log(JSON.stringify({roomId:room.roomId,matchId:room.roomId+':0',timedRoomId:timedRoom}));
+ if(!process.argv.includes('--keep')){for(const id of [room.roomId,timedRoom].filter(Boolean)){await sql`delete from chaos_match where room_id=${id}`;await sql`delete from chaos_room where id=${id}`;}for(const id of [host,guest])await sql`delete from chaos_player where id=${id}`;unlinkSync(file);}
+}catch(e){for(const id of [fixture?.roomId,timedRoom].filter(Boolean)){await sql`delete from chaos_match where room_id=${id}`;await sql`delete from chaos_room where id=${id}`;}for(const id of [host,guest])await sql`delete from chaos_player where id=${id}`;if(existsSync(file))unlinkSync(file);throw e;}

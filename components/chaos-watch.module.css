@@ -164,6 +164,10 @@
   font-weight: 800;
 }
 .status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   padding: 12px 16px;
   margin: 14px 0;
   background: #18273d;
@@ -171,6 +175,61 @@
   color: #d4f86c;
   font-weight: 800;
   text-transform: capitalize;
+}
+.status b {
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+.chip,
+.chipHot {
+  padding: 3px 9px;
+  border: 1px solid #61758a;
+  border-radius: 999px;
+  background: #273d54;
+  color: #fff1cf;
+  font-size: 12px;
+  font-weight: 800;
+}
+.chipHot {
+  border-color: #d4f86c;
+  background: #2c4020;
+  color: #d4f86c;
+}
+.clock {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid #61758a;
+  border-radius: 8px;
+  background: #18273d;
+  color: #fff1cf;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+}
+.clockActive {
+  border-color: #d4f86c;
+  background: #d4f86c;
+  color: #223349;
+}
+.clockLow {
+  border-color: #f0a04b;
+  background: #6b3d12;
+  color: #ffe0b2;
+}
+.clockOut {
+  border-color: #d98a9a;
+  background: #5b323c;
+  color: #ffd9e0;
+}
+.rowClocks {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0;
+}
+.rowClocks small {
+  display: inline;
+  margin: 0;
 }
 .controls {
   text-align: center;

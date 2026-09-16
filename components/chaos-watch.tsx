@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "./chessboard-compat";
@@ -20,6 +21,7 @@ type Entry = {
   rated?: boolean;
   moveCount?: number | null;
   platform?: string;
+  clock?: MatchClock | null;
 };
 type Detail = {
   id: string;
@@ -36,6 +38,8 @@ type Detail = {
   legacy?: boolean;
   moveCount?: number | null;
   platform?: string;
+  base?: number;
+  increment?: number;
   result?: { winner: string; reason: string };
 };
 const control = (base: number, inc: number) =>
@@ -44,6 +48,17 @@ const clockText = (ms: number) => {
   const sec = Math.ceil(Math.max(0, ms) / 1000);
   return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
 };
+/** Clocks are game state, not decoration: the side on the move is highlighted
+ * and a side inside its last 30 seconds is visibly at risk before it flags. */
+const clockState = (ms: number, active: boolean) =>
+  [
+    styles.clock,
+    active ? styles.clockActive : "",
+    ms <= 0 ? styles.clockOut : ms <= 30000 ? styles.clockLow : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+/** Button and page share one target: the Watchtower is a page, never a modal. */
 export function ChaosWatchButton({
   matchId,
   label = "Watch & replays",
@@ -55,51 +70,34 @@ export function ChaosWatchButton({
   initialTab?: "live" | "archive";
   card?: boolean;
 } = {}) {
-  const [open, setOpen] = useState(false);
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    if (open) dialog.current?.showModal();
-    else dialog.current?.close();
-  }, [open]);
+  const href = matchId
+    ? `/watch?match=${encodeURIComponent(matchId)}`
+    : initialTab === "archive"
+      ? "/watch?tab=archive"
+      : "/watch";
   return (
-    <>
-      <button
-        className={card ? "lobby-destination" : "sound-button"}
-        data-tone={initialTab === "live" ? "mint" : "violet"}
-        onClick={() => setOpen(true)}
-      >
-        {card ? (
-          <>
-            <span className="destination-icon">
-              <ChaosHubIcon kind={initialTab === "live" ? "live" : "replay"} />
-            </span>
-            <strong>{label}</strong>
-            <small>
-              {initialTab === "live" ? "Drop into a match" : "Relive the chaos"}
-            </small>
-            <span className="destination-arrow" aria-hidden="true">
-              ↗
-            </span>
-          </>
-        ) : (
-          label
-        )}
-      </button>
-      <dialog
-        ref={dialog}
-        className={styles.dialog}
-        onCancel={() => setOpen(false)}
-        aria-label="Watch Chaos Chess"
-      >
-        {open && (
-          <ChaosWatch
-            initialTab={initialTab}
-            initialMatch={matchId}
-            onClose={() => setOpen(false)}
-          />
-        )}
-      </dialog>
-    </>
+    <Link
+      className={card ? "lobby-destination" : "sound-button"}
+      data-tone={initialTab === "live" ? "mint" : "violet"}
+      href={href}
+    >
+      {card ? (
+        <>
+          <span className="destination-icon">
+            <ChaosHubIcon kind={initialTab === "live" ? "live" : "replay"} />
+          </span>
+          <strong>{label}</strong>
+          <small>
+            {initialTab === "live" ? "Drop into a match" : "Relive the chaos"}
+          </small>
+          <span className="destination-arrow" aria-hidden="true">
+            ↗
+          </span>
+        </>
+      ) : (
+        label
+      )}
+    </Link>
   );
 }
 export function ChaosWatch({
@@ -169,7 +167,10 @@ export function ChaosWatch({
         if (selected) {
           setDetail(d);
           setReceived(Date.now());
-        } else setList(d);
+        } else {
+          setList(d);
+          setReceived(Date.now());
+        }
         setError("");
       } catch (e) {
         if (active)
@@ -258,11 +259,18 @@ export function ChaosWatch({
       setError("Copy is unavailable in this browser.");
     }
   };
-  const remaining = (side: "w" | "b") =>
-    detail?.clock
-      ? detail.clock[side] -
-        (detail.clock.active === side ? Math.max(0, now - received) : 0)
+  /** Server anchor plus the elapsed time since this payload arrived. */
+  const liveClock = (clock: MatchClock | null | undefined, side: "w" | "b") =>
+    clock
+      ? clock[side] -
+        (clock.active === side ? Math.max(0, now - received) : 0)
       : 0;
+  const clockChip = (clock: MatchClock | null | undefined, side: "w" | "b") =>
+    clock ? (
+      <b className={clockState(liveClock(clock, side), clock.active === side)}>
+        {clockText(liveClock(clock, side))}
+      </b>
+    ) : null;
   const deadline = detail?.pickDeadline
     ? Math.max(
         0,
@@ -358,6 +366,14 @@ export function ChaosWatch({
                           ? "● LIVE · Watch"
                           : `${g.winner === "draw" ? "Draw" : g.winner + " won"} · ${g.rated ? "Rated" : "Casual"}`}
                       </small>
+                      {tab === "live" && g.clock && (
+                        <span className={styles.rowClocks}>
+                          <small>White</small>
+                          {clockChip(g.clock, "w")}
+                          <small>Black</small>
+                          {clockChip(g.clock, "b")}
+                        </span>
+                      )}
                       <small>
                         {tab === "archive"
                           ? new Date(g.date).toLocaleString()
@@ -413,12 +429,23 @@ export function ChaosWatch({
         ) : (
           <>
             <div className={styles.status} role="status">
-              {selected.live
-                ? detail.result
-                  ? `${detail.result.winner === "draw" ? "Draw" : detail.result.winner === "aborted" ? "No contest" : detail.result.winner + " wins"} · ${detail.result.reason}`
-                  : detail.phase
-                : frame && describeWatchFrame(frame)}
-              {deadline !== null && !detail.result && ` · ${deadline}s`}
+              <span>
+                {selected.live
+                  ? detail.result
+                    ? `${detail.result.winner === "draw" ? "Draw" : detail.result.winner === "aborted" ? "No contest" : detail.result.winner + " wins"} · ${detail.result.reason}`
+                    : detail.phase
+                  : frame && describeWatchFrame(frame)}
+              </span>
+              {typeof detail.base === "number" && (
+                <b className={styles.chip} title="Time control">
+                  {control(detail.base, detail.increment ?? 0)}
+                </b>
+              )}
+              {deadline !== null && !detail.result && (
+                <b className={styles.chipHot} title="Seconds left to choose">
+                  ⏱ {deadline}s
+                </b>
+              )}
             </div>
             {!selected.live && detail.result && (
               <p>
@@ -442,9 +469,7 @@ export function ChaosWatch({
                   <strong>{flipped ? detail.white : detail.black}</strong>
                   <span>
                     {flipped ? "White" : "Black"}{" "}
-                    {selected.live &&
-                      detail.clock &&
-                      clockText(remaining(flipped ? "w" : "b"))}
+                    {selected.live && clockChip(detail.clock, flipped ? "w" : "b")}
                   </span>
                 </div>
                 <div className={styles.board} ref={board}>
@@ -473,9 +498,7 @@ export function ChaosWatch({
                   <strong>{flipped ? detail.black : detail.white}</strong>
                   <span>
                     {flipped ? "Black" : "White"}{" "}
-                    {selected.live &&
-                      detail.clock &&
-                      clockText(remaining(flipped ? "b" : "w"))}
+                    {selected.live && clockChip(detail.clock, flipped ? "b" : "w")}
                   </span>
                 </div>
                 {!selected.live && frames.length > 0 && (

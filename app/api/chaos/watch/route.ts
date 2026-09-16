@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
-import { projectClock } from "@/lib/chaos-clock";
+import { projectClock, type MatchClock } from "@/lib/chaos-clock";
 import { visualState, archiveFrames, archivePlatform } from "@/lib/chaos-watch";
 export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
@@ -112,6 +112,7 @@ export async function GET(req: NextRequest) {
     );
     const data = live
       ? await db.execute(sql`select r.id,r."hostColor" as host_color,r."timeControlSeconds" as base,r."incrementSeconds" as increment,
+   r."chaosState"->'_sync'->'clock' as clock,
    coalesce(h.name,'Guest player') as host,coalesce(g.name,'Guest player') as guest,r."updatedAt" as date
    from chaos_room r left join chaos_player h on h.id=r."hostId" left join chaos_player g on g.id=r."guestId"
    where r.status='playing' and r."guestId" is not null and r."updatedAt">now()-interval '2 hours'
@@ -122,6 +123,7 @@ export async function GET(req: NextRequest) {
    coalesce(h.name,'Guest player') as host,coalesce(g.name,'Guest player') as guest
    from chaos_match m left join chaos_player h on h.id=m.host_id left join chaos_player g on g.id=m.guest_id
    order by m.ended_at desc,m.id desc limit 21 offset ${page * 20}`);
+    const listNow = Date.now();
     return NextResponse.json(
       {
         games: data.rows
@@ -138,8 +140,12 @@ export async function GET(req: NextRequest) {
             rated: m.rated,
             moveCount: m.move_count,
             ...(!live ? { platform: archivePlatform(m.host_id, m.guest_id) } : {}),
+            ...(live && m.clock
+              ? { clock: projectClock(m.clock as MatchClock, listNow) }
+              : {}),
           })),
         hasMore: data.rows.length > 20,
+        ...(live ? { serverNow: listNow } : {}),
       },
       { headers },
     );
