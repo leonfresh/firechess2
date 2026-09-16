@@ -280,7 +280,7 @@ The tree doesn't just tell you the position — it tells you whether you handle 
 
 To see how the tree flags a weakness, consider this position from the French Advance variation (mentioned earlier as a 29% win rate "leak"):
 
-<chess-position fen="r1bqkb1r/pp1pnppp/2n1p3/2pPP3/8/N2P1N2/PP4PP/R1BQKB1R w KQkq - 0 6" orientation="white" caption="French Advance after 1.e4 e6 2.d4 d5 3.e5 c5 4.c3 Nc6 5.Nf3 Nge7 6.Na3 — a position where your opening tree might show a 29% win rate. White has space on the kingside, but the key battle revolves around the d4 pawn and f6 square. If your tree shows red here, you need to study the typical pawn breaks and knight maneuvers."></chess-position>
+<chess-position fen="r1bqkb1r/pp1pnppp/2n1p3/2pPP3/8/N2P1N2/PP4PP/R1BQKB1R w KQkq - 0 6" orientation="white" caption="French Advance after 1.e4 e6 2.d4 d5 3.e5 c5 4.c3 Nc6 5.Nf3 Nge7 6.Na3 — a position where your opening tree might show a 29% win rate. White has space on the kingside, but the key battle revolves around the d4 pawn and f6 square. If your tree shows red here, you need to study the typical pawn breaks and knight maneuvers." arrows="d5c6:green" badge="best"></chess-position>
 
 Here, White has played the Advance French: 1.e4 e6 2.d4 d5 3.e5 c5 4.c3 Nc6 5.Nf3 Nge7 6.Na3. The position is closed, White has space on the kingside, and the key battle will revolve around the d4 pawn and the f6 square. A 29% win rate here screams that you're mishandling this structure — likely playing too passively when aggressive breaks like b4 or the Ng5-e2-f4 maneuver are needed.
 

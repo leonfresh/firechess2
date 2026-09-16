@@ -36,9 +36,9 @@ The result: you make the same type of mistake across different openings, differe
 
 This is the single most common mistake pattern at the club level. Your opponent offers material — a pawn, a piece, sometimes even a queen — and you take it without checking if it's safe.
 
-The psychology is simple: free stuff feels good. Your brain pattern-matches "capturable piece = take it" because in 90% of positions, that's correct. The problem is the other 10%.
+The [psychology of chess tilt](/blog/chess-psychology-tilting) plays a role here: free stuff feels good. Your brain pattern-matches "capturable piece = take it" because in 90% of positions, that's correct. The problem is the other 10%.
 
-<chess-position fen="r1bqkb1r/ppp2ppp/2n5/3np1N1/2B5/8/PPPP1PPP/RNBQK2R w KQkq - 0 6" caption="The Fried Liver Attack trap: Black played 5...Nxd5??, grabbing the pawn. It looks free — but White has Nxf7!, a devastating sacrifice that rips open Black's king. After 6.Nxf7 Kxf7 7.Qf3+ Ke6 8.Nc3, White's attack is crushing. Taking the 'free' pawn loses the game." orientation="white"></chess-position>
+<chess-position fen="r1bqkb1r/ppp2ppp/2n5/3np1N1/2B5/8/PPPP1PPP/RNBQK2R w KQkq - 0 6" caption="The Fried Liver Attack trap: Black played 5...Nxd5??, grabbing the pawn. It looks free — but White has Nxf7!, a devastating sacrifice that rips open Black's king. After 6.Nxf7 Kxf7 7.Qf3+ Ke6 8.Nc3, White's attack is crushing. Taking the 'free' pawn loses the game." orientation="white" arrows="g5f7:green" badge="best"></chess-position>
 
 This position comes from the Italian Game, Two Knights Defense: 1.e4 e5 2.Nf3 Nc6 3.Bc4 Nf6 4.Ng5 d5 5.exd5 Nxd5?? The knight on d5 looks safe. There's no immediate threat visible. But White plays 6.Nxf7! — sacrificing the knight to rip open the black king. After 6...Kxf7 7.Qf3+ Ke6 8.Nc3, White's pieces flood in and Black's king is stranded in the center.
 
@@ -54,7 +54,7 @@ This pattern shows up on move 8-15 of the middlegame. You develop a plan — may
 
 The result: you walk into a tactic that was visible for 2-3 moves.
 
-<chess-position fen="rnb1kb1r/1p3ppp/pq1ppn2/6B1/3NPP2/2N5/PPP3PP/R2QKB1R w KQkq - 1 8" caption="The Sicilian Najdorf, Poisoned Pawn Variation: Black's queen on b6 targets b2 and creates pressure along the a5-e1 diagonal. Many club players play 8.e5 here, focused on their own attack, missing that 8...dxe5 9.fxe5 Qxb2 wins a pawn while White's center collapses. Always check what your opponent's last move does before executing your plan." orientation="white"></chess-position>
+<chess-position fen="rnb1kb1r/1p3ppp/pq1ppn2/6B1/3NPP2/2N5/PPP3PP/R2QKB1R w KQkq - 1 8" caption="The Sicilian Najdorf, Poisoned Pawn Variation: Black's queen on b6 targets b2 and creates pressure along the a5-e1 diagonal. Many club players play 8.e5 here, focused on their own attack, missing that 8...dxe5 9.fxe5 Qxb2 wins a pawn while White's center collapses. Always check what your opponent's last move does before executing your plan." orientation="white" arrows="d4b3:green,e4e5:orange" badge="good"></chess-position>
 
 This is the Sicilian Najdorf after 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 a6 6.Bg5 e6 7.f4 Qb6. Black's queen on b6 creates immediate tactical pressure: it eyes b2, pins the f2 pawn to the king along the a5-e1 diagonal, and sets up potential tactics on the queenside.
 
@@ -70,7 +70,7 @@ This pattern costs club players 0.5-1.0 points of ACPL per game. You capture a p
 
 The recapture reflex is deeply ingrained. "They took my bishop, I take back with the queen." It feels natural. But in chess, the best response to a capture is often *not* a recapture.
 
-<chess-position fen="r1bq1rk1/2p1bppp/p1n2n2/1p1pp3/4P3/1BP2N2/PP1P1PPP/RNBQR1K1 w - - 0 9" caption="Ruy Lopez, Marshall Attack: Black just played 8...d5, striking in the center. The automatic response is 9.exd5, but this leads to the Marshall Gambit where Black gets dangerous compensation. The move 9.d3 — declining the pawn — is often safer and avoids Black's preparation. Not every capture demands a recapture." orientation="white"></chess-position>
+<chess-position fen="r1bq1rk1/2p1bppp/p1n2n2/1p1pp3/4P3/1BP2N2/PP1P1PPP/RNBQR1K1 w - - 0 9" caption="Ruy Lopez, Marshall Attack: Black just played 8...d5, striking in the center. The automatic response is 9.exd5, but this leads to the Marshall Gambit where Black gets dangerous compensation. The move 9.d3 — declining the pawn — is often safer and avoids Black's preparation. Not every capture demands a recapture." orientation="white" arrows="e4d5:green,d2d3:orange"></chess-position>
 
 This is the Ruy Lopez after 1.e4 e5 2.Nf3 Nc6 3.Bb5 a6 4.Ba4 Nf6 5.O-O Be7 6.Re1 b5 7.Bb3 O-O 8.c3 d5. Black strikes in the center with ...d5, and the automatic 9.exd5 leads into the Marshall Attack — one of the most deeply analyzed gambit lines in chess. Black gets a powerful attack for the pawn, and most club players are unprepared for the complications.
 
@@ -87,7 +87,7 @@ Tactics aren't just for puzzle rush. They appear in real games far more often th
 
 The critical distinction: in a puzzle, you *know* there's a tactic. In a game, you have to *notice* it. This is pattern recognition at work, and it's trainable.
 
-<chess-position fen="r1bqk1nr/pppp1ppp/2n5/b7/2B1P3/2Pp1N2/P4PPP/RNBQ1RK1 w kq - 0 8" caption="Evans Gambit: Black just played 7...d3?, a natural-looking move that grabs space and attacks the c3 pawn. But it's a blunder — White has 8.Qb3!, threatening both Qxf7 mate and Bxf7+ (the bishop on c4 eyes f7). Black's queen and rook are both undefended. Tactics hide in plain sight when you're focused on your own plan." orientation="white"></chess-position>
+<chess-position fen="r1bqk1nr/pppp1ppp/2n5/b7/2B1P3/2Pp1N2/P4PPP/RNBQ1RK1 w kq - 0 8" caption="Evans Gambit: Black just played 7...d3?, a natural-looking move that grabs space and attacks the c3 pawn. But it's a blunder — White has 8.Qb3!, threatening both Qxf7 mate and Bxf7+ (the bishop on c4 eyes f7). Black's queen and rook are both undefended. Tactics hide in plain sight when you're focused on your own plan." orientation="white" arrows="d1b3:green" badge="best"></chess-position>
 
 This comes from the Evans Gambit: 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.b4 Bxb4 5.c3 Ba5 6.d4 exd4 7.O-O d3?? Black plays d3 thinking it's a strong pawn push. It *looks* active — attacking the c3 pawn, blocking the c4 bishop's diagonal. But White has 8.Qb3! hitting f7 with the queen and the bishop. Black can't defend both threats.
 
@@ -103,7 +103,7 @@ Endgame mistakes are the most expensive pattern in club chess. In the opening, a
 
 The problem: club players don't study endgames. They reach a winning position and throw it away because they don't know the technique. Or they reach a drawn position and lose because they don't know the defensive method.
 
-<chess-position fen="r7/3k4/3P4/3K4/8/8/8/4R3 w - - 0 1" caption="Rook endgame: White has a passed pawn on d6 and the more active king. The winning plan is 1.Re7+ Kc6 (or Kd8) 2.Kc4, marching the king to support the pawn. Many club players instead push d7 immediately, allowing Black's rook to get behind the pawn with 1.d7? Ra5+ 2.Ke6 Ra6+ with perpetual check. Endgame technique matters more than material." orientation="white"></chess-position>
+<chess-position fen="r7/3k4/3P4/3K4/8/8/8/4R3 w - - 0 1" caption="Rook endgame: White has a passed pawn on d6 and the more active king. The winning plan is 1.Re7+ Kc6 (or Kd8) 2.Kc4, marching the king to support the pawn. Many club players instead push d7 immediately, allowing Black's rook to get behind the pawn with 1.d7? Ra5+ 2.Ke6 Ra6+ with perpetual check. Endgame technique matters more than material." orientation="white" arrows="e1e7:green" badge="best"></chess-position>
 
 White's position looks winning — the d6 pawn is advanced, the rook is active, and the king is centralized. But the technique matters. The correct approach is 1.Re7+ followed by marching the king to support the d-pawn. The tempting 1.d7? allows 1...Ra5+ 2.Ke6 Ra6+ with a perpetual check that draws the game.
 

@@ -35,7 +35,7 @@ If you're studying endgames to [improve your chess rating](/blog/chess-rating-12
 
 If you learn exactly one rook endgame technique, make it the Lucena position. It's the fundamental winning method in rook + pawn vs. rook endgames, and it appears — in some form — in the vast majority of winning rook endgames.
 
-<chess-position fen="1K1R4/1P6/8/8/8/8/1r6/1k6 w - - 0 1" caption="The Lucena position: White to play and win. The key is building a bridge with the rook." orientation="white" moves="Rd1, Kb7, Rd8, Kb6, Rd6"></chess-position>
+<chess-position fen="1K1R4/1P6/8/8/8/8/1r6/1k6 w - - 0 1" caption="The Lucena position: White to play and win. The key is building a bridge with the rook." orientation="white" moves="Rd1, Kb7, Rd8, Kb6, Rd6" arrows="d8g8:green" badge="best"></chess-position>
 
 **What's happening:** White has a rook on d8 and a pawn on b7, with the king on b8. Black has a rook on b2 trying to stop the pawn from promoting. White's king is in front of its own pawn — this is the classic Lucena structure.
 
@@ -78,7 +78,7 @@ This is where [building a chess study plan from your own games](/blog/how-to-bui
 
 Siegbert Tarrasch, one of the greatest chess teachers in history, formulated a rule that every club player should memorize: **the rook belongs behind the passed pawn.**
 
-<chess-position fen="8/1k6/1P6/8/8/8/1K6/R7 w - - 0 1" caption="White's rook is behind the passed pawn. The rook gains space as the pawn advances — this is the Tarrasch rule in action." orientation="white" moves="Ra7, Kb8, Ka6, Kc8"></chess-position>
+<chess-position fen="8/1k6/1P6/8/8/8/1K6/R7 w - - 0 1" caption="White's rook is behind the passed pawn. The rook gains space as the pawn advances — this is the Tarrasch rule in action." orientation="white" moves="Ra7, Kb8, Ka6, Kc8" arrows="a1e1:green" badge="best"></chess-position>
 
 Why does this work? When the rook is behind its own passed pawn, every square the pawn advances *increases* the rook's scope. The rook gains mobility with each pawn move. If the rook is in front of the pawn, the opposite happens — the rook gets more restricted as the pawn advances.
 
@@ -96,7 +96,7 @@ This principle shows up in almost every rook endgame. Players who [check their g
 
 If the Tarrasch rule is about rook placement relative to pawns, the seventh-rank principle is about rook placement relative to the enemy king. A rook on the seventh rank — the rank where the opponent's pawns sit — is devastatingly powerful.
 
-<chess-position fen="1R6/4r1k1/8/8/8/8/6K1/8 w - - 0 1" caption="White's rook on the seventh rank dominates. Black's pawns are frozen and the king is confined." orientation="white" moves="Rb7, Kf6, Kf3, Re8"></chess-position>
+<chess-position fen="1R6/4r1k1/8/8/8/8/6K1/8 w - - 0 1" caption="White's rook on the seventh rank dominates. Black's pawns are frozen and the king is confined." orientation="white" moves="Rb7, Kf6, Kf3, Re8" arrows="b8d8:green" badge="best"></chess-position>
 
 **What the rook on the seventh does:**
 - Traps the enemy king on the back rank
@@ -116,7 +116,7 @@ Understanding [how chess engines evaluate](/blog/how-to-read-chess-engine-analys
 
 Here's the counterintuitive truth about rook endgames: **an active rook is often worth more than a pawn.** Club players cling to material, but in rook endgames, the player with the more active rook frequently wins despite being a pawn (or even two pawns) down.
 
-<chess-position fen="8/8/4k3/r3P3/8/4K3/8/R7 w - - 0 1" caption="White is a pawn up, but Black's rook is far more active. Activity often matters more than material in rook endgames." orientation="white" moves="Ra6, Ke7, Ra7, Kd6"></chess-position>
+<chess-position fen="8/8/4k3/r3P3/8/4K3/8/R7 w - - 0 1" caption="White is a pawn up, but Black's rook is far more active. Activity often matters more than material in rook endgames." orientation="white" moves="Ra6, Ke7, Ra7, Kd6" arrows="a1a5:green" badge="best"></chess-position>
 
 **Why activity beats material:**
 - An active rook creates threats that force the opponent into passive defense

@@ -151,7 +151,7 @@ The Two Knights Defense is one of the most combative responses to 3.Bc4. After 4
 
 **6.Nxf7!?** — The Fried Liver Attack. White sacrifices a knight to drag Black's king into the open. After **6...Kxf7 7.Qf3+ Ke6**, the Black king is on e6 — in the center of the board, surrounded by pieces.
 
-<chess-position fen="r1bq1b1r/ppp3pp/2n1k3/3np3/2B5/5Q2/PPPP1PPP/RNB1K2R w KQ - 2 8" caption="The famous Fried Liver position: Black's king is on e6, exposed to attack. White has development and initiative for the sacrificed piece." orientation="white"></chess-position>
+<chess-position fen="r1bq1b1r/ppp3pp/2n1k3/3np3/2B5/5Q2/PPPP1PPP/RNB1K2R w KQ - 2 8" caption="The famous Fried Liver position: Black's king is on e6, exposed to attack. White has development and initiative for the sacrificed piece." orientation="white" arrows="b1c3:green" badge="best"></chess-position>
 
 This position has been analyzed for centuries, and it's *still* controversial. At the club level, Black almost always collapses under the pressure. White plays Nc3, develops rapidly, and launches a central attack that's incredibly difficult to defend over the board.
 

@@ -100,7 +100,7 @@ Stockfish 18's NNUE (Efficiently Updatable Neural Network) evaluation has made i
 
 Here's an example of what engine analysis reveals in practice. In this Italian Game middlegame, Black has just played ...Bxc3, winning the bishop pair. But Stockfish sees deeper \u2014 White's development lead and open b-file create concrete threats that outweigh the material deficit:
 
-<chess-position fen="r1bqk2r/pppp1ppp/2n5/8/2BP4/1Qb2N2/P4PPP/R1B2RK1 b kq - 1 10" caption="Italian Game after 9.Qb3. Black has the bishop pair, but White's lead in development and pressure on f7 create real threats. Stockfish evaluates this as roughly equal \u2014 a human might think Black is better." orientation="white"></chess-position>
+<chess-position fen="r1bqk2r/pppp1ppp/2n5/8/2BP4/1Qb2N2/P4PPP/R1B2RK1 b kq - 1 10" caption="Italian Game after 9.Qb3. Black has the bishop pair, but White's lead in development and pressure on f7 create real threats. Stockfish evaluates this as roughly equal \u2014 a human might think Black is better." orientation="white" arrows="d7d5:green"></chess-position>
 
 A human looking at this position might think Black is clearly better \u2014 they've won a whole bishop. But Stockfish's evaluation hovers near 0.0 because White's pieces are actively placed: the queen on b3 pressures f7, the bishop on c4 targets the same square, and White has already castled while Black's king is still in the center. This kind of nuance \u2014 where material count misleads but piece activity compensates \u2014 is exactly what engine analysis teaches you to see. For more on interpreting these evaluations, see our [centipawn loss guide](/blog/what-is-centipawn-loss).
 
@@ -191,7 +191,7 @@ Three databases in one:
 
 The opening explorer is especially powerful at critical branching points \u2014 positions where one move leads to a comfortable middlegame and another leads to disaster. Here's a classic example from the Ruy Lopez:
 
-<chess-position fen="r1bqkb1r/1ppp1ppp/p1n2n2/4p3/B3P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 3 5" caption="Ruy Lopez after 5.O-O. Black's most popular reply is 5...b5 (Chigorin Defense), but the explorer shows that 5...Be7 and 5...Nxe4 (Berlin Defense) have different scoring profiles at every rating level." orientation="black" moves="b5,Be7,Nxe4"></chess-position>
+<chess-position fen="r1bqkb1r/1ppp1ppp/p1n2n2/4p3/B3P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 3 5" caption="Ruy Lopez after 5.O-O. Black's most popular reply is 5...b5 (Chigorin Defense), but the explorer shows that 5...Be7 and 5...Nxe4 (Berlin Defense) have different scoring profiles at every rating level." orientation="black" moves="b5,Be7,Nxe4" arrows="f6e4:green,b7b5:orange"></chess-position>
 
 At this position, the Lichess Opening Explorer shows three main continuations with wildly different scoring profiles depending on your rating. At the club level, 5...b5 scores best for Black, but at the GM level, the Berlin Defense (5...Nxe4) dominates \u2014 it's the line that famously drew 8 games in the 2013 Carlsen-Anand World Championship match. Check the opening explorer for your specific rating band, and see our [opening principles guide](/blog/chess-opening-principles) for navigating these early decisions.
 
@@ -224,7 +224,7 @@ For positions with 7 or fewer pieces, endgame tablebases provide **perfect play*
 
 Here's a position where tablebases are essential \u2014 from the outside, it looks completely drawn, but the tablebase knows the truth:
 
-<chess-position fen="5k2/6r1/8/8/8/5P2/8/R1K5 w - - 0 1" caption="White to move. This rook endgame looks drawn, but the Syzygy tablebase reveals that only one move holds the draw \u2014 every other move loses. Can you find it?" orientation="white"></chess-position>
+<chess-position fen="5k2/6r1/8/8/8/5P2/8/R1K5 w - - 0 1" caption="White to move. This rook endgame looks drawn, but the Syzygy tablebase reveals that only one move holds the draw \u2014 every other move loses. Can you find it?" orientation="white" arrows="a1a8:green,a1a7:red" badge="blunder"></chess-position>
 
 Without tablebases, even a strong club player would struggle to evaluate this correctly. The Syzygy database instantly tells you whether each move wins, draws, or loses \u2014 and it often reveals that positions that look completely equal are actually decisive with perfect play. For more endgame fundamentals, see our [king and pawn endgames guide](/blog/king-and-pawn-endgames-guide) and [endgame patterns club players miss](/blog/endgame-patterns-club-players-miss).
 
@@ -286,7 +286,7 @@ Several specialized tools have emerged that combine engine analysis with AI expl
 
 Here is a position where AI-powered explanation adds real value beyond raw engine analysis:
 
-<chess-position fen="r1b1k2r/1pqnbppp/p2ppn2/6B1/3NPPP1/2N2Q2/PPP4P/2KR1B1R b kq - 0 10" caption="Sicilian Najdorf, English Attack. Stockfish evaluates this as roughly equal, but an AI tool can explain White's plan: O-O-O, f5, g5, and a kingside pawn storm. Understanding the plan matters more than the evaluation number." orientation="white"></chess-position>
+<chess-position fen="r1b1k2r/1pqnbppp/p2ppn2/6B1/3NPPP1/2N2Q2/PPP4P/2KR1B1R b kq - 0 10" caption="Sicilian Najdorf, English Attack. Stockfish evaluates this as roughly equal, but an AI tool can explain White's plan: O-O-O, f5, g5, and a kingside pawn storm. Understanding the plan matters more than the evaluation number." orientation="black" arrows="b7b5:green"></chess-position>
 
 An engine tells you this position is +0.3. An AI tool tells you *why*: White is building the classic English Attack pawn storm with f4-f5 and g4-g5, aiming to rip open Black's kingside while the king castles long. That kind of strategic explanation — connecting the position to a broader middlegame plan — is where LLMs genuinely add value. For more on middlegame planning, see our [middlegame strategy guide](/blog/chess-middlegame-strategy-finding-a-plan).
 

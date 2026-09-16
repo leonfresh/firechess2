@@ -88,7 +88,7 @@ Between 1000 and 1200, players stop hanging pieces in one move — but they stil
 
 This is the rating range where [Italian Game](/openings/italian-game) middlegames become instructive. The opening is popular at this level, and the typical mistakes reveal the one-move blindspot perfectly:
 
-<chess-position fen="r1bqk2r/b1p2ppp/p1np1n2/1p2p3/PPB1P3/2PP1N2/3N1PPP/R1BQK2R w KQkq - 0 9" caption="Italian Game middlegame after 8...b5 — White has expanded on the queenside with a4 and b4, and the bishop sits on c4 aiming at f7. At the 1000-1200 level, the typical mistake here is Black playing moves like ...Bg4 without considering that after Bxf7+ Kxf7, Ng5+ forks the king and queen. One-move deeper calculation is what separates 1000 from 1200." orientation="white"></chess-position>
+<chess-position fen="r1bqk2r/b1p2ppp/p1np1n2/1p2p3/PPB1P3/2PP1N2/3N1PPP/R1BQK2R w KQkq - 0 9" caption="Italian Game middlegame after 8...b5 — White has expanded on the queenside with a4 and b4, and the bishop sits on c4 aiming at f7. At the 1000-1200 level, the typical mistake here is Black playing moves like ...Bg4 without considering that after Bxf7+ Kxf7, Ng5+ forks the king and queen. One-move deeper calculation is what separates 1000 from 1200." orientation="white" arrows="a4b5:green"></chess-position>
 
 **The critical skill gap:** A 1000-rated player sees Bg4 as "I'm pinning the knight" and stops there. A 1200-rated player calculates one move further: "After Bg4, can my opponent create a threat?" This one-ply lookahead is the bridge between the two rating levels.
 
@@ -105,7 +105,7 @@ This is the rating range where [Italian Game](/openings/italian-game) middlegame
 
 At 1200-1400, players have basic board awareness and can see one-move threats reliably. The new blunder pattern is **missing two-move combinations** — tactics that require seeing opponent moves that aren't checks or captures. Back-rank mates, knight forks, and pins that require a preparatory move become the primary source of [high-CP-loss mistakes](/blog/how-to-stop-blundering-chess).
 
-<chess-position fen="3q1rk1/ppp2ppp/2n5/8/8/2P5/PP3PPP/R1QR2K1 w - - 0 1" caption="A typical 1200-1400 blunder scenario: Black's king looks safe on g8, but the back rank is weak. White can play Rd8+! forcing Qxd8, then Qxd8+ and the rook on f8 falls. At this level, players notice the immediate threat (Rd8+) but miss that it creates a *second* threat after the queen recaptures." orientation="white" moves="Rd8, Qxd8, Qxd8" analysis="true"></chess-position>
+<chess-position fen="3q1rk1/ppp2ppp/2n5/8/8/2P5/PP3PPP/R1QR2K1 w - - 0 1" caption="A typical 1200-1400 blunder scenario: Black's king looks safe on g8, but the back rank is weak. White can play Rd8+! forcing Qxd8, then Qxd8+ and the rook on f8 falls. At this level, players notice the immediate threat (Rd8+) but miss that it creates a *second* threat after the queen recaptures." orientation="white" moves="Rd8, Qxd8, Qxd8" analysis="true" arrows="d1d8:green" badge="best"></chess-position>
 
 **Why back-rank tactics dominate this range:** Players at 1200-1400 have learned to castle and keep their king safe — but they forget to create an escape square with h3/h6 or g3/g6. The back-rank weakness persists for the entire game, and a single rook or queen on the d-file ends things instantly.
 
@@ -123,7 +123,7 @@ This is the transition zone where blunder *character* changes fundamentally. Bel
 
 The French Defense illustrates this perfectly. After 1.e4 e6 2.d4 d5 3.Nc3 Bb4 4.e5 c5 5.a3 Bxc3+ 6.bxc3, Black faces a critical decision:
 
-<chess-position fen="r1bqk1nr/pp4pp/2n1pp2/3pP3/3P4/P4N2/2P2PPP/R1BQKB1R w KQkq - 0 9" caption="French Defense, Steinitz Variation — Black has just played ...f6?! This is a classic 1400-1600 positional blunder. It challenges White's center but permanently weakens the e6 square and the light-squared bishop's diagonal. The engine gives White a +1.2 advantage — not from a tactic, but from a structural concession that takes 15 moves to exploit." orientation="white"></chess-position>
+<chess-position fen="r1bqk1nr/pp4pp/2n1pp2/3pP3/3P4/P4N2/2P2PPP/R1BQKB1R w KQkq - 0 9" caption="French Defense, Steinitz Variation — Black has just played ...f6?! This is a classic 1400-1600 positional blunder. It challenges White's center but permanently weakens the e6 square and the light-squared bishop's diagonal. The engine gives White a +1.2 advantage — not from a tactic, but from a structural concession that takes 15 moves to exploit." orientation="white" arrows="f1d3:green" badge="best"></chess-position>
 
 **Why ...f6 is a blunder without a tactic:** There's no immediate tactic that punishes ...f6. No fork, no pin, no mate threat. The damage is positional: the e6 square becomes a permanent outpost for White's pieces, the light-squared bishop (hemmed in by its own pawns on e6 and d5) has no future, and the king becomes slightly more exposed. This is the kind of mistake that shows up as 60-80 cp in ACPL — invisible to the naked eye but devastating over a full game.
 
@@ -177,7 +177,7 @@ At 1600-1800, outright blunders become rare. You are no longer hanging pieces or
 
 The Sicilian Najdorf is the perfect testing ground for this level. After the main line 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 a6 6.Be2 e5, Black faces a critical decision:
 
-<chess-position fen="rnbqkb1r/1p3ppp/p2p1n2/4p3/3NP3/2N5/PPP1BPPP/R1BQK2R w KQkq - 0 7" caption="Sicilian Najdorf after 6...e5 — Black grabs central space but creates a permanent hole on d5 and blocks in the light-squared bishop. At the 1600-1800 level, this is the typical subtle inaccuracy. It is not losing by force, but gives White a lasting positional edge that skilled players will convert over 25 moves. The engine prefers 6...e6, maintaining flexibility." orientation="white" analysis="true"></chess-position>
+<chess-position fen="rnbqkb1r/1p3ppp/p2p1n2/4p3/3NP3/2N5/PPP1BPPP/R1BQK2R w KQkq - 0 7" caption="Sicilian Najdorf after 6...e5 — Black grabs central space but creates a permanent hole on d5 and blocks in the light-squared bishop. At the 1600-1800 level, this is the typical subtle inaccuracy. It is not losing by force, but gives White a lasting positional edge that skilled players will convert over 25 moves. The engine prefers 6...e6, maintaining flexibility." orientation="white" analysis="true" arrows="d4b3:green" badge="best"></chess-position>
 
 **Why this is a blunder at 1800 but not at 1200:** At 1200, neither player knows how to exploit the d5 hole, so ...e5 is fine. At 1800, White will plant a knight on d5, exchange it for two minor pieces, and grind a lasting advantage. The positional cost of ...e5 only becomes apparent when both players understand piece placement and pawn structure.
 
@@ -234,7 +234,7 @@ Not all blunders are equally trainable. Some resist improvement even with target
 
 **Time-pressure blunders** appear at every rating level and worsen under time trouble. The fix is not chess knowledge — it is [time management](/blog/chess-time-management-tips). Players who spend 60% of their time on moves 1-15 and blitz out moves 20-30 in 10 seconds will always have high ACPL in the endgame. Reserve at least 30% of your clock for the last 15 moves.
 
-**Emotional blunders** happen after a bad position or a previous mistake. You play a desperate sacrifice to get back in the game or lash out with an aggressive move that does not work. The fix is recognizing the emotional pattern — when you feel frustrated, take 10 seconds before every move and ask yourself: would I play this if I were winning?
+**emotional — see our guide to [chess tilt and psychology](/blog/chess-psychology-tilting) blunders** happen after a bad position or a previous mistake. You play a desperate sacrifice to get back in the game or lash out with an aggressive move that does not work. The fix is recognizing the emotional pattern — when you feel frustrated, take 10 seconds before every move and ask yourself: would I play this if I were winning?
 
 **Pattern-mismatch blunders** occur when you apply a pattern from one position to a different one. A knight fork that worked in a similar-looking position fails here because the king has an escape square. The fix is building more precise pattern recognition through [studied positions](/blog/chess-pattern-recognition), not just more patterns.
 

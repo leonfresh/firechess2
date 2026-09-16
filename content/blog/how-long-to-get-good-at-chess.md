@@ -56,7 +56,7 @@ The jump from 800 to 1200 is where most players hit their first wall. You can st
 
 This is also where the Fried Liver Attack punishes sloppy play. Here's a position that catches 1200-level players constantly:
 
-<chess-position fen="r1bqkb1r/ppp2ppp/2n5/3np1N1/2B5/8/PPPP1PPP/RNBQK2R w KQkq - 0 6" caption="The Fried Liver Attack setup — after 1.e4 e5 2.Nf3 Nc6 3.Bc4 Nf6 4.Ng5 d5 5.exd5 Nxd5?? A 1200 grabs the pawn without seeing Nxf7! The knight sacrifice rips open the king." orientation="white" moves="Nxf7,Kxf7,Qf3+"></chess-position>
+<chess-position fen="r1bqkb1r/ppp2ppp/2n5/3np1N1/2B5/8/PPPP1PPP/RNBQK2R w KQkq - 0 6" caption="The Fried Liver Attack setup — after 1.e4 e5 2.Nf3 Nc6 3.Bc4 Nf6 4.Ng5 d5 5.exd5 Nxd5?? A 1200 grabs the pawn without seeing Nxf7! The knight sacrifice rips open the king." orientation="white" moves="Nxf7,Kxf7,Qf3+" arrows="g5f7:green" badge="best"></chess-position>
 
 After 5...Nxd5??, White plays 6.Nxf7! — sacrificing the knight to drag the Black king out. After 6...Kxf7 7.Qf3+, the queen forks the king and the knight on d5. Black is lost. At the 1200 level, players fall for this because they see a free pawn and grab it without checking for tactical consequences. By 1400, most players know to play 5...Na5 instead.
 
@@ -72,7 +72,7 @@ After 5...Nxd5??, White plays 6.Nxf7! — sacrificing the knight to drag the Bla
 
 The 1200-to-1400 jump is about seeing one move deeper. Where a 1200 spots a fork, a 1400 sees the *combination* — a sequence of forcing moves that leads to a material advantage or checkmate. Légal's Mate is a perfect example of this kind of pattern:
 
-<chess-position fen="rn1q1bnr/ppp1kB1p/3p2p1/4N3/4P3/2N5/PPPP1PPP/R1BbK2R w KQ - 1 7" caption="Légal's Mate pattern — White sacrificed the queen with5.Nxe5! Bxd1 6.Bxf7+ Ke7. Now 7.Nd5# is checkmate. Recognizing that the queen sacrifice leads to forced mate is exactly what separates 1200 from 1400." orientation="white" moves="Nd5"></chess-position>
+<chess-position fen="rn1q1bnr/ppp1kB1p/3p2p1/4N3/4P3/2N5/PPPP1PPP/R1BbK2R w KQ - 1 7" caption="Légal's Mate pattern — White sacrificed the queen with5.Nxe5! Bxd1 6.Bxf7+ Ke7. Now 7.Nd5# is checkmate. Recognizing that the queen sacrifice leads to forced mate is exactly what separates 1200 from 1400." orientation="white" moves="Nd5" arrows="c3d5:green" badge="brilliant"></chess-position>
 
 This position arose from the opening moves 1.e4 e5 2.Nf3 d6 3.Bc4 Bg4 4.Nc3 g6 5.Nxe5! — White sacrifices the queen because after 5...Bxd1 6.Bxf7+ Ke7, the beautiful 7.Nd5# delivers checkmate. The pattern is clean: queen sacrifice, bishop check, knight delivers mate. At 1400, you start *seeing* these combinations. At 1200, you'd take the bishop with Nxf7 and miss the knockout.
 
@@ -91,7 +91,7 @@ The jump from 1400 to 1600 is less about tactics and more about **positional jud
 
 Here's a position from the Ruy Lopez that separates 1400s from 1600s:
 
-<chess-position fen="r1b2rk1/2q1bppp/p2p1n2/npp1p3/3PP3/2P2N1P/PPB2PP1/RNBQR1K1 w - - 1 12" caption="Ruy Lopez Chigorin Defense — White to move. A 1400 sees a normal position. A 1600 recognizes the plan: Nbd2-f1-g3, aiming for a kingside attack while Black is tangled up on the queenside. Positional understanding, not tactics, is the difference." orientation="white" moves="Nbd2,Nf1,Ng3"></chess-position>
+<chess-position fen="r1b2rk1/2q1bppp/p2p1n2/npp1p3/3PP3/2P2N1P/PPB2PP1/RNBQR1K1 w - - 1 12" caption="Ruy Lopez Chigorin Defense — White to move. A 1400 sees a normal position. A 1600 recognizes the plan: Nbd2-f1-g3, aiming for a kingside attack while Black is tangled up on the queenside. Positional understanding, not tactics, is the difference." orientation="white" moves="Nbd2,Nf1,Ng3" arrows="d4d5:green,b1d2:orange"></chess-position>
 
 This is the Ruy Lopez Chigorin Defense after 11...Qc7. White's plan is Nbd2-f1-g3, rerouting the knight to attack Black's kingside. A 1400 might play aimlessly here — maybe d5 to open the position, or h4 for a direct attack. A 1600 understands that the knight maneuver is the key idea, that d5 should be timed carefully, and that the bishop pair + better pawn structure gives White a lasting edge. This kind of positional understanding doesn't come from puzzles — it comes from studying master games and understanding pawn structures.
 
@@ -110,7 +110,7 @@ At 1800, the game becomes about **consistency and precision**. You rarely hang p
 
 Endgame technique becomes critical at this level. Here's a position that separates 1600s from 1800s:
 
-<chess-position fen="8/8/4k3/3p4/3KP3/8/8/8 w - - 0 1" caption="King and pawn endgame — White to move. A 1600 might push the pawn with d5? but a 1800 knows that Ke3! (taking the opposition) is the key move. After Ke3 Ke6-d6 Kd4! White wins by controlling the critical squares." orientation="white" moves="Ke3,Kd6,Kd4"></chess-position>
+<chess-position fen="8/8/4k3/3p4/3KP3/8/8/8 w - - 0 1" caption="King and pawn endgame — White to move. A 1600 might push the pawn with d5? but a 1800 knows that Ke3! (taking the opposition) is the key move. After Ke3 Ke6-d6 Kd4! White wins by controlling the critical squares." orientation="white" arrows="e4d5:green" badge="best"></chess-position>
 
 White to move. A 1600 might instinctively push d5?, but after 1.d5+?! Kd6 2.Ke4 Kc5 the position is drawn — Black's king gets in front of the pawn. The correct move is 1.Ke3! — taking the opposition. After 1...Kd6 2.Kd4!, White's king dominates. The pawn will queen. This kind of endgame knowledge is pure study — you either know the opposition or you don't.
 

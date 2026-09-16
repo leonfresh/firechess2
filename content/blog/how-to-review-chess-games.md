@@ -59,7 +59,7 @@ What you're looking for:
 
 Here's a real example. In an Italian Game, White plays the natural-looking 8.Bg5:
 
-<chess-position fen="r1bqk2r/ppppbppp/2n2n2/4p1B1/2B1P3/3P1N2/PPP2PPP/RN1QK2R b KQkq - 2 5" caption="After 8.Bg5 — looks natural, but Black can equalise easily with ...h6 followed by ...d6. The pin on the knight is temporary, and White has committed the bishop prematurely." orientation="white"></chess-position>
+<chess-position fen="r1bqk2r/ppppbppp/2n2n2/4p1B1/2B1P3/3P1N2/PPP2PPP/RN1QK2R b KQkq - 2 5" caption="After 8.Bg5 — looks natural, but Black can equalise easily with ...h6 followed by ...d6. The pin on the knight is temporary, and White has committed the bishop prematurely." orientation="black" arrows="h7h6:green"></chess-position>
 
 The move Bg5 isn't a blunder — it's an inaccuracy. On the surface it looks fine: you pin the knight, develop a piece, put pressure on f6. But the engine shows that after 8...h6 9.Bh4 d6, Black has a comfortable position because the bishop on h4 is passive and White hasn't achieved anything concrete.
 
@@ -81,7 +81,7 @@ Ask yourself three questions:
 
 Here's an example from a Sicilian Najdorf. White launches a kingside attack with g4, and Black must decide how to respond:
 
-<chess-position fen="r2q1rk1/1p1nbppp/p2pbn2/4p3/4P1P1/1NN1BP2/PPPQ3P/2KR1B1R b - - 0 11" caption="Black to move in a sharp Sicilian Najdorf. White has just played g4, threatening g5 to kick the knight. Black's response here determines whether the kingside attack succeeds or fizzles." orientation="black"></chess-position>
+<chess-position fen="r2q1rk1/1p1nbppp/p2pbn2/4p3/4P1P1/1NN1BP2/PPPQ3P/2KR1B1R b - - 0 11" caption="Black to move in a sharp Sicilian Najdorf. White has just played g4, threatening g5 to kick the knight. Black's response here determines whether the kingside attack succeeds or fizzles." orientation="black" arrows="b7b5:green"></chess-position>
 
 The critical decision: should Black play 11...h6 (preventing g5 and keeping the knight on f6), 11...d5 (striking at the centre before White's attack develops), or 11...a5 (preparing queenside counterplay)?
 
@@ -97,7 +97,7 @@ Check your endgame for these common leaks:
 
 **Rook activity.** The most common endgame mistake is a passive rook. Your rook should be behind passed pawns (yours or your opponent's), on the seventh rank, or cutting off the enemy king. If your rook is sitting on the first rank doing nothing, you're probably losing.
 
-<chess-position fen="4r1k1/5pp1/7p/8/8/7P/5PP1/4R1K1 w - - 0 1" caption="White to move in a rook endgame. The key principle: activate your rook. Re1-e7 or Re1-d1 preparing to invade are both strong. Re1-e5 (centralising) is tempting but passive — the rook does more work on the seventh rank." orientation="white"></chess-position>
+<chess-position fen="4r1k1/5pp1/7p/8/8/7P/5PP1/4R1K1 w - - 0 1" caption="White to move in a rook endgame. The key principle: activate your rook. Re1-e7 or Re1-d1 preparing to invade are both strong. Re1-e5 (centralising) is tempting but passive — the rook does more work on the seventh rank." orientation="white" arrows="e1e8:green" badge="best"></chess-position>
 
 **King activity.** In endgames without queens, the king is a fighting piece. If your king is still on g1 when there are no threats, you're playing a piece down. Walk the king toward the centre.
 
@@ -288,7 +288,7 @@ If you play the Italian Game as White in 30% of your games, scan all of them and
 
 For example, in a typical Italian middlegame where Black has traded on e6:
 
-<chess-position fen="r2q1rk1/ppp1b1pp/2nppn2/4p3/4P3/3P1N1P/PPP2PP1/RNBQR1K1 w - - 0 9" caption="White to move after Black played ...Be6 and ...fxe6. The open f-file gives Black counterplay. White must decide between Nbd2-f1-g3 (slow but solid) and Ng5 (aggressive but committal)." orientation="white"></chess-position>
+<chess-position fen="r2q1rk1/ppp1b1pp/2nppn2/4p3/4P3/3P1N1P/PPP2PP1/RNBQR1K1 w - - 0 9" caption="White to move after Black played ...Be6 and ...fxe6. The open f-file gives Black counterplay. White must decide between Nbd2-f1-g3 (slow but solid) and Ng5 (aggressive but committal)." orientation="white" arrows="c2c3:green"></chess-position>
 
 If you find that you consistently choose the wrong plan in this type of position, that's a targeted study topic. You don't need to study the entire Italian Game — just this specific structure with the open f-file.
 
@@ -308,7 +308,7 @@ A few anti-patterns to avoid:
 
 **Don't blame external factors.** "I lost because of time trouble" or "I lost because they played a weird opening." Maybe — but what could you have done differently? Even in time trouble, you chose specific moves. Review those choices.
 
-**Don't review when tilted.** If you just lost 3 games in a row, your review will be emotional, not analytical. Take a break. Come back in an hour with a clear head.
+**Don't review when [chess tilt and psychology](/blog/chess-psychology-tilting) (tilted.** If you just lost 3 games in a row, your review will be emotional, not analytical. Take a break. Come back in an hour with a clear head.
 
 **Don't use the engine to justify your moves.** Some players look for the one engine line where their move works and say "see, it was fine." That's confirmation bias. If the engine shows your move loses 200 centipawns in the main line, the fact that there's one sideline where it works doesn't make it good.
 

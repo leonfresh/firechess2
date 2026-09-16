@@ -92,7 +92,7 @@ The key metric to watch on FireChess is your ACPL (average centipawn loss) in th
 
 The Queen's Gambit is the most respected pawn sacrifice in chess. After 1.d4 d5 2.c4, White offers the c-pawn in exchange for control of the centre. It's been the primary weapon of world champions from Capablanca to Carlsen, and it's the cornerstone of [d4 opening strategy](/blog/queens-gambit-guide).
 
-<chess-position fen="rnbqkbnr/ppp1pppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq - 0 2" caption="The Queen's Gambit after 1.d4 d5 2.c4. White offers the c-pawn — if Black takes, White gets a strong centre with e4 next." orientation="white"></chess-position>
+<chess-position fen="rnbqkbnr/ppp1pppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq - 0 2" caption="The Queen's Gambit after 1.d4 d5 2.c4. White offers the c-pawn — if Black takes, White gets a strong centre with e4 next." orientation="black" arrows="e7e6:green,c7c6:orange"></chess-position>
 
 **The moves:** 1.d4 d5 2.c4
 
@@ -110,7 +110,7 @@ The Queen's Gambit is the most respected pawn sacrifice in chess. After 1.d4 d5 
 
 If the Queen's Gambit is a positional sacrifice, the Evans Gambit is a full-blooded attacking gambit. After 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.b4, White sacrifices the b-pawn to gain time for a rapid d4 push and open lines against the Black king.
 
-<chess-position fen="r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4" caption="The Evans Gambit after 4.b4. White offers the b-pawn — if Black takes, d4 follows and White gets a powerful centre with open lines." orientation="white"></chess-position>
+<chess-position fen="r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4" caption="The Evans Gambit after 4.b4. White offers the b-pawn — if Black takes, d4 follows and White gets a powerful centre with open lines." orientation="white" arrows="c5b4:green"></chess-position>
 
 **The moves:** 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.b4
 
@@ -138,13 +138,13 @@ In FireChess analysis of Evans Gambit games at the 1200-1600 level, White averag
 
 The Sicilian Defense is the most popular opening at club level — and one of the hardest to face as White. The main lines require deep theoretical knowledge, and most club players don't have time to study the Najdorf, Dragon, and Sveshnikov. The Smith-Morra Gambit solves this problem completely.
 
-<chess-position fen="rnbqkbnr/pp1ppppp/8/8/3pP3/2P5/PP3PPP/RNBQKBNR b KQkq - 0 3" caption="The Smith-Morra Gambit after 3.c3. White offers a pawn to open the c-file and d-file for rapid development — a direct refutation of Black's Sicilian setup." orientation="white"></chess-position>
+<chess-position fen="rnbqkbnr/pp1ppppp/8/8/3pP3/2P5/PP3PPP/RNBQKBNR b KQkq - 0 3" caption="The Smith-Morra Gambit after 3.c3. White offers a pawn to open the c-file and d-file for rapid development — a direct refutation of Black's Sicilian setup." orientation="black" arrows="d4c3:green"></chess-position>
 
 **The moves:** 1.e4 c5 2.d4 cxd4 3.c3
 
 **What White gets:** After 3...dxc3 4.Nxc3, White has two central pawns versus one, open lines for the rooks, and a natural development plan with Nf3, Bc4, and 0-0. Black has an extra pawn but faces immediate pressure on the d-file and along the a2-g8 diagonal.
 
-<chess-position fen="rnbqkbnr/pp1ppppp/8/8/4P3/2N5/PP3PPP/R1BQKBNR b KQkq - 0 4" caption="Smith-Morra Accepted after 4.Nxc3. White's development lead is clear — Nf3, Bc4, and 0-0 come with tempo, while Black's extra pawn is a long-term liability." orientation="white"></chess-position>
+<chess-position fen="rnbqkbnr/pp1ppppp/8/8/4P3/2N5/PP3PPP/R1BQKBNR b KQkq - 0 4" caption="Smith-Morra Accepted after 4.Nxc3. White's development lead is clear — Nf3, Bc4, and 0-0 come with tempo, while Black's extra pawn is a long-term liability." orientation="black" arrows="e7e6:green"></chess-position>
 
 **Why it works at club level:** The Smith-Morra is the ultimate "anti-theory" weapon against the Sicilian. While your opponent has memorized Najdorf lines, you've sidestepped everything and reached a position where natural development leads to a strong attack. The typical game goes: Nf3, Bc4, 0-0, Qe2, and Rd1 — every move comes with a threat.
 
@@ -162,7 +162,7 @@ In FireChess scans of Sicilian games at the 1100-1500 level, players who face th
 
 The Budapest Gambit is Black's most aggressive response to 1.d4. After 1.d4 Nf6 2.c4 e5, Black immediately challenges White's centre and creates tactical complications. It's a favourite of club players who want to take the initiative from the start.
 
-<chess-position fen="rnbqkb1r/pppp1ppp/5n2/4p3/2PP4/8/PP2PPPP/RNBQKBNR w KQkq - 0 3" caption="The Budapest Gambit after 2...e5. Black strikes at the centre immediately — if White captures, Ng4 creates immediate tactical threats against e5 and f2." orientation="black"></chess-position>
+<chess-position fen="rnbqkb1r/pppp1ppp/5n2/4p3/2PP4/8/PP2PPPP/RNBQKBNR w KQkq - 0 3" caption="The Budapest Gambit after 2...e5. Black strikes at the centre immediately — if White captures, Ng4 creates immediate tactical threats against e5 and f2." orientation="white" arrows="d4e5:green"></chess-position>
 
 **The moves:** 1.d4 Nf6 2.c4 e5
 
@@ -184,7 +184,7 @@ The Budapest Gambit is Black's most aggressive response to 1.d4. After 1.d4 Nf6 
 
 The Scotch Gambit is one of the cleanest gambits in chess. After 1.e4 e5 2.Nf3 Nc6 3.d4 exd4 4.Bc4, White sacrifices the d-pawn for rapid development and central control. It's the weapon of choice for players who want active piece play without the complexity of the Evans Gambit.
 
-<chess-position fen="r1bqkbnr/pppp1ppp/2n5/8/2BpP3/5N2/PPP2PPP/RNBQK2R b KQkq - 1 4" caption="The Scotch Gambit after 4.Bc4. White offers the d-pawn — if Black takes, e5 follows with a powerful central wedge and open lines for White's pieces." orientation="white"></chess-position>
+<chess-position fen="r1bqkbnr/pppp1ppp/2n5/8/2BpP3/5N2/PPP2PPP/RNBQK2R b KQkq - 1 4" caption="The Scotch Gambit after 4.Bc4. White offers the d-pawn — if Black takes, e5 follows with a powerful central wedge and open lines for White's pieces." orientation="black" arrows="g8f6:green"></chess-position>
 
 **The moves:** 1.e4 e5 2.Nf3 Nc6 3.d4 exd4 4.Bc4
 

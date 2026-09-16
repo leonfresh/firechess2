@@ -71,7 +71,7 @@ Notice what this means. The difference between a 1200 and a 1900 isn't opening k
 
 Here's a position that illustrates the beginner blunder problem perfectly. White has just played 3.Qh5, threatening mate on f7. Black needs to defend — 3...g6 or 3...Qe7 both work. But a beginner sees the knight on f6 as "developing" and plays 3...Nf6??, completely missing that Qxf7# is now checkmate.
 
-<chess-position fen="r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3" caption="Black to move. White's queen on h5 and bishop on c4 threaten Qxf7# (checkmate). The correct defense is 3...g6 or 3...Qe7. The blunder? 3...Nf6?? allows Qxf7#." orientation="black"></chess-position>
+<chess-position fen="r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3" caption="Black to move. White's queen on h5 and bishop on c4 threaten Qxf7# (checkmate). The correct defense is 3...g6 or 3...Qe7. The blunder? 3...Nf6?? allows Qxf7#." orientation="black" arrows="g7g6:green,g8f6:red" badge="blunder"></chess-position>
 
 This is the kind of blunder that dominates under-1000 play: not seeing a one-move checkmate threat. It's not a calculation failure — it's a pattern recognition failure. The player hasn't seen enough Scholar's Mate attempts to automatically check "is f7 safe?" when the queen and bishop are aimed at it. Scan your own games on [FireChess's analyzer at /analyze](/analyze) — if your blunder badges cluster on f2/f7 squares, you have the same pattern gap. Fix it by drilling [basic chess tactics](/blog/chess-tactics-every-player-should-know) until the "is my king safe?" check becomes automatic.
 
@@ -196,7 +196,7 @@ This has a direct implication for training. If you're under 1400, **you don't ne
 
 Here's a position from the Italian Game that shows how tactical blunders work for intermediate players. White has just played 7.Bh4 (retreating the bishop after ...h6), and now Black plays 7...g5?? — a move that looks aggressive (attacking the bishop) but completely misses that 8.Nxg5! wins a pawn for nothing. If Black captures back with 8...hxg5??, then 9.Bxg5 pins the queen to the king.
 
-<chess-position fen="r1bqk2r/ppp2p2/2np1n1p/2b1p1p1/2B1P2B/2PP1N2/PP3PPP/RN1QK2R w KQkq - 0 8" caption="White to move. Black just played 7...g5?? attacking the bishop. But 8.Nxg5! wins a pawn — if 8...hxg5 9.Bxg5 pins the queen. This is a tactical oversight: Black saw the attack but missed the counter-tactic." orientation="white"></chess-position>
+<chess-position fen="r1bqk2r/ppp2p2/2np1n1p/2b1p1p1/2B1P2B/2PP1N2/PP3PPP/RN1QK2R w KQkq - 0 8" caption="White to move. Black just played 7...g5?? attacking the bishop. But 8.Nxg5! wins a pawn — if 8...hxg5 9.Bxg5 pins the queen. This is a tactical oversight: Black saw the attack but missed the counter-tactic." orientation="white" arrows="h4g3:green,h4g5:orange"></chess-position>
 
 This is the blunder type that shifts as you improve. Black didn't leave a piece undefended — they missed a two-move combination (Nxg5 followed by Bxg5 pin). That's the difference between beginner and intermediate blunders: one is a one-move failure, the other requires calculating a sequence. The Italian Game is full of these traps, which is why [knowing the common Italian Game mistakes](/blog/italian-game-mistakes-club-players-make) directly cuts your blunder rate in the opening.
 
@@ -204,7 +204,7 @@ This is the blunder type that shifts as you improve. Black didn't leave a piece 
 
 Endgame blunders are rarer but more devastating. In this position, White has the opposition (a key endgame concept) and should play 1.Kd6! to march toward Black's pawn and win. But many club players play 1.Ke6?? instead, which looks active but actually gives Black the opposition — and with it, the draw.
 
-<chess-position fen="8/3k4/4p3/3KP3/8/8/8/8 w - - 0 1" caption="White to move. With the opposition, White should play 1.Kd6! marching toward Black's pawn. The common blunder is 1.Ke6?? — looks aggressive but surrenders the opposition and draws." orientation="white"></chess-position>
+<chess-position fen="8/3k4/4p3/3KP3/8/8/8/8 w - - 0 1" caption="White to move. With the opposition, White should play 1.Kd6! marching toward Black's pawn. The common blunder is 1.Ke6?? — looks aggressive but surrenders the opposition and draws." orientation="white" arrows="d5c5:green" badge="best"></chess-position>
 
 This type of blunder — choosing the wrong move in a theoretically won position — accounts for 14% of blunders at 2200+ but only 8% under 1000. Beginners rarely reach pure endgames, so they don't blunder there. Masters reach them all the time, and one wrong king step can throw away a win. If you want to understand these positions better, see our guide to [endgame patterns club players miss](/blog/endgame-patterns-club-players-miss).
 

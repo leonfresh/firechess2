@@ -81,7 +81,7 @@ The 1200 player's mistake isn't a lack of chess knowledge — it's a thinking ha
 
 Consider this typical fork pattern that decides games at the club level:
 
-<chess-position fen="r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/2NP4/PPP2PPP/R1BQK2R w KQkq - 0 5" orientation="white" caption="White to move in the Italian Game with an early Nc3. The knight on f6 defends h7, which is the key square White targets with ideas like Ng5. Recognising which pieces defend which squares is a pattern that repeats across thousands of openings." ></chess-position>
+<chess-position fen="r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/2NP4/PPP2PPP/R1BQK2R w KQkq - 0 5" orientation="white" caption="White to move in the Italian Game with an early Nc3. The knight on f6 defends h7, which is the key square White targets with ideas like Ng5. Recognising which pieces defend which squares is a pattern that repeats across thousands of openings." arrows="e1g1:green" badge="best"></chess-position>
 
 White can already consider ideas like Ng5 threatening Nxf7, or simply continue development. The key is recognising that the knight on f6 is the only defender of h7 — a pattern that repeats across thousands of games.
 
@@ -129,7 +129,7 @@ The endgames you *must* know:
 
 Here's a position every player at 1500+ should know cold:
 
-<chess-position fen="4k3/8/8/8/8/8/4P3/4K3 w - - 0 1" orientation="white" caption="White to move. This king and pawn endgame is a must-know position. White wins by seizing the opposition: 1.Kd2! Ke7 2.Ke3! Kf6 3.Kf4! — the king approaches and promotes the pawn. Without knowing this technique, players routinely draw or even lose won endings." ></chess-position>
+<chess-position fen="4k3/8/8/8/8/8/4P3/4K3 w - - 0 1" orientation="white" caption="White to move. This king and pawn endgame is a must-know position. White wins by seizing the opposition: 1.Kd2! Ke7 2.Ke3! Kf6 3.Kf4! — the king approaches and promotes the pawn. Without knowing this technique, players routinely draw or even lose won endings." arrows="e1f2:green" badge="best"></chess-position>
 
 White's only winning plan involves the opposition. If you don't know how to play this, you're likely to draw — or even lose — a position that should be a routine win.
 

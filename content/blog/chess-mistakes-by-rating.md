@@ -86,7 +86,7 @@ This is the rating band where the [Greek Gift sacrifice](/blog/chess-tactics-eve
 
 ### The King Safety Problem
 
-<chess-position fen="rnb2rk1/pppnqppp/4p3/3pP3/3P4/2N2N2/PPP2PPP/R2QKB1R w KQ - 2 8" caption="A typical French Defence structure after 7...O-O. White's pieces are well-placed for a kingside attack: the knight on f3 can jump to g5 or h4, and the bishop can come to d3 aiming at h7. Black castled because 'you should castle early,' but in this specific pawn structure, the king is safer on the queenside. The classic Bxh7+ sacrifice is a real threat here — and at 1200-1400, it succeeds far more often than it should." orientation="white" analysis="true"></chess-position>
+<chess-position fen="rnb2rk1/pppnqppp/4p3/3pP3/3P4/2N2N2/PPP2PPP/R2QKB1R w KQ - 2 8" caption="A typical French Defence structure after 7...O-O. White's pieces are well-placed for a kingside attack: the knight on f3 can jump to g5 or h4, and the bishop can come to d3 aiming at h7. Black castled because 'you should castle early,' but in this specific pawn structure, the king is safer on the queenside. The classic Bxh7+ sacrifice is a real threat here — and at 1200-1400, it succeeds far more often than it should." orientation="white" analysis="true" arrows="f1d3:green" badge="best"></chess-position>
 
 The lesson isn't "don't castle" — it's that castling is a **conditional** principle, not an absolute rule. In this French Defence structure, the centre is locked with pawns on e5 and d4 vs e6 and d5. That lock means the kingside files are semi-open for an attack, while the queenside is relatively closed. Black castled into the attack because the 1200-1400 player treats "castle early" as a rule rather than a guideline.
 
@@ -127,7 +127,7 @@ This is the rating band where middlegame planning becomes the bottleneck. You ca
 
 ### The IQP Middlegame Problem
 
-<chess-position fen="r1bqk2r/pppp1ppp/2n2n2/8/1bBPP3/2N2N2/PP3PPP/R1BQK2R b KQkq - 2 7" caption="The Italian Game with an isolated queen's pawn (IQP). White has a central pawn on d4 with no pawn support — the classic IQP. This pawn gives White piece activity and attacking chances, but if the pieces get traded, the d4 pawn becomes a target. At 1400-1600, players know the d4 pawn is 'weak' but don't understand that the side WITH the IQP should keep pieces on and attack, while the side AGAINST the IQP should trade pieces and target the pawn. The strategic plan matters more than any single tactic." orientation="black" analysis="true"></chess-position>
+<chess-position fen="r1bqk2r/pppp1ppp/2n2n2/8/1bBPP3/2N2N2/PP3PPP/R1BQK2R b KQkq - 2 7" caption="The Italian Game with an isolated queen's pawn (IQP). White has a central pawn on d4 with no pawn support — the classic IQP. This pawn gives White piece activity and attacking chances, but if the pieces get traded, the d4 pawn becomes a target. At 1400-1600, players know the d4 pawn is 'weak' but don't understand that the side WITH the IQP should keep pieces on and attack, while the side AGAINST the IQP should trade pieces and target the pawn. The strategic plan matters more than any single tactic." orientation="black" analysis="true" arrows="f6e4:green"></chess-position>
 
 The IQP position is a litmus test for strategic understanding. If you're White with the IQP, your plan is: keep pieces on, attack the kingside, use the d4-d5 break. If you're Black, your plan is: trade pieces, blockade on d5, squeeze the endgame. At 1400-1600, players often do the opposite — they trade when they should attack and keep pieces when they should simplify.
 
@@ -164,7 +164,7 @@ What happens after move 25?
 
 ### The Endgame Conversion Failure
 
-<chess-position fen="6r1/5k2/P4p2/5p2/8/8/5K2/R7 w - - 0 1" caption="White has a rook, a passed a-pawn, and an active king. This should be winning — but only if White plays precisely. The technique is: keep the rook behind the passed pawn (on a1 or a2), advance the king to support the pawn, and only promote when it's safe. At 1600-1800, the most common mistake is putting the rook in front of the pawn or advancing the pawn without king support, allowing Black's rook to attack from behind. One wrong move can turn this into a draw." orientation="white" analysis="true"></chess-position>
+<chess-position fen="6r1/5k2/P4p2/5p2/8/8/5K2/R7 w - - 0 1" caption="White has a rook, a passed a-pawn, and an active king. This should be winning — but only if White plays precisely. The technique is: keep the rook behind the passed pawn (on a1 or a2), advance the king to support the pawn, and only promote when it's safe. At 1600-1800, the most common mistake is putting the rook in front of the pawn or advancing the pawn without king support, allowing Black's rook to attack from behind. One wrong move can turn this into a draw." orientation="white" analysis="true" arrows="a6a7:green" badge="best"></chess-position>
 
 This type of position — rook + passed pawn vs rook — comes up in roughly 15% of games at the 1600-1800 level. The technique is well-established (Lucena and Philidor positions), but most 1600-1800 players haven't memorised it. They win the pawn race by instinct or they don't, and the results are inconsistent.
 

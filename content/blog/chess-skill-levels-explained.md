@@ -80,7 +80,7 @@ The core issue at 1200 is **board vision**. You're looking at your pieces and yo
 
 Here's a position that illustrates a typical 1200 mistake. White has just played Be2, developing sensibly, but Black has a concrete opportunity that many club players miss:
 
-<chess-position fen="r1bq1rk1/pppnbppp/4pn2/3p2B1/2PP4/2N1PN2/PP3PPP/R2QKB1R w KQ - 3 7" caption="QGD Tabiya: White has just played e3 and Nf3. Both sides have pawn tension on c4/d5. A 1200 might instinctively capture cxd5, releasing the tension prematurely — but maintaining it with moves like Rc1 or Bd3 keeps more options." orientation="white" moves="cxd5,exd5,Bd3,Rc1"></chess-position>
+<chess-position fen="r1bq1rk1/pppnbppp/4pn2/3p2B1/2PP4/2N1PN2/PP3PPP/R2QKB1R w KQ - 3 7" caption="QGD Tabiya: White has just played e3 and Nf3. Both sides have pawn tension on c4/d5. A 1200 might instinctively capture cxd5, releasing the tension prematurely — but maintaining it with moves like Rc1 or Bd3 keeps more options." orientation="white" moves="cxd5,exd5,Bd3,Rc1" arrows="d1c2:green,c4d5:orange"></chess-position>
 
 This is a standard Queen's Gambit Declined position where the c4/d5 pawn tension is the central strategic question. At 1200, most players capture immediately with cxd5, simplifying the position and releasing pressure. It "feels" safe — you remove the tension and know where you stand. But that instinct is exactly what's holding you back.
 
@@ -107,7 +107,7 @@ The most common 1500 blind spots:
 
 Here's a position from the French Defense that exposes this gap:
 
-<chess-position fen="rnbqk1nr/pp3ppp/4p3/2ppP3/3P4/P1P5/2P2PPP/R1BQKBNR b KQkq - 0 6" caption="French Defense, Advance Variation after 6.bxc3. The pawn tension between d4 and c5 is the key strategic question. A 1500 might play cxd4, but maintaining the tension and building pressure with Nc6 and Qb6 is far more effective." orientation="black" moves="cxd4,Nc6,Qb6"></chess-position>
+<chess-position fen="rnbqk1nr/pp3ppp/4p3/2ppP3/3P4/P1P5/2P2PPP/R1BQKBNR b KQkq - 0 6" caption="French Defense, Advance Variation after 6.bxc3. The pawn tension between d4 and c5 is the key strategic question. A 1500 might play cxd4, but maintaining the tension and building pressure with Nc6 and Qb6 is far more effective." orientation="black" moves="cxd4,Nc6,Qb6" arrows="g8e7:green,c5d4:orange"></chess-position>
 
 This is a critical moment in the French Advance Variation. White has just recaptured on c3 with the b-pawn, creating doubled c-pawns but also a massive pawn center. The tension between d4 and c5 is the defining feature of this structure.
 
@@ -130,7 +130,7 @@ The other 1800 blind spot is **endgame technique**. You know the basic checkmate
 
 Here's a position from the Najdorf Sicilian that illustrates the 1800 level:
 
-<chess-position fen="rnbqkb1r/1p3ppp/p2p1n2/4p3/3NP3/2N5/PPP1BPPP/R1BQK2R w KQkq - 0 7" caption="Sicilian Najdorf after 6...e5. Black has just challenged the center with e5, creating pawn tension on the d4/e5 axis. An 1800 knows the typical ideas (Nf5, Nde2, Nb3, f4) but struggles to calculate which continuation is best in THIS specific position." orientation="white" moves="Nf5,Nde2,Nb3,f4"></chess-position>
+<chess-position fen="rnbqkb1r/1p3ppp/p2p1n2/4p3/3NP3/2N5/PPP1BPPP/R1BQK2R w KQkq - 0 7" caption="Sicilian Najdorf after 6...e5. Black has just challenged the center with e5, creating pawn tension on the d4/e5 axis. An 1800 knows the typical ideas (Nf5, Nde2, Nb3, f4) but struggles to calculate which continuation is best in THIS specific position." orientation="white" moves="Nf5,Nde2,Nb3,f4" arrows="d4b3:green,d4f5:orange"></chess-position>
 
 This is one of the most analyzed positions in chess. After 6...e5, White's knight on d4 is challenged and must decide where to go. Every move carries strategic consequences:
 
@@ -162,7 +162,7 @@ At 2000, your tactical vision is sharp enough that you rarely miss 2-move combin
 
 **Positional intuition.** You feel when a position is dangerous before you can prove it. You recognize the warning signs — a king without luft, a knight headed for an outpost, a pawn chain pointing at your king — and take prophylactic action. This is not mystical; it is pattern recognition built from thousands of analyzed positions.
 
-<chess-position fen="r1bq1rk1/2pnbppp/p2p1n2/1p2p3/3PP3/1BP2N1P/PP3PP1/RNBQR1K1 w - - 1 11" caption="Ruy Lopez Breyer after 10...Nbd7. The pawn tension on the e4/e5 and d4/d6 axes defines the middlegame. A 2000 player evaluates which tension to maintain and which to release based on concrete calculation, not habit." orientation="white" moves="dxe5,Nxe5,exd5,Nxd5"></chess-position>
+<chess-position fen="r1bq1rk1/2pnbppp/p2p1n2/1p2p3/3PP3/1BP2N1P/PP3PP1/RNBQR1K1 w - - 1 11" caption="Ruy Lopez Breyer after 10...Nbd7. The pawn tension on the e4/e5 and d4/d6 axes defines the middlegame. A 2000 player evaluates which tension to maintain and which to release based on concrete calculation, not habit." orientation="white" moves="dxe5,Nxe5,exd5,Nxd5" arrows="c3c4:green,d4e5:orange"></chess-position>
 
 This is the Ruy Lopez Breyer — one of the most strategically complex openings in chess. White has pawns on c3, d4, and e4; Black has pawns on d6 and e5, with the c-file half-open after ...b5. The multiple points of tension (d4 vs e5, e4 vs d6) create a web of strategic decisions.
 
