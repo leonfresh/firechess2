@@ -1,6 +1,6 @@
 ---
-title: "Shirov Bh3!! The Greatest Chess Move Ever Played (1998)"
-description: "Shirov's 47...Bh3!! vs Topalov — GMs call it the greatest chess move ever. Interactive board, engine analysis, and why Kasparov was stunned."
+title: "Shirov Bh3!!: The Greatest Endgame Sacrifice Explained"
+description: "Shirov's 47...Bh3!! stunned Kasparov and fooled engines. Interactive board, full game analysis, and why this sacrifice still amazes GMs."
 date: 2026-09-17
 author: "FireChess Team"
 tags: ["shirov topalov bh3", "greatest chess moves", "famous chess games", "endgame sacrifice", "chess brilliancy", "zugzwang"]

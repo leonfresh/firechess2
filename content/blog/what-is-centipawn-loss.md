@@ -1,5 +1,5 @@
 ---
-title: "What Is Centipawn Loss in Chess? ACPL Benchmarks by Rating"
+title: "Average Centipawn Loss Explained: ACPL Benchmarks by Rating"
 description: "What is centipawn loss (ACPL) in chess? See real ACPL benchmarks by rating, board examples, and how to use ACPL to find your biggest leaks."
 date: "2026-09-17"
 author: "FireChess Team"

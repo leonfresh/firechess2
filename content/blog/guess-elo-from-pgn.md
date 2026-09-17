@@ -1,5 +1,5 @@
 ---
-title: "Guess Elo from PGN: How to Estimate Chess Rating from Any Game File"
+title: "Guess Elo from PGN: Estimate Chess Rating from Any Game"
 description: "Guess elo from any PGN file using centipawn loss, blunder count, and opening depth. Real examples and benchmarks from 50,000+ analyzed games."
 date: "2026-09-12"
 author: "FireChess Team"

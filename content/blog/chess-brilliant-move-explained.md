@@ -395,7 +395,7 @@ The training formula:
 
 2. **Review your missed opportunities.** After a game, check if you missed any brilliant moves. But more importantly, understand *why* you missed them: wrong candidate generation? Calculation error? Pattern you didn't recognize?
 
-3. **Study master sacrifices.** Go through games with famous sacrifices (Tal, Shirov, Mikhail Nezhmetdinov). You're training pattern libraries, not memorizing lines.
+3. **Study master sacrifices.** Go through games with famous sacrifices (Tal, Shirov — [Shirov's Bh3!! vs Topalov](/blog/shirov-topalov-bh3-sacrifice) is the gold standard — Mikhail Nezhmetdinov). You're training pattern libraries, not memorizing lines.
 
 4. **Analyze finished games** with a tool that shows you brilliant move flags — the [FireChess Analyzer](/analyze) highlights brilliants in your game history automatically. Seeing where brilliants were available trains your eye to recognize those positions.
 

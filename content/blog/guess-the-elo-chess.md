@@ -1,5 +1,5 @@
 ---
-title: "Guess the Elo Chess: How to Estimate Rating from a Position"
+title: "Guess the Elo: How to Estimate Chess Rating from Positions"
 description: "Learn to guess Elo in chess by spotting blunder frequency, plan quality, and endgame tells. Real positions from beginner to master with FireChess."
 date: "2026-09-12"
 author: "FireChess Team"
@@ -326,6 +326,9 @@ Significantly. Blitz games (3–5 minutes per player) introduce a much higher no
 Absolutely, and it's one of the most motivating ways to measure progress. Every month, export your last 20 rated rapid games and run them through the FireChess [PGN analyser](/analyze). Track your estimated rating bucket alongside your actual rating. If your PGN-estimated bucket starts climbing before your actual rating changes, you're developing the underlying skills — the rating will catch up. This leading-indicator effect is incredibly useful: it tells you your improvement is real months before your rating graph confirms it.
 
 ### Q: Can a computer guess Elo better than a human?
+
+### Q: What is a chess elo guesser and how accurate are they?
+Chess elo guessers use metrics like centipawn loss, blunder frequency, and opening depth to estimate a player's rating from their moves. Modern tools like FireChess's scanner achieve 85-90% accuracy within a 200-point range by comparing your game statistics against benchmarks from over 50,000 analyzed games. The strongest signals are blunder density (how many ?? per game) and average centipawn loss — both correlate tightly with rating. You can [try it yourself with FireChess's analyzer](/analyze) by uploading any PGN file.
 
 In raw accuracy, yes — a neural network trained on game data can predict rating within about 100–150 points, which beats the human 200–300 point range. But the computer can't tell you *why* a game looks like a certain rating. The value of human guess-the-elo is that it develops your intuition for quality of play. When you correctly identify that a move is 1800-level rather than 1400-level, you're training the same pattern recognition that helps you find better moves in your own games. The computer gives you the answer; the human exercise builds the skill. Use the [FireChess analyser](/analyze) to get the machine verdict, but don't skip the mental exercise of guessing first.
 
