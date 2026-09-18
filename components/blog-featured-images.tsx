@@ -62,8 +62,6 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <FirechessJuly2026Art />;
     case "shirov-topalov-bh3-sacrifice":
       return <ShirovTopalovBh3Art />;
-    case "guess-the-elo-chess":
-      return <GuessTheEloChessArt />;
     case "chess-rating-1200-to-1500":
       return <ChessRating1200Art />;
     case "best-chess-openings-for-beginners-by-rating":
@@ -136,6 +134,8 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <SkillGapArt />;
     case "stop-repeating-chess-mistakes":
       return <StopRepeatingArt />;
+    case "chess-psychology-tilting":
+      return <ChessPsychologyTiltingArt />;
     default:
       return <DefaultArt />;
   }
@@ -3659,6 +3659,65 @@ function StopRepeatingArt() {
       <text x="292" y="58" fill="#4ade80" fontSize="9" fontWeight="700" fillOpacity="0.8">SCANNED</text>
       {[[65,48],[340,160],[110,180]].map(([x,y],i) => (
         <circle key={`sr${i}`} cx={x} cy={y} r={1.2} fill="#fb923c" fillOpacity={0.25+i*0.05}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2.4+i*0.4}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Chess Psychology Tilting — brain with lightning bolt / broken chain */
+/* ================================================================== */
+function ChessPsychologyTiltingArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="cpt-bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#0c1220" />
+          <stop offset="100%" stopColor="#14102a" />
+        </linearGradient>
+        <radialGradient id="cpt-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
+        </radialGradient>
+        <filter id="cpt-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#cpt-bg)" />
+      <rect width="400" height="200" fill="url(#cpt-glow)" />
+      {/* brain outline — left side */}
+      <g filter="url(#cpt-f)" transform="translate(80,40)">
+        <path d="M60,60 C40,30 10,35 15,60 C5,70 8,95 30,100 C25,115 40,130 60,120 C80,130 95,115 90,100 C112,95 115,70 105,60 C110,35 80,30 60,60 Z"
+          fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeOpacity="0.7" />
+        {/* brain folds */}
+        <path d="M45,55 C55,48 65,55 60,65" fill="none" stroke="#a78bfa" strokeWidth="1.5" strokeOpacity="0.4" />
+        <path d="M70,50 C75,60 68,72 60,68" fill="none" stroke="#a78bfa" strokeWidth="1.5" strokeOpacity="0.4" />
+        <path d="M50,80 C58,85 70,82 75,75" fill="none" stroke="#a78bfa" strokeWidth="1.5" strokeOpacity="0.4" />
+      </g>
+      {/* lightning bolt — tilt symbol */}
+      <g filter="url(#cpt-f)">
+        <polygon points="240,35 220,90 245,85 225,145 270,75 248,80 265,35"
+          fill="#ef4444" fillOpacity="0.85" stroke="#f87171" strokeWidth="1" />
+      </g>
+      {/* chain links being broken */}
+      <g opacity="0.6">
+        <rect x="195" y="140" width="20" height="10" rx="5" fill="none" stroke="#64748b" strokeWidth="2" />
+        <rect x="210" y="140" width="20" height="10" rx="5" fill="none" stroke="#64748b" strokeWidth="2" strokeDasharray="4 3" />
+        <rect x="240" y="140" width="20" height="10" rx="5" fill="none" stroke="#64748b" strokeWidth="2" strokeDasharray="4 3" />
+        <rect x="260" y="140" width="20" height="10" rx="5" fill="none" stroke="#64748b" strokeWidth="2" />
+      </g>
+      {/* title text */}
+      <text x="320" y="65" textAnchor="middle" fill="#f1f5f9" fontSize="14" fontWeight="700" fontFamily="system-ui, sans-serif">TILT</text>
+      <text x="320" y="82" textAnchor="middle" fill="#94a3b8" fontSize="9" fontFamily="system-ui, sans-serif">the silent</text>
+      <text x="320" y="95" textAnchor="middle" fill="#94a3b8" fontSize="9" fontFamily="system-ui, sans-serif">rating killer</text>
+      {/* heartbeat line — emotional spike */}
+      <path d="M160,175 L200,175 L210,155 L220,190 L230,160 L240,185 L250,175 L350,175"
+        fill="none" stroke="#ef4444" strokeWidth="1.5" strokeOpacity="0.5">
+        <animate attributeName="stroke-opacity" values="0.5;0.2;0.5" dur="2s" repeatCount="indefinite" />
+      </path>
+      {/* sparkles */}
+      {[[70,30],[310,120],[350,40],[130,170]].map(([x,y],i) => (
+        <circle key={`cpt${i}`} cx={x} cy={y} r={1.2} fill="#8b5cf6" fillOpacity={0.25+i*0.05}>
           <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2.4+i*0.4}s`} repeatCount="indefinite" />
         </circle>
       ))}
