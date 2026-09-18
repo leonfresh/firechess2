@@ -1,7 +1,7 @@
 ---
-title: "Shirov Bh3!!: The Greatest Endgame Sacrifice Explained"
-description: "Shirov's 47...Bh3!! stunned Kasparov and fooled engines. Interactive board, full game analysis, and why this sacrifice still amazes GMs."
-date: 2026-09-17
+title: "Shirov vs Topalov 1998: The Immortal Bh3!! Endgame Sacrifice"
+description: "Why did Shirov sacrifice his bishop on h3? Walk through the full 1998 game on an interactive board and learn what engines missed."
+date: 2026-09-18
 author: "FireChess Team"
 tags: ["shirov topalov bh3", "greatest chess moves", "famous chess games", "endgame sacrifice", "chess brilliancy", "zugzwang"]
 canonical: https://www.firechess.com/blog/shirov-topalov-bh3-sacrifice
