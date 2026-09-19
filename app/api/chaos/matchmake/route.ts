@@ -11,13 +11,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { chaosRooms } from "@/lib/schema";
 import { eq, and, ne, isNull, gte, sql } from "drizzle-orm";
-import { createSyncState, startServerOpening } from "@/lib/chaos-room-sync";
-import { getChaosUserId } from "@/lib/chaos-auth";
+import { createSyncState, startServerOpening, MATCHMAKING_WINDOW_MS } from "@/lib/chaos-room-sync";
+import { getChaosUserId, isGuestId } from "@/lib/chaos-auth";
 import { notifyLiveRoom } from "@/lib/chaos-live-token";
 import { timeControl } from "@/lib/chaos-clock";
 
-/** Rooms older than this are considered abandoned */
-const STALE_THRESHOLD_MS = 90_000; // 90 seconds
+/** Posted challenges older than this are abandoned: unlisted and no longer joinable */
+const STALE_THRESHOLD_MS = MATCHMAKING_WINDOW_MS;
 
 function generateRoomCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -51,23 +51,31 @@ export async function GET(req: NextRequest) {
   }
 
   const control = timeControl(Number(req.nextUrl.searchParams.get("base")), Number(req.nextUrl.searchParams.get("inc")));
-  // Match players who chose the same clock.
-  const rooms = await db
-    .select()
-    .from(chaosRooms)
-    .where(
-      and(
-        eq(chaosRooms.isMatchmaking, true),
-        eq(chaosRooms.status, "waiting"),
-        isNull(chaosRooms.guestId),
-        ne(chaosRooms.hostId, userId),
-        gte(chaosRooms.createdAt, cutoff),
-        eq(chaosRooms.timeControlSeconds, control.base),
-        eq(chaosRooms.incrementSeconds, control.inc),
-        sql`coalesce((${chaosRooms.chaosState}->'_sync'->>'draftProtocol')::integer, 1) = ${req.nextUrl.searchParams.get("draftProtocol") === "2" ? 2 : 1}`,
-      ),
-    )
-    .limit(1);
+  // Match players who chose the same clock, preferring the same account class: a signed-in seeker
+  // is paired with a signed-in host (that pair is what makes a game rated), a guest with a guest.
+  // Falls back to any open room so matchmaking never dead-ends on an empty pool.
+  const seekerIsGuest = isGuestId(userId);
+  const findRoom = (sameClassOnly: boolean) =>
+    db
+      .select()
+      .from(chaosRooms)
+      .where(
+        and(
+          eq(chaosRooms.isMatchmaking, true),
+          eq(chaosRooms.status, "waiting"),
+          isNull(chaosRooms.guestId),
+          ne(chaosRooms.hostId, userId),
+          gte(chaosRooms.createdAt, cutoff),
+          eq(chaosRooms.timeControlSeconds, control.base),
+          eq(chaosRooms.incrementSeconds, control.inc),
+          sql`coalesce((${chaosRooms.chaosState}->'_sync'->>'draftProtocol')::integer, 1) = ${req.nextUrl.searchParams.get("draftProtocol") === "2" ? 2 : 1}`,
+          sameClassOnly ? sql`(${chaosRooms.hostId} like 'guest\\_%') = ${seekerIsGuest}` : undefined,
+        ),
+      )
+      .limit(1);
+
+  let rooms = await findRoom(true);
+  if (rooms.length === 0) rooms = await findRoom(false);
 
   if (rooms.length > 0) {
     const room = rooms[0];

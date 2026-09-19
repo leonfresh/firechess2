@@ -5,7 +5,7 @@
  *
  * Features:
  *  - Online player count (heartbeat every 20s while visible)
- *  - 60-second matchmaking timer with auto-cancel
+ *  - Matchmaking timer with auto-cancel
  *  - Live chat for players waiting in the lobby
  *  - Polls chat messages periodically while the tab is visible
  */
@@ -68,7 +68,7 @@ type LobbyProps = {
 
 const PRESENCE_INTERVAL = 20_000; // heartbeat every 20s while visible
 const CHAT_POLL_INTERVAL = 5_000; // poll chat every 5s while visible
-const MAX_SEARCH_TIME = 60; // 60 seconds max search
+const MAX_SEARCH_TIME = 150; // seconds; must stay under MATCHMAKING_WINDOW_MS or a waiting room expires before it can be joined
 
 function isDocumentVisible() {
   return (
@@ -441,13 +441,14 @@ export function ChaosLobby({
               {unlimitedTime ? "No rush · Casual game" : "Want this game to count toward your rating?"}
             </p>
             <ul className="mt-2 list-disc space-y-1 pl-5">
-              <li>Both players sign in with FireChess or Discord before joining the match.</li>
-              <li>Use Find opponent with a timed clock.</li>
+              <li>Both players sign in with FireChess or Discord before the match.</li>
+              <li>Play a timed clock — No rush games are casual.</li>
               <li>Both players make at least one move, then finish the game.</li>
+              <li>Up to three games between the same two players count per day.</li>
             </ul>
             <p className="mt-2 text-slate-300">
               {unlimitedTime ? "Choose a timed clock to qualify for rated play. " : "A timed clock alone does not guarantee a rated game. "}
-              Guest play, friend rooms and No rush games are casual and do not change ratings.
+              Guest play and No rush games are casual and do not change ratings. Friend matches count when both players are signed in.
             </p>
           </details>
           {searchState === "idle" && (

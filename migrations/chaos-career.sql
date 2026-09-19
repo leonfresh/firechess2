@@ -16,10 +16,16 @@ CREATE INDEX IF NOT EXISTS chaos_match_host ON chaos_match(host_id, ended_at DES
 CREATE INDEX IF NOT EXISTS chaos_match_guest ON chaos_match(guest_id, ended_at DESC);
 CREATE INDEX IF NOT EXISTS chaos_match_public_recent ON chaos_match(ended_at DESC,id DESC);
 CREATE INDEX IF NOT EXISTS chaos_room_live_recent ON chaos_room("updatedAt" DESC,id DESC) WHERE status='playing' AND "guestId" IS NOT NULL;
+-- Rated rules (Sep 2026): a finished game counts when both players are registered
+-- (chaos_player rows = signed in with FireChess or Discord), the clock is timed, and both
+-- made a move. The queue is NOT required anymore -- friend rooms count too, which is where
+-- the games actually happen. Anti-farm: at most MAX_RATED_GAMES_PER_PAIR_PER_DAY rated games
+-- between the same two ids — the rest stay casual history.
 CREATE OR REPLACE FUNCTION archive_chaos_match() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE
  result jsonb; match_id text; num integer; inserted integer;
  eligible boolean; hr integer; gr integer; delta integer; score numeric;
+ capped integer;
 BEGIN
  IF NEW.status NOT IN ('finished','resigned-white','resigned-black') OR OLD.status IN ('finished','resigned-white','resigned-black') OR NEW."guestId" IS NULL THEN RETURN NEW; END IF;
  result := NEW."chaosState"->'_sync'->'result';
@@ -32,7 +38,7 @@ BEGIN
  ON CONFLICT(id) DO NOTHING;
  GET DIAGNOSTICS inserted = ROW_COUNT;
  IF inserted = 0 THEN RETURN NEW; END IF;
- eligible := coalesce((NEW."chaosState"->'_sync'->>'ratedQueue')::boolean,false) AND NEW."timeControlSeconds">0
+ eligible := NEW."timeControlSeconds">0
  AND NEW."hostId" <> NEW."guestId"
  AND NEW."chaosState"->'_sync'->>'draftProtocol'='2'
  AND EXISTS(SELECT 1 FROM jsonb_array_elements(coalesce(NEW."moveHistory",'[]'::jsonb)) m WHERE m->>'color'='w')
@@ -40,6 +46,11 @@ BEGIN
  AND EXISTS(SELECT 1 FROM chaos_player WHERE id=NEW."hostId")
  AND EXISTS(SELECT 1 FROM chaos_player WHERE id=NEW."guestId");
  IF NOT coalesce(eligible,false) THEN RETURN NEW; END IF;
+ -- MAX_RATED_GAMES_PER_PAIR_PER_DAY = 3. Counted only over already-rated games, so hitting the
+ -- cap leaves every later result in the same day as casual history instead of blocking the pair.
+ capped := (SELECT count(*) FROM chaos_match WHERE rated=true AND ended_at > now() - interval '24 hours'
+  AND ((host_id=NEW."hostId" AND guest_id=NEW."guestId") OR (host_id=NEW."guestId" AND guest_id=NEW."hostId")));
+ IF capped >= 3 THEN RETURN NEW; END IF;
  -- Stable lock order serializes simultaneous results involving the same players.
  PERFORM id FROM chaos_player WHERE id IN (NEW."hostId",NEW."guestId") ORDER BY id FOR UPDATE;
  SELECT rating INTO hr FROM chaos_player WHERE id=NEW."hostId";

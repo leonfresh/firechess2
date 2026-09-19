@@ -13,12 +13,23 @@ BEGIN
  UPDATE chaos_room SET status='resigned-black',"chaosState"='{"_sync":{"draftProtocol":2,"ratedQueue":true,"gameNumber":1,"result":{"winner":"white","reason":"Resignation"}}}' WHERE id=r;
  SELECT count(*) INTO v FROM chaos_match WHERE room_id=r; IF v<>2 THEN RAISE EXCEPTION 'Rematch history overwritten'; END IF;
  SELECT rating INTO v FROM chaos_player WHERE id=h; IF v>=1216 THEN RAISE EXCEPTION 'Rematch color swap scored wrong'; END IF;
+ -- Friend room (ratedQueue=false) with a timed clock and both moves made: rated since Sep 2026.
  UPDATE chaos_room SET status='playing',"isMatchmaking"=false,"chaosState"='{"_sync":{"draftProtocol":2,"ratedQueue":false,"gameNumber":2}}' WHERE id=r;
  UPDATE chaos_room SET status='finished',"chaosState"='{"_sync":{"draftProtocol":2,"ratedQueue":false,"gameNumber":2,"result":{"winner":"draw","reason":"Draw agreed"}}}' WHERE id=r;
- SELECT games INTO v FROM chaos_player WHERE id=h; IF v<>2 THEN RAISE EXCEPTION 'Friend room was rated'; END IF;
- SELECT count(*) INTO v FROM chaos_match WHERE room_id=r; IF v<>3 THEN RAISE EXCEPTION 'Casual game missing'; END IF;
+ SELECT games INTO v FROM chaos_player WHERE id=h; IF v<>3 THEN RAISE EXCEPTION 'Friend room was not rated: %',v; END IF;
+ SELECT count(*) INTO v FROM chaos_match WHERE room_id=r; IF v<>3 THEN RAISE EXCEPTION 'Rated game missing from history'; END IF;
+ -- Fourth rated game of the day between the same pair: capped, so casual history only.
+ UPDATE chaos_room SET status='playing',"chaosState"='{"_sync":{"draftProtocol":2,"ratedQueue":false,"gameNumber":3}}' WHERE id=r;
+ UPDATE chaos_room SET status='finished',"chaosState"='{"_sync":{"draftProtocol":2,"ratedQueue":false,"gameNumber":3,"result":{"winner":"black","reason":"Checkmate"}}}' WHERE id=r;
+ SELECT games INTO v FROM chaos_player WHERE id=h; IF v<>3 THEN RAISE EXCEPTION 'Per-pair daily cap did not hold: %',v; END IF;
+ SELECT count(*) INTO v FROM chaos_match WHERE room_id=r; IF v<>4 THEN RAISE EXCEPTION 'Capped game missing from history'; END IF;
+ -- No rush games (no clock) stay casual even when both players are registered and both moved.
+ UPDATE chaos_room SET status='playing',"timeControlSeconds"=0,"chaosState"='{"_sync":{"draftProtocol":2,"ratedQueue":false,"gameNumber":4}}' WHERE id=r;
+ UPDATE chaos_room SET status='finished',"chaosState"='{"_sync":{"draftProtocol":2,"ratedQueue":false,"gameNumber":4,"result":{"winner":"white","reason":"Checkmate"}}}' WHERE id=r;
+ SELECT games INTO v FROM chaos_player WHERE id=h; IF v<>3 THEN RAISE EXCEPTION 'Untimed game was rated'; END IF;
+ SELECT count(*) INTO v FROM chaos_match WHERE room_id=r; IF v<>5 THEN RAISE EXCEPTION 'Casual game missing'; END IF;
  DELETE FROM chaos_room WHERE id=r;
- SELECT count(*) INTO v FROM chaos_match WHERE room_id=r; IF v<>3 THEN RAISE EXCEPTION 'Deleting room removed history'; END IF;
+ SELECT count(*) INTO v FROM chaos_match WHERE room_id=r; IF v<>5 THEN RAISE EXCEPTION 'Deleting room removed history'; END IF;
  DELETE FROM chaos_match WHERE room_id=r;
  DELETE FROM chaos_player WHERE id IN(h,g);
 END $$;

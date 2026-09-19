@@ -10,7 +10,7 @@ import { chaosRooms } from "@/lib/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { getChaosUserId } from "@/lib/chaos-auth";
 import { notifyLiveRoom } from "@/lib/chaos-live-token";
-import { startServerOpening } from "@/lib/chaos-room-sync";
+import { startServerOpening, MATCHMAKING_WINDOW_MS } from "@/lib/chaos-room-sync";
 
 export async function POST(req: NextRequest) {
   const userId = await getChaosUserId(req);
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (room.isMatchmaking && (room.createdAt?.getTime() ?? 0) < Date.now() - 90_000) {
+  if (room.isMatchmaking && (room.createdAt?.getTime() ?? 0) < Date.now() - MATCHMAKING_WINDOW_MS) {
     return NextResponse.json({ error: "This challenge has expired. Choose another player." }, { status: 410 });
   }
   const openingState = startServerOpening(room);

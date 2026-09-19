@@ -331,7 +331,7 @@ export function ChaosWatch({
           </nav>
           {tab === "archive" && (
             <p className={styles.note}>
-              Rated games count toward the ladder: both players must sign in with FireChess or Discord, join timed public matchmaking, and each make a move. A displayed username alone does not make a game rated. Guest play, friend rooms and No rush games are casual and do not change ratings.
+              Rated games count toward the ladder: both players must sign in with FireChess or Discord, the clock must be timed, and each must make a move. A displayed username alone does not make a game rated. Guest play and No rush games are casual and do not change ratings, and only the first three games between the same two players each day count.
             </p>
           )}
         </>

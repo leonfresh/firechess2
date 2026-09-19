@@ -8,8 +8,9 @@ async function req(user,path,body,status=200){const r=await fetch(base+path,{met
 let roomId;await sql`insert into chaos_player(id,name) values(${host},'Integration test'),(${guest},'Integration test')`;
 try{
  const room=await req(host,'/api/chaos/create',{draftProtocol:2,hostColor:'white',timeControlSeconds:300,incrementSeconds:3});roomId=room.roomId;
- // An old creation date keeps this fixture out of the public queue while testing its normal join path.
- await sql`update chaos_room set "isMatchmaking"=true,"createdAt"=now()-interval '1 day' where id=${roomId}`;
+ // A fresh creation date keeps this fixture inside the matchmaking window; the room is joined a
+ // second later, so the only cost is a brief appearance in the public challenge list.
+ await sql`update chaos_room set "isMatchmaking"=true,"createdAt"=now() where id=${roomId}`;
  await req(guest,'/api/chaos/join',{roomCode:room.roomCode});
  let state=await req(host,'/api/chaos/sync?roomId='+roomId);
  const send=async(user,message,id=randomUUID())=>state=await req(user,'/api/chaos/sync',{roomId,id,baseRevision:state.stateRevision,message});

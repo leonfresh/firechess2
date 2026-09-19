@@ -14,7 +14,7 @@ try {
     await sql`insert into chaos_player(id,name) values(${host},'Opening abort test'),(${guest},'Opening abort test')`;
     const room=await req(host,'/api/chaos/create',{draftProtocol:2,hostColor:'white',timeControlSeconds:300,incrementSeconds:3});rooms.push(room.roomId);
     // Exercise rated eligibility without exposing a test room in the public lobby.
-    await sql`update chaos_room set "isMatchmaking"=true,"createdAt"=now()-interval '1 day' where id=${room.roomId}`;
+    await sql`update chaos_room set "isMatchmaking"=true,"createdAt"=now() where id=${room.roomId}`;
     await req(guest,'/api/chaos/join',{roomCode:room.roomCode});
     let state=await req(host,'/api/chaos/sync?roomId='+room.roomId);
     const send=async(user,message)=>state=await req(user,'/api/chaos/sync',{roomId:room.roomId,id:randomUUID(),baseRevision:state.stateRevision,message});

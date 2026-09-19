@@ -303,7 +303,7 @@ Chaos Chess has its own separate ELO rating system starting at 1200. It does not
 
 ### Q: Can I play Chaos Chess against friends?
 
-Yes. You can create a private room with a room code and invite a friend to play Chaos Chess with full modifier drafting. Private games use the same modifier pool and draft rules as ranked matches, but they're unrated by default. You can also set custom draft parameters — like starting the draft at turn 3 instead of turn 5, or guaranteeing an Epic modifier in the first draft phase — for a more chaotic experience.
+Yes. You can create a private room with a room code and invite a friend to play Chaos Chess with full modifier drafting. Private games use the same modifier pool and draft rules as ranked matches, and they count for rating when both players are signed in and the game runs on a timed clock — No rush games stay casual. You can also set custom draft parameters — like starting the draft at turn 3 instead of turn 5, or guaranteeing an Epic modifier in the first draft phase — for a more chaotic experience.
 
 ### Q: How does Stockfish handle the modified pieces?
 

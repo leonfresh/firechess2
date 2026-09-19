@@ -38,3 +38,8 @@ export async function getChaosUserId(req: NextRequest): Promise<string | null> {
 
   return null;
 }
+
+/** Guest identities are the only seats that can never be rated: they have no chaos_player row. */
+export function isGuestId(id: string | null | undefined): boolean {
+  return !!id && id.startsWith("guest_");
+}

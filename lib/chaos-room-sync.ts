@@ -11,6 +11,9 @@ export type SyncEvent = { revision: number; actor: "host" | "guest" | "system"; 
 export type RoomChat = { id: string; actor: "host" | "guest"; text: string; ts: number };
 export type OpeningMove = {side: "w" | "b"; deadline: number};
 export const OPENING_MOVE_MS = 30_000;
+/** How long a posted challenge stays listed in the lobby and joinable by code or quick pairing.
+ *  Must exceed the client's search timer (MAX_SEARCH_TIME in components/chaos-lobby.tsx). */
+export const MATCHMAKING_WINDOW_MS = 300_000;
 export type SyncMeta = { replayFrames?: WatchFrame[]; openingMoveRule?: boolean; firstMoves?: ("w" | "b")[]; openingMove?: OpeningMove; chat?: RoomChat[]; ratedQueue?: boolean; gameNumber?: number; revision: number; stateRevision: number; events: SyncEvent[]; receipts: string[]; picks: Partial<Record<"host" | "guest", string | null>>; rematch: string[]; drawOffer?: string; frozenBy?: string; draftPicks?: Record<string, boolean>; result?: {winner: string; reason: string}; games?: Record<string, unknown>[]; clock?: MatchClock; draftProtocol?: 2; draft?: ServerDraft; opening?: {deadline: number; offers: {host: string[]; guest: string[]}} };
 export type SyncRoom = { id: string; hostId: string; guestId: string | null; hostColor: string; fen: string; chaosState: unknown; status: string; moveHistory: unknown; [key: string]: any };
 export class SyncError extends Error { constructor(public status: number, message: string) { super(message); } }

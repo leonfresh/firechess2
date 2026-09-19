@@ -22,10 +22,20 @@ test('signed-in timed matchmaking is eligible, with opponent conditions explicit
   assert.match(html,/opponent must also be signed in/);assert.match(html,/both players must make a move/);
   assert.doesNotMatch(html,/Sign in to unlock/);
 });
-for(const [props,reason] of [[{unlimited:true},/No rush games are casual/],[{mode:'friends'},/Friend matches are always casual/],[{mode:'practice'},/Practice against the AI/]])
+for(const [props,reason] of [[{unlimited:true},/No rush games are casual/],[{mode:'practice'},/Practice against the AI/]])
   test(`signed-in ${JSON.stringify(props)} stays casual`,()=>{
     const html=render(signed,props);assert.match(html,/>Casual</);assert.match(html,reason);assert.doesNotMatch(html,/>Rated eligible</);
   });
+test('signed-in friend matches are rated eligible too, with the daily pair cap spelled out',()=>{
+  const html=render(signed,{mode:'friends'});
+  assert.match(html,/>Rated eligible</);assert.match(html,/friend must also be signed in/i);
+  assert.match(html,/first three games between the same two players each day count/i);
+  assert.doesNotMatch(html,/always casual/i);
+});
+test('guest friend matches stay casual',()=>{
+  const html=render({data:{player:null},isLoading:false},{mode:'friends'});
+  assert.match(html,/>Casual</);assert.match(html,/Playing as a guest/);assert.doesNotMatch(html,/>Rated eligible</);
+});
 test('loading and failure do not misrepresent the player as a guest or rated',()=>{
   const loading=render({isLoading:true});assert.match(loading,/Checking sign-in/);assert.doesNotMatch(loading,/Playing as a guest|Sign in to unlock|>Rated eligible</);
   const failed=render({...signed,error:new Error('offline')});assert.match(failed,/Eligibility unavailable/);assert.match(failed,/Retry account check/);assert.doesNotMatch(failed,/>Rated eligible</);
