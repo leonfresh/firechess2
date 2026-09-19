@@ -9940,11 +9940,11 @@ export default function ChaosChessPage() {
                 {
                   icon: "🧱",
                   piece: "♟",
-                  name: "Forced En Passant",
-                  tier: "common",
-                  tierColor: "text-slate-400 border-white/10 bg-white/[0.04]",
-                  glow: "rgba(255,255,255,0.08)",
-                  desc: "En passant is now mandatory. If you CAN take en passant, you MUST. Tu dois.",
+                  name: "Toll Gate",
+                  tier: "rare",
+                  tierColor: "text-cyan-400 border-cyan-500/30 bg-cyan-500/10",
+                  glow: "rgba(6,182,212,0.2)",
+                  desc: "Your opponent's pawns can never advance two squares. No double step, no torpedo charge — the road is closed.",
                 },
                 {
                   icon: "💀",
@@ -10451,7 +10451,7 @@ export default function ChaosChessPage() {
               />
               <p className="text-xs text-orange-400">
                 Yes, we have{" "}
-                <span className="font-bold">Forced En Passant</span>,{" "}
+                <span className="font-bold">Toll Gate</span>,{" "}
                 <span className="font-bold">The Knook</span>, and{" "}
                 <span className="font-bold">the Bishop Cannon</span>.
               </p>
