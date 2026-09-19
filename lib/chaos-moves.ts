@@ -1174,11 +1174,16 @@ function genEnPassantEverywhere(game: Chess, color: Color): ChaosMove[] {
   return moves;
 }
 
-/** Early promotion: pawns promote on rank 5 (white) or rank 4 (black).
- * Only pawns on rank 4 or below (white) / rank 5 or above (black) can trigger. */
+/** Battlefield Promotion target rank (0-indexed): rank 6 for White, rank 3 for Black.
+ * Shipped as rank 5 / rank 4 — that handed out a queen by the third move, so the card was
+ * nerfed one rank. The pawn must sit one rank below the target (White promotes from rank 5
+ * onto rank 6). Keep the card text in `lib/chaos-chess.ts` and the two sync tests in step. */
+const EARLY_PROMO_RANK: Record<Color, number> = { w: 5, b: 2 };
+
+/** Early promotion: a pawn one rank below the target promotes by advancing or capturing onto it. */
 function genEarlyPromotion(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
-  const promoRank = color === "w" ? 4 : 3; // Rank 5 for White, rank 4 for Black, as the card promises.
+  const promoRank = EARLY_PROMO_RANK[color];
   const dir = color === "w" ? 1 : -1;
   const pawns = allSquaresOf(game, "p", color);
 
@@ -1636,6 +1641,15 @@ export function getChaosMoves(
     const trackedSquare = assignedSquares?.[trackedKey];
 
     for (const m of gen(game, color, trackedSquare)) {
+      // Toll Gate: the opponent's card forbids our pawns from advancing two squares, so a
+      // Torpedo Pawn's charge is filtered here for every consumer (board, AI, outcome checks).
+      if (
+        opponentModifiers?.some((mod) => mod.id === "toll-gate") &&
+        game.get(m.from)?.type === "p" &&
+        Math.abs(Number(m.to[1]) - Number(m.from[1])) === 2
+      ) {
+        continue;
+      }
       const key = `${m.from}-${m.to}-${m.modifierId}`;
       if (seen.has(key)) continue;
       seen.add(key);

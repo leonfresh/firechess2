@@ -327,7 +327,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     id: "pawn-promotion-early",
     name: "Battlefield Promotion",
     description:
-      "Pawns can promote on rank 5 for White or rank 4 for Black.",
+      "Pawns can promote on rank 6 for White or rank 3 for Black.",
     tier: "epic",
     icon: "⭐",
     piece: "p",
@@ -344,10 +344,10 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     phases: [3, 4, 5],
   },
   {
-    id: "forced-en-passant",
-    name: "Forced En Passant",
+    id: "toll-gate",
+    name: "Toll Gate",
     description:
-      "Your opponent must play en passant whenever it is legal.",
+      "Your opponent's pawns can never advance two squares — this also stops a Torpedo Pawn's charge.",
     tier: "rare",
     icon: "🧱",
     piece: "p",

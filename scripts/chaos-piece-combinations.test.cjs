@@ -20,12 +20,15 @@ for (const side of ['w', 'b']) {
     assert.ok(!getChaosMoves(g, mods, side, {}, powers('kamikaze-bishop')).some(m => m.to === 'b2'));
   });
   test(`${side}: pawn charge, bayonet and early promotion keep their distinct options`, () => {
-    const from = side === 'w' ? 'd4' : 'd5', to = side === 'w' ? 'd5' : 'd4';
+    const from = side === 'w' ? 'd5' : 'd4', to = side === 'w' ? 'd6' : 'd3';
     const g = setup(side, [[from,'p']]);
     const mods = powers('pawn-charge','pawn-capture-forward','pawn-promotion-early');
     const promotion = getChaosMoves(g, mods, side).find(m => m.modifierId === 'pawn-promotion-early' && m.to === to);
     assert.ok(promotion, 'Promotion must use the rank printed on the card');
     assert.equal(executeChaosMove(g, promotion, mods).get(to).type, 'q');
+    assert.ok(!getChaosMoves(setup(side, [[side === 'w' ? 'd4' : 'd5', 'p']]), mods, side)
+      .some(m => m.modifierId === 'pawn-promotion-early'),
+      'The old rank-5/rank-4 promotion stays retired unless the card text moves with it');
     assert.ok(getChaosMoves(g, mods, side).some(m => m.modifierId === 'pawn-charge'));
     g.put({type:'r',color:enemy},to);
     const bayonet = getChaosMoves(g, mods, side).find(m => m.modifierId === 'pawn-capture-forward' && m.to === to);

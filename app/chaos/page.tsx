@@ -5020,13 +5020,6 @@ export default function ChaosChessPage() {
           cs.playerModifiers,
         );
 
-        // Forced En Passant: if player has this, AI must play EP when available — skip chaos
-        const forcedEpForAI =
-          cs.playerModifiers.some((m) => m.id === "forced-en-passant") &&
-          g
-            .moves({ verbose: true })
-            .some((m: { flags: string }) => m.flags.includes("e"));
-
         // Anomaly move options for the human player — passed to computeChaosThreatPenalty
         // so Stockfish is aware of anomaly-powered moves (Emperor king leaps, Star camel
         // leaps, Moon ghost captures, Strength king queen-range capture, etc.) when
@@ -5046,7 +5039,7 @@ export default function ChaosChessPage() {
 
         // Evaluate chaos moves — captures sorted by material gain are always evaluated;
         // positional (non-capture) chaos moves are considered 30% of the time.
-        if (aiChaosMoves.length > 0 && !forcedEpForAI) {
+        if (aiChaosMoves.length > 0) {
           // Chaos-aware piece value lookup: upgraded pieces are worth more
           const getVal = (sq: string, pieceType: string, pColor: "w" | "b") =>
             getChaosPieceValCp(
@@ -5848,19 +5841,34 @@ export default function ChaosChessPage() {
           }
         }
 
-        // Forced En Passant: if player has this modifier and EP is available, AI must play it
-        // (but NOT if we just set bestUci to escape a chaos check — escaping takes priority)
+        // Toll Gate: the player's card forbids the AI's pawns from advancing two squares.
+        // chess.js happily plays the double step, so rewrite the engine's pick to the same
+        // pawn's single step, else the top-ranked legal move that isn't a double push.
         if (
           !appliedChaosEscape &&
-          cs.playerModifiers.some((m) => m.id === "forced-en-passant")
+          cs.playerModifiers.some((m) => m.id === "toll-gate")
         ) {
-          const epMoves = g
-            .moves({ verbose: true })
-            .filter((m: { flags: string; from: string; to: string }) =>
-              m.flags.includes("e"),
+          const legalMoves = g.moves({ verbose: true });
+          const isDoublePush = (m: { piece: string; from: string; to: string }) =>
+            m.piece === "p" &&
+            Math.abs(Number(m.to[1]) - Number(m.from[1])) === 2;
+          const picked = legalMoves.find((m) => m.lan === bestUci);
+          if (picked && isDoublePush(picked)) {
+            const stepRank =
+              Number(picked.from[1]) + (picked.color === "w" ? 1 : -1);
+            const step = legalMoves.find(
+              (m) => m.from === picked.from && m.to === `${picked.from[0]}${stepRank}`,
             );
-          if (epMoves.length > 0) {
-            bestUci = `${epMoves[0].from}${epMoves[0].to}`;
+            const ranked = (
+              topMoves
+                .map((t) => t.bestMove ?? t.pvMoves[0])
+                .filter(Boolean) as string[]
+            )
+              .map((u) => legalMoves.find((m) => m.lan === u && !isDoublePush(m)))
+              .find(Boolean);
+            const fallback =
+              step ?? ranked ?? legalMoves.find((m) => !isDoublePush(m));
+            if (fallback) bestUci = fallback.lan;
           }
         }
 
@@ -7416,20 +7424,11 @@ export default function ChaosChessPage() {
       )
         return false;
 
-      // Forced En Passant: if AI has this modifier and standard EP is available, player must play it
-      if (chaosState.aiModifiers.some((m) => m.id === "forced-en-passant")) {
-        const epMoves = game
-          .moves({ verbose: true })
-          .filter((m: { flags: string; from: string; to: string }) =>
-            m.flags.includes("e"),
-          );
-        if (
-          epMoves.length > 0 &&
-          !epMoves.some(
-            (m: { from: string; to: string }) => m.from === from && m.to === to,
-          )
-        ) {
-          return false; // must play en passant
+      // Toll Gate: if the AI has this modifier, the player's pawns may not advance two squares
+      if (chaosState.aiModifiers.some((m) => m.id === "toll-gate")) {
+        const moving = game.get(from as any);
+        if (moving?.type === "p" && Math.abs(Number(to[1]) - Number(from[1])) === 2) {
+          return false; // Toll Gate blocks the two-square advance
         }
       }
 

@@ -54,7 +54,7 @@ const { getChaosMoves, executeChaosMove } = require('../lib/chaos-moves.ts');
 
 for (const side of ['w','b']) test(`${side}: Battlefield Promotion accepts all four choices on the advertised rank`,()=>{
   for (const promoted of ['q','r','b','n']) {
-    let r=ready();const from=side==='w'?'d4':'d5',to=side==='w'?'d5':'d4';
+    let r=ready();const from=side==='w'?'d5':'d4',to=side==='w'?'d6':'d3';
     const g=new Chess(`7k/8/8/8/8/8/8/K7 ${side} - - 0 10`);g.put({type:'p',color:side},from);r.fen=g.fen();
     const mods=[ALL_MODIFIERS.find(m=>m.id==='pawn-promotion-early')];
     r.chaosState={...r.chaosState,[side==='w'?'playerModifiers':'aiModifiers']:mods};

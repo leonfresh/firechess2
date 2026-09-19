@@ -378,7 +378,7 @@ const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
     iconGlow: "rgba(168,85,247,0.7)",
     glow: "rgba(168,85,247,0.3)",
   },
-  "forced-en-passant": { icon: "🧱", iconGlow: "rgba(249,115,22,0.6)" },
+  "toll-gate": { icon: "🧱", iconGlow: "rgba(249,115,22,0.6)" },
   "pawn-shield-wall": { icon: "🔰", iconGlow: "rgba(59,130,246,0.6)" },
   "enpassant-everywhere": { icon: "♟️", iconGlow: "rgba(234,179,8,0.6)" },
   "pawn-fortress": { icon: "🏰", iconGlow: "rgba(245,158,11,0.8)" },

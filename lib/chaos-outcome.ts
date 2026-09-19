@@ -10,7 +10,6 @@ export function getKingCaptureMove(game: Chess, state: ChaosState, side: Color, 
   const owner = side === 'w' ? 'player' : 'ai', enemy = side === 'w' ? 'ai' : 'player';
   const own = state[`${owner}Modifiers`], other = state[`${enemy}Modifiers`];
   const normal = game.moves({verbose:true});
-  if (other.some(m => m.id === 'forced-en-passant') && normal.some(m => m.flags.includes('e'))) return null;
   const special = getChaosMoves(game,own,side,state.assignedSquares,other,{
     playerAnomaly:state[`${owner}Anomaly`], moonUnlocked:game.moveNumber() >= 10,
     strengthMode:state[`${owner}Anomaly`] === 'strength' && !state[`${owner}AnomalyUsed`],
@@ -32,6 +31,9 @@ export function blockedMove(game: Chess, state: ChaosState, color: Color, from: 
   if (state[`${own}ImmuneSquare`] === from && (state[`${own}ImmuneTurnsLeft`] ?? 0)>0 && game.get(to as Square)) return 'Protected pieces cannot capture';
   const enemyMods=color==='w'?state.aiModifiers:state.playerModifiers;
   if (enemyMods.some(m=>m.id==='kings-chains') && computeChainedSquare(game,color==='w'?'b':'w')===from) return "This piece is held by King's Chains";
+  // Toll Gate: the opponent's card forbids this side's pawns from advancing two squares —
+  // that covers the opening double step and a Torpedo Pawn's charge alike.
+  if (enemyMods.some(m=>m.id==='toll-gate') && game.get(from as Square)?.type==='p' && Math.abs(Number(to[1])-Number(from[1]))===2) return 'Toll Gate blocks the two-square advance';
   return null;
 }
 export function chaosOutcome(game: Chess, state: ChaosState): {winner:'white'|'black'|'draw';reason:string}|null {

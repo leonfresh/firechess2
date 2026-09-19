@@ -59,7 +59,7 @@ export const LS_PREVIEW_NO_CONFIRM = "firechess_chaos_preview_no_confirm";
  */
 export const PROGRESSION_UNLOCK_ORDER: readonly string[] = [
   "king-wrath", // game  2 — Regicide (rare)
-  "forced-en-passant", // game  5 — Forced En Passant (rare)
+  "toll-gate", // game  5 — Toll Gate (rare)
   "queen-cannon", // game  9 — Queen Cannon (epic)
   "collateral-rook", // game 14 — Collateral Damage (epic)
   "nuclear-queen", // game 20 — Nuclear Queen (legendary)
@@ -78,7 +78,7 @@ export const PROGRESSION_UNLOCK_ORDER: readonly string[] = [
  */
 export const UNLOCK_AT_GAMES: readonly number[] = [
   2, // king-wrath
-  5, // forced-en-passant
+  5, // toll-gate
   9, // queen-cannon
   14, // collateral-rook
   20, // nuclear-queen
