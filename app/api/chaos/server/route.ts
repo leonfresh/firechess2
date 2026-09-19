@@ -54,9 +54,10 @@ export async function GET(req: NextRequest) {
     ]);
 
     const row = (totals.rows[0] ?? {}) as Record<string, number>;
+    // Never cached: the response carries a per-viewer "yours" row.
     return NextResponse.json(
       {guild, days, players: row.players ?? 0, games: row.games ?? 0, rated: row.rated ?? 0, ranked: row.ranked ?? 0, top: standings.rows},
-      {headers: {"Cache-Control": "public, max-age=0, s-maxage=30"}},
+      {headers: {"Cache-Control": "no-store"}},
     );
   } catch {
     return NextResponse.json({error: "Server standing is temporarily unavailable. Please retry."}, {status: 503});
