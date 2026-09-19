@@ -985,3 +985,14 @@ export const chaosMatches = pgTable('chaos_match', {
   hostBefore: integer('host_before'), guestBefore: integer('guest_before'), hostDelta: integer('host_delta'), guestDelta: integer('guest_delta'),
   endedAt: timestamp('ended_at',{withTimezone:true}).notNull().defaultNow(), record: jsonb('record').notNull(),
 });
+
+/** One row per Discord Activity handshake — where players launch from (guild/channel/instance).
+ *  Written by /api/chaos/discord-token; see migrations/chaos-launch.sql. Nil for website play. */
+export const chaosLaunches = pgTable('chaos_launch', {
+  id: text('id').primaryKey(),
+  playerId: text('player_id').notNull(),
+  guildId: text('guild_id'),
+  channelId: text('channel_id'),
+  instanceId: text('instance_id').notNull(),
+  createdAt: timestamp('created_at', {withTimezone: true}).notNull().defaultNow(),
+});

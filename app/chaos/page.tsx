@@ -3427,6 +3427,10 @@ export default function ChaosChessPage() {
 
   /* ── Unlimited time mode (no per-move or draft countdown) ── */
   const [unlimitedTime, setUnlimitedTime] = useState(() => {
+    // The Discord Activity always opens on a timed clock: No rush games can never be rated, and a
+    // stored website preference should not follow a player into the Activity. No rush stays one
+    // click away with its consequence spelled out.
+    if (presentation.activity) return false;
     if (typeof window === "undefined") return false;
     try {
       return window.localStorage.getItem("chaos_unlimited_time") === "1";
@@ -10041,7 +10045,7 @@ export default function ChaosChessPage() {
             <select className="rounded-lg bg-slate-800 p-2" value={unlimitedTime ? "untimed" : timeControl?.label ?? "5+3"} onChange={e => {
               setUnlimitedTime(e.target.value === "untimed");
               if (e.target.value !== "untimed") setTimeControl(CHAOS_TIME_CONTROLS.find(c => c.label === e.target.value) ?? CHAOS_TIME_CONTROLS[1]);
-            }}>{CHAOS_TIME_CONTROLS.map(c => <option key={c.label}>{c.label}</option>)}<option value="untimed">No rush</option></select>
+            }}>{CHAOS_TIME_CONTROLS.map(c => <option key={c.label}>{c.label}</option>)}<option value="untimed">No rush (casual)</option></select>
           </label>}
           {/* ── AI Mode ── */}
           {gameMode === "ai" && (

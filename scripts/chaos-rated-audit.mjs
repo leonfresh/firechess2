@@ -79,3 +79,11 @@ out('legacy website ladder (chaos_rating, self-reported)', await q(
   `select count(*)::int as players, sum("gamesPlayed")::int as games,
           count(*) filter (where "updatedAt" > now() - interval '7 days')::int as active_7d,
           max("updatedAt")::date as last_activity from chaos_rating`));
+
+out('Discord launches per day (chaos_launch)', await q(
+  `select (created_at at time zone 'Australia/Sydney')::date as day, count(*)::int as launches,
+          count(distinct player_id)::int as players, count(distinct guild_id)::int as guilds
+   from chaos_launch where created_at > now() - interval '14 days' group by 1 order by 1 desc`));
+out('where launches come from (top servers)', await q(
+  `select coalesce(guild_id,'(no server)') as guild, count(distinct player_id)::int as players,
+          count(*)::int as launches from chaos_launch group by 1 order by players desc, launches desc limit 10`));

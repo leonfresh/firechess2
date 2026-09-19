@@ -2,12 +2,15 @@ import {NextRequest, NextResponse} from 'next/server';
 import {db} from '@/lib/db';
 import {sql} from 'drizzle-orm';
 import {signDiscordIdentity} from '@/lib/chaos-discord-identity';
+import {normalizeChaosLaunch} from '@/lib/chaos-launch';
+import {randomUUID} from 'node:crypto';
 export async function POST(req: NextRequest) {
   const headers = {'Cache-Control': 'no-store'};
   try {
     const raw = await req.text();
     if (raw.length > 4096) return NextResponse.json({error:'Invalid code'}, {status:400,headers});
-    const {code} = JSON.parse(raw);
+    const body = JSON.parse(raw);
+    const {code} = body;
     if (typeof code !== 'string' || !code || code.length > 2048) return NextResponse.json({error:'Invalid code'}, {status:400,headers});
     const clientId = process.env.CHAOS_DISCORD_CLIENT_ID, secret = process.env.CHAOS_DISCORD_CLIENT_SECRET;
     if (!clientId || !secret) return NextResponse.json({error:'Discord sign-in is being configured. Please try again later.'}, {status:503,headers});
@@ -20,6 +23,15 @@ export async function POST(req: NextRequest) {
     if (!/^\d{17,20}$/.test(user.id)) throw new Error('Invalid identity');
     const id = `discord_${user.id}`, name = String(user.global_name || user.username || 'Player').slice(0,80);
     await db.execute(sql`insert into chaos_player (id, name) values (${id}, ${name}) on conflict (id) do update set name=excluded.name`);
+    // Launch attribution is best-effort: a logging failure must never block sign-in.
+    const launch = normalizeChaosLaunch(body);
+    if (launch.instanceId) {
+      try {
+        await db.execute(sql`insert into chaos_launch (id, player_id, guild_id, channel_id, instance_id)
+          values (${randomUUID()}, ${id}, ${launch.guildId}, ${launch.channelId}, ${launch.instanceId})
+          on conflict (player_id, instance_id) do nothing`);
+      } catch {}
+    }
     return NextResponse.json({access_token:token.access_token, identity:signDiscordIdentity(id), player:{id,name}}, {headers});
   } catch { return NextResponse.json({error:'Could not sign in to Discord. Please try again.'}, {status:503,headers}); }
 }
