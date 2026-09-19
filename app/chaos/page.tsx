@@ -9397,6 +9397,14 @@ export default function ChaosChessPage() {
     ]);
   }, []);
 
+  const handleCancelRematch = useCallback(() => {
+    // Retract an unmatched request so an auto-rematch countdown can be cancelled safely.
+    if (partySendRef.current) {
+      partySendRef.current({ type: "unrematch" });
+    }
+    setRematchRequested(false);
+  }, []);
+
   const handleAcceptRematch = useCallback(() => {
     setWaitingForOpponentDraft(false);
     setPendingPhase(0);
@@ -11516,6 +11524,7 @@ export default function ChaosChessPage() {
               reason={endReason} practice={gameMode === 'ai'} turns={moveLog.length}
               powers={chaosState.playerModifiers} rematchRequested={rematchRequested} rematchReceived={rematchReceived}
               onRematch={() => gameMode === 'ai' ? startGame(playerColor, 'ai') : rematchReceived ? handleAcceptRematch() : handleRematch()}
+              onCancelRematch={rematchRequested && !rematchReceived ? handleCancelRematch : undefined}
               onLobby={() => {
                 setGameStatus('setup'); setGameResult(null); setEndReason(''); setRoomId(null); setRoomCode('');
                 setMatchmakeState('idle'); setDrawOfferSent(false); setDrawOfferReceived(false);

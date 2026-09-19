@@ -19,6 +19,7 @@ export type PartyMessageType =
   | "draw-accept" // A player accepted the draw offer
   | "draw-decline" // A player declined the draw offer
   | "rematch" // A player requested a rematch
+  | "unrematch" // A player retracted an unmatched rematch request
   | "anomaly_pick" // A player picked (or skipped) their opening anomaly
   | "chat"; // In-game chat message in the bounded room event log
 
@@ -77,7 +78,7 @@ export type PartyDrawDeclineMessage = {
 };
 
 export type PartyRematchMessage = {
-  type: "rematch";
+  type: "rematch" | "unrematch";
 };
 
 export type PartyRegisterMessage = {

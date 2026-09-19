@@ -38,15 +38,21 @@ export async function GET(req: NextRequest) {
 
   // Listing never claims a seat and exposes only explicitly public queue rooms.
   if (req.nextUrl.searchParams.get("list") === "1") {
+    // Optional Activity scope: mark challenges posted by people in the same voice channel so the
+    // lobby can put them first ("in this call") instead of showing an anonymous pool.
+    const instance = (req.nextUrl.searchParams.get("instance") ?? "").slice(0, 64);
+    const scoped = /^[\w.-]{1,64}$/.test(instance) ? instance : null;
     const data = await db.execute(sql`select r."roomCode", r."timeControlSeconds", r."incrementSeconds",
       coalesce(p.name,'Guest player') as name, p.rating, coalesce(p.games,0) as games,
       (p.id is not null and r."timeControlSeconds">0) as "ratedEligible",
-      (r."hostId"=${userId}) as yours
+      (r."hostId"=${userId}) as yours,
+      (${scoped}::text is not null and exists(select 1 from chaos_launch l
+        where l.player_id=r."hostId" and l.instance_id=${scoped} and l.created_at > now() - interval '12 hours')) as "sameInstance"
       from chaos_room r left join chaos_player p on p.id=r."hostId"
       where r."isMatchmaking"=true and r.status='waiting' and r."guestId" is null
       and r."createdAt">=${cutoff.toISOString()}
       and coalesce((r."chaosState"->'_sync'->>'draftProtocol')::integer,1)=2
-      order by r."createdAt" asc limit 30`);
+      order by "sameInstance" desc, r."createdAt" asc limit 30`);
     return NextResponse.json({ rooms: data.rows }, { headers: { "Cache-Control": "no-store" } });
   }
 

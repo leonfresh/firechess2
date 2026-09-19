@@ -63,9 +63,23 @@ try {
   const fallback = await seek({identity: uid()});
   assert.equal(fallback.roomId, guestRoom2.roomId, 'signed seeker must fall back to an open guest room');
 
-  console.log('PASS: signed-with-signed and guest-with-guest pairing, plus fallback when no same-class room is open.');
+  // "In this call": a challenge posted by someone who launched this activity instance is flagged.
+  await sql`insert into chaos_launch (id, player_id, guild_id, channel_id, instance_id)
+    values (${randomUUID()}, ${signed}, '1234567890123456789', '1234567890123456789', 'pairing-test-instance')`;
+  const inCallRoom = await challenge({identity: signed});
+  const scoped = await fetch(`${base}/api/chaos/matchmake?${CLOCK.replace('draftProtocol=2', 'list=1')}&instance=pairing-test-instance`, {headers: {'X-Chaos-Identity': token(signedSeeker)}});
+  const scopedBody = await scoped.json();
+  assert.equal(scoped.status, 200, JSON.stringify(scopedBody));
+  const flagged = scopedBody.rooms.find(r => r.roomCode === inCallRoom.roomCode);
+  const unflagged = scopedBody.rooms.find(r => r.roomCode === guestRoom2.roomCode);
+  assert.equal(flagged?.sameInstance, true, 'same-instance challenge must be flagged');
+  assert.equal(unflagged?.sameInstance, false, 'other challenges must not be flagged');
+  assert.ok(!JSON.stringify(scopedBody.rooms).includes(signed), 'listing must not leak player ids');
+
+  console.log('PASS: signed-with-signed and guest-with-guest pairing, fallback, and in-this-call flagging.');
 } finally {
   for (const id of rooms) await sql`delete from chaos_room where id=${id}`;
+  for (const id of players) await sql`delete from chaos_launch where player_id=${id}`;
   for (const id of players) await sql`delete from chaos_player where id=${id}`;
   console.log('Pairing fixtures removed.');
 }

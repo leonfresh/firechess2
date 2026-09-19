@@ -107,7 +107,7 @@ export function expireClock(room: SyncRoom, now = Date.now()) {
     chaosState: {...cleanState(room.chaosState), _sync: meta}, updatedAt: new Date(now) };
 }
 const stateTypes = new Set(["move", "chaos_move", "draft"]);
-const allowed = new Set([...stateTypes, "power_pick", "power_reroll", "ability", "join", "king_capture", "kamikaze_king", "anomaly_pick", "draft_freeze", "resign", "draw-offer", "draw-accept", "draw-decline", "rematch", "chat"]);
+const allowed = new Set([...stateTypes, "power_pick", "power_reroll", "ability", "join", "king_capture", "kamikaze_king", "anomaly_pick", "draft_freeze", "resign", "draw-offer", "draw-accept", "draw-decline", "rematch", "unrematch", "chat"]);
 const ids = (mods: any[]) => mods.map(m => m.id).sort().join(",");
 
 
@@ -476,6 +476,10 @@ export function reduceCommand(room: SyncRoom, userId: string, command: any, now 
       meta.rematch = []; meta.draftPicks = {}; meta.picks = { host: null, guest: null }; delete meta.drawOffer; delete meta.frozenBy;
       meta.stateRevision++;
     }
+  } else if (type === "unrematch") {
+    // Retracts an unmatched rematch request so an auto-rematch countdown stays cancellable: a player
+    // who has moved on must not be pulled into a new game when the opponent accepts later.
+    meta.rematch = meta.rematch.filter(who => who !== actor);
   } else if (type === "chat") {
     if (typeof message.text !== "string" || !message.text.trim() || message.text.length > 300) throw new SyncError(400, "Invalid chat message");
     const last = [...(meta.chat ?? [])].reverse().find(m => m.actor === actor);

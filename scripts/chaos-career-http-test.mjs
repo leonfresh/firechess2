@@ -24,6 +24,9 @@ try{
  const forged=await fetch(base+'/api/chaos/career',{headers:{'X-Chaos-Identity':'forged','X-Guest-Id':'guest_'+randomUUID()}});assert.equal(forged.status,401);
  await send(host,{type:'rematch'});await send(guest,{type:'rematch'});assert.equal(state.snapshot.hostColor,'black');
  await send(host,{type:'resign'});career=await req(host,'/api/chaos/career');assert.equal(career.games.length,2);assert.equal(career.games[0].rated,false);assert.equal(career.profile.games,1);
+ // Auto-rematch stays cancellable: an unmatched request can be retracted again.
+ await send(host,{type:'rematch'});assert.deepEqual(state.snapshot.chaosState._sync.rematch,[host]);
+ await send(host,{type:'unrematch'});assert.deepEqual(state.snapshot.chaosState._sync.rematch,[]);
  console.log('PASS '+room.roomCode+': authenticated rated match, both Elo changes, duplicate retry, private full history, forged-token rejection, and separate casual rematch record through Discord proxy.');
 }finally{
  if(roomId){await sql`delete from chaos_match where room_id=${roomId}`;await sql`delete from chaos_room where id=${roomId}`;}

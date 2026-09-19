@@ -54,6 +54,8 @@ export type ChaosResultProps = {
   rematchRequested: boolean;
   rematchReceived: boolean;
   onRematch: () => void;
+  /** Present only while our own rematch request is outstanding: retracts it (auto-rematch cancel). */
+  onCancelRematch?: () => void;
   onLobby: () => void;
 };
 export const ChaosPresentation = createContext<{
