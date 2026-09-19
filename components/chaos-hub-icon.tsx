@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 export function ChaosHubIcon({
   kind,
 }: {
-  kind: "leaderboard" | "live" | "replay";
+  kind: "leaderboard" | "live" | "replay" | "collection";
 }) {
   return (
     <svg
@@ -31,10 +31,16 @@ export function ChaosHubIcon({
           <circle cx="16" cy="16" r="4" />
           <path d="M25 4h4v4" />
         </>
-      ) : (
+      ) : kind === "replay" ? (
         <>
           <path d="M7 9a11 11 0 1 1-2 13M7 4v6H1" />
           <path d="m14 11 8 5-8 5V11Z" fill="currentColor" strokeWidth="1" />
+        </>
+      ) : (
+        <>
+          <rect x="4" y="10" width="16" height="18" rx="3" />
+          <path d="M9 6.5A3 3 0 0 1 12 4h11a3 3 0 0 1 3 3v11a3 3 0 0 1-2 2.83" />
+          <path d="m8.5 19 2.5 2.5 5.5-5.5" />
         </>
       )}
     </svg>

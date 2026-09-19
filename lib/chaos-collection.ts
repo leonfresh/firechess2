@@ -4,12 +4,12 @@
  */
 
 /**
- * Modifier IDs available to all players without signing up.
- * All 7 commons + 10 rares + 3 milder epics = 20 unlocked.
- * Locked (~10): the high-power epics + all legendaries.
+ * Modifier IDs available to all players without signing up: 19 of the 30 modifiers.
+ * Tier labels live in ALL_MODIFIERS (lib/chaos-chess.ts) and shift as powers are retuned, so read
+ * the per-tier counts from there rather than from this comment. Everything else is earned or locked.
  */
 export const GUEST_UNLOCKED_IDS = new Set([
-  // Commons (all 7)
+  // Commons
   "pawn-charge",
   "pawn-capture-forward",
   "camel",
@@ -17,7 +17,7 @@ export const GUEST_UNLOCKED_IDS = new Set([
   "kings-chains",
   "dragon-rook",
   "pawn-promotion-early",
-  // Rares (10 of 11 — amazon locked as premium)
+  // Rares (amazon stays locked as premium)
   "night-rider",
   "phantom-rook",
   "sniper-bishop",
@@ -27,7 +27,7 @@ export const GUEST_UNLOCKED_IDS = new Set([
   "king-ascension",
   "usurper",
   "bishop-bounce",
-  // Epics (3 of 8 — milder ones)
+  // Epics (the milder ones)
   "queen-teleport",
   "bishop-cannon",
   "pawn-fortress",

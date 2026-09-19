@@ -8,6 +8,7 @@ import { describeWatchFrame, describeWatchAnomaly, expandVisual, type WatchFrame
 import { getAnomalyById } from "@/lib/chaos-anomalies";
 import type { MatchClock } from "@/lib/chaos-clock";
 import { ChaosHubIcon } from "./chaos-hub-icon";
+import { getSoundVolume, playSound, setSoundVolume } from "@/lib/sounds";
 import styles from "./chaos-watch.module.css";
 type Entry = {
   id: string;
@@ -265,6 +266,40 @@ export function ChaosWatch({
       ? clock[side] -
         (clock.active === side ? Math.max(0, now - received) : 0)
       : 0;
+  const [muted, setMuted] = useState(false);
+  const restoreVolume = useRef(0.6);
+  useEffect(() => {
+    setMuted(getSoundVolume() === 0);
+  }, []);
+  const toggleSound = () => {
+    if (muted) {
+      setSoundVolume(restoreVolume.current || 0.6);
+      setMuted(false);
+    } else {
+      const current = getSoundVolume();
+      if (current > 0) restoreVolume.current = current;
+      setSoundVolume(0);
+      setMuted(true);
+    }
+  };
+  /* Cue every position change the viewer sees — live polls and replay stepping alike. */
+  const lastFen = useRef("");
+  useEffect(() => {
+    const fen = frame?.fen ?? "";
+    const before = lastFen.current;
+    lastFen.current = fen;
+    if (!fen || !before || before === fen) return;
+    const boardBefore = before.split(" ")[0];
+    const boardNow = fen.split(" ")[0];
+    // Ignore game switches and archive jumps across different positions.
+    if (boardBefore.split("/").length !== boardNow.split("/").length) return;
+    const pieceCount = (board: string) => (board.match(/[a-zA-Z]/g) ?? []).length;
+    if (fen.includes("#")) playSound("applause");
+    else if (pieceCount(boardNow) < pieceCount(boardBefore))
+      playSound("capture");
+    else if (fen.includes("+")) playSound("check");
+    else playSound("move");
+  }, [frame?.fen]);
   const clockChip = (clock: MatchClock | null | undefined, side: "w" | "b") =>
     clock ? (
       <b className={clockState(liveClock(clock, side), clock.active === side)}>
@@ -293,13 +328,23 @@ export function ChaosWatch({
               : "Every game has a story."}
           </h2>
         </div>
-        {onClose ? (
-          <button onClick={onClose} aria-label="Close watchtower">
-            ✕
+        <div className={styles.headingActions}>
+          <button
+            className={styles.soundToggle}
+            onClick={toggleSound}
+            aria-pressed={!muted}
+            aria-label={muted ? "Turn move sounds on" : "Turn move sounds off"}
+          >
+            {muted ? "🔇" : "🔊"} <span>{muted ? "Sound off" : "Sound on"}</span>
           </button>
-        ) : (
-          <a href="/">Play Chaos Chess</a>
-        )}
+          {onClose ? (
+            <button onClick={onClose} aria-label="Close watchtower">
+              ✕
+            </button>
+          ) : (
+            <a href="/">Play Chaos Chess</a>
+          )}
+        </div>
       </header>
       {selected ? (
         <button onClick={leave}>← All games</button>
