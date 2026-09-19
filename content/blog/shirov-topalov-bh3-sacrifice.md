@@ -1,6 +1,6 @@
 ---
-title: "Shirov Bh3 Sacrifice Explained: Greatest Chess Endgame Move"
-description: "Why did Shirov play Bh3!! against Topalov? Walk through the full 1998 game move-by-move on an interactive board with engine analysis."
+title: "Shirov's Immortal Bh3!!: The Greatest Chess Endgame Move"
+description: "Why did Shirov sacrifice his bishop on h3? Play through the full 1998 game on an interactive board and discover the hidden zugzwang."
 date: 2026-09-18
 author: "FireChess Team"
 tags: ["shirov topalov bh3", "greatest chess moves", "famous chess games", "endgame sacrifice", "chess brilliancy", "zugzwang"]
@@ -192,13 +192,13 @@ The final position is beautiful in its clarity: Black's king on b3 supports the 
 
 This game teaches several critical endgame concepts that directly apply to your own games. [Scan your games on FireChess](/analyze) to see how your endgame accuracy compares — you might find the same tempo-counting mistakes Topalov made.
 
-### Q: King Activity Trumps Material in Endgames
+### Q: Why does king activity matter more than material in endgames?
 
 This is the single most important lesson from Shirov's sacrifice. He gave up a full bishop — normally a decisive material advantage — for a single tempo. In the middlegame, this would be catastrophic. But in the endgame, especially in opposite-colored bishop endgames, the **active king is worth more than a minor piece**.
 
 **Practical application:** When you reach an endgame where material is roughly balanced, actively ask yourself: "Which king is more active?" If your king is stuck defending pawns while the opponent's king is free to roam, consider sacrificing a pawn or even a piece to activate your king. The Shirov game proves that this trade can be winning.
 
-### Q: Opposite-Colored Bishops Favor the Attacker
+### Q: Why do opposite-colored bishops favor the attacker?
 
 When both sides have only one bishop each, and they run on different colored squares, the defender faces a structural problem: the defending bishop can never attack the opponent's pawns if they're on the opposite color. This means:
 
@@ -210,7 +210,7 @@ In the Shirov game, White's bishop was on c3 (a dark square), while Black's pass
 
 **Practical application:** In opposite-colored bishop endgames, prioritize getting your passed pawns onto the opposite color from the enemy bishop. Create two passed pawns as far apart as possible — the defending bishop can only stop one at a time.
 
-### Q: Don't Trust Static Evaluations in King-and-Pawn Races
+### Q: Should I trust engine evaluations in king-and-pawn endgames?
 
 This game is a perfect example of why you should **calculate concretely** rather than trust material evaluation. Even a modern 2000-rated player glancing at a quick Stockfish evaluation might think "bishop for nothing? That's losing." But the concrete calculation proves otherwise.
 
@@ -218,7 +218,7 @@ This game is a perfect example of why you should **calculate concretely** rather
 
 **Practical application:** When you see a move that gives away material but activates your king, don't dismiss it out of hand. Calculate the king-and-pawn race concretely. Count: "If I sacrifice here, how many moves does it take my king to reach the key square? How many moves for the opponent?" If your king arrives first, the sacrifice works regardless of the material count.
 
-### Q: Recognize When King Centralization Becomes Critical
+### Q: When does king centralization become critical in endgames?
 
 In the opening and middlegame, king safety is paramount — you keep your king hidden behind pawns and pieces. But in the endgame, the king transforms from a liability into a fighting piece. The transition point usually comes when queens are off the board and fewer than 5 pieces remain per side.
 
@@ -230,7 +230,7 @@ In the opening and middlegame, king safety is paramount — you keep your king h
 
 If you answer Y-Y-Y-Y, start marching your king forward immediately.
 
-### Q: Opposite-Colored Bishops Weaken the Defender — Exploit It
+### Q: How do opposite-colored bishops weaken the defender?
 
 The Topalov-Shirov game is the ultimate demonstration of this principle. White's bishop on c3 was on dark squares, while Black's threats were on dark squares too — but the d4-pawn was on a dark square, meaning White's bishop could theoretically attack it. Except Black's king on c4 defended the pawn, and White's king was too far away to help.
 
