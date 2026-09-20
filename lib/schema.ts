@@ -977,6 +977,13 @@ export const chaosPlayers = pgTable('chaos_player', {
   rating: integer('rating').notNull().default(1200), games: integer('games').notNull().default(0),
   wins: integer('wins').notNull().default(0), losses: integer('losses').notNull().default(0),
   draws: integer('draws').notNull().default(0), peak: integer('peak').notNull().default(1200),
+  gold: integer('gold').notNull().default(0),
+});
+/** Gold credits, one row per payout; written by the archive trigger, see migrations/chaos-gold.sql. */
+export const chaosGoldLedger = pgTable('chaos_gold_ledger', {
+  id: text('id').primaryKey(), playerId: text('player_id').notNull(), matchId: text('match_id'),
+  amount: integer('amount').notNull(), reason: text('reason').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 export const chaosMatches = pgTable('chaos_match', {
   id: text('id').primaryKey(), roomId: text('room_id').notNull(), gameNumber: integer('game_number').notNull(),

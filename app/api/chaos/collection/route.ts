@@ -6,8 +6,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { chaosUnlocks, users, chaosRatings } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { chaosUnlocks, users, chaosRatings, chaosPlayers, chaosGoldLedger } from "@/lib/schema";
+import { and, eq, gt, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import {
   GUEST_UNLOCKED_IDS,
@@ -48,11 +48,20 @@ export async function GET(req: NextRequest) {
 
   // Authenticated user's own collection
   const session = await auth();
+
+  // Gold is keyed by chaos_player id. Inside Discord the activity sends X-Chaos-Identity (a
+  // discord_<snowflake>); a website session uses the user id, which is a chaos_player id too.
+  const { gold, goldWeek } = await readGold(
+    req.headers.get("x-chaos-identity") || session?.user?.id || null,
+  );
+
   if (!session?.user?.id) {
-    // Guest: return the default guest set
+    // Guest: the default guest set, plus whatever gold their Discord identity has earned
     return NextResponse.json({
       unlockedIds: [...GUEST_UNLOCKED_IDS],
       total: ALL_MODIFIERS.length,
+      gold,
+      goldWeek,
     });
   }
 
@@ -87,7 +96,35 @@ export async function GET(req: NextRequest) {
     unlockedIds: [...unlocked],
     total: ALL_MODIFIERS.length,
     gamesPlayed,
+    gold,
+    goldWeek,
   });
+}
+
+/**
+ * Gold balance for a chaos_player id: total plus the last 7 days, both null when the id is unknown
+ * (a signed-out player, or someone who has never finished a game). Read-only.
+ */
+async function readGold(
+  playerId: string | null,
+): Promise<{ gold: number | null; goldWeek: number | null }> {
+  if (!playerId) return { gold: null, goldWeek: null };
+  const rows = await db
+    .select({ gold: chaosPlayers.gold })
+    .from(chaosPlayers)
+    .where(eq(chaosPlayers.id, playerId))
+    .limit(1);
+  if (rows.length === 0) return { gold: null, goldWeek: null };
+  const week = await db
+    .select({ total: sql<number>`coalesce(sum(${chaosGoldLedger.amount}), 0)::int` })
+    .from(chaosGoldLedger)
+    .where(
+      and(
+        eq(chaosGoldLedger.playerId, playerId),
+        gt(chaosGoldLedger.createdAt, sql`now() - interval '7 days'`),
+      ),
+    );
+  return { gold: rows[0].gold, goldWeek: week[0]?.total ?? 0 };
 }
 
 /* ── POST ────────────────────────────────────────────────────────── */

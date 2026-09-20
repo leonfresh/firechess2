@@ -20,7 +20,7 @@ function load(){
  };
  vm.runInNewContext(ts.transpile(fs.readFileSync('discord-activity/app/collection.tsx','utf8'),{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022,esModuleInterop:true}),
   {module,exports:module.exports,require:name=>shims[name]??(name==='react'?react:name==='react/jsx-runtime'?require(name):{}),Date,URL,Math,console,setTimeout,clearTimeout,Set,Promise,
-   fetch:async url=>({ok:true,json:async()=>String(url).includes('collection')?{unlockedIds:['alpha'],total:MODS.length}:{profile:{games:2}}})});
+   fetch:async url=>({ok:true,json:async()=>String(url).includes('collection')?{unlockedIds:['alpha'],total:MODS.length,gold:340,goldWeek:55}:{profile:{games:2}}})});
  return {exports:module.exports,reset:()=>{cursor=0}};
 }
 const walk=(n,out=[])=>{if(!n)return out;if(Array.isArray(n)){n.forEach(x=>walk(x,out));return out}if(typeof n==='object'){out.push(n);walk(n.props?.children,out)}return out};
@@ -48,6 +48,21 @@ test('every tab is reachable and the card is a button, not a link',()=>{
  const card=nodes.find(n=>n.props?.className==='lobby-destination');
  assert.equal(card.type,'button','the collection card must be a button — activity.css hides anchors');
  assert.equal(card.props.href,undefined);
+});
+test('the armoury shows the gold balance the player has earned',async()=>{
+ const {exports,reset}=load();
+ walk(exports.ActivityCollection({card:true})).find(n=>n.props?.className==='lobby-destination').props.onClick();
+ reset();
+ walk(exports.ActivityCollection({card:true}));
+ await new Promise(r=>setTimeout(r,0));
+ reset();
+ const nodes=walk(exports.ActivityCollection({card:true}));
+ const pill=nodes.find(n=>n.props?.className==='collection-gold');
+ assert.ok(pill,'the gold pill must render when the API reports a balance');
+ assert.match(pill.props['aria-label'],/^340 gold, 55 earned this week$/);
+ // A player with no earning identity gets no pill at all rather than a zero.
+ const source=fs.readFileSync('discord-activity/app/collection.tsx','utf8');
+ assert.match(source,/typeof d\?\.gold === "number"/,'gold is only shown when the API returns a number');
 });
 test('the pieces and anomalies tabs cover the full catalogue',()=>{
  const source=fs.readFileSync('discord-activity/app/collection.tsx','utf8');
