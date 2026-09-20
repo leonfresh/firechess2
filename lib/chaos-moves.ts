@@ -225,6 +225,32 @@ function genPawnCharge(game: Chess, color: Color): ChaosMove[] {
   return moves;
 }
 
+/** Conscription: pawns can also capture diagonally backwards */
+function genPawnConscription(game: Chess, color: Color): ChaosMove[] {
+  const moves: ChaosMove[] = [];
+  const dir = color === "w" ? -1 : 1; // backwards, away from the enemy
+  const pawns = allSquaresOf(game, "p", color);
+
+  for (const ps of pawns) {
+    const [f, r] = sqToCoords(ps);
+    for (const df of [-1, 1]) {
+      const target = sq(f + df, r + dir);
+      if (!target) continue;
+      if (!isEnemy(game, target, color)) continue;
+      if (wouldLeaveKingInCheck(game, ps, target, color)) continue;
+
+      moves.push({
+        from: ps,
+        to: target,
+        type: "capture",
+        modifierId: "conscription",
+        label: "Conscription (backward capture)",
+      });
+    }
+  }
+  return moves;
+}
+
 /** Pawns can capture straight ahead */
 function genPawnBayonet(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
@@ -1588,6 +1614,7 @@ const MODIFIER_GENERATORS: Record<
 > = {
   "pawn-charge": genPawnCharge,
   "pawn-capture-forward": genPawnBayonet,
+  conscription: genPawnConscription,
   camel: genCamel,
   "dragon-bishop": genDragonBishop,
   "dragon-rook": genDragonRook,
@@ -2747,6 +2774,17 @@ export function applyDraftEffect(
     const shuffled = empties.sort(() => Math.random() - 0.5);
     for (let i = 0; i < Math.min(2, shuffled.length); i++) {
       tmp.put({ type: "n", color }, shuffled[i]);
+      modified = true;
+    }
+  }
+
+  if (modifier.id === "phalanx") {
+    // Raise 3 pawns on empty squares of your own third rank (rank 3 for white, rank 6 for black)
+    const rank = color === "w" ? 2 : 5;
+    const empties = emptySquaresInRanks(tmp, [rank]);
+    const shuffled = empties.sort(() => Math.random() - 0.5);
+    for (let i = 0; i < Math.min(3, shuffled.length); i++) {
+      tmp.put({ type: "p", color }, shuffled[i]);
       modified = true;
     }
   }

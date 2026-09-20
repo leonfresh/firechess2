@@ -111,10 +111,18 @@ const allowed = new Set([...stateTypes, "power_pick", "power_reroll", "ability",
 const ids = (mods: any[]) => mods.map(m => m.id).sort().join(",");
 
 
+/** Powers that place extra pieces on the board the moment they are drafted. */
+type DraftSpawnId = "knight-horde" | "undead-army" | "phalanx";
+const DRAFT_SPAWN_POWERS: ReadonlySet<string> = new Set<DraftSpawnId>(["knight-horde", "undead-army", "phalanx"]);
+/** Narrows an optional command field to a spawn power, which the literal comparisons used to do. */
+const isDraftSpawnPower = (id: string | undefined): id is DraftSpawnId => !!id && DRAFT_SPAWN_POWERS.has(id);
+
 function matchesDraftSpawns(candidate: Chess, after: Chess, draftedId: string, side: "w" | "b") {
           const pieceType = draftedId === "knight-horde" ? "n" : "p";
           let spawned = 0, empties = 0;
-          const allowedRanks = draftedId === "knight-horde" ? (side === "w" ? "1234" : "5678") : (side === "w" ? "23" : "67");
+          const allowedRanks = draftedId === "knight-horde" ? (side === "w" ? "1234" : "5678")
+            : draftedId === "phalanx" ? (side === "w" ? "3" : "6")
+            : (side === "w" ? "23" : "67");
           for (let rank=1;rank<=8;rank++) for (let i=0;i<8;i++) {
             const square = `${"abcdefgh"[i]}${rank}` as any;
             const original = candidate.get(square), actual = after.get(square);
@@ -124,7 +132,8 @@ function matchesDraftSpawns(candidate: Chess, after: Chess, draftedId: string, s
             spawned++;
           }
           const missing = 8-candidate.board().flat().filter(p=>p?.color===side&&p.type==='p').length;
-          return spawned === Math.min(empties, draftedId === "knight-horde" ? 2 : Math.max(0,missing)) && candidate.turn() === after.turn();
+          const expected = draftedId === "knight-horde" ? 2 : draftedId === "phalanx" ? 3 : Math.max(0, missing);
+          return spawned === Math.min(empties, expected) && candidate.turn() === after.turn();
 }
 
 /** Pure command validation and reduction; persistence uses a revision compare-and-swap. */
@@ -242,7 +251,7 @@ export function reduceCommand(room: SyncRoom, userId: string, command: any, now 
       const boardMatches = candidates.some(candidate => {
         // Random draft spawns may choose different valid squares. Existing pieces
         // must stay exactly where the validated move left them.
-        if (draftedId === "knight-horde" || draftedId === "undead-army") {
+        if (isDraftSpawnPower(draftedId)) {
           return matchesDraftSpawns(candidate, after, draftedId, side);
         }
         return candidate.fen().split(" ").slice(0,4).join(" ") === after.fen().split(" ").slice(0,4).join(" ");
@@ -281,7 +290,7 @@ export function reduceCommand(room: SyncRoom, userId: string, command: any, now 
       }
     }
     if (!moving && type !== "draft") throw new SyncError(400, "Missing move");
-    if (!moving && fen !== room.fen && !(addedPower && (draftedId === "knight-horde" || draftedId === "undead-army") && matchesDraftSpawns(before, after, draftedId, side))) {
+    if (!moving && fen !== room.fen && !(addedPower && isDraftSpawnPower(draftedId) && matchesDraftSpawns(before, after, draftedId, side))) {
       const anomaly = color === "white" ? state.playerAnomaly : state.aiAnomaly;
       const used = color === "white" ? state.playerAnomalyUsed : state.aiAnomalyUsed;
       if (used || before.turn() !== side) throw new SyncError(409, "Ability is unavailable");

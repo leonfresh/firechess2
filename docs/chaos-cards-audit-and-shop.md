@@ -156,3 +156,17 @@ month. Tune freely, these are knobs not commitments.
    fixes in section 4.
 
 Phase 1 and 2 are the economy. Phase 3 is the reason to care about it.
+
+## 8. Status
+
+- **Phase 1, shipped.** Gold is minted in `archive_chaos_match()` (`migrations/chaos-gold.sql`),
+  balance on `chaos_player.gold`, credits in `chaos_gold_ledger`, `GET /api/chaos/collection`
+  returns `gold`/`goldWeek`, and the Armoury shows the pill. Verified by
+  `scripts/chaos-gold-db-test.mjs` against the live schema.
+- **Section 4 fixes, shipped.** Sniper range 3, King's Chains range 2, Kamikaze re-priced to epic,
+  Railgun two charges (`scripts/chaos-card-fixes.test.cjs`).
+- **Phase 3, two of three cards in the engine.** Conscription and Phalanx are playable and pass
+  `scripts/chaos-new-cards.test.cjs`. Their illustrations are pending (see `ART_PENDING` in
+  `scripts/chaos-power-art.test.cjs`) and they are not yet priced, so they are free for now —
+  the shop gate and the art land together. Hostile Takeover is next, then the shop itself.
+- Nothing is spendable yet: there is no shop route, no `chaos_player_unlock` table.
