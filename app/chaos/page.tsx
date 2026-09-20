@@ -1,4 +1,6 @@
 "use client";
+import {ChaosImpact} from "@/components/chaos-impact";
+import {kamikazeImpact} from "@/lib/chaos-impact";
 import {buildChaosCustomPieces, SINGLE_PIECE_MODIFIERS} from "@/components/chaos-pieces";
 import { getKingCaptureMove } from "@/lib/chaos-outcome";
 import { chaosIdentityHeaders } from '@/lib/chaos-client-identity';
@@ -52,6 +54,7 @@ import React, {
 import { createPortal } from "react-dom";
 import { Chess, type Color, type PieceSymbol, type Square } from "chess.js";
 import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
+import { chaosMoveDecal } from "@/lib/chaos-move-decals";
 import { stockfishPool } from "@/lib/stockfish-client";
 import { ChaosLobby } from "@/components/chaos-lobby";
 import { OpeningMoveNotice, AbortedMatch } from "@/components/chaos-opening-move";
@@ -2393,7 +2396,7 @@ const EFFECT_KEYFRAMES = `
 @keyframes ce-king-ring  { 0%{transform:scale(.1);opacity:.9;border-width:6px} 100%{transform:scale(2.6);opacity:0;border-width:1px} }
 `;
 
-type BoardEffect = { id: number; type: string; squares: string[] };
+type BoardEffect = { id: number; type: string; squares: string[]; pieces?: string[] };
 type RicochetAnimState = {
   id: number;
   from: string;
@@ -2425,7 +2428,7 @@ function BoardEffectsOverlay({
     <>
       <style>{EFFECT_KEYFRAMES}</style>
       <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[8px]">
-        {effects.flatMap(({ id, type, squares }) =>
+        {effects.flatMap(({ id, type, squares, pieces }) =>
           squares.map((square) => {
             const file = square.charCodeAt(0) - 97;
             const rank = parseInt(square[1], 10) - 1;
@@ -2433,7 +2436,9 @@ function BoardEffectsOverlay({
             const y = orientation === "white" ? (7 - rank) * sq : rank * sq;
 
             let inner: React.ReactNode = null;
-            if (type === "explosion") {
+            if (type === "kamikaze" || type === "checkmate") {
+              inner = <ChaosImpact mate={type === "checkmate"} pieces={pieces}/>;
+            } else if (type === "explosion") {
               inner = (
                 <div
                   style={{
@@ -3220,17 +3225,9 @@ function PieceInfoPanel({
 
 /* ────────────────────────── Main Page ────────────────────────── */
 
-// Static SVG decals keep destinations readable without moving the board squares.
-function activityMoveDecal(chaos: boolean, capture: boolean, enemy = false): string {
-  const color = capture ? '#ff986e' : enemy ? '#ffba84' : chaos ? '#cab0ff' : '#a6eeff';
-  const shape = capture
-    ? '<path d="M12 32V16Q12 12 16 12H32M68 12H84Q88 12 88 16V32M88 68V84Q88 88 84 88H68M32 88H16Q12 88 12 84V68"/><path d="M44 12L50 19L56 12M88 44L81 50L88 56M56 88L50 81L44 88M12 56L19 50L12 44"/>'
-    : chaos ? '<path d="M50 28L72 50L50 72L28 50Z"/><path d="M52 37L43 51H51L47 63L60 47H51Z" fill="'+color+'" stroke="none"/>'
-    : '<circle cx="50" cy="50" r="18"/><path d="M41 50L48 57L61 43"/>';
-  return `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g fill="${capture ? 'none' : '#172737cc'}" stroke="#172737" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">${shape}</g><g fill="${capture ? 'none' : '#172737cc'}" stroke="${color}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">${shape}</g></svg>`)}")`;
-}
-
 const EFFECT_DURATIONS: Record<string, number> = {
+  kamikaze: 1500,
+  checkmate: 2400,
   explosion: 750,
   nuke: 1000,
   teleport: 850,
@@ -3876,6 +3873,34 @@ export default function ChaosChessPage() {
     },
     [],
   );
+
+  // Observe the committed board: works for local play and server snapshots alike.
+  const impactPrevious = useRef({fen: game.fen(), status: gameStatus});
+  const impactFen = game.fen();
+  useEffect(() => {
+    const previous = impactPrevious.current;
+    impactPrevious.current = {fen: impactFen, status: gameStatus};
+    if (["playing", "drafting"].includes(previous.status)) {
+      const own = playerColor === "white" ? "w" : "b";
+      const theirs = own === "w" ? "b" : "w";
+      const armed = {w:false,b:false};
+      armed[own] = chaosState.playerModifiers.some(m=>m.id === "kamikaze-bishop");
+      armed[theirs] = chaosState.aiModifiers.some(m=>m.id === "kamikaze-bishop");
+      const impact = kamikazeImpact(previous.fen, impactFen, armed);
+      if (impact) {
+        const id = ++effectIdRef.current;
+        setBoardEffects(e=>[...e,{id,type:"kamikaze",squares:[impact.square],pieces:presentation.activity?impact.pieces:undefined}]);
+        setTimeout(()=>setBoardEffects(e=>e.filter(x=>x.id!==id)),1500);
+        playSound("capture");
+      }
+    }
+    if (gameStatus === "game-over" && previous.status !== "game-over" && /checkmate/i.test(endReason)) {
+      const loser = gameResult === "white" ? "b" : "w";
+      const king = new Chess(impactFen).board().flat().find(p=>p?.type === "k" && p.color === loser);
+      if (king) triggerEffect("checkmate",[king.square]);
+      playSound("correct");
+    }
+  }, [impactFen, gameStatus, endReason, gameResult, playerColor, chaosState.playerModifiers, chaosState.aiModifiers, presentation.activity, triggerEffect]);
 
   const startRicochetAnim = useCallback(
     (
@@ -9696,7 +9721,7 @@ export default function ChaosChessPage() {
         if (background.includes('radial-gradient')) {
           const chaos = background.includes('168,85,247');
           const capture = background.includes('68%');
-          destinations[square] = {backgroundImage: activityMoveDecal(chaos, capture, enemy), backgroundSize:'100% 100%', backgroundRepeat:'no-repeat'};
+          destinations[square] = {backgroundImage: chaosMoveDecal(chaos, capture, enemy), backgroundSize:'100% 100%', backgroundRepeat:'no-repeat'};
         } else if (style.backgroundColor) {
           destinations[square] = {backgroundColor:enemy ? '#ffad6855' : '#69d9ff55',boxShadow:enemy ? 'inset 0 0 0 3px #ffd3a6' : 'inset 0 0 0 3px #a6eeff'};
         }
@@ -11054,7 +11079,7 @@ export default function ChaosChessPage() {
             <div
               ref={boardContainerRef}
               data-arena-board
-              data-impact={boardEffects.some(effect => ["explosion", "nuke"].includes(effect.type)) ? "blast" : undefined}
+              data-impact={boardEffects.some(effect => ["explosion", "nuke", "kamikaze", "checkmate"].includes(effect.type)) ? "blast" : undefined}
               style={{
                 width: `min(100%, min(${640 + boardSizeOffset * 40}px, max(200px, calc(100dvh - ${Math.max(200, (presentation.activity ? 330 : 380) - boardSizeOffset * 40)}px))))`,
                 maxWidth: `${640 + boardSizeOffset * 40}px`,

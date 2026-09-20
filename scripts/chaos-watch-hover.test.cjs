@@ -13,8 +13,22 @@ test('hovering a piece shows where it can go, powers included', () => {
   assert.ok(src.includes('onMouseOutSquare={() => setHover(null)}'), 'and clear it on the way out');
   assert.ok(src.includes('getChaosMoves('), 'hover targets must include the powers in play, not just standard moves');
   assert.ok(src.includes('customSquareStyles={boardStyles}'), 'the highlight rides on the board styles');
-  assert.ok(src.includes('const hoverTargets = useMemo'), 'targets are computed per hover, not per render');
-  assert.ok(/styles\[hover\] = \{ \.\.\.\(styles\[hover\] \?\? \{\}\)/.test(src), 'hovering a last-move square must keep its move highlight');
+  assert.ok(src.includes('const hoverHints = useMemo'), 'hints are computed per hover, not per render');
+  assert.ok(/styles\[hover\] = \{\s*\.\.\.\(styles\[hover\] \?\? \{\}\)/.test(src), 'hovering a last-move square must keep its move highlight');
+});
+
+test('hover hints wear the same decals the game board draws', () => {
+  const src = watch();
+  assert.ok(src.includes('chaosMoveDecal('), 'the watch board must use the shared decal builder');
+  assert.ok(src.includes('decal(true, m.type === "capture")'), 'a power target gets the bolt decal');
+  assert.ok(src.includes('decal(false, !!m.captured)'), 'a quiet move or capture gets the check or bracket decal');
+  assert.ok(src.includes('backgroundSize: "100% 100%"'), 'decals are stretched over the square');
+  // The game board and the watch board must not grow separate copies that drift.
+  const game = fs.readFileSync('app/chaos/page.tsx', 'utf8');
+  assert.ok(game.includes('import { chaosMoveDecal } from "@/lib/chaos-move-decals"'), 'the game imports the shared builder');
+  assert.ok(!game.includes('function activityMoveDecal'), 'and keeps no local copy of it');
+  const decals = fs.readFileSync('lib/chaos-move-decals.ts', 'utf8');
+  assert.ok(decals.includes('M50 28L72 50L50 72L28 50Z'), 'the bolt diamond is the shared shape');
 });
 
 test('the pick history fills in as the replay plays, at the bottom of the rail', () => {

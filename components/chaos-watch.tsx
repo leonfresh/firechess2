@@ -6,6 +6,7 @@ import { Chessboard } from "./chessboard-compat";
 import { buildChaosCustomPieces } from "./chaos-pieces";
 import { describeWatchFrame, describeWatchAnomaly, expandVisual, type WatchFrame } from "@/lib/chaos-watch";
 import { getChaosMoves } from "@/lib/chaos-moves";
+import { chaosMoveDecal } from "@/lib/chaos-move-decals";
 import { getAnomalyById } from "@/lib/chaos-anomalies";
 import type { MatchClock } from "@/lib/chaos-clock";
 import { ChaosHubIcon } from "./chaos-hub-icon";
@@ -258,33 +259,57 @@ export function ChaosWatch({
     }
   }, [frame]);
   /**
-   * Hover a piece to see where it can go: standard moves plus the powers in play, so a spectator
-   * sees the same extra squares the players do.
+   * Hover a piece to see where it can go, with the same decals the game board draws: a check for a
+   * quiet move, a bracket for a capture, a bolt for a power. The side to move reads as "yours", so
+   * the colours match what the players saw.
    */
-  const hoverTargets = useMemo(() => {
-    if (!hover || !frame) return [];
-    try {
-      const game = new Chess(frame.fen);
-      const piece = game.get(hover as any);
-      if (!piece) return [];
-      const targets = new Set<string>(
-        game.moves({ square: hover as any, verbose: true }).map((m) => m.to),
-      );
-      try {
-        const s = expandVisual(frame.state);
-        const own = piece.color === "w" ? s.playerModifiers : s.aiModifiers;
-        const foe = piece.color === "w" ? s.aiModifiers : s.playerModifiers;
-        for (const m of getChaosMoves(game, own, piece.color, s.assignedSquares, foe))
-          if (m.from === hover) targets.add(m.to);
-      } catch {
-        /* A power that cannot resolve in this position just contributes no squares. */
+  const hoverHints = useMemo(() => {
+    const styles: Record<
+      string,
+      {
+        backgroundColor?: string;
+        background?: string;
+        boxShadow?: string;
+        backgroundImage?: string;
+        backgroundSize?: string;
+        backgroundRepeat?: string;
       }
-      return [...targets];
+    > = {};
+    if (!hover || !frame) return styles;
+    let game: Chess;
+    let piece: { color: "w" | "b" } | undefined;
+    try {
+      game = new Chess(frame.fen);
+      piece = game.get(hover as any) as { color: "w" | "b" } | undefined;
     } catch {
-      return [];
+      return styles;
     }
+    if (!piece) return styles;
+    const ours = game.turn() === piece.color;
+    const decal = (chaos: boolean, capture: boolean) => ({
+      backgroundImage: chaosMoveDecal(chaos, capture, !ours),
+      backgroundSize: "100% 100%",
+      backgroundRepeat: "no-repeat",
+    });
+    for (const m of game.moves({ square: hover as any, verbose: true }))
+      styles[m.to] = decal(false, !!m.captured);
+    try {
+      const s = expandVisual(frame.state);
+      const own = piece.color === "w" ? s.playerModifiers : s.aiModifiers;
+      const foe = piece.color === "w" ? s.aiModifiers : s.playerModifiers;
+      for (const m of getChaosMoves(game, own, piece.color, s.assignedSquares, foe))
+        if (m.from === hover) styles[m.to] = decal(true, m.type === "capture");
+    } catch {
+      /* A power that cannot resolve in this position just contributes no squares. */
+    }
+    styles[hover] = {
+      ...(styles[hover] ?? {}),
+      backgroundColor: ours ? "#69d9ff55" : "#ffad6855",
+      boxShadow: ours ? "inset 0 0 0 3px #a6eeff" : "inset 0 0 0 3px #ffd3a6",
+    };
+    return styles;
   }, [hover, frame]);
-  /** Last move, hovered piece and its targets in one style map for the board. */
+  /** Last move plus the hover hints in one style map for the board. */
   const boardStyles = useMemo(() => {
     const styles: Record<
       string,
@@ -292,16 +317,10 @@ export function ChaosWatch({
     > = {};
     for (const s of [frame?.from, frame?.to])
       if (s) styles[s] = { backgroundColor: "#f3ce72" };
-    if (hover)
-      styles[hover] = { ...(styles[hover] ?? {}), boxShadow: "inset 0 0 0 3px #f3ce72" };
-    for (const s of hoverTargets)
-      if (!styles[s])
-        styles[s] = {
-          background:
-            "radial-gradient(circle, rgba(18,22,30,0.32) 21%, transparent 23%)",
-        };
+    for (const [square, style] of Object.entries(hoverHints))
+      styles[square] = { ...(styles[square] ?? {}), ...style };
     return styles;
-  }, [frame?.from, frame?.to, hover, hoverTargets]);
+  }, [frame?.from, frame?.to, hoverHints]);
   const leave = () => {
     setSelected(null);
     setAuto(false);
