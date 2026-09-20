@@ -93,6 +93,7 @@ import {
   TIER_LABELS,
   ALL_MODIFIERS,
   NUCLEAR_QUEEN_COOLDOWN_TURNS,
+  RAILGUN_MAX_SHOTS,
   type ChaosState,
   type ChaosModifier,
   type ModifierTier,
@@ -5300,18 +5301,33 @@ export default function ChaosChessPage() {
                     ],
                   };
                 }
-                if (
-                  chaosMove.modifierId === "railgun" ||
-                  chaosMove.modifierId === "usurper"
-                ) {
+                if (chaosMove.modifierId === "railgun") {
+                  // Two charges for the AI too; spend the card only when they run out.
+                  const aiShots = (cs2.aiRailgunShots ?? 0) + 1;
+                  cs2 =
+                    aiShots >= RAILGUN_MAX_SHOTS
+                      ? {
+                          ...cs2,
+                          aiRailgunShots: aiShots,
+                          aiModifiers: cs2.aiModifiers.filter(
+                            (m) => m.id !== "railgun",
+                          ),
+                          spentAiModIds: [
+                            ...(cs2.spentAiModIds ?? []),
+                            "railgun",
+                          ],
+                        }
+                      : { ...cs2, aiRailgunShots: aiShots };
+                }
+                if (chaosMove.modifierId === "usurper") {
                   cs2 = {
                     ...cs2,
                     aiModifiers: cs2.aiModifiers.filter(
-                      (m) => m.id !== chaosMove.modifierId,
+                      (m) => m.id !== "usurper",
                     ),
                     spentAiModIds: [
                       ...(cs2.spentAiModIds ?? []),
-                      chaosMove.modifierId,
+                      "usurper",
                     ],
                   };
                 }
@@ -7629,18 +7645,33 @@ export default function ChaosChessPage() {
           };
           setWarpQueenActive(false);
         }
-        if (
-          chaosMove.modifierId === "railgun" ||
-          chaosMove.modifierId === "usurper"
-        ) {
+        if (chaosMove.modifierId === "railgun") {
+          // Two charges: the card stays in hand until both shots are fired.
+          const shots = (cs.playerRailgunShots ?? 0) + 1;
+          cs =
+            shots >= RAILGUN_MAX_SHOTS
+              ? {
+                  ...cs,
+                  playerRailgunShots: shots,
+                  playerModifiers: cs.playerModifiers.filter(
+                    (m) => m.id !== "railgun",
+                  ),
+                  spentPlayerModIds: [
+                    ...(cs.spentPlayerModIds ?? []),
+                    "railgun",
+                  ],
+                }
+              : { ...cs, playerRailgunShots: shots };
+        }
+        if (chaosMove.modifierId === "usurper") {
           cs = {
             ...cs,
             playerModifiers: cs.playerModifiers.filter(
-              (m) => m.id !== chaosMove.modifierId,
+              (m) => m.id !== "usurper",
             ),
             spentPlayerModIds: [
               ...(cs.spentPlayerModIds ?? []),
-              chaosMove.modifierId,
+              "usurper",
             ],
           };
         }

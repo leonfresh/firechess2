@@ -19,6 +19,8 @@ import { ALL_ANOMALIES, type AnomalyId } from "./chaos-anomalies";
 
 export type ModifierTier = "common" | "rare" | "epic" | "legendary";
 export const NUCLEAR_QUEEN_COOLDOWN_TURNS = 5;
+/** Railgun charges per game: the card stays in hand until both shots are fired. */
+export const RAILGUN_MAX_SHOTS = 2;
 
 export type PieceType = "p" | "n" | "b" | "r" | "q" | "k";
 
@@ -103,6 +105,9 @@ export interface ChaosState {
    */
   playerNuclearCooldownUntil?: number;
   aiNuclearCooldownUntil?: number;
+  /** Railgun shots fired so far (0 to RAILGUN_MAX_SHOTS). The card is only spent once they run out. */
+  playerRailgunShots?: number;
+  aiRailgunShots?: number;
   /**
    * IDs of once-per-game modifiers that have been consumed (removed from
    * playerModifiers / aiModifiers after use). Kept so they are never
@@ -161,7 +166,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     id: "kings-chains",
     name: "King's Chains",
     description:
-      "Your king freezes the most valuable adjacent enemy. It cannot move or capture, but still threatens squares.",
+      "Your king freezes the most valuable enemy within 2 squares. It cannot move or capture, but still threatens squares.",
     tier: "common",
     icon: "⛓️",
     piece: "k",
@@ -202,8 +207,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "sniper-bishop",
     name: "Sniper Bishop",
-    description:
-      "Bishops can capture diagonally up to 2 squares away without moving.",
+    description: "Bishops can capture diagonally up to 3 squares away without moving.",
     tier: "rare",
     icon: "🎯",
     piece: "b",
@@ -274,7 +278,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     name: "Kamikaze Bishop",
     description:
       "When a bishop is captured, its attacker is destroyed too.",
-    tier: "legendary",
+    tier: "epic",
     icon: "🧨",
     piece: "b",
     phases: [2, 3],
@@ -421,7 +425,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     id: "railgun",
     name: "Railgun",
     description:
-      "Once per game, a rook shoots in all 4 straight directions, hitting the first enemy in each through blockers.",
+      "Twice per game, a rook shoots in all 4 straight directions, hitting the first enemy in each through blockers.",
     tier: "legendary",
     icon: "⚡",
     piece: "r",
@@ -509,6 +513,8 @@ export function createChaosState(): ChaosState {
     aiCapturedForJudgement: [],
     playerNuclearCooldownUntil: 0,
     aiNuclearCooldownUntil: 0,
+    playerRailgunShots: 0,
+    aiRailgunShots: 0,
     spentPlayerModIds: [],
     spentAiModIds: [],
   };

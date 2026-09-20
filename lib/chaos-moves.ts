@@ -676,7 +676,7 @@ function getNuclearSquares(game: Chess, to: Square, color: Color): Square[] {
   return result;
 }
 
-/** Sniper Bishop: can capture enemies on same diagonal within 2 squares without moving */
+/** Sniper Bishop: can capture enemies on same diagonal within 3 squares without moving */
 function genSniperBishop(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const bishops = allSquaresOf(game, "b", color);
@@ -690,7 +690,7 @@ function genSniperBishop(game: Chess, color: Color): ChaosMove[] {
   for (const bs of bishops) {
     const [f, r] = sqToCoords(bs);
     for (const [df, dr] of diagDirs) {
-      for (let dist = 1; dist <= 2; dist++) {
+      for (let dist = 1; dist <= 3; dist++) {
         const target = sq(f + df * dist, r + dr * dist);
         if (!target) break;
         const piece = game.get(target);
@@ -1936,12 +1936,12 @@ export function getChaosAttackedSquares(
     }
   }
 
-  /* Sniper Bishop: diag 1-2 squares */
+  /* Sniper Bishop: diag 1-3 squares */
   if (modIds.has("sniper-bishop")) {
     for (const bs of allSquaresOf(game, "b", attackerColor)) {
       const [f, r] = sqToCoords(bs);
       for (const [df, dr] of diagonals) {
-        for (let dist = 1; dist <= 2; dist++) {
+        for (let dist = 1; dist <= 3; dist++) {
           const t = sq(f + df * dist, r + dr * dist);
           if (!t) break;
           attacked.add(t);
@@ -2876,8 +2876,8 @@ export function findCheckingSquares(
 
 /**
  * Compute which enemy square the Kings-Chains modifier should freeze.
- * Returns the square of the highest-value enemy piece adjacent to `ownerColor`'s
- * king, or null if none are adjacent.
+ * Returns the square of the highest-value enemy piece within 2 squares of
+ * `ownerColor`'s king, or null if none are in range.
  */
 export function computeChainedSquare(
   game: Chess,
@@ -2891,24 +2891,18 @@ export function computeChainedSquare(
   let bestSq: string | null = null;
   let bestVal = 0;
 
-  for (const [df, dr] of [
-    [-1, -1],
-    [-1, 0],
-    [-1, 1],
-    [0, -1],
-    [0, 1],
-    [1, -1],
-    [1, 0],
-    [1, 1],
-  ] as [number, number][]) {
-    const s = sq(kf + df, kr + dr);
-    if (!s) continue;
-    const piece = game.get(s as Square);
-    if (!piece || piece.color !== enemyColor || piece.type === "k") continue;
-    const val = PIECE_VALUE_CP[piece.type] ?? 0;
-    if (val > bestVal) {
-      bestVal = val;
-      bestSq = s;
+  for (let df = -2; df <= 2; df++) {
+    for (let dr = -2; dr <= 2; dr++) {
+      if (df === 0 && dr === 0) continue;
+      const s = sq(kf + df, kr + dr);
+      if (!s) continue;
+      const piece = game.get(s as Square);
+      if (!piece || piece.color !== enemyColor || piece.type === "k") continue;
+      const val = PIECE_VALUE_CP[piece.type] ?? 0;
+      if (val > bestVal) {
+        bestVal = val;
+        bestSq = s;
+      }
     }
   }
   return bestSq;
