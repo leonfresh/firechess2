@@ -336,6 +336,10 @@ For most club players (under 1800), tactics first. Tactical patterns appear in e
 
 Use the tracking method described above. If your target mistake frequency drops over four weeks and your average game quality improves, the plan is working. If your rating drops or your mistake count stays flat, the plan needs adjustment. The key is not to judge after one bad session — look for a trend. Three steps forward and one step back still means progress.
 
+
+
+Another approach: try to [guess your Elo](/blog/guess-the-elo-chess) from your own recent games. If your guess matches your actual rating, your self-assessment is calibrated. If you consistently overestimate, you have blind spots that targeted study should address.
+
 ### Q: How long should I stick with one study focus before switching?
 
 At least three to four weeks, unless it is clearly the wrong target. It takes time for new patterns to move from conscious effort to automatic recognition. Switching too fast means you never internalize anything. The exception is if your tracking shows zero improvement after three weeks — in that case, cycle back to the review phase and check whether you identified the right weakness.

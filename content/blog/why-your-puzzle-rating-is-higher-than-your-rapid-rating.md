@@ -182,7 +182,7 @@ When you open a puzzle, your brain instantly switches into hunt mode. You start 
 
 In a rapid game, the position does **not** come with that label. You have to recognize the tactical moment yourself.
 
-That recognition gap is where a lot of Elo disappears.
+That recognition gap is where a lot of Elo disappears — and it is exactly what tools like [Guess the Elo](/blog/guess-the-elo-chess) are designed to measure.
 
 ## Real-Game Blind Spots: A Concrete Example
 

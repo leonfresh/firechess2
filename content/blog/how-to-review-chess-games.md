@@ -278,6 +278,8 @@ Once the basic routine is second nature, add these techniques to deepen your ana
 
 ### Guess-the-Move Training
 
+Want to practice reading games like a rating estimator? Try [Guess the Elo](/blog/guess-the-elo-chess) — it trains the same pattern-recognition skills that make game review faster.
+
 Open your game at the critical moment (Step 3 position) and **cover the actual move you played.** Now try to find the engine's top move. If you find it, great — that pattern is already in your toolbox. If you don't, study the position until you understand why the engine's move is best.
 
 This technique is far more effective than passively reading engine lines because it forces you to calculate. You're training the same skill you use during a real game.

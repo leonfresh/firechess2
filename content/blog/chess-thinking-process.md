@@ -227,7 +227,7 @@ After you've listed three, compare them. Which one fits the position's demands? 
 
 ### Drill 3: Post-Game Audit
 
-After each game, open it in FireChess's [/analyze](/analyze) tool. For each move marked with a red or amber badge (mistake or inaccuracy), ask:
+After each game, open it in FireChess's [/analyze](/analyze) tool. Developing that recognition is what lets you [guess a player's Elo](/blog/guess-the-elo-chess) from a handful of moves. For each move marked with a red or amber badge (mistake or inaccuracy), ask:
 
 1. What did I think the position needed? (Evaluation)
 2. What moves did I consider? (Candidates)

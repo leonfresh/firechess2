@@ -68,6 +68,8 @@ After 5...Nxd5??, White plays 6.Nxf7! — sacrificing the knight to drag the Bla
 
 **Typical timeline:** 3-12 months from starting chess, or 2-6 months after reaching 800. Players who do daily puzzles and analyze their games with an engine reach 1200 significantly faster. Upload your games to [FireChess's analysis tool](/analyze) and look at your accuracy score — if you're averaging below 70% accuracy, tactical puzzles should be your primary focus.
 
+Curious where you fall on the rating spectrum? Try to [guess the Elo](/blog/guess-the-elo-chess) from your own games — it is one of the fastest ways to develop the pattern recognition that drives improvement.
+
 ## How Long to Reach 1400: Recognizing Combinations (6-18 Months)
 
 The 1200-to-1400 jump is about seeing one move deeper. Where a 1200 spots a fork, a 1400 sees the *combination* — a sequence of forcing moves that leads to a material advantage or checkmate. Légal's Mate is a perfect example of this kind of pattern:
