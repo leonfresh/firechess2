@@ -1,0 +1,38 @@
+[
+  {
+    "id": "hook",
+    "at": 0.1,
+    "slot": 2.8,
+    "text": "This pawn becomes a queen."
+  },
+  {
+    "id": "rank",
+    "at": 3.2,
+    "slot": 2.5,
+    "text": "On the fifth rank."
+  },
+  {
+    "id": "setup",
+    "at": 6.2,
+    "slot": 3.6,
+    "text": "Watch the b-pawn. Two moves."
+  },
+  {
+    "id": "power",
+    "at": 11.4,
+    "slot": 3,
+    "text": "One power. A whole new threat."
+  },
+  {
+    "id": "mate",
+    "at": 15,
+    "slot": 4.3,
+    "text": "Later, that same pawn delivers checkmate."
+  },
+  {
+    "id": "cta",
+    "at": 20.1,
+    "slot": 3.7,
+    "text": "Chess with powerups. Play on Discord."
+  }
+]

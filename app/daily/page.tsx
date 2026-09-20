@@ -355,6 +355,19 @@ function BlunderBoard({
   const [boardSize, setBoardSize] = useState(400);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
+  const playedMove = useMemo(() => {
+    try {
+      const replay = new Chess(tactic.fenBefore);
+      const move = replay.move(parseUci(tactic.userMove));
+      return { from: move.from, to: move.to, san: move.san, fen: replay.fen() };
+    } catch {
+      return null;
+    }
+  }, [tactic.fenBefore, tactic.userMove]);
+  const [replayPhase, setReplayPhase] = useState<"before" | "played" | "rewinding" | "ready">(
+    playedMove ? "before" : "ready",
+  );
+  const [replayCount, setReplayCount] = useState(0);
   const [game, setGame] = useState(() => new Chess(tactic.fenBefore));
   const [status, setStatus] = useState<"playing" | "correct" | "wrong">(
     "playing",
@@ -392,8 +405,28 @@ function BlunderBoard({
     preloadSounds();
   }, []);
 
+  useEffect(() => {
+    if (!playedMove) return;
+    setReplayPhase("before");
+    setGame(new Chess(tactic.fenBefore));
+    setSelectedSquare(null);
+    setLegalMoveSquares({});
+    const play = setTimeout(() => {
+      setGame(new Chess(playedMove.fen));
+      setReplayPhase("played");
+      playSound("move");
+    }, 600);
+    const rewind = setTimeout(() => {
+      setGame(new Chess(tactic.fenBefore));
+      setReplayPhase("rewinding");
+    }, 2100);
+    const ready = setTimeout(() => setReplayPhase("ready"), 2400);
+    return () => { clearTimeout(play); clearTimeout(rewind); clearTimeout(ready); };
+  }, [playedMove, tactic.fenBefore, replayCount]);
+
   const handleDrop = useCallback(
     (from: CbSquare, to: CbSquare) => {
+      if (replayPhase !== "ready") return false;
       // Free play after solving — try other moves and see what happens
       if (status === "correct") {
         try {
@@ -470,11 +503,12 @@ function BlunderBoard({
       }
       return false;
     },
-    [game, expected, status, attempts, onComplete],
+    [game, expected, status, attempts, onComplete, replayPhase],
   );
 
   const handleSquareClick = useCallback(
     (square: CbSquare) => {
+      if (replayPhase !== "ready") return;
       if (status !== "playing" && status !== "correct") return;
 
       // Clicking a highlighted legal-move square → execute move
@@ -522,12 +556,16 @@ function BlunderBoard({
       }
       setLegalMoveSquares(styles);
     },
-    [game, selectedSquare, legalMoveSquares, status, orientation, handleDrop],
+    [game, selectedSquare, legalMoveSquares, status, orientation, handleDrop, replayPhase],
   );
 
   const customSquareStyles: Record<string, React.CSSProperties> = {
     ...legalMoveSquares,
   };
+  if (replayPhase === "played" && playedMove) {
+    customSquareStyles[playedMove.from] = { backgroundColor: "rgba(249,115,22,0.3)" };
+    customSquareStyles[playedMove.to] = { backgroundColor: "rgba(249,115,22,0.5)" };
+  }
   if (status === "wrong") {
     customSquareStyles[expected.from] = {
       boxShadow: "inset 0 0 16px 4px rgba(239,68,68,0.5)",
@@ -547,7 +585,12 @@ function BlunderBoard({
               : "border-slate-500 bg-slate-800"
           }`}
         />
-        <span className="text-slate-400">Your turn as {orientation}</span>
+        <span className="text-slate-400" aria-live="polite">
+          {replayPhase === "before" ? "Watch the move you played in your game"
+            : replayPhase === "played" ? `You played ${playedMove?.san}`
+            : replayPhase === "rewinding" ? "Rewinding — find a better move"
+            : `Your turn as ${orientation}`}
+        </span>
       </div>
 
       <div
@@ -565,7 +608,7 @@ function BlunderBoard({
           boardOrientation={orientation}
           boardWidth={boardSize}
           animationDuration={200}
-          arePiecesDraggable={status === "playing" || status === "correct"}
+          arePiecesDraggable={replayPhase === "ready" && (status === "playing" || status === "correct")}
           customSquareStyles={customSquareStyles}
           customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
           customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
@@ -580,6 +623,17 @@ function BlunderBoard({
           />
         )}
       </div>
+
+      {playedMove && status === "playing" && (
+        <button
+          type="button"
+          disabled={replayPhase !== "ready"}
+          onClick={() => { setReplayPhase("before"); setIndicator(null); setReplayCount(count => count + 1); }}
+          className="rounded-lg px-3 py-2 text-xs text-slate-400 hover:bg-white/5 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400 disabled:cursor-default disabled:opacity-50"
+        >
+          Replay your game move
+        </button>
+      )}
 
       <div className="flex items-center gap-1.5">
         {Array.from({ length: MAX_TRIES }).map((_, i) => (

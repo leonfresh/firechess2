@@ -1,0 +1,8 @@
+# Generated from ../public and the installed Stockfish package.
+/public/
+/.next/
+/node_modules/
+/.partykit/
+*.tsbuildinfo
+.env.local
+!assets/*.png

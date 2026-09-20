@@ -9,7 +9,7 @@
  *  - Supports tier filtering: All | Common | Rare | Epic | Legendary
  *  - Shareable link: /chaos/collection?user=username
  *  - Authenticated users see their personal collection after OAuth.
- *  - Guests see the 13 default-unlocked modifiers.
+ *  - Every base card is unlocked for every player, signed in or not; the shop sells new ones.
  */
 
 import React, { useEffect, useState, Suspense } from "react";
@@ -23,7 +23,8 @@ import {
   type ChaosModifier,
   type ModifierTier,
 } from "@/lib/chaos-chess";
-import { GUEST_UNLOCKED_IDS, getProgressionInfo } from "@/lib/chaos-collection";
+import { GUEST_UNLOCKED_IDS } from "@/lib/chaos-collection";
+import { chaosIdentityHeaders } from "@/lib/chaos-client-identity";
 
 /* ── Twemoji helper (same as chaos page) ── */
 function _twemojiUrl(emoji: string): string {
@@ -58,12 +59,12 @@ function ChaosCollectionInner() {
   const username = searchParams.get("user");
   const { authenticated } = useSession();
 
-  const [unlockedIds, setUnlockedIds] =
-    useState<Set<string>>(GUEST_UNLOCKED_IDS);
+  const [unlockedIds, setUnlockedIds] = useState<Set<string>>(
+    () => new Set(GUEST_UNLOCKED_IDS),
+  );
   const [profileName, setProfileName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<ModifierTier | "all">("all");
-  const [gamesPlayed, setGamesPlayed] = useState<number | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -72,7 +73,7 @@ function ChaosCollectionInner() {
         const url = username
           ? `/api/chaos/collection?user=${encodeURIComponent(username)}`
           : "/api/chaos/collection";
-        const res = await fetch(url);
+        const res = await fetch(url, { headers: chaosIdentityHeaders() });
         if (res.ok) {
           const data: {
             unlockedIds: string[];
@@ -81,8 +82,6 @@ function ChaosCollectionInner() {
           } = await res.json();
           setUnlockedIds(new Set(data.unlockedIds));
           if (data.username) setProfileName(data.username);
-          if (typeof data.gamesPlayed === "number")
-            setGamesPlayed(data.gamesPlayed);
         }
       } finally {
         setLoading(false);
@@ -139,7 +138,7 @@ function ChaosCollectionInner() {
               href="/auth/signin"
               className="rounded-lg border border-purple-500/40 bg-purple-600/20 px-3 py-1.5 text-xs font-bold text-purple-300 hover:bg-purple-600/30 transition-all"
             >
-              🔐 Sign in to unlock more
+              🔐 Sign in to sync your collection
             </Link>
           )}
         </div>
@@ -188,105 +187,8 @@ function ChaosCollectionInner() {
           </div>
         </div>
 
-        {/* Next Unlock infographic — only for authenticated own-collection */}
-        {authenticated &&
-          viewingOwn &&
-          !loading &&
-          (() => {
-            const info = getProgressionInfo(gamesPlayed ?? 0);
-
-            if (!info) {
-              return (
-                <div className="mb-6 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.06] p-4 flex items-center gap-3">
-                  <span className="text-2xl">🏆</span>
-                  <div>
-                    <p className="text-sm font-bold text-emerald-300">
-                      All progression powerups unlocked!
-                    </p>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      You&apos;ve earned every modifier through gameplay.
-                    </p>
-                  </div>
-                </div>
-              );
-            }
-
-            const nextMod = ALL_MODIFIERS.find((m) => m.id === info.nextModId);
-            if (!nextMod) return null;
-
-            const {
-              remaining,
-              gamesInWindow,
-              windowSize,
-              pct,
-              nextIdx,
-              total,
-            } = info;
-            const tc = TIER_COLORS[nextMod.tier];
-
-            return (
-              <div className="mb-6 rounded-2xl border border-purple-500/20 bg-gradient-to-r from-purple-950/40 to-slate-900/40 p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">
-                      Next Unlock
-                    </span>
-                    <span className="text-[10px] text-slate-600">
-                      {nextIdx + 1}/{total}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-slate-500">
-                    {remaining} game{remaining !== 1 ? "s" : ""} to go
-                  </span>
-                </div>
-                <div className="flex items-center gap-4">
-                  {/* Modifier preview card */}
-                  <div
-                    className={`relative flex-shrink-0 w-14 h-14 rounded-xl border flex items-center justify-center ${tc.border} ${tc.bg}`}
-                  >
-                    <Emoji emoji={nextMod.icon} className="w-8 h-8" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-bold text-white truncate">
-                        {nextMod.name}
-                      </span>
-                      <span
-                        className={`text-[8px] font-bold uppercase tracking-wider rounded-full px-1.5 py-0.5 flex-shrink-0 ${tc.text} ${tc.bg}`}
-                      >
-                        {TIER_LABELS[nextMod.tier]}
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-slate-500 leading-relaxed line-clamp-2 mb-2">
-                      {nextMod.description}
-                    </p>
-                    {/* Progress bar */}
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-700"
-                          style={{
-                            width: `${pct}%`,
-                            background: {
-                              common:
-                                "linear-gradient(to right, #6b7280, #9ca3af)",
-                              rare: "linear-gradient(to right, #3b82f6, #60a5fa)",
-                              epic: "linear-gradient(to right, #a855f7, #c084fc)",
-                              legendary:
-                                "linear-gradient(to right, #f59e0b, #fcd34d)",
-                            }[nextMod.tier],
-                          }}
-                        />
-                      </div>
-                      <span className="text-[10px] font-bold tabular-nums text-slate-400">
-                        {gamesInWindow}/{windowSize}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
+        {/* The games-played unlock ladder is gone: every base card is free, and the cards the
+            shop sells are listed with their prices in the Armoury instead. */}
 
         {/* Tier filter tabs */}
         <div className="mb-6 flex gap-2 flex-wrap">
@@ -332,11 +234,11 @@ function ChaosCollectionInner() {
         {!authenticated && viewingOwn && (
           <div className="mt-10 rounded-2xl border border-purple-500/20 bg-purple-500/5 p-6 text-center">
             <p className="text-lg font-bold text-white mb-1">
-              Unlock all 30 modifiers
+              Every card, on every device
             </p>
             <p className="text-sm text-slate-400 mb-4">
-              Create a free account to track your collection and earn new
-              modifiers by playing.
+              All base cards are already unlocked. Create a free account to carry
+              your collection and your gold across devices.
             </p>
             <Link
               href="/auth/signin"

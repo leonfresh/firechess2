@@ -159,3 +159,11 @@
 /* Keep decorative glows inside the viewport without creating a scroll container. */
 .landingRoot{overflow-x:clip}
 @media(max-width:600px){.chaosBannerCopy{flex:1 1 calc(100% - 54px)}.chaosBannerAction{flex-basis:calc(100% - 54px)}}
+
+.discordCta{display:flex;align-items:center;gap:24px;margin-top:32px;padding:28px 30px;border:1px solid #818cf845;border-radius:14px;background:linear-gradient(115deg,#5865f21a,#171e2b);color:var(--text)}
+.discordIcon{display:grid;place-items:center;flex-shrink:0;width:58px;height:58px;border-radius:16px;background:#818cf81a;color:#a5b4fc}
+.discordCopy{flex:1;min-width:0}.discordCopy .eyebrow{color:#a5b4fc}.discordCopy h2{margin:8px 0;font-size:26px;letter-spacing:-.7px;line-height:1.25}.discordCopy p{color:var(--muted);font-size:14px;line-height:1.65;max-width:580px}
+.discordButton{display:inline-flex;align-items:center;justify-content:center;gap:9px;flex-shrink:0;min-height:46px;padding:12px 19px;border-radius:8px;background:#5865f2;color:#fff!important;text-decoration:none;font-size:14px;font-weight:650;transition:background .15s}
+.discordButton:hover{background:#4752c4}.discordButton:focus-visible{outline:2px solid #c7d2fe;outline-offset:4px}
+@media(max-width:700px){.discordCta{padding:24px;gap:18px;flex-wrap:wrap}.discordIcon{width:44px;height:44px;border-radius:12px}.discordCopy{flex-basis:calc(100% - 62px)}.discordCopy h2{font-size:22px}.discordButton{width:100%}}
+@media(prefers-reduced-motion:reduce){.discordButton{transition:none}}

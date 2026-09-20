@@ -1,0 +1,26 @@
+[
+  {
+    "id": "hook",
+    "at": 0.1,
+    "slot": 3.7,
+    "text": "That knight just stole a rook from there."
+  },
+  {
+    "id": "power",
+    "at": 4.2,
+    "slot": 4.1,
+    "text": "The Camel adds a three-and-one leap."
+  },
+  {
+    "id": "draft",
+    "at": 8.7,
+    "slot": 4.7,
+    "text": "Draft powers. Build threats your friends won't see coming."
+  },
+  {
+    "id": "cta",
+    "at": 14.1,
+    "slot": 3.6,
+    "text": "Chaos Chess. Play on Discord."
+  }
+]

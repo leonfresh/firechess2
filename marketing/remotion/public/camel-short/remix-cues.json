@@ -1,0 +1,88 @@
+{
+  "music": "ChessOverdrive.mp3",
+  "sections": [
+    [
+      0,
+      4,
+      48
+    ],
+    [
+      4,
+      8.5,
+      32
+    ],
+    [
+      8.5,
+      14,
+      40
+    ],
+    [
+      14,
+      18,
+      96
+    ]
+  ],
+  "effects": [
+    {
+      "sound": "vine-boom",
+      "at": 1.1333333333333333,
+      "end": 2.033,
+      "spoken": false
+    },
+    {
+      "sound": "record-scratch",
+      "at": 2.48,
+      "end": 2.86,
+      "spoken": false
+    },
+    {
+      "sound": "wait-what",
+      "at": 2.9,
+      "end": 3.545,
+      "spoken": true
+    },
+    {
+      "sound": "whoosh",
+      "at": 3.78,
+      "end": 4.05,
+      "spoken": false
+    },
+    {
+      "sound": "ping-idea-lightbulb",
+      "at": 8.5,
+      "end": 9.05,
+      "spoken": false
+    },
+    {
+      "sound": "whoosh",
+      "at": 13.78,
+      "end": 14.05,
+      "spoken": false
+    },
+    {
+      "sound": "correct",
+      "at": 14,
+      "end": 14.6,
+      "spoken": false
+    }
+  ],
+  "speechWindows": [
+    [
+      0.1,
+      2.3909583333333333
+    ],
+    [
+      4.2,
+      6.496041666666667
+    ],
+    [
+      8.7,
+      12.247416666666666
+    ],
+    [
+      14.1,
+      16.303
+    ]
+  ],
+  "peakDBFS": -1.11
+}

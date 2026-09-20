@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Nl3Nav, FlameMark } from "@/components/new-landing-3/nav";
+import { Nl3Nav } from "@/components/new-landing-3/nav";
 import { Nl3Hero } from "@/components/new-landing-3/hero-section";
 import { ScanSection } from "@/components/new-landing/scan-section";
 import { Nl3HowItWorks } from "@/components/new-landing-3/how-it-works-section";
@@ -89,13 +89,6 @@ export default function NewLanding3Page() {
       <Nl3Faq />
       <Nl3FinalCta onScanClick={goToScan} />
 
-      {/* Ember & Ink footer — replaces global chrome on this route */}
-      <footer className="flex flex-col items-center justify-between gap-3 border-t border-[#1e1a24] px-6 py-8 text-[13px] text-[#565061] sm:flex-row sm:px-10">
-        <span className="flex items-center gap-2 font-semibold text-[#8d8696]">
-          <FlameMark size={18} /> © 2026 FireChess
-        </span>
-        <span>Stockfish 18 · Lichess & Chess.com · Made for club players</span>
-      </footer>
     </div>
   );
 }

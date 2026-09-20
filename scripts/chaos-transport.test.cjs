@@ -5,7 +5,7 @@ const {randomUUID}=require('node:crypto');
 const source=ts.transpile(fs.readFileSync(require('node:path').join(__dirname,'../lib/use-party-room.ts'),'utf8'),{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022});
 const settle=()=>new Promise(resolve=>setImmediate(resolve));
 const packet=(revision=0,extra={})=>({revision,stateRevision:revision,actor:'host',events:[],snapshot:{fen:'saved'},...extra});
-function harness(responses, live=false){
+function harness(responses, live=false, cloudflare=false){
  const effects=[],messages=[],calls=[],timers=new Map();let timerId=0;
  const module={exports:{}};
  const react={useEffect:fn=>effects.push(fn),useRef:value=>({current:value}),useCallback:fn=>fn,useState:value=>[value,()=>{}]};
@@ -20,7 +20,7 @@ function harness(responses, live=false){
   changed(){this.onmessage?.({data:JSON.stringify({type:'changed'})})}
   close(){this.readyState=3;this.onclose?.()}
  }
- const ctx={module,exports:module.exports,process:{env:{}},AbortController,AbortSignal,URL,performance,crypto:{randomUUID},
+ const ctx={module,exports:module.exports,process:{env:{NEXT_PUBLIC_CHAOS_CLOUDFLARE_LIVE:cloudflare?'true':'false'}},AbortController,AbortSignal:{},URL,performance,crypto:{randomUUID},
  ...(live?{WebSocket:FakeSocket}:{}),
  require:name=>name==='react'?react:{getGuestId:()=> 'isolated-guest',chaosIdentityHeaders:()=>({'X-Chaos-Identity':'test-identity'})},
  window:{location:{href:'http://localhost:3001/chaos'},addEventListener(){},removeEventListener(){}},document:{addEventListener(){},removeEventListener(){}},
@@ -126,4 +126,16 @@ test('rejected chat does not discard a queued move or roll back the board',async
  try{await settle();h.hook.send({type:'chat',text:'Hello'});h.hook.send({type:'move',fen:'next'});await settle();await h.tick();
  assert.equal(h.calls.filter(c=>c.body).length,2);assert.equal(h.messages.filter(m=>m.type==='sync_error').length,0);assert.equal(h.messages.filter(m=>m.type==='chat_error').length,1);
  }finally{h.cleanup();}
+});
+
+
+test('older Chrome receives opening offers over HTTP without AbortSignal static helpers',async()=>{
+ const opening={deadline:21000,offers:{host:['fool'],guest:['sun']}};
+ const h=harness([{data:packet(1,{snapshot:{draftProtocol:2,opening,openingPicks:{host:null}}})}]);
+ try{await settle();assert.equal(h.calls.length,1);assert.equal(h.messages.find(m=>m.type==='opening_sync').snapshot.opening.offers.host[0],'fool');}finally{h.cleanup();}
+});
+
+test('older Chrome obtains Cloudflare credentials and connects without AbortSignal static helpers',async()=>{
+ const h=harness([{data:packet()},{data:{origin:'https://live.example.com',token:'test'}}],true,true);
+ try{await settle();assert.equal(h.calls.length,2);assert.ok(h.calls[1].path.includes('live-ticket'));assert.equal(h.sockets.length,1);h.sockets[0].open();h.sockets[0].reply(packet());await settle();}finally{h.cleanup();}
 });

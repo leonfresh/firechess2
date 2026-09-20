@@ -8,7 +8,7 @@ const groups = [
   ...navigationGroups.slice(0, 3),
   { label: "More", links: [["Dashboard", "/newdashboard"], ["Pricing", "/newpricing"], ["Famous games", "/games"], ["Chess glossary", "/glossary"], ["Leaderboard", "/leaderboard"], ["Coin shop", "/shop"], ["Support", "/support"], ["Account & billing", "/account"]] },
 ];
-const social = [["Discord", "https://discord.gg/YS8fc4FtEk"], ["Reddit", "https://reddit.com/r/firechess"], ["X / Twitter", "https://twitter.com/firechessapp"], ["GitHub", "https://github.com/leonfresh"]];
+const social = [["Discord", "https://discord.gg/YS8fc4FtEk"], ["Reddit", "https://reddit.com/r/firechess"], ["GitHub", "https://github.com/leonfresh"]];
 
 export function SiteFooter() {
   return <footer className={s.footer}>

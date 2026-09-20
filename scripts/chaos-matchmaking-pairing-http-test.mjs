@@ -71,9 +71,9 @@ try {
   const scopedBody = await scoped.json();
   assert.equal(scoped.status, 200, JSON.stringify(scopedBody));
   const flagged = scopedBody.rooms.find(r => r.roomCode === inCallRoom.roomCode);
-  const unflagged = scopedBody.rooms.find(r => r.roomCode === guestRoom2.roomCode);
   assert.equal(flagged?.sameInstance, true, 'same-instance challenge must be flagged');
-  assert.equal(unflagged?.sameInstance, false, 'other challenges must not be flagged');
+  assert.deepEqual(scopedBody.rooms.filter(r => r.sameInstance).map(r => r.roomCode), [inCallRoom.roomCode],
+    'only challenges from this instance may be flagged');
   assert.ok(!JSON.stringify(scopedBody.rooms).includes(signed), 'listing must not leak player ids');
 
   console.log('PASS: signed-with-signed and guest-with-guest pairing, fallback, and in-this-call flagging.');

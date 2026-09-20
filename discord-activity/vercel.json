@@ -1,0 +1,5 @@
+{
+  "framework": "nextjs",
+  "installCommand": "cd .. && npm ci && cd discord-activity && npm ci",
+  "buildCommand": "npm run build"
+}

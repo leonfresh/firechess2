@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ALL_MODIFIERS, type ModifierTier } from "@/lib/chaos-chess";
 import { ALL_ANOMALIES } from "@/lib/chaos-anomalies";
-import { GUEST_UNLOCKED_IDS, getProgressionInfo } from "@/lib/chaos-collection";
+import { GUEST_UNLOCKED_IDS } from "@/lib/chaos-collection";
 import { chaosIdentityHeaders } from "@/lib/chaos-client-identity";
 import { getGuestId } from "@/lib/guest-id";
 import { ChaosHubIcon } from "@/components/chaos-hub-icon";
@@ -18,7 +18,18 @@ const TIERS: { id: ModifierTier; label: string; blurb: string }[] = [
   { id: "legendary", label: "Legendary", blurb: "Game-warping" },
 ];
 
-type Tab = "powers" | "pieces" | "anomalies";
+type Tab = "powers" | "pieces" | "anomalies" | "shop";
+
+/** One row of the shop, as the collection API reports it. */
+type ShopCard = {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  tier: string;
+  price: number;
+  owned: boolean;
+};
 
 /**
  * The Armoury: every power, fairy piece and tarot anomaly in one place, with what the player has
@@ -32,6 +43,10 @@ export function ActivityCollection({ card = false }: { card?: boolean }) {
   const [games, setGames] = useState<number | null>(null);
   /** Gold balance from the collection API: null when the player has no earning identity yet. */
   const [gold, setGold] = useState<{ total: number; week: number } | null>(null);
+  /** Shop cards with prices and ownership, straight from the collection API. */
+  const [shop, setShop] = useState<ShopCard[] | null>(null);
+  const [buying, setBuying] = useState<string | null>(null);
+  const [shopError, setShopError] = useState<string | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (open) dialog.current?.showModal();
@@ -44,6 +59,8 @@ export function ActivityCollection({ card = false }: { card?: boolean }) {
     setUnlocked(null);
     setGames(null);
     setGold(null);
+    setShop(null);
+    setShopError(null);
     void (async () => {
       try {
         const r = await fetch("/api/chaos/collection", {
@@ -58,6 +75,7 @@ export function ActivityCollection({ card = false }: { card?: boolean }) {
             total: d.gold,
             week: typeof d.goldWeek === "number" ? d.goldWeek : 0,
           });
+        if (active && Array.isArray(d?.shop)) setShop(d.shop as ShopCard[]);
       } catch {
         if (active) setUnlocked(new Set<string>(GUEST_UNLOCKED_IDS));
       }
@@ -77,6 +95,38 @@ export function ActivityCollection({ card = false }: { card?: boolean }) {
       active = false;
     };
   }, [open]);
+  /** Buy a shop card. The server decides the price; the UI only shows what it reports back. */
+  const buy = async (cardId: string) => {
+    setBuying(cardId);
+    setShopError(null);
+    try {
+      const r = await fetch("/api/chaos/shop", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...chaosIdentityHeaders(),
+        },
+        body: JSON.stringify({ cardId }),
+      });
+      const d = await r.json().catch(() => null);
+      if (!r.ok) {
+        setShopError(typeof d?.error === "string" ? d.error : "Purchase failed");
+        return;
+      }
+      setShop((prev) =>
+        prev
+          ? prev.map((c) => (c.id === cardId ? { ...c, owned: true } : c))
+          : prev,
+      );
+      setUnlocked((prev) => new Set([...(prev ?? []), cardId]));
+      if (typeof d?.gold === "number")
+        setGold((g) => ({ total: d.gold, week: g?.week ?? 0 }));
+    } catch {
+      setShopError("Could not reach the shop");
+    } finally {
+      setBuying(null);
+    }
+  };
   const has = (id: string) => unlocked?.has(id) ?? false;
   const badge = (id: string) =>
     unlocked === null ? "…" : has(id) ? "✓" : "🔒";
@@ -85,10 +135,8 @@ export function ActivityCollection({ card = false }: { card?: boolean }) {
   const collected = unlocked
     ? ALL_MODIFIERS.filter((m) => has(m.id)).length
     : null;
-  const next = games === null ? null : getProgressionInfo(games);
-  const nextMod = next
-    ? ALL_MODIFIERS.find((m) => m.id === next.nextModId)
-    : undefined;
+  const shopCards = shop ?? [];
+  const shopLocked = shopCards.filter((c) => !c.owned).length;
   const titleId = card ? "lobby-collection-title" : "nav-collection-title";
   const row = (id: string) => {
     const mod = ALL_MODIFIERS.find((m) => m.id === id);
@@ -162,28 +210,18 @@ export function ActivityCollection({ card = false }: { card?: boolean }) {
           {collected === null
             ? "Counting your kit…"
             : `${collected} of ${ALL_MODIFIERS.length} powers in your kit.`}
-          {nextMod && next
-            ? ` Next unlock: ${nextMod.name} — ${next.remaining} more ${next.remaining === 1 ? "game" : "games"}.`
-            : ""}
+          {games ? ` ${games} ${games === 1 ? "game" : "games"} played.` : ""}
+          {shopLocked > 0
+            ? ` ${shopLocked} card${shopLocked === 1 ? "" : "s"} still in the shop.`
+            : " Everything is unlocked."}
         </p>
-        {next ? (
-          <div
-            className="collection-progress"
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={next.pct}
-            aria-label={`Progress to ${nextMod?.name ?? "the next unlock"}`}
-          >
-            <span style={{ width: `${next.pct}%` }} />
-          </div>
-        ) : null}
         <nav className="career-tabs" aria-label="Collection sections">
           {(
             [
               ["powers", `Powers (${ALL_MODIFIERS.length})`],
               ["pieces", `Pieces (${PIECE_IDS.length})`],
               ["anomalies", `Anomalies (${ALL_ANOMALIES.length})`],
+              ["shop", shop ? `Shop (${shopCards.length})` : "Shop"],
             ] as [Tab, string][]
           ).map(([id, label]) => (
             <button
@@ -220,6 +258,48 @@ export function ActivityCollection({ card = false }: { card?: boolean }) {
           <ul className="career-list collection-list">
             {PIECE_IDS.map((id) => row(id))}
           </ul>
+        ) : tab === "shop" ? (
+          <div>
+            {shopError ? (
+              <p className="career-note" role="alert">
+                {shopError}
+              </p>
+            ) : null}
+            <ul className="career-list collection-list">
+              {shopCards.map((card) => (
+                <li key={card.id} data-locked={!card.owned}>
+                  <PowerArt id={card.id} />
+                  <span>
+                    <strong>
+                      {card.icon} {card.name}
+                    </strong>
+                    <small>
+                      {card.tier} ·{" "}
+                      {card.owned ? "In your collection" : `${card.price} gold`}
+                    </small>
+                    <small>{card.description}</small>
+                  </span>
+                  {card.owned ? (
+                    <b className="collection-badge" data-owned="true">
+                      ✓
+                    </b>
+                  ) : (
+                    <button
+                      className="sound-button"
+                      disabled={buying === card.id}
+                      onClick={() => buy(card.id)}
+                    >
+                      {buying === card.id ? "Buying…" : `Buy · ${card.price}`}
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <p className="career-note">
+              Gold is earned by finishing games: 10 a game, +15 for a win, +5 on a
+              clock, and +25 for your first win each day.
+            </p>
+          </div>
         ) : (
           <ul className="career-list collection-list">
             {ALL_ANOMALIES.map((a) => (
@@ -250,9 +330,9 @@ export function ActivityCollection({ card = false }: { card?: boolean }) {
           </ul>
         )}
         <p className="career-note">
-          Anomalies are never locked — Pro players just see more choices at the
-          start of a match. Sign in on firechess.com to carry one collection
-          across every device.
+          Every base card is unlocked. Shop cards are bought once with gold and
+          then drafted like any other. Anomalies are never locked — Pro players
+          just see more choices at the start of a match.
         </p>
       </dialog>
     </>

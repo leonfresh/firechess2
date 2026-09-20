@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ProductPreview } from "./hero-slideshow";
 import { ScanForm } from "./scan-form";
 import { LandingDetails } from "./landing-details";
-import { ArrowDown, ArrowRight, ArrowUpRight, Crosshair, Layers3, TrendingUp, Zap } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUpRight, Crosshair, Layers3, TrendingUp, Zap, MessagesSquare } from "lucide-react";
 import { SAMPLE_REPORTS } from "@/lib/sample-reports";
 import { PreviewHeader } from "./shared";
 import s from "./modern.module.css";
@@ -62,6 +62,15 @@ export function ModernLanding() {
         </div>
       </section>
       <div className={s.trustRow}><span>Built around the way you play</span><span><Layers3 size={17} /> Analyze across games</span><span><Crosshair size={17} /> Find recurring patterns</span><span><Zap size={17} /> Powered by Stockfish 18</span></div>
+      <section className={s.discordCta} aria-labelledby="discord-heading">
+        <span className={s.discordIcon} aria-hidden="true"><MessagesSquare size={28} /></span>
+        <div className={s.discordCopy}>
+          <span className={s.eyebrow}>THE FIRECHESS COMMUNITY</span>
+          <h2 id="discord-heading">Good games. Better company.</h2>
+          <p>Share your games, find Chaos Chess opponents, and help shape what we build next.</p>
+        </div>
+        <a href="https://discord.gg/YS8fc4FtEk" className={s.discordButton} target="_blank" rel="noopener noreferrer">Join our Discord <ArrowUpRight size={18} aria-hidden="true" /><span className="sr-only"> (opens in a new tab)</span></a>
+      </section>
       <section className={s.stepsSection} data-reveal id="how-it-works"><div className={s.sectionHeading}><div><span className={s.eyebrow}>FROM INSIGHT TO INSTINCT</span><h2>A little clarity goes a long way.</h2></div><a href="#scan" className={s.textLink}>Find your first pattern <ArrowRight size={16} /></a></div><div className={s.stepsGrid}>{[
         { icon: Layers3, title: "Bring your games", text: "Connect a username or import a PGN. Your game history is the starting point." },
         { icon: Crosshair, title: "See what repeats", text: "Look beyond individual blunders. Find the openings and habits that keep showing up." },

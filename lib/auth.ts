@@ -75,11 +75,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db),
   secret: authSecret,
   providers: [
-    Google,
-    Lichess,
-    Resend({
+    ...(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET ? [Google] : []),
+    ...(process.env.AUTH_LICHESS_ID ? [Lichess] : []),
+    ...(process.env.AUTH_RESEND_KEY ? [Resend({
+      apiKey: process.env.AUTH_RESEND_KEY,
       from: process.env.AUTH_RESEND_FROM ?? "FireChess <noreply@firechess.com>",
-    }),
+    })] : []),
   ],
   pages: {
     signIn: "/auth/signin",

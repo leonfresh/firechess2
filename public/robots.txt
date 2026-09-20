@@ -9,4 +9,4 @@ Disallow: /support/
 # Allow sample report pages (shared publicly)
 Allow: /report/sample-
 
-Sitemap: https://firechess.com/sitemap.xml
+Sitemap: https://www.firechess.com/sitemap.xml

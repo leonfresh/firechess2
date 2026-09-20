@@ -303,7 +303,7 @@ Here's a weekly schedule designed for rapid improvement from 1200 to 1500:
 
 The total is under 3 hours per week. The key isn't volume — it's consistency and honest self-assessment after every game. Use our [puzzle trainer](/puzzles) to drill the tactical motifs that appear most often in your actual games.
 
-If you're struggling to stick to this schedule, read our guide on [breaking chess rating plateaus](/blog/breaking-chess-rating-plateau) — it covers the motivation traps that derail most improvement plans and how to reset after a bad losing streak.
+If you're struggling to stick to this schedule, read our guide on [breaking chess rating plateaus](/blog/breaking-chess-rating-plateau) — it covers the motivation traps that derail most improvement plans and how to reset after a bad losing streak — a common sign of [chess tilt and psychology](/blog/chess-psychology-tilting).
 
 ## Measuring Your Progress
 

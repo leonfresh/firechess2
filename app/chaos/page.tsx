@@ -92,6 +92,7 @@ import {
   TIER_COLORS,
   TIER_LABELS,
   ALL_MODIFIERS,
+  SHOP_CARD_IDS,
   NUCLEAR_QUEEN_COOLDOWN_TURNS,
   RAILGUN_MAX_SHOTS,
   type ChaosState,
@@ -132,9 +133,6 @@ import {
   LS_FIRST_WIN_DONE,
   LS_PREVIEWED_MODS,
   LS_PREVIEW_NO_CONFIRM,
-  PROGRESSION_UNLOCK_ORDER,
-  UNLOCK_AT_GAMES,
-  getProgressionInfo,
 } from "@/lib/chaos-collection";
 
 /* ────────────────────────── Chaos Piece Overlays ────────────────────────── */
@@ -3463,6 +3461,34 @@ export default function ChaosChessPage() {
   opponentRatingRef.current = opponentRating;
   const myGamesPlayedRef = useRef(0);
   myGamesPlayedRef.current = myGamesPlayed;
+  /**
+   * Shop cards this player owns, from the collection API. Every base card is free, so this is the
+   * only thing that gates a draft pool: a shop card is offered once it has been bought.
+   */
+  const [shopOwned, setShopOwned] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    let active = true;
+    fetch("/api/chaos/collection", {
+      headers: chaosHeaders(),
+      cache: "no-store",
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!active || !Array.isArray(d?.shop)) return;
+        setShopOwned(
+          new Set(
+            (d.shop as { id: string; owned?: boolean }[])
+              .filter((c) => c.owned)
+              .map((c) => c.id),
+          ),
+        );
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [eloChange, setEloChange] = useState<number | null>(null);
   const [eloSaved, setEloSaved] = useState(false);
   const [aiEloSaved, setAiEloSaved] = useState(false);
@@ -3517,19 +3543,17 @@ export default function ChaosChessPage() {
   >(new Set());
 
   /**
-   * For signed-in users: modifier IDs not yet earned via games-played progression.
-   * Sliced from PROGRESSION_UNLOCK_ORDER — mods before the earned count are available;
-   * the rest are excluded from draft pools until the player crosses the next milestone.
+   * The only cards a player can be missing: shop cards they have not bought. Every other card is
+   * free (lib/chaos-collection.ts), so this drives every lock badge in the UI.
    */
   const lockedForAuthUser = useMemo<string[]>(() => {
     if (!authenticated) return [];
-    const earnedCount = UNLOCK_AT_GAMES.filter(
-      (t) => myGamesPlayed >= t,
-    ).length;
-    return [...PROGRESSION_UNLOCK_ORDER.slice(earnedCount)];
-  }, [authenticated, myGamesPlayed]);
+    return ALL_MODIFIERS.filter(
+      (m) => SHOP_CARD_IDS.has(m.id) && !shopOwned.has(m.id),
+    ).map((m) => m.id);
+  }, [authenticated, shopOwned]);
 
-  /** Set of modifier IDs the authenticated user has earned — passed to DraftModal so locked cards render with the lock/try badge */
+  /** Set of modifier IDs the authenticated user may draft — every base card plus owned shop cards */
   const authUnlockedIds = useMemo<Set<string>>(
     () =>
       new Set(
@@ -3538,6 +3562,12 @@ export default function ChaosChessPage() {
         ),
       ),
     [lockedForAuthUser],
+  );
+
+  /** The same set for guests and the Discord activity, which have no session. */
+  const draftUnlockedIds = useMemo<Set<string>>(
+    () => new Set([...GUEST_UNLOCKED_IDS, ...shopOwned]),
+    [shopOwned],
   );
 
   // Player drafts always guarantee at least one freely-pickable card —
@@ -3552,7 +3582,8 @@ export default function ChaosChessPage() {
       spentIds: string[],
       seed?: number,
     ) => {
-      const unlocked = authenticated ? authUnlockedIds : GUEST_UNLOCKED_IDS;
+      // Shop cards stay out of the pool until they are bought, in Discord as much as on the site.
+      const unlocked = authenticated ? authUnlockedIds : draftUnlockedIds;
       const choices = rollDraftChoices(
         phase,
         alreadyDrafted,
@@ -3561,7 +3592,6 @@ export default function ChaosChessPage() {
         anomaly,
         spentIds,
       );
-      if (presentation.activity) return choices;
       return ensureUnlockedChoice(
         choices,
         unlocked,
@@ -3570,7 +3600,7 @@ export default function ChaosChessPage() {
         spentIds,
       );
     },
-    [authenticated, authUnlockedIds, presentation.activity],
+    [authenticated, authUnlockedIds, draftUnlockedIds],
   );
 
   /** Modifier earnt by the guest after their first win — shown in unlock modal */
@@ -4030,21 +4060,9 @@ export default function ChaosChessPage() {
         if (data.ok) {
           setAiEloSaved(true);
           if (data.gamesPlayed !== undefined) {
-            const prevGames = myGamesPlayedRef.current;
-            const newGames = data.gamesPlayed;
-            setMyGamesPlayed(newGames);
-            // Detect newly crossed progression milestones
-            const newUnlocks: ChaosModifier[] = [];
-            UNLOCK_AT_GAMES.forEach((threshold, idx) => {
-              if (prevGames < threshold && newGames >= threshold) {
-                const modId = PROGRESSION_UNLOCK_ORDER[idx];
-                const mod = ALL_MODIFIERS.find((m) => m.id === modId);
-                if (mod) newUnlocks.push(mod);
-              }
-            });
-            if (newUnlocks.length > 0) {
-              setTimeout(() => setPendingAuthUnlocks(newUnlocks), 1400);
-            }
+            // The games-played ladder is gone: every base card is free from the first game, so
+            // there is no milestone to announce. Shop cards arrive through the shop, not here.
+            setMyGamesPlayed(data.gamesPlayed);
           }
         }
       })
@@ -4285,9 +4303,9 @@ export default function ChaosChessPage() {
             !window.localStorage.getItem(LS_FIRST_WIN_DONE)
           ) {
             window.localStorage.setItem(LS_FIRST_WIN_DONE, "1");
-            const locked = ALL_MODIFIERS.filter(
-              (m) => !GUEST_UNLOCKED_IDS.has(m.id),
-            );
+            // Nothing is gated by grinding any more, so there is no prize to hand out. Shop cards
+            // are bought with gold and must never arrive as a free first-win gift.
+            const locked: ChaosModifier[] = [];
             if (locked.length > 0) {
               const prize = locked[Math.floor(Math.random() * locked.length)];
               window.localStorage.setItem(LS_PENDING_UNLOCK, prize.id);
@@ -4384,9 +4402,9 @@ export default function ChaosChessPage() {
             !window.localStorage.getItem(LS_FIRST_WIN_DONE)
           ) {
             window.localStorage.setItem(LS_FIRST_WIN_DONE, "1");
-            const locked = ALL_MODIFIERS.filter(
-              (m) => !GUEST_UNLOCKED_IDS.has(m.id),
-            );
+            // Nothing is gated by grinding any more, so there is no prize to hand out. Shop cards
+            // are bought with gold and must never arrive as a free first-win gift.
+            const locked: ChaosModifier[] = [];
             if (locked.length > 0) {
               const prize = locked[Math.floor(Math.random() * locked.length)];
               window.localStorage.setItem(LS_PENDING_UNLOCK, prize.id);
@@ -9855,82 +9873,9 @@ export default function ChaosChessPage() {
             </a>
           </div>
 
-          {/* ── Next Progression Unlock (authenticated only) ── */}
-          {authenticated &&
-            (() => {
-              const info = getProgressionInfo(myGamesPlayed ?? 0);
-              if (!info) return null;
-              const nextMod = ALL_MODIFIERS.find(
-                (m) => m.id === info.nextModId,
-              );
-              if (!nextMod) return null;
-              const {
-                remaining,
-                gamesInWindow,
-                windowSize,
-                pct,
-                nextIdx,
-                total,
-              } = info;
-              const tc = TIER_COLORS[nextMod.tier];
-              return (
-                <div className="mb-6 w-full max-w-sm rounded-2xl border border-purple-500/20 bg-gradient-to-r from-purple-950/40 to-slate-900/40 p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">
-                        Next Unlock
-                      </span>
-                      <span className="text-[10px] text-slate-600">
-                        {nextIdx + 1}/{total}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-slate-500">
-                      {remaining} game{remaining !== 1 ? "s" : ""} to go
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`relative flex-shrink-0 w-12 h-12 rounded-xl border flex items-center justify-center ${tc.border} ${tc.bg}`}
-                    >
-                      <Emoji emoji={nextMod.icon} className="w-7 h-7" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-bold text-white truncate">
-                          {nextMod.name}
-                        </span>
-                        <span
-                          className={`text-[8px] font-bold uppercase tracking-wider rounded-full px-1.5 py-0.5 flex-shrink-0 ${tc.text} ${tc.bg}`}
-                        >
-                          {TIER_LABELS[nextMod.tier]}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-700"
-                            style={{
-                              width: `${pct}%`,
-                              background: {
-                                common:
-                                  "linear-gradient(to right, #6b7280, #9ca3af)",
-                                rare: "linear-gradient(to right, #3b82f6, #60a5fa)",
-                                epic: "linear-gradient(to right, #a855f7, #c084fc)",
-                                legendary:
-                                  "linear-gradient(to right, #f59e0b, #fcd34d)",
-                              }[nextMod.tier],
-                            }}
-                          />
-                        </div>
-                        <span className="text-[10px] font-bold tabular-nums text-slate-400">
-                          {gamesInWindow}/{windowSize}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
+          {/* The games-played unlock ladder is gone: every base card is free and the shop is
+              the only gate, so there is no "next unlock" to show. Gold progress lives in the
+              Armoury, next to the cards it buys. */}
 
           {/* ── Example draft cards (flip on hover) ── */}
           <div className="mb-8 flex w-full max-w-2xl flex-wrap justify-center gap-3 sm:mb-10">
@@ -10738,7 +10683,7 @@ export default function ChaosChessPage() {
             anomaly={chaosState.playerAnomaly}
             temperanceUsed={chaosState.playerTemperanceUsedThisPhase}
             onTemperanceReroll={handleTemperanceReroll}
-            unlockedIds={presentation.activity ? undefined : authenticated ? authUnlockedIds : GUEST_UNLOCKED_IDS}
+            unlockedIds={authenticated ? authUnlockedIds : draftUnlockedIds}
             isAuthenticated={authenticated}
             onLockedPick={(mod) => {
               if (!authenticated) {
@@ -11745,86 +11690,8 @@ export default function ChaosChessPage() {
                         </div>
                       )}
 
-                      {/* ── Next Unlock progress (AI game-over, authenticated) ── */}
-                      {gameMode === "ai" &&
-                        authenticated &&
-                        aiEloSaved &&
-                        (() => {
-                          const info = getProgressionInfo(myGamesPlayed ?? 0);
-                          if (!info) {
-                            return (
-                              <div className="w-full rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] p-3 flex items-center gap-2">
-                                <span className="text-lg">🏆</span>
-                                <p className="text-xs font-bold text-emerald-300">
-                                  All progression powerups unlocked!
-                                </p>
-                              </div>
-                            );
-                          }
-                          const nextMod = ALL_MODIFIERS.find(
-                            (m) => m.id === info.nextModId,
-                          );
-                          if (!nextMod) return null;
-                          const { remaining, gamesInWindow, windowSize, pct } =
-                            info;
-                          const tc = TIER_COLORS[nextMod.tier];
-                          return (
-                            <div className="w-full rounded-xl border border-purple-500/20 bg-gradient-to-r from-purple-950/40 to-slate-900/40 p-3">
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">
-                                  Next Unlock
-                                </span>
-                                <span className="text-[10px] text-slate-500">
-                                  {remaining} game{remaining !== 1 ? "s" : ""}{" "}
-                                  to go
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className={`flex-shrink-0 w-10 h-10 rounded-xl border flex items-center justify-center ${tc.border} ${tc.bg}`}
-                                >
-                                  <Emoji
-                                    emoji={nextMod.icon}
-                                    className="w-6 h-6"
-                                  />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-1.5 mb-1">
-                                    <span className="text-xs font-bold text-white truncate">
-                                      {nextMod.name}
-                                    </span>
-                                    <span
-                                      className={`text-[8px] font-bold uppercase tracking-wider rounded-full px-1.5 py-0.5 flex-shrink-0 ${tc.text} ${tc.bg}`}
-                                    >
-                                      {TIER_LABELS[nextMod.tier]}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex-1 h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
-                                      <div
-                                        className="h-full rounded-full transition-all duration-700"
-                                        style={{
-                                          width: `${pct}%`,
-                                          background: {
-                                            common:
-                                              "linear-gradient(to right, #6b7280, #9ca3af)",
-                                            rare: "linear-gradient(to right, #3b82f6, #60a5fa)",
-                                            epic: "linear-gradient(to right, #a855f7, #c084fc)",
-                                            legendary:
-                                              "linear-gradient(to right, #f59e0b, #fcd34d)",
-                                          }[nextMod.tier],
-                                        }}
-                                      />
-                                    </div>
-                                    <span className="text-[10px] font-bold tabular-nums text-slate-400">
-                                      {gamesInWindow}/{windowSize}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })()}
+                      {/* The games-played ladder is gone, so there is no next unlock to show
+                          here: every base card is free and shop cards are bought in the Armoury. */}
                     </div>
                     {/* /left column */}
                     {/* Right column: buttons + links */}

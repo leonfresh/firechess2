@@ -1,0 +1,32 @@
+{
+  "id": "9a03eca8-45b1-482c-9760-15bfe960fd5b:0",
+  "white": "asur",
+  "black": "AgungAdi",
+  "result": {
+    "winner": "black",
+    "reason": "Resignation"
+  },
+  "rated": false,
+  "endedAt": "2026-09-08 14:05:13.804377+00",
+  "frames": [
+    {
+      "fen": "rnbqkbnr/pppppppp/2p2p2/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "state": {
+        "white": [],
+        "black": [],
+        "assignedSquares": {},
+        "playerAnomaly": "high-priestess",
+        "aiAnomaly": "empress",
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Final position"
+    }
+  ],
+  "legacy": true,
+  "base": -1,
+  "increment": 0
+}

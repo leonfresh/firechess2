@@ -1,0 +1,20 @@
+{
+  "name": "chaos-chess-discord-activity",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "prepare:assets": "node scripts/prepare-assets.mjs",
+    "party:dev": "partykit dev",
+    "test:transport": "node --test ../scripts/chaos-transport.test.cjs",
+    "predev": "npm run prepare:assets",
+    "prebuild": "npm run prepare:assets",
+    "prestart": "npm run prepare:assets",
+    "dev": "node ../scripts/chaos-server.mjs --activity --dev",
+    "build": "next build",
+    "start": "node ../scripts/chaos-server.mjs --activity",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@discord/embedded-app-sdk": "^2.5.0"
+  }
+}

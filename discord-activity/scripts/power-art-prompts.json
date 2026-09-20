@@ -1,0 +1,34 @@
+{
+  "tool": "Built-in image_gen",
+  "promptAssembly": "base + ' Subject: ' + subjects[id]",
+  "railgunRevision": {
+    "reference": "assets/railgun.png",
+    "output": "assets/railgun-v2.png",
+    "prompt": "Edit this Chaos Chess Railgun card illustration. Remove ONLY the extra fifth barrel in the very front center pointing toward the viewer and its white lightning bolt. Replace that central barrel area with the matching uninterrupted ivory rook torso surface. Preserve exactly the other FOUR blue/gold side barrels (two left, two right), blue background, lighting, pedestal, top battlements, blue jewel, square framing and toy PBR style. No other changes. No text."
+  },
+  "base": "Use case: stylized-concept. Asset type: square Chaos Chess power-up card illustration. Premium playful mobile game toy PBR render matching the existing ivory and gold Chaos Chess set. Chunky rounded glossy molded plastic, soft bevels, warm studio key light upper left, soft contact shadows, subtle bloom. Full subject centered with 10 percent safe margin; simple colored studio background, clear silhouette readable as a small thumbnail. No lettering, no text, no card frame, no UI, no watermark, no humans. ",
+  "subjects": {
+    "knight-horde": "Three ivory knight horse-head chess pieces charging together, gold bridles, one prominent leader and two smaller companions, swirling golden dust. Sky blue background.",
+    "undead-army": "A cheerful army of ivory pawn chess pieces rising from mint-green magical rings on chess tiles, tiny harmless skull emblems and green ghost wisps. Charming not scary. Emerald background.",
+    "king-ascension": "A magnificent ivory king chess piece with gold cross and crown floating above a radiant golden chess tile, eight straight golden rays radiating outward to suggest long-range captures, small levitating gold shards. Warm amber background.",
+    "rook-cannon": "An ivory rook chess piece built into a chunky gold-trimmed toy cannon turret, rounded blue cannon barrel emerging from its front, a single glossy cannonball airborne. Coral orange background.",
+    "railgun": "An ivory rook chess piece with four chunky blue electromagnetic barrels pointing in four orthogonal directions, glowing cyan coils and short electric beams, gold fittings. Deep electric blue background.",
+    "queen-cannon": "An ivory queen chess piece with an unmistakable five-point jeweled gold crown, a chunky purple toy cannon mounted into her flared torso, polished gold muzzle emitting a glowing pink orb. Pink purple background.",
+    "queen-teleport": "An ivory queen chess piece stepping between two luminous violet portal rings, one complete queen in foreground and faint translucent trailing silhouette in other portal, gold crown. Indigo background.",
+    "collateral-rook": "A sturdy ivory rook chess piece bowling into two small navy enemy pawn chess pieces in a straight line, playful orange impact burst and tumbling chess tiles. Warm orange background.",
+    "bishop-bounce": "An ivory bishop chess piece with gold-trimmed mitre, a luminous turquoise diagonal ribbon hitting a raised board edge and bouncing away, readable angled ricochet trail. Teal background.",
+    "pawn-promotion-early": "A small ivory pawn chess piece halfway transforming into a grand ivory gold-crowned queen, floating crown lowering above it, upward golden sparkles, pedestal on a central chess tile. Peach pink background.",
+    "bishop-cannon": "An ivory bishop chess piece with split pointed mitre, a glossy purple crystal cannon built into torso firing a violet orb diagonally over one small navy pawn. Lilac background.",
+    "knook": "A clearly hybrid knight and rook ivory chess piece: friendly horse head rising from a chunky crenellated castle tower torso, gold masonry trim, sturdy round chess pedestal. Turquoise background.",
+    "archbishop": "A clearly hybrid bishop and knight ivory chess piece: elegant horse head with a small gold bishop mitre and diamond jewel, split bishop ribbon collar, curved horse neck, round chess pedestal. Pale lavender background.",
+    "night-rider": "A navy-blue knight horse-head chess piece with gold trim and crescent moon crest, two smaller translucent blue echo silhouettes following in a leaping curve, star sparkles. Twilight blue background.",
+    "phantom-rook": "A translucent mint-blue ghost rook chess piece passing through a solid small ivory pawn, rounded castle crenellations and playful glowing eyes, gold rim at pedestal, ghostly mist. Aqua background.",
+    "sniper-bishop": "An ivory bishop chess piece with split gold-edged mitre wearing a small blue optical scope attached alongside torso, thin glowing diagonal targeting beam aimed at a distant navy pawn. Rounded toy equipment. Blue cyan background.",
+    "pawn-fortress": "An ivory pawn chess piece protected inside a little gold-trimmed round castle wall with a curved translucent blue shield, three crenellations, sturdy chess tile base. Soft blue background.",
+    "enpassant-everywhere": "An ivory pawn chess piece sidestepping behind a navy pawn chess piece with a curved bright mint arrow trail around it, little speed puffs and two clear chess tiles, cheeky playful composition. Mint green background.",
+    "king-wrath": "An ivory king chess piece with bold gold cross crown standing triumphantly beside a toppled navy pawn while a smaller ivory knight reappears in a glowing golden resurrection ring behind the king. Orange gold background.",
+    "usurper": "An ivory king chess piece and ivory rook chess piece trading places across two tiles, two thick curved violet magic arrows circling between them, gold crown floating slightly above king. Purple background.",
+    "kamikaze-bishop": "An ivory bishop chess piece with gold-edged mitre and a round cartoon toy bomb tied to torso with red ribbon, tiny sparkling fuse, harmless stylized orange explosion puff behind it. No violence or realistic weapons. Coral background.",
+    "forced-en-passant": "An ivory pawn chess piece with a giant chunky red horseshoe magnet pulling a navy pawn sideways into a diagonal capture, little curved motion trail on chess tiles. Humorous toy composition. Warm red pink background."
+  }
+}

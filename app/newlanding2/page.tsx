@@ -479,13 +479,6 @@ export default function NewLanding2Page() {
         </div>
       </section>
 
-      <footer className="py-10">
-        <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-4 px-8 font-mono text-[12.5px]" style={{ color: ASH }}>
-          <span>firechess</span>
-          <span>blog &middot; pricing &middot; about &middot; discord</span>
-        </div>
-      </footer>
-
       <div className="py-8 text-center">
         <span className="rounded-full border px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-[0.16em]" style={{ borderColor: ASH_DIM, color: ASH }}>
           &#9660; report page &#9660;

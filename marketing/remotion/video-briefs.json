@@ -1,0 +1,25 @@
+{
+  "camel-short": {
+    "duration": 18,
+    "cues": [
+      {"id":"hook","at":0.1,"slot":3.7,"text":"That knight just stole a rook from there."},
+      {"id":"power","at":4.2,"slot":4.1,"text":"The Camel adds a three-and-one leap."},
+      {"id":"draft","at":8.7,"slot":4.7,"text":"Draft powers. Build threats your friends won't see coming."},
+      {"id":"cta","at":14.1,"slot":3.6,"text":"Chaos Chess. Play on Discord."}
+    ]
+  },
+  "showcase": {
+    "duration": 60,
+    "cues": [
+      {"id":"hook","at":0.1,"slot":4.6,"text":"That knight just took a rook from three squares away."},
+      {"id":"intro","at":5.2,"slot":5.5,"text":"This is Chaos Chess. Play a friend, find an opponent, or practice against the A I."},
+      {"id":"anomalies","at":11.2,"slot":5.5,"text":"Choose an opening anomaly for a match-long twist. Or skip it and start playing."},
+      {"id":"draft","at":17.2,"slot":7.3,"text":"Every five turns, pick one of three powers. Upgrade your pieces, and watch what your opponent picks too."},
+      {"id":"tactics","at":25.2,"slot":8.3,"text":"A Knook adds rook moves to a knight. But it can still be captured. Your powers change the tactics, not the goal."},
+      {"id":"finish","at":34.2,"slot":7.3,"text":"Find the threats. Protect your king. Here, a Camel's longer jump finishes the game with checkmate."},
+      {"id":"clocks","at":42.2,"slot":6.3,"text":"Choose two plus one, five plus three, or a longer game. Clocks pause while drafting."},
+      {"id":"community","at":49.2,"slot":5.3,"text":"Browse the leaderboard, watch games live, or replay a match to study the powers."},
+      {"id":"cta","at":55.2,"slot":4.4,"text":"Bring a friend. Draft your advantage. Play Chaos Chess on Discord."}
+    ]
+  }
+}

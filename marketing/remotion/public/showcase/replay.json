@@ -1,0 +1,895 @@
+{
+  "id": "e3af55a1-82fb-46ad-9e12-7effa0b1e5c8:0",
+  "white": "evil gooblert",
+  "black": "IdkUsername",
+  "result": {
+    "winner": "black",
+    "reason": "Checkmate"
+  },
+  "rated": false,
+  "endedAt": "2026-09-08 12:42:02.675442+00",
+  "frames": [
+    {
+      "fen": "rnbqkbnr/pppppppp/8/8/8/4P3/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+      "state": {
+        "white": [],
+        "black": [],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 1: e2 → e3",
+      "from": "e2",
+      "to": "e3"
+    },
+    {
+      "fen": "rnbqkbnr/pppp1ppp/8/4p3/8/4P3/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+      "state": {
+        "white": [],
+        "black": [],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 2: e7 → e5",
+      "from": "e7",
+      "to": "e5"
+    },
+    {
+      "fen": "rnbqkbnr/pppp1ppp/8/4p3/7P/4P3/PPPP1PP1/RNBQKBNR b KQkq - 0 2",
+      "state": {
+        "white": [],
+        "black": [],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 3: h2 → h4",
+      "from": "h2",
+      "to": "h4"
+    },
+    {
+      "fen": "rnbqkbnr/pppp1pp1/8/4p2p/7P/4P3/PPPP1PP1/RNBQKBNR w KQkq - 0 3",
+      "state": {
+        "white": [],
+        "black": [],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 4: h7 → h5",
+      "from": "h7",
+      "to": "h5"
+    },
+    {
+      "fen": "rnbqkbnr/pppp1pp1/8/4p2p/7P/4P2R/PPPP1PP1/RNBQKBN1 b Qkq - 1 3",
+      "state": {
+        "white": [],
+        "black": [],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 5: h1 → h3",
+      "from": "h1",
+      "to": "h3"
+    },
+    {
+      "fen": "r1bqkbnr/pppp1pp1/2n5/4p2p/7P/4P2R/PPPP1PP1/RNBQKBN1 w Qkq - 2 4",
+      "state": {
+        "white": [],
+        "black": [],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 6: b8 → c6",
+      "from": "b8",
+      "to": "c6"
+    },
+    {
+      "fen": "r1bqkbnr/pppp1pp1/2n5/4p2p/2P4P/4P2R/PP1P1PP1/RNBQKBN1 b Qkq - 0 4",
+      "state": {
+        "white": [],
+        "black": [],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 7: c2 → c4",
+      "from": "c2",
+      "to": "c4"
+    },
+    {
+      "fen": "r1bqkbnr/p1pp1pp1/1pn5/4p2p/2P4P/4P2R/PP1P1PP1/RNBQKBN1 w Qkq - 0 5",
+      "state": {
+        "white": [],
+        "black": [],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 8: b7 → b6",
+      "from": "b7",
+      "to": "b6"
+    },
+    {
+      "fen": "r1bqkbnr/p1pp1pp1/1pn5/4p2p/P1P4P/4P2R/1P1P1PP1/RNBQKBN1 b Qkq - 0 5",
+      "state": {
+        "white": [],
+        "black": [],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 9: a2 → a4",
+      "from": "a2",
+      "to": "a4"
+    },
+    {
+      "fen": "r2qkbnr/p1pp1pp1/bpn5/4p2p/P1P4P/4P2R/1P1P1PP1/RNBQKBN1 w Qkq - 1 6",
+      "state": {
+        "white": [
+          "dragon-rook"
+        ],
+        "black": [],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 10: c8 → a6",
+      "from": "c8",
+      "to": "a6"
+    },
+    {
+      "fen": "r2qkbnr/p1pp1pp1/bpn5/4p2p/P1P4P/4PR2/1P1P1PP1/RNBQKBN1 b Qkq - 2 6",
+      "state": {
+        "white": [
+          "dragon-rook"
+        ],
+        "black": [
+          "camel"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 11: h3 → f3",
+      "from": "h3",
+      "to": "f3"
+    },
+    {
+      "fen": "r2qkbn1/p1pp1pp1/bpn4r/4p2p/P1P4P/4PR2/1P1P1PP1/RNBQKBN1 w Qq - 3 7",
+      "state": {
+        "white": [
+          "dragon-rook"
+        ],
+        "black": [
+          "camel"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 12: h8 → h6",
+      "from": "h8",
+      "to": "h6"
+    },
+    {
+      "fen": "r2qkbn1/p1pp1pp1/bpn4r/4p2p/P1P1R2P/4P3/1P1P1PP1/RNBQKBN1 b Qq - 3 7",
+      "state": {
+        "white": [
+          "dragon-rook"
+        ],
+        "black": [
+          "camel"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 13: f3 → e4",
+      "from": "f3",
+      "to": "e4"
+    },
+    {
+      "fen": "r2qk1n1/p1pp1pp1/bpnb3r/4p2p/P1P1R2P/4P3/1P1P1PP1/RNBQKBN1 w Qq - 4 8",
+      "state": {
+        "white": [
+          "dragon-rook"
+        ],
+        "black": [
+          "camel"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 14: f8 → d6",
+      "from": "f8",
+      "to": "d6"
+    },
+    {
+      "fen": "r2qk1n1/p1pp1pp1/bpnb3r/4p2p/P1P1R2P/4PN2/1P1P1PP1/RNBQKB2 b Qq - 5 8",
+      "state": {
+        "white": [
+          "dragon-rook"
+        ],
+        "black": [
+          "camel"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 15: g1 → f3",
+      "from": "g1",
+      "to": "f3"
+    },
+    {
+      "fen": "r2qk1n1/p1pp1pp1/bp1b3r/4p2p/PnP1R2P/4PN2/1P1P1PP1/RNBQKB2 w Qq - 6 9",
+      "state": {
+        "white": [
+          "dragon-rook"
+        ],
+        "black": [
+          "camel"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 16: c6 → b4",
+      "from": "c6",
+      "to": "b4"
+    },
+    {
+      "fen": "r2qk1n1/p1pp1pp1/bp1b3r/4p2p/PnP1R2P/R3PN2/1P1P1PP1/1NBQKB2 b q - 7 9",
+      "state": {
+        "white": [
+          "dragon-rook"
+        ],
+        "black": [
+          "camel"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 17: a1 → a3",
+      "from": "a1",
+      "to": "a3"
+    },
+    {
+      "fen": "r2qk1n1/p1pp1pp1/bpnb3r/4p2p/P1P1R2P/R3PN2/1P1P1PP1/1NBQKB2 w q - 8 10",
+      "state": {
+        "white": [
+          "dragon-rook"
+        ],
+        "black": [
+          "camel"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 18: b4 → c6",
+      "from": "b4",
+      "to": "c6"
+    },
+    {
+      "fen": "r2qk1n1/p1pp1pp1/bpnb3r/4pR1p/P1P4P/R3PN2/1P1P1PP1/1NBQKB2 b q - 8 10",
+      "state": {
+        "white": [
+          "dragon-rook"
+        ],
+        "black": [
+          "camel"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 19: e4 → f5",
+      "from": "e4",
+      "to": "f5"
+    },
+    {
+      "fen": "r2qk1n1/p1pp1pp1/bp1b3r/4pn1p/P1P4P/R3PN2/1P1P1PP1/1NBQKB2 w q - 8 11",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook"
+        ],
+        "black": [
+          "camel"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 20: c6 → f5",
+      "from": "c6",
+      "to": "f5"
+    },
+    {
+      "fen": "r2qk1n1/p1pp1pp1/bp1b3r/4pn1p/P1P4P/R1N1PN2/1P1P1PP1/2BQKB2 b q - 9 11",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook"
+        ],
+        "black": [
+          "camel",
+          "pawn-capture-forward"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 21: b1 → c3",
+      "from": "b1",
+      "to": "c3"
+    },
+    {
+      "fen": "r2qk1n1/p1pp1pp1/bp5r/4pn1p/P1P4P/b1N1PN2/1P1P1PP1/2BQKB2 w q - 0 12",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook"
+        ],
+        "black": [
+          "camel",
+          "pawn-capture-forward"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 22: d6 → a3",
+      "from": "d6",
+      "to": "a3"
+    },
+    {
+      "fen": "r2qk1n1/p1pp1pp1/bp5r/4pn1p/P1P4P/N3PN2/1P1P1PP1/2BQKB2 b q - 0 12",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook"
+        ],
+        "black": [
+          "camel",
+          "pawn-capture-forward"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 23: c3 → a3",
+      "from": "c3",
+      "to": "a3"
+    },
+    {
+      "fen": "r2qk1n1/p1pp1pp1/bp5r/4pn2/P1P4p/N3PN2/1P1P1PP1/2BQKB2 w q - 0 13",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook"
+        ],
+        "black": [
+          "camel",
+          "pawn-capture-forward"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 24: h5 → h4",
+      "from": "h5",
+      "to": "h4"
+    },
+    {
+      "fen": "r2qk1n1/p1pp1pp1/bp5r/4pn2/P1P4N/N3P3/1P1P1PP1/2BQKB2 b q - 0 13",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook"
+        ],
+        "black": [
+          "camel",
+          "pawn-capture-forward"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 25: f3 → h4",
+      "from": "f3",
+      "to": "h4"
+    },
+    {
+      "fen": "r2qk1n1/p1pp1pp1/bp6/4pn2/P1P4r/N3P3/1P1P1PP1/2BQKB2 w q - 0 14",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook"
+        ],
+        "black": [
+          "camel",
+          "pawn-capture-forward"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 26: h6 → h4",
+      "from": "h6",
+      "to": "h4"
+    },
+    {
+      "fen": "r2qk1n1/p1pp1pp1/bp6/4pn2/P1P4r/N3P1P1/1P1P1P2/2BQKB2 b q - 0 14",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook"
+        ],
+        "black": [
+          "camel",
+          "pawn-capture-forward"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 27: g2 → g3",
+      "from": "g2",
+      "to": "g3"
+    },
+    {
+      "fen": "r2qk1n1/p1pp1pp1/bp6/4pn2/P1P5/N3P1P1/1P1P1P2/2BQKB1r w q - 1 15",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook"
+        ],
+        "black": [
+          "camel",
+          "pawn-capture-forward"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 28: h4 → h1",
+      "from": "h4",
+      "to": "h1"
+    },
+    {
+      "fen": "r2qk1n1/p1pp1pp1/bp6/4pn2/P1P5/3NP1P1/1P1P1P2/2BQKB1r b q - 1 15",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook"
+        ],
+        "black": [
+          "camel",
+          "pawn-capture-forward"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 29: a3 → d3",
+      "from": "a3",
+      "to": "d3"
+    },
+    {
+      "fen": "r2qk1n1/p1pp1pp1/1p6/4pn2/P1b5/3NP1P1/1P1P1P2/2BQKB1r w q - 0 16",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook",
+          "queen-teleport"
+        ],
+        "black": [
+          "camel",
+          "pawn-capture-forward"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 30: a6 → c4",
+      "from": "a6",
+      "to": "c4"
+    },
+    {
+      "fen": "r2qk1n1/p1pN1pp1/1p6/4pn2/P1b5/4P1P1/1P1P1P2/2BQKB1r b q - 0 16",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook",
+          "queen-teleport"
+        ],
+        "black": [
+          "camel",
+          "pawn-capture-forward",
+          "phantom-rook"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 31: d3 → d7",
+      "from": "d3",
+      "to": "d7"
+    },
+    {
+      "fen": "r3k1n1/p1pq1pp1/1p6/4pn2/P1b5/4P1P1/1P1P1P2/2BQKB1r w q - 0 17",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook",
+          "queen-teleport"
+        ],
+        "black": [
+          "camel",
+          "pawn-capture-forward",
+          "phantom-rook"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 32: d8 → d7",
+      "from": "d8",
+      "to": "d7"
+    },
+    {
+      "fen": "r3k1n1/p1pq1pp1/1p6/4pn1Q/P1b5/4P1P1/1P1P1P2/2B1KB1r b q - 1 17",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook",
+          "queen-teleport"
+        ],
+        "black": [
+          "camel",
+          "pawn-capture-forward",
+          "phantom-rook"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 33: d1 → h5",
+      "from": "d1",
+      "to": "h5"
+    },
+    {
+      "fen": "4k1n1/p1pq1pp1/1p6/4pn1Q/r1b5/4P1P1/1P1P1P2/2B1KB1r w - - 1 18",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook",
+          "queen-teleport"
+        ],
+        "black": [
+          "camel",
+          "pawn-capture-forward",
+          "phantom-rook"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 34: a8 → a4",
+      "from": "a8",
+      "to": "a4"
+    },
+    {
+      "fen": "4k1nQ/p1pq1pp1/1p6/4pn2/r1b5/4P1P1/1P1P1P2/2B1KB1r b - - 2 18",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook",
+          "queen-teleport"
+        ],
+        "black": [
+          "camel",
+          "pawn-capture-forward",
+          "phantom-rook"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 35: h5 → h8",
+      "from": "h5",
+      "to": "h8"
+    },
+    {
+      "fen": "4k1nr/p1pq1pp1/1p6/4pn2/r1b5/4P1P1/1P1P1P2/2B1KB2 w - - 0 19",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook",
+          "queen-teleport"
+        ],
+        "black": [
+          "camel",
+          "pawn-capture-forward",
+          "phantom-rook"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 36: h1 → h8",
+      "from": "h1",
+      "to": "h8"
+    },
+    {
+      "fen": "4k1nr/p1pq1pp1/1p6/4pn2/r1b5/4P1P1/1P1P1PB1/2B1K3 b - - 1 19",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook",
+          "queen-teleport"
+        ],
+        "black": [
+          "camel",
+          "pawn-capture-forward",
+          "phantom-rook"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 37: f1 → g2",
+      "from": "f1",
+      "to": "g2"
+    },
+    {
+      "fen": "4k1nr/p1pq1pp1/1p6/4p3/r1b5/4P1P1/1P1P1Pn1/2B1K3 w - - 1 20",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook",
+          "queen-teleport"
+        ],
+        "black": [
+          "camel",
+          "pawn-capture-forward",
+          "phantom-rook"
+        ],
+        "assignedSquares": {},
+        "playerAnomaly": null,
+        "aiAnomaly": null,
+        "currentPhase": 0,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Move 38: f5 → g2",
+      "from": "f5",
+      "to": "g2"
+    },
+    {
+      "fen": "4k1nr/p1pq1pp1/1p6/4p3/r1b5/4P1P1/1P1P1Pn1/2B1K3 w - - 1 20",
+      "state": {
+        "white": [
+          "dragon-rook",
+          "knook",
+          "queen-teleport"
+        ],
+        "black": [
+          "camel",
+          "pawn-capture-forward",
+          "phantom-rook"
+        ],
+        "assignedSquares": {
+          "b_camel": "g2",
+          "w_knook": null
+        },
+        "playerAnomaly": "judgement",
+        "aiAnomaly": "judgement",
+        "currentPhase": 3,
+        "playerNuclearCooldownUntil": 0,
+        "aiNuclearCooldownUntil": 0,
+        "playerMoonUnlocked": false,
+        "aiMoonUnlocked": false
+      },
+      "label": "Final position"
+    }
+  ],
+  "legacy": true,
+  "base": -1,
+  "increment": 0
+}

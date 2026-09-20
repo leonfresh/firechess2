@@ -6,15 +6,19 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { chaosUnlocks, users, chaosRatings, chaosPlayers, chaosGoldLedger } from "@/lib/schema";
+import {
+  chaosUnlocks,
+  users,
+  chaosRatings,
+  chaosPlayers,
+  chaosGoldLedger,
+  chaosPlayerUnlock,
+} from "@/lib/schema";
 import { and, eq, gt, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import {
-  GUEST_UNLOCKED_IDS,
-  PROGRESSION_UNLOCK_ORDER,
-  UNLOCK_AT_GAMES,
-} from "@/lib/chaos-collection";
+import { GUEST_UNLOCKED_IDS } from "@/lib/chaos-collection";
 import { ALL_MODIFIERS } from "@/lib/chaos-chess";
+import { shopCatalog } from "@/lib/chaos-shop";
 
 /* ── GET ─────────────────────────────────────────────────────────── */
 export async function GET(req: NextRequest) {
@@ -49,17 +53,21 @@ export async function GET(req: NextRequest) {
   // Authenticated user's own collection
   const session = await auth();
 
-  // Gold is keyed by chaos_player id. Inside Discord the activity sends X-Chaos-Identity (a
-  // discord_<snowflake>); a website session uses the user id, which is a chaos_player id too.
-  const { gold, goldWeek } = await readGold(
-    req.headers.get("x-chaos-identity") || session?.user?.id || null,
-  );
+  // Gold and shop unlocks are keyed by chaos_player id. Inside Discord the activity sends
+  // X-Chaos-Identity (a discord_<snowflake>); a website session uses the user id, which is a
+  // chaos_player id too.
+  const playerId = req.headers.get("x-chaos-identity") || session?.user?.id || null;
+  const { gold, goldWeek } = await readGold(playerId);
+  const ownedShop = playerId ? await readShopUnlocks(playerId) : [];
+  const ownedSet = new Set(ownedShop);
+  const shop = shopCatalog().map((card) => ({ ...card, owned: ownedSet.has(card.id) }));
 
   if (!session?.user?.id) {
-    // Guest: the default guest set, plus whatever gold their Discord identity has earned
+    // Guest: every base card is free, plus anything their identity has bought, plus their gold
     return NextResponse.json({
-      unlockedIds: [...GUEST_UNLOCKED_IDS],
+      unlockedIds: [...GUEST_UNLOCKED_IDS, ...ownedShop],
       total: ALL_MODIFIERS.length,
+      shop,
       gold,
       goldWeek,
     });
@@ -77,28 +85,31 @@ export async function GET(req: NextRequest) {
     .limit(1);
   const gamesPlayed = ratingRows[0]?.gamesPlayed ?? 0;
 
-  // Include mods earned via games-played progression
-  const progressionEarned = UNLOCK_AT_GAMES.filter(
-    (t) => gamesPlayed >= t,
-  ).length;
-  const progressionUnlocked = PROGRESSION_UNLOCK_ORDER.slice(
-    0,
-    progressionEarned,
-  );
-
+  // Base set plus website unlocks plus bought cards. There is no games-played ladder any more:
+  // every base card is free, and the shop is the only gate left.
   const unlocked = new Set([
     ...GUEST_UNLOCKED_IDS,
-    ...progressionUnlocked,
     ...rows.map((r) => r.modifierId),
+    ...ownedShop,
   ]);
 
   return NextResponse.json({
     unlockedIds: [...unlocked],
     total: ALL_MODIFIERS.length,
     gamesPlayed,
+    shop,
     gold,
     goldWeek,
   });
+}
+
+/** Shop cards this player has bought. Empty for a signed-out visitor with no Discord identity. */
+async function readShopUnlocks(playerId: string): Promise<string[]> {
+  const rows = await db
+    .select({ modifierId: chaosPlayerUnlock.modifierId })
+    .from(chaosPlayerUnlock)
+    .where(eq(chaosPlayerUnlock.playerId, playerId));
+  return rows.map((r) => r.modifierId);
 }
 
 /**

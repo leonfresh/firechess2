@@ -1370,7 +1370,7 @@ async function analyzeBrilliantMovesFromGames(
           ply >= 6 &&
           isBrilliantCandidate(fenBefore, userUci, engineDepth)
         ) {
-          const screenDepth = Math.max(7, engineDepth - 4);
+          const screenDepth = Math.max(12, engineDepth);
           const screenBefore = await stockfishPool.evaluateFen(
             fenBefore,
             screenDepth,
@@ -1398,8 +1398,14 @@ async function analyzeBrilliantMovesFromGames(
                 userUci.startsWith(screenBefore.bestMove.slice(0, 4)) &&
                 screenCpLoss <= 5);
 
+            // Confirm at scan depth and compare a distinct alternative. Without
+            // multi-PV evidence, do not award a brilliant badge.
+            const topMoves = screenCpLoss <= 10 && screenAfterCp >= -50
+              ? await stockfishPool.getTopMoves(fenBefore, 2, screenDepth)
+              : [];
+            const alternative = topMoves.find(line => line.bestMove && line.bestMove !== userUci);
             if (
-              isBrilliantMove({
+              alternative && isBrilliantMove({
                 fenBefore,
                 moveUci: userUci,
                 cpLoss: screenCpLoss,
@@ -1407,16 +1413,18 @@ async function analyzeBrilliantMovesFromGames(
                 evalAfterMover: screenAfterCp,
                 isBestMove: !!isBestScreenMove,
                 moveIndex: ply,
-                engineDepth,
+                engineDepth: screenDepth,
+                alternativeEvalMover: alternative.cp,
               })
             ) {
               const pvResult = await stockfishPool.getPrincipalVariation(
-                fenBefore,
+                fenAfter,
                 6,
-                Math.max(8, engineDepth - 2),
+                screenDepth,
               );
 
               brilliantMoves.push({
+                classificationVersion: 2,
                 fenBefore,
                 fenAfter,
                 userMove: userUci,
@@ -1427,7 +1435,7 @@ async function analyzeBrilliantMovesFromGames(
                 userColor,
                 gameIndex: gameIndex + 1,
                 moveNumber: Math.floor(ply / 2) + 1,
-                line: formatPvMovesAsSan(fenBefore, pvResult?.pvMoves ?? []),
+                line: formatPvMovesAsSan(fenBefore, [userUci, ...(pvResult?.pvMoves ?? [])]),
                 reason: buildMoveQualityCommentary({
                   classification: "brilliant",
                   cpLoss: screenCpLoss,

@@ -1,0 +1,15 @@
+const fs=require('node:fs'),ts=require('typescript'),Module=require('node:module'),path=require('node:path'),assert=require('node:assert/strict');
+const file=path.resolve('lib/move-quality.ts'),mod=new Module(file,module);mod.filename=file;mod.paths=module.paths;mod._compile(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,file);
+const {isBrilliantCandidate,isBrilliantMove}=mod.exports;
+const gift='6k1/5ppp/8/8/8/3B4/8/6K1 w - - 0 1';
+assert.equal(isBrilliantCandidate(gift,'d3h7'),true);
+assert.equal(isBrilliantCandidate('6k1/5ppp/8/8/8/3B4/8/6KR w - - 0 1','d3h7'),false,'illegal king capture is not a sacrifice');
+assert.equal(isBrilliantCandidate('6k1/8/8/8/3Q4/3p4/8/6K1 w - - 0 1','d4e4'),false,'backwards pawn attack');
+const base={fenBefore:gift,moveUci:'d3h7',cpLoss:0,evalBeforeMover:50,evalAfterMover:50,isBestMove:true,engineDepth:12};
+assert.equal(isBrilliantMove(base),true,'sound sacrifice needs no artificial eval jump');
+assert.equal(isBrilliantMove({...base,evalAfterMover:-150}),false);
+assert.equal(isBrilliantMove({...base,alternativeEvalMover:400}),false);
+assert.equal(isBrilliantMove({...base,evalBeforeMover:700,evalAfterMover:700,alternativeEvalMover:0}),true,'only winning move can qualify');
+assert.equal(isBrilliantMove({...base,cpLoss:NaN}),false);
+assert.equal(isBrilliantMove({...base,cpLoss:50}),false);
+console.log('8 brilliant classification regressions passed');

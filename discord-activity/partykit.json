@@ -1,0 +1,6 @@
+{
+  "name": "chaos-chess-discord",
+  "main": "party/main.ts",
+  "parties": { "chaos": "../party/chaos.ts" },
+  "compatibilityDate": "2024-12-01"
+}

@@ -1,31 +1,45 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { getProviders, signIn } from "next-auth/react";
+import { useEffect, useState } from "react";
 
-function chaosSignInReturn() {
-  return new URLSearchParams(window.location.search).get("callbackUrl") === "/api/chaos/website-login" ? "/api/chaos/website-login" : "/";
+function returnAfterSignIn() {
+  // Allow the new dashboard handoff without accepting arbitrary redirect URLs.
+  const target = new URLSearchParams(window.location.search).get("callbackUrl");
+  return target && ["/newdashboard", "/newpricing", "/newtraining", "/api/chaos/website-login"].includes(target) ? target : "/";
 }
 
 export default function SignInPage() {
   const [loading, setLoading] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [emailSent, setEmailSent] = useState(false);
+  const [providers, setProviders] = useState<string[] | null>(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let active = true;
+    getProviders().then(value => { if (active) { if (value === null) setError("Could not load sign-in methods. Please reload to retry."); setProviders(Object.keys(value ?? {})); } }).catch(() => { if (active) { setProviders([]); setError("Could not load sign-in methods. Please reload to retry."); } });
+    return () => { active = false; };
+  }, []);
 
   const handleSignIn = async (provider: string) => {
-    setLoading(provider);
-    await signIn(provider, { callbackUrl: chaosSignInReturn() });
+    if (!providers?.includes(provider)) return;
+    setLoading(provider); setError("");
+    try { await signIn(provider, { callbackUrl: returnAfterSignIn() }); }
+    catch { setError("Could not start sign-in. Please try again."); }
+    finally { setLoading(null); }
   };
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!email.trim() || !providers?.includes("resend")) return;
+    setError("");
     setLoading("resend");
     try {
-      await signIn("resend", { email: email.trim(), callbackUrl: chaosSignInReturn(), redirect: false });
+      const result = await signIn("resend", { email: email.trim(), callbackUrl: returnAfterSignIn(), redirect: false });
+      if (!result?.ok || result.error) throw new Error("Email sign-in failed");
       setEmailSent(true);
     } catch {
-      // signIn may throw on network error
+      setError("Could not send the sign-in email. Please try again.");
     } finally {
       setLoading(null);
     }
@@ -45,9 +59,12 @@ export default function SignInPage() {
           </p>
         </div>
 
+        {error && <p role="alert" className="rounded-xl border border-red-400/30 p-4 text-sm text-red-200">{error}</p>}
+        {providers === null && <p role="status" className="text-sm text-slate-400">Loading sign-in methods…</p>}
+        {providers?.length === 0 && !error && <div className="rounded-xl border border-orange-400/30 p-5 text-sm text-slate-300"><p>Sign-in is not configured on this instance yet. You can still explore the sample reports.</p><a className="mt-3 inline-block text-orange-300" href="/newreportpage">Explore a sample report →</a></div>}
         {/* OAuth buttons */}
         <div className="space-y-3">
-          <button
+          {providers?.includes("google") && <button
             type="button"
             onClick={() => handleSignIn("google")}
             disabled={!!loading}
@@ -79,9 +96,9 @@ export default function SignInPage() {
               </svg>
             )}
             Continue with Google
-          </button>
+          </button>}
 
-          <button
+          {providers?.includes("lichess") && <button
             type="button"
             onClick={() => handleSignIn("lichess")}
             disabled={!!loading}
@@ -99,9 +116,10 @@ export default function SignInPage() {
               </svg>
             )}
             Continue with Lichess
-          </button>
+          </button>}
         </div>
 
+        {providers?.includes("resend") && <>
         {/* Divider */}
         <div className="flex items-center gap-3">
           <div className="h-px flex-1 bg-white/[0.08]" />
@@ -154,6 +172,7 @@ export default function SignInPage() {
             </button>
           </form>
         )}
+        </>}
 
         <p className="text-center text-xs text-slate-600">
           <span className="text-slate-500">Chess.com users:</span> Use Google or email sign-in above, then enter your Chess.com username when scanning.

@@ -22,6 +22,12 @@ export const NUCLEAR_QUEEN_COOLDOWN_TURNS = 5;
 /** Railgun charges per game: the card stays in hand until both shots are fired. */
 export const RAILGUN_MAX_SHOTS = 2;
 
+/**
+ * Cards that are not part of the free set: they are bought with gold (see lib/chaos-shop.ts).
+ * Everything else in ALL_MODIFIERS is unlocked for every player, signed in or not.
+ */
+export const SHOP_CARD_IDS: ReadonlySet<string> = new Set(["conscription", "phalanx"]);
+
 export type PieceType = "p" | "n" | "b" | "r" | "q" | "k";
 
 export interface ChaosModifier {

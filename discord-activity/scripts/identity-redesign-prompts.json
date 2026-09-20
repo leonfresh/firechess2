@@ -1,0 +1,15 @@
+{
+  "tool": "Built-in image_gen",
+  "date": "2026-09-08",
+  "images": [
+    {"output":"assets/camel-v2.png","prompt":"Single square Chaos Chess Camel power card illustration. A clearly recognizable CAMEL chess figurine, not a horse or knight: long curved upright neck, blunt elongated split-lip muzzle, tiny rounded ears, no horse mane, TWO rounded camel humps clearly visible on its compact sculpted body below the neck. Whole camel upper body sculpt joins a classic round chess pedestal. Ivory glazed toy ceramic, gold trim and simple gold collar, matching a premium playful casual mobile game toy PBR chess set. Friendly expressive eye, soft rounded bevels, warm studio key light from upper left, gentle contact shadow. A single dominant piece centered, generous 10 percent safe margin. Simple periwinkle studio background. No crown, no horse mane, no text, no card frame, no extra pieces, no scenery."},
+    {
+      "output": "assets/pawn-fortress-v2.png",
+      "prompt": "Create a single square game card illustration for Chaos Chess: Pawn Fortress, whose ability is a captured pawn sometimes respawning on its home square. Charming chunky toy PBR rendered chess pieces, ivory ceramic with warm gold trim, softly rounded forms, polished casual mobile board-game style. Clearly show a small ivory pawn re-forming from mint green glowing particles on a single golden HOME chess tile with a subtle castle crenellation rim. Behind and to the left a faint translucent departed pawn silhouette dissolves, with ONE broad curved mint return arrow leading to the solid pawn on home tile. The solid revived pawn is the dominant subject. No shield, no bubble, no forcefield, no text, no numbers, no card border, no logo. Soft turquoise studio background, warm key light, crisp readable silhouette at thumbnail size, uncluttered, 3/4 view, generous safe margins."
+    },
+    {
+      "output": "assets/forced-en-passant-v2.png",
+      "prompt": "Create a single square game card illustration for Chaos Chess: Forced En Passant. Charming chunky toy PBR chess pieces in ivory/gold and navy/gold, matching a polished casual mobile board-game style. An ivory pawn and a navy pawn on adjacent chess squares, ivory pawn prominently poised to make an en passant capture: show ONE bold warm golden arrow turning diagonally from ivory pawn toward an EMPTY highlighted square behind the navy pawn, with a small red exclamation marker hovering above the ivory pawn indicating mandatory move. A soft fading outline around navy pawn implies removal. Only a compact 2-by-3 chess tile platform, no other pieces, no magnet, no weapons, no text, no letters, no numbers, no card border. Warm coral-pink studio background, chunky readable forms, soft shadows, friendly playful mood, clean 3/4 view, large subjects with safe margins."
+    }
+  ]
+}

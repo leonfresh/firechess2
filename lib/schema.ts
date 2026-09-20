@@ -985,6 +985,12 @@ export const chaosGoldLedger = pgTable('chaos_gold_ledger', {
   amount: integer('amount').notNull(), reason: text('reason').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
+/** Cards bought with gold, keyed by chaos_player id so Discord and website identities both work. */
+export const chaosPlayerUnlock = pgTable('chaos_player_unlock', {
+  id: text('id').primaryKey(), playerId: text('player_id').notNull(), modifierId: text('modifier_id').notNull(),
+  pricePaid: integer('price_paid').notNull().default(0), source: text('source').notNull().default('shop'),
+  unlockedAt: timestamp('unlocked_at', { withTimezone: true }).notNull().defaultNow(),
+});
 export const chaosMatches = pgTable('chaos_match', {
   id: text('id').primaryKey(), roomId: text('room_id').notNull(), gameNumber: integer('game_number').notNull(),
   hostId: text('host_id').notNull(), guestId: text('guest_id').notNull(), hostColor: text('host_color').notNull(),

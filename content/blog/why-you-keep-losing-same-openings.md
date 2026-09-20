@@ -8,7 +8,7 @@ tags: ["openings", "psychology"]
 
 You sit down to play. Your opponent opens 1.d4. You groan internally. Somehow, you *always* struggle against d4 openings. Or maybe it's the Sicilian. Or the London System. Whatever it is, there's an opening that feels like your kryptonite.
 
-This isn't bad luck. It's a pattern, and patterns can be fixed.
+This isn't bad luck. It's a pattern, and patterns can be fixed. Sometimes the pattern isn't just in your openings — it's in your [psychology and tilt response](/blog/chess-psychology-tilting).
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
 <svg width="660" height="280" viewBox="0 0 660 280" fill="none" xmlns="http://www.w3.org/2000/svg">

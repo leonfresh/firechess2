@@ -3,35 +3,16 @@
  * Used by both the client page and the server-side API routes.
  */
 
+import { ALL_MODIFIERS, SHOP_CARD_IDS } from "./chaos-chess";
+
 /**
- * Modifier IDs available to all players without signing up: 19 of the 30 modifiers.
- * Tier labels live in ALL_MODIFIERS (lib/chaos-chess.ts) and shift as powers are retuned, so read
- * the per-tier counts from there rather than from this comment. Everything else is earned or locked.
+ * Modifier IDs available to every player, signed in or not: the whole set except the shop cards.
+ * Shop cards are bought with gold (lib/chaos-shop.ts); nothing else is gated any more, so a new
+ * player can play the full game and the shop's promise is variety rather than power.
  */
-export const GUEST_UNLOCKED_IDS = new Set([
-  // Commons
-  "pawn-charge",
-  "pawn-capture-forward",
-  "camel",
-  "dragon-bishop",
-  "kings-chains",
-  "dragon-rook",
-  "pawn-promotion-early",
-  // Rares (amazon stays locked as premium)
-  "night-rider",
-  "phantom-rook",
-  "sniper-bishop",
-  "enpassant-everywhere",
-  "knook",
-  "archbishop",
-  "king-ascension",
-  "usurper",
-  "bishop-bounce",
-  // Epics (the milder ones)
-  "queen-teleport",
-  "bishop-cannon",
-  "pawn-fortress",
-]);
+export const GUEST_UNLOCKED_IDS: ReadonlySet<string> = new Set(
+  ALL_MODIFIERS.filter((m) => !SHOP_CARD_IDS.has(m.id)).map((m) => m.id),
+);
 
 /** localStorage key for an earn-then-signup pending unlock */
 export const LS_PENDING_UNLOCK = "firechess_pending_unlock";
@@ -53,102 +34,8 @@ export const LS_PREVIEWED_MODS = "firechess_chaos_previewed_mods";
 export const LS_PREVIEW_NO_CONFIRM = "firechess_chaos_preview_no_confirm";
 
 /**
- * Ordered list of modifier IDs that unlock progressively for signed-in users.
- * Unlock thresholds are front-loaded so new players earn early mods quickly.
- * Ordered weakest → strongest so casual players earn mild upgrades first.
+ * The games-played unlock ladder is gone: every base card is unlocked for everyone from the first
+ * game, and the shop (lib/chaos-shop.ts) sells the rest. There is no longer a "next unlock" to
+ * compute, so the ladder tables and getProgressionInfo() were removed with it - nothing in the app
+ * gates a card on games played any more.
  */
-export const PROGRESSION_UNLOCK_ORDER: readonly string[] = [
-  "king-wrath", // game  2 — Regicide (rare)
-  "toll-gate", // game  5 — Toll Gate (rare)
-  "queen-cannon", // game  9 — Queen Cannon (epic)
-  "collateral-rook", // game 14 — Collateral Damage (epic)
-  "nuclear-queen", // game 20 — Nuclear Queen (legendary)
-  "rook-cannon", // game 27 — Rook Cannon (legendary)
-  "knight-horde", // game 35 — Knight Horde (legendary)
-  "undead-army", // game 44 — Undead Army (legendary)
-  "railgun", // game 54 — Railgun (legendary)
-  "kamikaze-bishop", // game 60 — Kamikaze Bishop (legendary)
-  "amazon", // game 65 — The Amazon (legendary)
-];
-
-/**
- * Cumulative games-played threshold for each unlock in PROGRESSION_UNLOCK_ORDER.
- * Gaps increase arithmetically (2, 3, 4, 5 …) so early mods arrive fast
- * while later legendaries still require meaningful investment.
- */
-export const UNLOCK_AT_GAMES: readonly number[] = [
-  2, // king-wrath
-  5, // toll-gate
-  9, // queen-cannon
-  14, // collateral-rook
-  20, // nuclear-queen
-  27, // rook-cannon
-  35, // knight-horde
-  44, // undead-army
-  54, // railgun
-  60, // kamikaze-bishop
-  65, // amazon
-];
-
-/** @deprecated Use UNLOCK_AT_GAMES for per-step thresholds instead. */
-export const GAMES_PER_UNLOCK = 5;
-
-/**
- * All data needed to render the "Next Unlock" progression widget.
- * Returns null when the player has earned every progression mod.
- */
-export interface ProgressionInfo {
-  /** Index into PROGRESSION_UNLOCK_ORDER of the next mod to earn */
-  nextIdx: number;
-  /** Total number of progression steps */
-  total: number;
-  /** Modifier ID of the next unlock */
-  nextModId: string;
-  /** Absolute games-played threshold to earn it */
-  gamesNeeded: number;
-  /** Start of the current unlock window (previous threshold, or 0) */
-  prevThreshold: number;
-  /** Size of the window: gamesNeeded − prevThreshold */
-  windowSize: number;
-  /** Games played inside the current window: gamesPlayed − prevThreshold */
-  gamesInWindow: number;
-  /** Percentage through the window, 0–100 */
-  pct: number;
-  /** Games still needed: gamesNeeded − gamesPlayed */
-  remaining: number;
-}
-
-/**
- * Compute progression state from a raw gamesPlayed count.
- * Returns null when all progression mods have been earned.
- */
-export function getProgressionInfo(
-  gamesPlayed: number,
-): ProgressionInfo | null {
-  const earnedCount = Math.min(
-    UNLOCK_AT_GAMES.filter((t) => gamesPlayed >= t).length,
-    PROGRESSION_UNLOCK_ORDER.length,
-  );
-  const nextIdx = earnedCount;
-  if (nextIdx >= PROGRESSION_UNLOCK_ORDER.length) return null;
-
-  const nextModId = PROGRESSION_UNLOCK_ORDER[nextIdx];
-  const gamesNeeded = UNLOCK_AT_GAMES[nextIdx];
-  const prevThreshold = nextIdx === 0 ? 0 : UNLOCK_AT_GAMES[nextIdx - 1];
-  const windowSize = gamesNeeded - prevThreshold;
-  const gamesInWindow = Math.max(0, gamesPlayed - prevThreshold);
-  const pct = Math.round((gamesInWindow / windowSize) * 100);
-  const remaining = Math.max(0, gamesNeeded - gamesPlayed);
-
-  return {
-    nextIdx,
-    total: PROGRESSION_UNLOCK_ORDER.length,
-    nextModId,
-    gamesNeeded,
-    prevThreshold,
-    windowSize,
-    gamesInWindow,
-    pct,
-    remaining,
-  };
-}

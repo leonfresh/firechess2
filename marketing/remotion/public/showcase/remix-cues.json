@@ -1,0 +1,189 @@
+{
+  "music": "ChessOverdrive.mp3",
+  "sections": [
+    [
+      0,
+      5,
+      48
+    ],
+    [
+      5,
+      17,
+      8
+    ],
+    [
+      17,
+      34,
+      32
+    ],
+    [
+      34,
+      42,
+      48
+    ],
+    [
+      42,
+      49,
+      64
+    ],
+    [
+      49,
+      55,
+      80
+    ],
+    [
+      55,
+      60,
+      96
+    ]
+  ],
+  "effects": [
+    {
+      "sound": "vine-boom",
+      "at": 1.3666666666666667,
+      "end": 2.267,
+      "spoken": false
+    },
+    {
+      "sound": "record-scratch",
+      "at": 3.48,
+      "end": 3.72,
+      "spoken": false
+    },
+    {
+      "sound": "wait-what",
+      "at": 3.8,
+      "end": 4.445,
+      "spoken": true
+    },
+    {
+      "sound": "whoosh",
+      "at": 4.78,
+      "end": 5.05,
+      "spoken": false
+    },
+    {
+      "sound": "whoosh",
+      "at": 16.78,
+      "end": 17.05,
+      "spoken": false
+    },
+    {
+      "sound": "whoosh",
+      "at": 24.78,
+      "end": 25.05,
+      "spoken": false
+    },
+    {
+      "sound": "whoosh",
+      "at": 41.78,
+      "end": 42.05,
+      "spoken": false
+    },
+    {
+      "sound": "whoosh",
+      "at": 48.78,
+      "end": 49.05,
+      "spoken": false
+    },
+    {
+      "sound": "whoosh",
+      "at": 54.78,
+      "end": 55.05,
+      "spoken": false
+    },
+    {
+      "sound": "ping-idea-lightbulb",
+      "at": 20.45,
+      "end": 20.93,
+      "spoken": false
+    },
+    {
+      "sound": "capture",
+      "at": 26.366666666666667,
+      "end": 26.456,
+      "spoken": false
+    },
+    {
+      "sound": "capture",
+      "at": 29.866666666666667,
+      "end": 29.956,
+      "spoken": false
+    },
+    {
+      "sound": "capture",
+      "at": 35.36666666666667,
+      "end": 35.456,
+      "spoken": false
+    },
+    {
+      "sound": "capture",
+      "at": 37.166666666666664,
+      "end": 37.256,
+      "spoken": false
+    },
+    {
+      "sound": "capture",
+      "at": 38.96666666666667,
+      "end": 39.056,
+      "spoken": false
+    },
+    {
+      "sound": "bruh",
+      "at": 32.55,
+      "end": 33.103,
+      "spoken": true
+    },
+    {
+      "sound": "vine-boom",
+      "at": 40.766666666666666,
+      "end": 41.467,
+      "spoken": false
+    },
+    {
+      "sound": "correct",
+      "at": 41,
+      "end": 41.65,
+      "spoken": false
+    }
+  ],
+  "speechWindows": [
+    [
+      0.1,
+      3.45825
+    ],
+    [
+      5.2,
+      10.656583333333334
+    ],
+    [
+      11.2,
+      16.053416666666667
+    ],
+    [
+      17.2,
+      23.336375
+    ],
+    [
+      25.2,
+      32.22808333333333
+    ],
+    [
+      34.2,
+      40.37275
+    ],
+    [
+      42.2,
+      46.757125
+    ],
+    [
+      49.2,
+      53.485791666666664
+    ],
+    [
+      55.2,
+      59.169625
+    ]
+  ],
+  "peakDBFS": -1.11
+}

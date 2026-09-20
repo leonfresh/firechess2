@@ -22,11 +22,15 @@ function getStripe() {
 }
 
 export async function POST(req: NextRequest) {
-  const stripe = getStripe();
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return NextResponse.json({ error: "Checkout is temporarily unavailable. Please try again later." }, { status: 503 });
+  }
+  const stripe = getStripe();
 
   // Parse optional body for plan type
   let isLifetime = false;

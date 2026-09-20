@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <title>Chaos Chess</title>
+  <g transform="rotate(-8 64 64)">
+    <path d="M25 27h19v16h12V22h19v21h12V27h18v32L91 72l4 20H35l4-20-14-13V27Z" fill="#819c45" transform="translate(0 5)"/>
+    <path d="M25 27h19v16h12V22h19v21h12V27h18v32L91 72l4 20H35l4-20-14-13V27Z" fill="#d4f77a"/>
+    <path d="M36 85h57l10 16a5 5 0 0 1-4 8H30a5 5 0 0 1-4-8l10-16Z" fill="#819c45"/>
+    <path d="M36 81h57l10 16a5 5 0 0 1-4 8H30a5 5 0 0 1-4-8l10-16Z" fill="#d4f77a"/>
+    <path d="m68 47-19 27h15l-6 22 25-32H67l9-17h-8Z" fill="#192238"/>
+    <path d="M30 31h9M61 27h9M92 31h8" stroke="#f3ffd3" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <path d="m106 5 4 9 10 4-10 4-4 10-4-10-10-4 10-4 4-9Z" fill="#b9acf7"/>
+</svg>

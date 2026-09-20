@@ -1,0 +1,33 @@
+// Every draft power has its own illustration. The first four share an existing atlas.
+export const POWER_ART_SPRITES: Record<string, string> = {
+  'pawn-charge': '0% 0%', 'nuclear-queen': '100% 0%',
+  'dragon-bishop': '0% 100%', 'kings-chains': '100% 100%',
+};
+export const POWER_ILLUSTRATIONS: Record<string, string> = {
+  "camel": "camel-v2",
+  "dragon-rook": "dragon-rook",
+  "pawn-capture-forward": "pawn-bayonet",
+  "amazon": "amazon",
+  "knight-horde": "knight-horde",
+  "undead-army": "undead-army",
+  "king-ascension": "king-ascension",
+  "rook-cannon": "rook-cannon",
+  "railgun": "railgun-v2",
+  "queen-cannon": "queen-cannon",
+  "queen-teleport": "queen-teleport",
+  "collateral-rook": "collateral-rook",
+  "bishop-bounce": "bishop-bounce",
+  "pawn-promotion-early": "pawn-promotion-early",
+  "bishop-cannon": "bishop-cannon",
+  "knook": "knook",
+  "archbishop": "archbishop",
+  "night-rider": "night-rider",
+  "phantom-rook": "phantom-rook",
+  "sniper-bishop": "sniper-bishop",
+  "pawn-fortress": "pawn-fortress-v2",
+  "enpassant-everywhere": "enpassant-everywhere",
+  "king-wrath": "king-wrath",
+  "usurper": "usurper",
+  "kamikaze-bishop": "kamikaze-bishop",
+  "toll-gate": "toll-gate"
+};
