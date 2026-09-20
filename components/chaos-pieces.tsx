@@ -934,6 +934,10 @@ export function buildChaosCustomPieces(
       const visiblePowers = activeForPiece.filter(m =>
         !['knight-horde', 'undead-army', 'phalanx'].includes(m.id) &&
         (!SINGLE_PIECE_MODIFIERS[m.id] || singlePieceSquares[m.id]?.[pieceColor] === square));
+      // The nuclear queen's badge carries its cooldown, so ready and cooling look different.
+      const nukeTurnsLeft = activeForPiece.some(m => m.id === 'nuclear-queen')
+        ? (isPlayerPiece ? (playerNukeCdTurns ?? 0) : (aiNukeCdTurns ?? 0))
+        : 0;
 
       return (
         <div
@@ -979,10 +983,15 @@ export function buildChaosCustomPieces(
                 display: 'flex', gap: 1, borderRadius: 5, padding: 2, background: '#17263bea',
                 border: '1px solid #a8bfd377', color: '#e0f998', alignItems: 'center',
                 fontSize: Math.max(9, squareWidth * .17), fontWeight: 900, lineHeight: 1 }}>
-              {visiblePowers.slice(0, 2).map(m => <span key={m.id} data-power-badge={m.id}
-                style={{ width: squareWidth * .23, height: squareWidth * .23, display: 'grid', placeItems: 'center' }}>
-                {m.id === 'vaulting-knight' ? '↟' : m.id === 'bank-shot' ? '↱' : m.icon}
-              </span>)}
+              {visiblePowers.slice(0, 2).map(m => {
+                const cooling = m.id === 'nuclear-queen' ? nukeTurnsLeft : 0;
+                return <span key={m.id} data-power-badge={m.id} data-nuke-cd={cooling || undefined}
+                  title={cooling ? `Nuclear Queen cooling down: ${cooling} turn${cooling === 1 ? '' : 's'}` : undefined}
+                  style={{ width: squareWidth * .23, height: squareWidth * .23, display: 'grid', placeItems: 'center',
+                    ...(cooling ? { background: '#0b1220', borderRadius: 3, color: '#93a1b5', boxShadow: 'inset 0 0 0 1px #64748b88' } : {}) }}>
+                  {cooling || (m.id === 'vaulting-knight' ? '↟' : m.id === 'bank-shot' ? '↱' : m.icon)}
+                </span>;
+              })}
               {visiblePowers.length > 2 && <span data-power-overflow={visiblePowers.length - 2}>+{visiblePowers.length - 2}</span>}
             </div>
           )}

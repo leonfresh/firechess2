@@ -4,6 +4,8 @@
  */
 
 type SoundName =
+  | "chaos-blast"
+  | "chaos-mate"
   | "move"
   | "capture"
   | "check"
@@ -41,6 +43,8 @@ type SoundName =
   | "bro-serious";
 
 const SOUND_PATHS: Record<SoundName, string> = {
+  "chaos-blast": "/sounds/chaos-blast.wav",
+  "chaos-mate": "/sounds/chaos-mate.wav",
   move: "/sounds/Move.mp3",
   capture: "/sounds/Capture.mp3",
   check: "/sounds/Check.mp3",
@@ -80,6 +84,8 @@ const SOUND_PATHS: Record<SoundName, string> = {
 
 /** Volume overrides for different sound categories */
 const SOUND_VOLUMES: Partial<Record<SoundName, number>> = {
+  "chaos-blast": 0.45,
+  "chaos-mate": 0.45,
   applause: 0.4,
   "applause-short": 0.4,
   buzzer: 0.5,

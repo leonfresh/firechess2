@@ -238,3 +238,9 @@ Verification: 67 sync, transport, draft, clock and opening-abort tests passed, p
 - Shared Play / Watch / Shop navigation preserves Discord launch parameters; both hub pages initialize the shared Discord connection after a reload.
 - Checked desktop and 390px mobile layouts, lobby links, six shop cards, a real archived match and replay stepping. No horizontal overflow. Root/activity TypeScript checks and nine targeted collection/navigation/replay tests passed.
 - Embedded Discord navigation still needs a real-client playtest; browser checks cannot substitute for Discord's embedded client.
+
+### Impact effects — 2026-09-21
+- Kamikaze mutual kills are detected from committed board transitions, covering local moves and multiplayer snapshots. Both piece silhouettes break apart with shock rings, sparks and a short original tonal blast.
+- Checkmate gets a gold particle burst at the losing king and a dedicated original finale cue. The Activity result still waits 2,500ms before covering the board.
+- Added a bounded board jolt; reduced-motion users receive a static label without flying particles or shake. Master mute also silences the new cues.
+- Verified both-colour mutual kills, snapshot deduplication, ordinary-capture exclusion, mute handling and result delay (6 tests), TypeScript checks, and isolated desktop/mobile animation rendering. Full two-client live-match effects remain a playtest check.

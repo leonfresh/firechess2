@@ -2,7 +2,8 @@ import { Chess } from "chess.js";
 /** A mutual kill removes exactly the victim and attacker, and adds no piece. */
 export function kamikazeImpact(before: string, after: string, armed: {w:boolean;b:boolean}) {
   if (before === after || (!armed.w && !armed.b)) return null;
-  const old = new Chess(before), next = new Chess(after);
+  let old: Chess, next: Chess;
+  try { old = new Chess(before); next = new Chess(after); } catch { return null; }
   const removed = old.board().flat().filter(p => p && (!next.get(p.square) || next.get(p.square)?.type !== p.type || next.get(p.square)?.color !== p.color));
   const added = next.board().flat().some(p => p && (!old.get(p.square) || old.get(p.square)?.type !== p.type || old.get(p.square)?.color !== p.color));
   if (added || removed.length !== 2) return null;

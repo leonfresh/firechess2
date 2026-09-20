@@ -3891,14 +3891,14 @@ export default function ChaosChessPage() {
         const id = ++effectIdRef.current;
         setBoardEffects(e=>[...e,{id,type:"kamikaze",squares:[impact.square],pieces:presentation.activity?impact.pieces:undefined}]);
         setTimeout(()=>setBoardEffects(e=>e.filter(x=>x.id!==id)),1500);
-        playSound("capture");
+        playSound("chaos-blast");
       }
     }
     if (gameStatus === "game-over" && previous.status !== "game-over" && /checkmate/i.test(endReason)) {
       const loser = gameResult === "white" ? "b" : "w";
-      const king = new Chess(impactFen).board().flat().find(p=>p?.type === "k" && p.color === loser);
+      const king = game.board().flat().find(p=>p?.type === "k" && p.color === loser);
       if (king) triggerEffect("checkmate",[king.square]);
-      playSound("correct");
+      playSound("chaos-mate");
     }
   }, [impactFen, gameStatus, endReason, gameResult, playerColor, chaosState.playerModifiers, chaosState.aiModifiers, presentation.activity, triggerEffect]);
 
@@ -5038,7 +5038,6 @@ export default function ChaosChessPage() {
             },
           ]);
           spawnPepe(PEPE.firesgun);
-          playSound("airhorn");
         }
         return result;
       }
@@ -7664,7 +7663,6 @@ export default function ChaosChessPage() {
                 },
               ]);
               spawnPepe(PEPE.firesgun);
-              playSound("airhorn");
             }
           }
         }

@@ -86,3 +86,20 @@ for(const color of ['w','b']) test(`new equipment retains hybrid silhouettes and
  const stack=ctx.exports.build('chaos-toy',rooks,rooks,'white',new Chess());
  assert.equal(image(stack[color+'R']({squareWidth:40,square:color==='w'?'a1':'a8'})),`url(/activity/pieces/${color}RG.svg)`);
 });
+
+test('the nuclear queen badge shows its cooldown instead of the icon while cooling',()=>{
+ const nuke={id:'nuclear-queen',piece:'q',name:'Nuclear Queen',icon:'☢'};
+ function collect(node){return [node,...React.Children.toArray(node?.props?.children).flatMap(collect)].filter(Boolean);}
+ const badge=node=>collect(node).find(n=>n?.props?.['data-power-badge']==='nuclear-queen');
+ const build=(p,ai)=>ctx.exports.build('chaos-toy',[nuke],[nuke],'white',new Chess(),undefined,undefined,undefined,p,ai);
+ const cooling=badge(build(3,0).wQ({squareWidth:40,square:'d1'}));
+ assert.equal(cooling.props['data-nuke-cd'],3,'the badge carries the turns left');
+ assert.equal(cooling.props.children,3,'and prints the number');
+ assert.match(cooling.props.title,/3 turns/);
+ const ready=badge(build(0,0).wQ({squareWidth:40,square:'d1'}));
+ assert.equal(ready.props['data-nuke-cd'],undefined,'a ready queen shows no countdown');
+ assert.equal(ready.props.children,'☢','and keeps its icon');
+ // Each queen reads its own clock.
+ assert.equal(badge(build(0,5).bQ({squareWidth:40,square:'d8'})).props['data-nuke-cd'],5);
+ assert.equal(badge(build(0,5).wQ({squareWidth:40,square:'d1'})).props['data-nuke-cd'],undefined);
+});
