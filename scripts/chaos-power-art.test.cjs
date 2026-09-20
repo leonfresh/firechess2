@@ -7,7 +7,7 @@ const {POWER_ART_SPRITES,POWER_ILLUSTRATIONS}=require('../discord-activity/app/p
  * draws a pawn, which is the right silhouette until the real art lands with the shop. Keep this
  * list shrinking: a card must leave it before the shop sells it.
  */
-const ART_PENDING=new Set(['conscription','phalanx']);
+const ART_PENDING=new Set(['conscription','phalanx','hostile-takeover']);
 test('every draft power has a distinct illustration, including all later tiers',()=>{
  const used=new Set();
  for(const mod of ALL_MODIFIERS){

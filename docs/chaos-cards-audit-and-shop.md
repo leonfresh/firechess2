@@ -165,8 +165,18 @@ Phase 1 and 2 are the economy. Phase 3 is the reason to care about it.
   `scripts/chaos-gold-db-test.mjs` against the live schema.
 - **Section 4 fixes, shipped.** Sniper range 3, King's Chains range 2, Kamikaze re-priced to epic,
   Railgun two charges (`scripts/chaos-card-fixes.test.cjs`).
-- **Phase 3, two of three cards in the engine.** Conscription and Phalanx are playable and pass
-  `scripts/chaos-new-cards.test.cjs`. Their illustrations are pending (see `ART_PENDING` in
-  `scripts/chaos-power-art.test.cjs`) and they are not yet priced, so they are free for now —
-  the shop gate and the art land together. Hostile Takeover is next, then the shop itself.
-- Nothing is spendable yet: there is no shop route, no `chaos_player_unlock` table.
+- **Phase 3, all three cards in the engine.** Conscription, Phalanx and Hostile Takeover are
+  playable (`scripts/chaos-new-cards.test.cjs`, `scripts/chaos-hostile-takeover.test.cjs`). The
+  takeover flip runs inside `applyPostMoveEffects`, the same hook the room-sync validator calls, so
+  both sides compute one board; the card then leaves the holder's modifier list, which is what makes
+  it once per game.
+- **Phase 2, shipped.** `chaos_player_unlock` (`migrations/chaos-shop.sql`), prices in
+  `lib/chaos-shop.ts` (rare 150, epic 400, legendary 900), `POST /api/chaos/shop` (server-side
+  price, idempotent claim, `gold >= price` guard in SQL, ledger row), the Shop tab in the Armoury,
+  and `GUEST_UNLOCKED_IDS` now covers every base card. The games-played ladder is deleted end to
+  end, so the only locks left are unowned shop cards — in Discord too, since the activity no longer
+  skips the draft gate.
+- **Open: art.** The three new cards draw the pawn vector fallback until their illustrations land.
+  Their prompts are in `discord-activity/scripts/power-art-prompts.json`; when the art is generated,
+  drop them from `ART_PENDING` in `scripts/chaos-power-art.test.cjs` (the test fails if a listed card
+  turns out to have art, so the list cannot quietly rot).

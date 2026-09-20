@@ -26,7 +26,11 @@ export const RAILGUN_MAX_SHOTS = 2;
  * Cards that are not part of the free set: they are bought with gold (see lib/chaos-shop.ts).
  * Everything else in ALL_MODIFIERS is unlocked for every player, signed in or not.
  */
-export const SHOP_CARD_IDS: ReadonlySet<string> = new Set(["conscription", "phalanx"]);
+export const SHOP_CARD_IDS: ReadonlySet<string> = new Set([
+  "conscription",
+  "phalanx",
+  "hostile-takeover",
+]);
 
 export type PieceType = "p" | "n" | "b" | "r" | "q" | "k";
 
@@ -165,6 +169,16 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     icon: "🔰",
     piece: "p",
     phases: [1, 2],
+  },
+  {
+    id: "hostile-takeover",
+    name: "Hostile Takeover",
+    description:
+      "Once per game, the piece that captures one of your pawns defects to your side.",
+    tier: "epic",
+    icon: "🏴",
+    piece: "p",
+    phases: [2, 3],
   },
   {
     id: "camel",

@@ -2674,6 +2674,22 @@ export function applyPostMoveEffects(
   const fen = game.fen();
   const tmp = new Chess(fen);
 
+  // Hostile Takeover: the victim's pawn, once per game, drags its capturer over to their side.
+  // Consuming the card is the caller's job (see applyPostMove in app/chaos/page.tsx), which keeps
+  // this a pure board effect that the room-sync validator reproduces identically.
+  if (
+    capturedPiece &&
+    capturedType === "p" &&
+    opponentModifiers?.some((m) => m.id === "hostile-takeover")
+  ) {
+    const capturer = tmp.get(to);
+    if (capturer && capturer.type !== "k") {
+      tmp.remove(to);
+      tmp.put({ type: capturer.type, color: color === "w" ? "b" : "w" }, to);
+      modified = true;
+    }
+  }
+
   // Collateral Damage Rook
   if (
     capturedPiece &&

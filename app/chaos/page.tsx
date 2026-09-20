@@ -4916,6 +4916,37 @@ export default function ChaosChessPage() {
           playSound("airhorn");
         }
         if (
+          opponentMods?.some((m) => m.id === "hostile-takeover") &&
+          capturedType === "p" &&
+          captured
+        ) {
+          // Hostile Takeover: the board flip already happened inside applyPostMoveEffects; the card
+          // is spent here, and a card that leaves the list cannot fire twice in the same game.
+          if (result?.get(to as any)) {
+            const victimIsWhite = color === "b";
+            setChaosState((s) => ({
+              ...s,
+              playerModifiers: victimIsWhite
+                ? s.playerModifiers.filter((m) => m.id !== "hostile-takeover")
+                : s.playerModifiers,
+              aiModifiers: victimIsWhite
+                ? s.aiModifiers
+                : s.aiModifiers.filter((m) => m.id !== "hostile-takeover"),
+            }));
+            triggerEffect("spawn", [to as string]);
+            setEventLog((prev) => [
+              ...prev,
+              {
+                type: "chaos",
+                message: "🏴 HOSTILE TAKEOVER! The piece that took your pawn now fights for you.",
+                icon: "🏴",
+                pepe: PEPE.detective,
+              },
+            ]);
+            playSound("airhorn");
+          }
+        }
+        if (
           opponentMods?.some((m) => m.id === "pawn-fortress") &&
           capturedType === "p" &&
           captured
