@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, sql, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { chaosRooms } from "@/lib/schema";
+import { chaosRooms, chaosPlayerUnlock } from "@/lib/schema";
 import { getChaosUserId } from "@/lib/chaos-auth";
 import { readLiveToken, notifyLiveRoom } from "@/lib/chaos-live-token";
 import { metadata, reduceCommand, snapshot, settleRoom, nextDeadline, SyncError, type SyncRoom } from "@/lib/chaos-room-sync";
@@ -12,6 +12,17 @@ async function readRoom(id: string, user: string) {
   const [room] = await db.select().from(chaosRooms).where(eq(chaosRooms.id, id));
   if (!room) throw new SyncError(404, "Room not found");
   if (user !== "__chaos_alarm__" && room.hostId !== user && room.guestId !== user) throw new SyncError(403, "Not in this room");
+  // Snapshot ownership once per match; never trust IDs supplied in a move payload.
+  const meta = metadata(room);
+  if (room.status === "playing" && !meta.shopOwned) {
+    const owners = [room.hostId, room.guestId].filter((id): id is string => !!id);
+    const unlocks = await db.select({ playerId: chaosPlayerUnlock.playerId, modifierId: chaosPlayerUnlock.modifierId })
+      .from(chaosPlayerUnlock).where(inArray(chaosPlayerUnlock.playerId, owners));
+    room.chaosState = {...(room.chaosState as object), _sync: {...meta, shopOwned: {
+      host: unlocks.filter(row => row.playerId === room.hostId).map(row => row.modifierId),
+      guest: unlocks.filter(row => row.playerId === room.guestId).map(row => row.modifierId),
+    }}};
+  }
   return room;
 }
 function response(room: SyncRoom, user: string, since: number) {

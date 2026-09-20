@@ -406,6 +406,10 @@ export const SINGLE_PIECE_MODIFIERS: Record<string, true> = {
 
 /** Fairy piece SVG replacements — full piece image swap for transformative modifiers */
 const FAIRY_PIECE_SVGS: Record<string, Record<string, string>> = {
+  "vaulting-knight": { w: "/pieces/fairy/wVK.svg", b: "/pieces/fairy/bVK.svg" },
+  "bank-shot": { w: "/pieces/fairy/wBS.svg", b: "/pieces/fairy/bBS.svg" },
+  conscription: { w: "/pieces/fairy/wCS.svg", b: "/pieces/fairy/bCS.svg" },
+  "hostile-takeover": { w: "/pieces/fairy/wHT.svg", b: "/pieces/fairy/bHT.svg" },
   knook: { w: "/pieces/fairy/wC.svg", b: "/pieces/fairy/bC.svg" },
   archbishop: { w: "/pieces/fairy/wA.svg", b: "/pieces/fairy/bA.svg" },
   amazon: { w: "/pieces/fairy/wAm.svg", b: "/pieces/fairy/bAm.svg" },
@@ -597,7 +601,7 @@ export function buildChaosCustomPieces(
         "railgun",
       ];
       const MOVEMENT_MOD_IDS = ["dragon-bishop", "dragon-rook", "rook-cannon", "pawn-charge", "pawn-capture-forward", "sniper-bishop", "bishop-cannon", "bishop-bounce"];
-      const fairyTiers = [IDENTITY_MOD_IDS, MOVEMENT_MOD_IDS];
+      const fairyTiers = [IDENTITY_MOD_IDS, MOVEMENT_MOD_IDS, ["vaulting-knight", "bank-shot"]];
       for (const tier of fairyTiers) {
         // newest-first within the tier
         const found = [...activeForPiece].reverse().find((m) => {
@@ -630,6 +634,17 @@ export function buildChaosCustomPieces(
           pieceUrl = FAIRY_PIECE_SVGS[found.id][pieceColor];
           break;
         }
+      }
+
+      // Keep stacked equipment readable: a full sculpt for plain pawns, a compact
+      // ability marker when charge/bayonet or another pawn identity already owns the silhouette.
+      if (pieceType === "p") {
+        const recruited = activeForPiece.some(m => m.id === "conscription");
+        const takeover = activeForPiece.some(m => m.id === "hostile-takeover");
+        if (pieceUrl === url && recruited) pieceUrl = FAIRY_PIECE_SVGS.conscription[pieceColor];
+        if (pieceUrl === url && takeover) pieceUrl = FAIRY_PIECE_SVGS["hostile-takeover"][pieceColor];
+        if (recruited && !pieceUrl.endsWith("CS.svg")) overlays.push(<svg key="conscription" aria-label="Backward pawn captures" viewBox="0 0 32 24" width={squareWidth * .42} style={{position:"absolute",bottom:"4%",left:"2%",zIndex:2}}><path d="M15 3 5 18m0-8v8h8M17 3l10 15m-8 0h8v-8" fill="none" stroke="#102b3e" strokeWidth="6"/><path d="M15 3 5 18m0-8v8h8M17 3l10 15m-8 0h8v-8" fill="none" stroke="#77efe1" strokeWidth="3"/></svg>);
+        if (takeover && !pieceUrl.endsWith("HT.svg")) overlays.push(<svg key="takeover" aria-label="Hostile Takeover armed" viewBox="0 0 24 32" width={squareWidth * .3} style={{position:"absolute",top:0,right:0,zIndex:2}}><path d="M4 31V3" stroke="#f5d88e" strokeWidth="3"/><path d="M5 4q8-6 17 0v15q-9-6-17 0z" fill="#ad78e8" stroke="#4c316d" strokeWidth="2"/><path d="m9 8 3 3 3-4 3 4v3H9z" fill="#ffe6a2"/></svg>);
       }
 
       // Star anomaly: all knights become camels visually (camel SVG)
@@ -701,7 +716,7 @@ export function buildChaosCustomPieces(
         const def = MODIFIER_OVERLAYS[mod.id];
         if (!def) continue;
         // Equipment is part of these toy sculpts; don't cover it with the old crosshair/emoji.
-        if (actualSet === 'chaos-toy' && ['sniper-bishop', 'bishop-cannon', 'bishop-bounce', 'railgun', 'kamikaze-bishop', 'usurper'].includes(mod.id)) continue;
+        if (actualSet === 'chaos-toy') continue; // Power badges below keep combinations readable.
 
         // Skip icon/render overlays for most fairy piece replacements.
         // Exception: mods whose badge should still be visible alongside the fairy SVG.
@@ -917,7 +932,7 @@ export function buildChaosCustomPieces(
       }
 
       const visiblePowers = activeForPiece.filter(m =>
-        !['knight-horde', 'undead-army'].includes(m.id) &&
+        !['knight-horde', 'undead-army', 'phalanx'].includes(m.id) &&
         (!SINGLE_PIECE_MODIFIERS[m.id] || singlePieceSquares[m.id]?.[pieceColor] === square));
 
       return (
@@ -956,15 +971,19 @@ export function buildChaosCustomPieces(
             }}
           />
           {/* Modifier overlays */}
-          {actualSet === 'chaos-toy' && visiblePowers.length > 1 && (
-            <div title={visiblePowers.map(m => m.name).join(' + ')} aria-label={`${visiblePowers.length} powers: ${visiblePowers.map(m => m.name).join(', ')}`}
-              data-power-count={visiblePowers.length}
-              style={{ position: 'absolute', right: '2%', bottom: '4%', zIndex: 3, pointerEvents: 'none',
-                minWidth: squareWidth * .24, height: squareWidth * .24, padding: '0 2px', boxSizing: 'border-box',
-                borderRadius: 5, background: '#23334d', border: '1px solid #f2d58b', color: '#fff0c6',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: Math.max(9, squareWidth * .16),
-                fontWeight: 900, lineHeight: 1, boxShadow: '0 1px 3px #11182788' }}>
-              {visiblePowers.length}
+          {actualSet === 'chaos-toy' && visiblePowers.length > 0 && (
+            <div title={visiblePowers.map(m => m.name).join(' + ')}
+              aria-label={`Active powers: ${visiblePowers.map(m => m.name).join(', ')}`}
+              data-power-count={visiblePowers.length > 1 ? visiblePowers.length : undefined}
+              style={{ position: 'absolute', right: '1%', bottom: '1%', zIndex: 4, pointerEvents: 'none',
+                display: 'flex', gap: 1, borderRadius: 5, padding: 2, background: '#17263bea',
+                border: '1px solid #a8bfd377', color: '#e0f998', alignItems: 'center',
+                fontSize: Math.max(9, squareWidth * .17), fontWeight: 900, lineHeight: 1 }}>
+              {visiblePowers.slice(0, 2).map(m => <span key={m.id} data-power-badge={m.id}
+                style={{ width: squareWidth * .23, height: squareWidth * .23, display: 'grid', placeItems: 'center' }}>
+                {m.id === 'vaulting-knight' ? '↟' : m.id === 'bank-shot' ? '↱' : m.icon}
+              </span>)}
+              {visiblePowers.length > 2 && <span data-power-overflow={visiblePowers.length - 2}>+{visiblePowers.length - 2}</span>}
             </div>
           )}
           {overlays.length > 0 && (

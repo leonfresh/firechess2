@@ -16,9 +16,10 @@ import {
 } from "@/lib/schema";
 import { and, eq, gt, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { getChaosUserId, isGuestId } from "@/lib/chaos-auth";
 import { GUEST_UNLOCKED_IDS } from "@/lib/chaos-collection";
-import { ALL_MODIFIERS } from "@/lib/chaos-chess";
-import { shopCatalog } from "@/lib/chaos-shop";
+import { ACTIVE_MODIFIERS, SHOP_CARD_IDS } from "@/lib/chaos-chess";
+import { shopCatalog, ownedShopIds } from "@/lib/chaos-shop";
 
 /* ── GET ─────────────────────────────────────────────────────────── */
 export async function GET(req: NextRequest) {
@@ -46,7 +47,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       username,
       unlockedIds: [...unlocked],
-      total: ALL_MODIFIERS.length,
+      total: ACTIVE_MODIFIERS.length,
     });
   }
 
@@ -56,7 +57,8 @@ export async function GET(req: NextRequest) {
   // Gold and shop unlocks are keyed by chaos_player id. Inside Discord the activity sends
   // X-Chaos-Identity (a discord_<snowflake>); a website session uses the user id, which is a
   // chaos_player id too.
-  const playerId = req.headers.get("x-chaos-identity") || session?.user?.id || null;
+  const resolvedId = await getChaosUserId(req);
+  const playerId = resolvedId && !isGuestId(resolvedId) ? resolvedId : null;
   const { gold, goldWeek } = await readGold(playerId);
   const ownedShop = playerId ? await readShopUnlocks(playerId) : [];
   const ownedSet = new Set(ownedShop);
@@ -66,7 +68,7 @@ export async function GET(req: NextRequest) {
     // Guest: every base card is free, plus anything their identity has bought, plus their gold
     return NextResponse.json({
       unlockedIds: [...GUEST_UNLOCKED_IDS, ...ownedShop],
-      total: ALL_MODIFIERS.length,
+      total: ACTIVE_MODIFIERS.length,
       shop,
       gold,
       goldWeek,
@@ -95,7 +97,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     unlockedIds: [...unlocked],
-    total: ALL_MODIFIERS.length,
+    total: ACTIVE_MODIFIERS.length,
     gamesPlayed,
     shop,
     gold,
@@ -109,7 +111,7 @@ async function readShopUnlocks(playerId: string): Promise<string[]> {
     .select({ modifierId: chaosPlayerUnlock.modifierId })
     .from(chaosPlayerUnlock)
     .where(eq(chaosPlayerUnlock.playerId, playerId));
-  return rows.map((r) => r.modifierId);
+  return ownedShopIds(rows.map((r) => r.modifierId));
 }
 
 /**
@@ -158,8 +160,12 @@ export async function POST(req: NextRequest) {
   }
 
   // Validate that the modifier exists
-  if (!ALL_MODIFIERS.some((m) => m.id === modifierId)) {
+  if (!ACTIVE_MODIFIERS.some((m) => m.id === modifierId)) {
     return NextResponse.json({ error: "Unknown modifier" }, { status: 400 });
+  }
+
+  if (SHOP_CARD_IDS.has(modifierId)) {
+    return NextResponse.json({ error: "Unlock this power through the gold shop" }, { status: 403 });
   }
 
   // Insert or ignore (unique constraint prevents duplicates)

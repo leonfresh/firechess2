@@ -27,6 +27,12 @@ heads.Ca = '<path d="M26 72q-7-11 2-19 7-8 14 1 8-14 17-3l2-18-17 3-13-5q-5-4 0-
 heads.FK = '<g transform="translate(0 12) scale(1 .78)">' + heads.N + '</g><path d="M33 59q17 8 33 0l-5 10H38z"/><path d="m28 22 5-13 10 9 7-8 8 8 12-9 3 14-12 7H38z" fill="url(#gold)" stroke="#805d35" stroke-width="2"/><path d="M46 2h8v6h6v7h-6v6h-8v-6h-6V8h6z" fill="url(#gold)" stroke="#805d35" stroke-width="2"/>';
 heads.IP = heads.P + '<path d="M22 35v27m-6-20 6-8 6 8M78 35v27m-6-8 6 8 6-8" fill="none" stroke="#53cfc2" stroke-width="5"/>';
 heads.MQ = heads.Q + '<path d="M79 38a19 19 0 1 0 8 30A16 16 0 0 1 79 38z" fill="#c9b8f5" stroke="#66518d" stroke-width="2.5"/><path d="m80 45 2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff2ba" stroke="#8d76af" stroke-width="1.5"/>';
+// Shop pawns: equipment explains their persistent ability at board size.
+heads.CS = heads.P + '<path d="M33 28q0-21 17-21t17 21l-9-4H42z" fill="#409c9c"/><path d="M44 9V3h12v6" fill="url(#gold)"/><path d="M33 45 23 51m44-6 10 6" stroke="url(#gold)" stroke-width="8"/><path d="M23 49Q4 49 10 70l16-9zM77 49q19 0 13 21L74 61z" fill="#cbecef" stroke="#47747f" stroke-width="2"/><path d="M40 48h20l-4 10H44z" fill="url(#gold)"/>';
+heads.HT = heads.P + '<path d="M76 8v64" stroke="url(#gold)" stroke-width="5"/><path d="M76 10q-15-9-30 0v23q15-9 30 0z" fill="#aa79dc" stroke="#674291" stroke-width="2"/><path d="m53 17 4 4 4-6 4 6 5-4-3 10H55z" fill="#ffe5a2" stroke="none"/><path d="M39 44q11 7 22 0l-4 14-7-4-7 4z" fill="#aa79dc"/>';
+// New shop equipment keeps the ordinary piece silhouette recognizable.
+heads.VK = '<g transform="translate(0 -2) scale(1 .84)">' + heads.N + '</g><path d="m38 57 24 4-24 5 24 5H38" fill="none" stroke="#2c7786" stroke-width="7"/><path d="m38 57 24 4-24 5 24 5H38" fill="none" stroke="#86f0dd" stroke-width="3"/><path d="M24 50v17m-5-12 5-6 5 6M77 50v17m-5-12 5-6 5 6" fill="none" stroke="#71dcca" stroke-width="3"/>';
+heads.BS = heads.R + '<path d="M79 33v32H59" fill="none" stroke="#285466" stroke-width="9"/><path d="M79 33v32H59m6-6-6 6 6 6" fill="none" stroke="#86f0dd" stroke-width="4"/><path d="m38 49 9 9-9 9-9-9z" fill="#56c8cb" stroke="url(#gold)" stroke-width="3"/>';
 const variants = { Ca:'Ca', Db:'B', Dr:'R', RC:'R', EK:'K', Hb:'B', Usp:'K', KB:'B', QC:'Q', RG:'R', SB:'B', BC:'B', BB:'B' };
 function ornament(kind) {
   if (kind === 'Ca' || !variants[kind]) return '';

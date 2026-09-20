@@ -3,7 +3,7 @@
  * Used by both the client page and the server-side API routes.
  */
 
-import { ALL_MODIFIERS, SHOP_CARD_IDS } from "./chaos-chess";
+import { ACTIVE_MODIFIERS, SHOP_CARD_IDS } from "./chaos-chess";
 
 /**
  * Modifier IDs available to every player, signed in or not: the whole set except the shop cards.
@@ -11,7 +11,7 @@ import { ALL_MODIFIERS, SHOP_CARD_IDS } from "./chaos-chess";
  * player can play the full game and the shop's promise is variety rather than power.
  */
 export const GUEST_UNLOCKED_IDS: ReadonlySet<string> = new Set(
-  ALL_MODIFIERS.filter((m) => !SHOP_CARD_IDS.has(m.id)).map((m) => m.id),
+  ACTIVE_MODIFIERS.filter((m) => !SHOP_CARD_IDS.has(m.id)).map((m) => m.id),
 );
 
 /** localStorage key for an earn-then-signup pending unlock */

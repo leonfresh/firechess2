@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useActivityDialog } from "./use-activity-dialog";
+import { useEffect, useState } from "react";
 import { ChaosWatchButton } from "@/components/chaos-watch";
 import { ChaosHubIcon } from "@/components/chaos-hub-icon";
 import { chaosIdentityHeaders } from "@/lib/chaos-client-identity";
@@ -34,11 +35,7 @@ export function ActivityCareer({ card = false }: { card?: boolean }) {
   const [publicError, setPublicError] = useState(""),
     [personalError, setPersonalError] = useState(""),
     [personalLoading, setPersonalLoading] = useState(false);
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    if (open) dialog.current?.showModal();
-    else dialog.current?.close();
-  }, [open]);
+  const { ref: dialog, onBackdropClick } = useActivityDialog(open, () => setOpen(false));
   useEffect(() => {
     if (!open) return;
     let active = true;
@@ -105,9 +102,6 @@ export function ActivityCareer({ card = false }: { card?: boolean }) {
             </span>
             <strong>Leaderboard</strong>
             <small>See who’s on top</small>
-            <span className="destination-arrow" aria-hidden="true">
-              ↗
-            </span>
           </>
         ) : (
           "Leaderboard"
@@ -116,6 +110,7 @@ export function ActivityCareer({ card = false }: { card?: boolean }) {
       <dialog
         className="career-dialog"
         ref={dialog}
+        onClick={onBackdropClick}
         onCancel={() => setOpen(false)}
         aria-labelledby={card ? "lobby-career-title" : "nav-career-title"}
       >

@@ -1,10 +1,11 @@
 "use client";
-import Link from "next/link";
+import { ChaosNavLink } from "./chaos-nav-link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "./chessboard-compat";
 import { buildChaosCustomPieces } from "./chaos-pieces";
 import { describeWatchFrame, describeWatchAnomaly, expandVisual, type WatchFrame } from "@/lib/chaos-watch";
+import { getChaosMoves } from "@/lib/chaos-moves";
 import { getAnomalyById } from "@/lib/chaos-anomalies";
 import type { MatchClock } from "@/lib/chaos-clock";
 import { ChaosHubIcon } from "./chaos-hub-icon";
@@ -77,7 +78,7 @@ export function ChaosWatchButton({
       ? "/watch?tab=archive"
       : "/watch";
   return (
-    <Link
+    <ChaosNavLink
       className={card ? "lobby-destination" : "sound-button"}
       data-tone={initialTab === "live" ? "mint" : "violet"}
       href={href}
@@ -98,7 +99,7 @@ export function ChaosWatchButton({
       ) : (
         label
       )}
-    </Link>
+    </ChaosNavLink>
   );
 }
 export function ChaosWatch({
@@ -138,6 +139,8 @@ export function ChaosWatch({
     [received, setReceived] = useState(0),
     [copied, setCopied] = useState(false);
   const [width, setWidth] = useState(320);
+  /** Square the pointer is over: hovering a piece shows where it can go. */
+  const [hover, setHover] = useState<string | null>(null);
   const board = useRef<HTMLDivElement>(null);
   useEffect(() => {
     setError("");
@@ -207,6 +210,14 @@ export function ChaosWatch({
     return () => clearTimeout(timer);
   }, [auto, index, detail]);
   const frames = detail?.frames ?? [];
+  /** Picks revealed so far: the rail fills in one by one as the replay advances. */
+  const pickFrames = useMemo(
+    () =>
+      frames
+        .map((f, i) => ({ frame: f, at: i }))
+        .filter(({ frame, at }) => at <= index && / (picked|chose) /.test(frame.label)),
+    [frames, index],
+  );
   useEffect(() => {
     if (!board.current) return;
     const observer = new ResizeObserver((entries) =>
@@ -246,9 +257,55 @@ export function ChaosWatch({
       return null;
     }
   }, [frame]);
+  /**
+   * Hover a piece to see where it can go: standard moves plus the powers in play, so a spectator
+   * sees the same extra squares the players do.
+   */
+  const hoverTargets = useMemo(() => {
+    if (!hover || !frame) return [];
+    try {
+      const game = new Chess(frame.fen);
+      const piece = game.get(hover as any);
+      if (!piece) return [];
+      const targets = new Set<string>(
+        game.moves({ square: hover as any, verbose: true }).map((m) => m.to),
+      );
+      try {
+        const s = expandVisual(frame.state);
+        const own = piece.color === "w" ? s.playerModifiers : s.aiModifiers;
+        const foe = piece.color === "w" ? s.aiModifiers : s.playerModifiers;
+        for (const m of getChaosMoves(game, own, piece.color, s.assignedSquares, foe))
+          if (m.from === hover) targets.add(m.to);
+      } catch {
+        /* A power that cannot resolve in this position just contributes no squares. */
+      }
+      return [...targets];
+    } catch {
+      return [];
+    }
+  }, [hover, frame]);
+  /** Last move, hovered piece and its targets in one style map for the board. */
+  const boardStyles = useMemo(() => {
+    const styles: Record<
+      string,
+      { backgroundColor?: string; background?: string; boxShadow?: string }
+    > = {};
+    for (const s of [frame?.from, frame?.to])
+      if (s) styles[s] = { backgroundColor: "#f3ce72" };
+    if (hover)
+      styles[hover] = { ...(styles[hover] ?? {}), boxShadow: "inset 0 0 0 3px #f3ce72" };
+    for (const s of hoverTargets)
+      if (!styles[s])
+        styles[s] = {
+          background:
+            "radial-gradient(circle, rgba(18,22,30,0.32) 21%, transparent 23%)",
+        };
+    return styles;
+  }, [frame?.from, frame?.to, hover, hoverTargets]);
   const leave = () => {
     setSelected(null);
     setAuto(false);
+    setHover(null);
   };
   const share = async () => {
     try {
@@ -325,7 +382,7 @@ export function ChaosWatch({
               ? selected.live
                 ? "Ringside seats"
                 : "Run it back"
-              : "Every game has a story."}
+              : tab === "archive" ? "Match replays" : "Watch live"}
           </h2>
         </div>
         <div className={styles.headingActions}>
@@ -342,7 +399,7 @@ export function ChaosWatch({
               ✕
             </button>
           ) : (
-            <a href="/">Play Chaos Chess</a>
+            <ChaosNavLink href="/">Play Chaos Chess</ChaosNavLink>
           )}
         </div>
       </header>
@@ -350,10 +407,10 @@ export function ChaosWatch({
         <button onClick={leave}>← All games</button>
       ) : (
         <>
-          <p>
-            Watch live matches or replay completed games. Friend matches are
-            included.
-          </p>
+          <div className={styles.hero}>
+            <div><span className={styles.heroLabel}>GOOD SEATS. BAD IDEAS.</span><h1>Watch the board<br/><em>go off script.</em></h1><p>Catch a match live, or rewind the moment everything changed. Every move. Every ridiculous power.</p></div>
+            <div className={styles.heroArt} aria-hidden="true"><span>EXPECT THE UNEXPECTED</span><img src="/pieces/fairy/wVK.svg" alt=""/><img src="/pieces/fairy/bBS.svg" alt=""/><b>↗</b></div>
+          </div>
           <nav className={styles.tabs}>
             <button
               aria-pressed={tab === "live"}
@@ -371,13 +428,13 @@ export function ChaosWatch({
                 setPage(0);
               }}
             >
-              Game archive
+              Replays
             </button>
           </nav>
           {tab === "archive" && (
-            <p className={styles.note}>
+            <details className={styles.ratingHelp}><summary>Which matches are rated?</summary><p className={styles.note}>
               Rated games count toward the ladder: both players must sign in with FireChess or Discord, the clock must be timed, and each must make a move. A displayed username alone does not make a game rated. Guest play and No rush games are casual and do not change ratings, and only the first three games between the same two players each day count.
-            </p>
+            </p></details>
           )}
         </>
       )}
@@ -400,6 +457,7 @@ export function ChaosWatch({
                     }
                   >
                     <span className={styles.matchNames}>
+                      <span className={styles.matchBadge}>{tab === "live" ? "● LIVE NOW" : "↶ REPLAY"}</span>
                       <strong>{g.white}</strong>
                       <small>vs</small>
                       <strong>{g.black}</strong>
@@ -450,9 +508,10 @@ export function ChaosWatch({
                     ? "Matches will appear here once two players join. This list refreshes automatically."
                     : "Completed multiplayer matches will appear here."}
                 </p>
+                <div className={styles.emptyActions}><ChaosNavLink href="/">Start a match ↗</ChaosNavLink>{tab === "live" && <button onClick={() => {setTab("archive"); setPage(0);}}>Explore replays</button>}</div>
               </div>
             )}
-            <nav className={styles.tabs}>
+            <nav className={styles.tabs} aria-label="Match pages">
               <button
                 disabled={page === 0}
                 onClick={() => setPage((p) => p - 1)}
@@ -529,11 +588,9 @@ export function ChaosWatch({
                       customPieces={rendered.pieces}
                       customLightSquareStyle={{ background: "#efe4c5" }}
                       customDarkSquareStyle={{ background: "#7e9da5" }}
-                      customSquareStyles={Object.fromEntries(
-                        [frame.from, frame.to]
-                          .filter(Boolean)
-                          .map((s) => [s!, { backgroundColor: "#f3ce72" }]),
-                      )}
+                      onMouseOverSquare={(square) => setHover(square)}
+                      onMouseOutSquare={() => setHover(null)}
+                      customSquareStyles={boardStyles}
                     />
                   ) : (
                     <p>This position is unavailable.</p>
@@ -633,21 +690,6 @@ export function ChaosWatch({
                 </p>
               </div>
               <aside className={styles.powers}>
-                {!selected.live && frames.some(f => / (picked|chose) /.test(f.label)) && (
-                  <section>
-                    <h3>Pick history</h3>
-                    <ol>
-                      {frames.map((f, i) => / (picked|chose) /.test(f.label) && (
-                        <li key={i}>
-                          <button aria-current={index === i ? "step" : undefined} onClick={() => { setAuto(false); setIndex(i); }}>
-                            {describeWatchFrame(f).replace(/^(white|black)/, color => `${color === "white" ? detail.white : detail.black} (${color})`)}
-                          </button>
-                          {describeWatchAnomaly(f) && <p>{describeWatchAnomaly(f)}</p>}
-                        </li>
-                      ))}
-                    </ol>
-                  </section>
-                )}
                 {rendered &&
                   (["white", "black"] as const).map((color) => {
                     const mods =
@@ -684,6 +726,21 @@ export function ChaosWatch({
                       </section>
                     );
                   })}
+                {pickFrames.length > 0 && (
+                  <section>
+                    <h3>Pick history</h3>
+                    <ol>
+                      {pickFrames.map(({ frame: f, at }) => (
+                        <li key={at}>
+                          <button aria-current={index === at ? "step" : undefined} onClick={() => { setAuto(false); setIndex(at); }}>
+                            {describeWatchFrame(f).replace(/^(white|black)/, color => `${color === "white" ? detail.white : detail.black} (${color})`)}
+                          </button>
+                          {describeWatchAnomaly(f) && <p>{describeWatchAnomaly(f)}</p>}
+                        </li>
+                      ))}
+                    </ol>
+                  </section>
+                )}
               </aside>
             </div>
           </>

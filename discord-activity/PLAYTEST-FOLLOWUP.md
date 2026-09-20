@@ -192,3 +192,49 @@ Verification: 67 sync, transport, draft, clock and opening-abort tests passed, p
 ## Later rule changes (September 20)
 - Battlefield Promotion nerfed one rank: pawns now promote on rank 6 for White / rank 3 for Black. The earlier rank-5/rank-4 note above is superseded; the card text, the engine constant (`EARLY_PROMO_RANK` in `lib/chaos-moves.ts`) and both sync tests move together.
 - Forced En Passant retired and replaced by Toll Gate (rare, phases 2-3): the opponent's pawns can never advance two squares, which also stops a Torpedo Pawn's charge. Enforced in `blockedMove` (server + client + king-capture) and filtered in `getChaosMoves`; the retired card's illustration was renamed to `toll-gate` and reused.
+
+## September 21 — Armoury, modal polish and shop identities
+
+- Added a prominent illustrated Power shop lobby button. The shop opens directly, ahead of the collection tabs, with rarity-framed cards, gold balance, permanent-unlock explanations, owned states, sign-in guidance and insufficient-gold feedback.
+- Purchases use inline confirmation, disable competing purchase buttons, acknowledge successful unlocks, and refresh the current game's collection without a reload. No price or gold-reward changes.
+- Collection, leaderboard and replay browser use a shared native-dialog lifecycle: Escape/backdrop dismissal, focus restoration and body-scroll locking. Restyled collection lists, modal headers, empty states and mobile layouts; preserved mandatory game draft flows. Replay rating details are expandable instead of obscuring the game list.
+- Generated three original toy-PBR illustrations with built-in imagegen: conscription.png, phalanx.png, hostile-takeover.png, under assets. Prompts: twin-blade ivory pawn/teal helmet; three ivory pawn reinforcements/gold helmets/teal shields; purple-banner pawn converting a navy rook to ivory. No text; matching toy materials and saturated backgrounds. prepare-assets produces compact WebP delivery assets.
+- Added both-color CS (twin-blade conscript) and HT (purple-banner takeover) pawn SVGs. Existing rocket/bayonet equipment stays visible when stacked, with compact additional ability markers. Takeover marker disappears when its modifier is consumed. Phalanx summons ordinary pawns and intentionally does not imply a persistent shield ability; its new identity is on the power card.
+- Fixed shop/collection identity lookup to use getChaosUserId, validating signed Discord identity and recognizing the shared website cookie; anonymous guest IDs cannot buy.
+- Verification: 49 collection/shop/identity/piece tests; root and Activity TypeScript checks; desktop and 390px browser review; Escape restores trigger focus and page scrolling. Phone header overflow corrected. Purchase UI exercised with mocked responses; no real player gold spent.
+- Balance opinion: Conscription is a useful tactical addition, Phalanx needs crowded-board/stacking playtests, and Hostile Takeover needs especially careful feedback and balance testing. Mechanics and pricing unchanged. This is not a full audit of the other agent's shop economy or all new ability interactions.
+- Follow-up technical debt found during inspection: existing purchase claim/payment/ledger writes are separate database requests; they should become one atomic transaction before expanding the economy. This presentation pass does not claim to resolve that recovery risk.
+- Released backend dpl_4dXvWfE235v7hJkkeDFZ9Q48jYoe and final Activity dpl_niqiNaAWoj5jnSH9arXkRsXNy8pa. Production catalog and all new assets return 200; invalid purchase credentials return 401. Both production builds passed.
+
+
+## Shop variety refresh — 21 September 2026
+
+- Replaced the three pawn shop cards with Vaulting Knight (rare, 150 gold) and Bank Shot (epic, 400 gold). Usurper stays free; no duplicate Royal Escort card.
+- Retired Conscription, Phalanx and Hostile Takeover from new drafts and collection browsing. Their engine definitions and images remain for historical games/replays.
+- Added an atomic, repeatable refund migration at `migrations/chaos-retired-shop-refunds.sql`. Initial production audit found zero purchases. Refunds preserve historical unlock records and credit exactly the original price.
+- Added original card illustrations, white/black VK and BS toy SVGs, two-badge limit plus +N overflow; existing hybrid silhouettes retain priority.
+- Added interactive shop practice boards using the real move engine. These are isolated demonstrations, with no account, gold or rating changes.
+- Multiplayer snapshots shop ownership server-side per match and excludes unowned shop powers from normal offers and rerolls. New purchases apply in the next match.
+- Bank Shot collateral follows the final leg of its path. New move generators check blockers, standard/chaos king safety and never capture kings.
+- Browser checked at desktop and 390px mobile: both previews move/capture correctly, no horizontal overflow or visible broken images, Escape closes and returns focus to the shop button.
+- Remaining: live player balance feedback; purchase claim/payment/ledger atomicity remains a separate follow-up from the prior shop audit.
+
+- Release verification: 145 regression checks passed; both local and Vercel production builds passed. Live catalogue returns 32 current powers, 30 free, with Vaulting Knight (150) and Bank Shot (400). All six new deployed art/piece assets return 200. Refund migration applied: zero eligible purchases, zero gold credited. Original-art prompts saved in assets/shop-art-prompts.md.
+
+
+## Personal collection expansion — 21 September 2026
+
+- Gold shop now includes Night Rider and Phantom Rook (150 each), Bishop Bounce and Queen Teleport (400 each), alongside Vaulting Knight and Bank Shot. 26 starter powers stay free, including Knook, Archbishop, Amazon and Nuclear Queen.
+- Player-owned powers enter only that player's multiplayer offers/rerolls. Collection snapshots refresh for rematches. Local player drafts also exclude unowned shop powers.
+- Extended the free practice previews to all six shop cards; clarified personal ownership in the shop.
+- Legacy explicitly earned unlocks preserved by `migrations/chaos-shop-expansion.sql`; the old collection POST can no longer grant shop cards.
+- Resolved the prior atomic purchase follow-up: one database function locks the player's balance and commits ownership, debit and ledger together. Database fixture checks cover duplicate buys, insufficient funds and rollback if the ledger fails.
+
+- Released and verified: 83 targeted regression checks, both TypeScript checks, production builds, transaction rollback tests, live 26-free/six-shop catalogue and six functional previews. Night Rider preview now explicitly tracks its upgraded knight. Mobile shop has no horizontal overflow. Legacy migration rechecked after API cutover.
+
+### Watch and shop pages — 2026-09-21
+- Shop now has `/shop`, compact 88px artwork, responsive cards, inline unlock confirmation and expandable practice boards.
+- Watch and Replays share `/watch` and `/watch?tab=archive`; the archive no longer opens in a modal.
+- Shared Play / Watch / Shop navigation preserves Discord launch parameters; both hub pages initialize the shared Discord connection after a reload.
+- Checked desktop and 390px mobile layouts, lobby links, six shop cards, a real archived match and replay stepping. No horizontal overflow. Root/activity TypeScript checks and nine targeted collection/navigation/replay tests passed.
+- Embedded Discord navigation still needs a real-client playtest; browser checks cannot substitute for Discord's embedded client.

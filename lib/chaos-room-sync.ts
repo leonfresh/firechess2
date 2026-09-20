@@ -14,7 +14,7 @@ export const OPENING_MOVE_MS = 30_000;
 /** How long a posted challenge stays listed in the lobby and joinable by code or quick pairing.
  *  Must exceed the client's search timer (MAX_SEARCH_TIME in components/chaos-lobby.tsx). */
 export const MATCHMAKING_WINDOW_MS = 300_000;
-export type SyncMeta = { replayFrames?: WatchFrame[]; openingMoveRule?: boolean; firstMoves?: ("w" | "b")[]; openingMove?: OpeningMove; chat?: RoomChat[]; ratedQueue?: boolean; gameNumber?: number; revision: number; stateRevision: number; events: SyncEvent[]; receipts: string[]; picks: Partial<Record<"host" | "guest", string | null>>; rematch: string[]; drawOffer?: string; frozenBy?: string; draftPicks?: Record<string, boolean>; result?: {winner: string; reason: string}; games?: Record<string, unknown>[]; clock?: MatchClock; draftProtocol?: 2; draft?: ServerDraft; opening?: {deadline: number; offers: {host: string[]; guest: string[]}} };
+export type SyncMeta = { shopOwned?: { host: string[]; guest: string[] }; replayFrames?: WatchFrame[]; openingMoveRule?: boolean; firstMoves?: ("w" | "b")[]; openingMove?: OpeningMove; chat?: RoomChat[]; ratedQueue?: boolean; gameNumber?: number; revision: number; stateRevision: number; events: SyncEvent[]; receipts: string[]; picks: Partial<Record<"host" | "guest", string | null>>; rematch: string[]; drawOffer?: string; frozenBy?: string; draftPicks?: Record<string, boolean>; result?: {winner: string; reason: string}; games?: Record<string, unknown>[]; clock?: MatchClock; draftProtocol?: 2; draft?: ServerDraft; opening?: {deadline: number; offers: {host: string[]; guest: string[]}} };
 export type SyncRoom = { id: string; hostId: string; guestId: string | null; hostColor: string; fen: string; chaosState: unknown; status: string; moveHistory: unknown; [key: string]: any };
 export class SyncError extends Error { constructor(public status: number, message: string) { super(message); } }
 export function metadata(room: SyncRoom): SyncMeta {
@@ -333,7 +333,7 @@ export function reduceCommand(room: SyncRoom, userId: string, command: any, now 
       const ready = state.phaseTriggers[phase - 1] && before.moveNumber() >= state.phaseTriggers[phase - 1] &&
         !meta.draftPicks?.[phase + ":" + color] && (side === "w" || meta.draftPicks?.[phase + ":white"]);
       if (ready) meta.draft = {id: "draft-" + phase + "-" + color + "-" + (old.stateRevision + 1), color, phase,
-        choices: draftChoices(after.fen(), proposed, color, phase), deadline: now + DRAFT_DURATION_MS};
+        choices: draftChoices(after.fen(), proposed, color, phase, [], meta.shopOwned?.[actor] ?? []), deadline: now + DRAFT_DURATION_MS};
     }
     if (moving && meta.clock) meta.clock[side] += (room.incrementSeconds ?? 0) * 1000;
     for (const key of ["capturedPawnsWhite", "capturedPawnsBlack"]) {
@@ -353,7 +353,7 @@ export function reduceCommand(room: SyncRoom, userId: string, command: any, now 
     if (!draft.choices.includes(message.modifierId)) throw new SyncError(400, "Choose one of the offered powers");
     if (type === "power_reroll") {
       if (draft.rerolled || state[side === "w" ? "playerAnomaly" : "aiAnomaly"] !== "temperance") throw new SyncError(400, "Reroll unavailable");
-      const replacements = draftChoices(room.fen, state, color, draft.phase, draft.choices).slice(0, 2);
+      const replacements = draftChoices(room.fen, state, color, draft.phase, draft.choices, meta.shopOwned?.[actor] ?? []).slice(0, 2);
       if (!replacements.length) throw new SyncError(409, "No replacement cards available");
       draft.choices = [...draft.choices.filter(id => id !== message.modifierId), ...replacements];
       draft.rerolled = true;
@@ -481,6 +481,7 @@ export function reduceCommand(room: SyncRoom, userId: string, command: any, now 
         capturedPawnsWhite: 0, capturedPawnsBlack: 0, hostColor: room.hostColor === "white" ? "black" : "white",
         timerWhiteMs: room.timeControlSeconds > 0 ? room.timeControlSeconds * 1000 : null,
         timerBlackMs: room.timeControlSeconds > 0 ? room.timeControlSeconds * 1000 : null });
+      delete meta.shopOwned; // Refresh personal collections for the new match.
       delete meta.clock; delete meta.draft; delete meta.opening; delete meta.openingMove; meta.firstMoves = [];
       meta.rematch = []; meta.draftPicks = {}; meta.picks = { host: null, guest: null }; delete meta.drawOffer; delete meta.frozenBy;
       meta.stateRevision++;

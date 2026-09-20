@@ -18,11 +18,13 @@ const { applyPostMoveEffects } = require('../lib/chaos-moves.ts');
 const ht = ALL_MODIFIERS.find((m) => m.id === 'hostile-takeover');
 assert.ok(ht, 'hostile-takeover must exist in ALL_MODIFIERS');
 
-test('the card is an epic shop card in the mid-game phases', () => {
+test('the card is an epic mid-game card that never lands in a free draft', () => {
   assert.equal(ht.tier, 'epic');
   assert.deepEqual(ht.phases, [2, 3]);
-  assert.ok(SHOP_CARD_IDS.has('hostile-takeover'), 'it is sold in the shop, not free');
   assert.ok(ht.description.toLowerCase().includes('pawn'), 'the rule must name the trigger piece');
+  // It is not part of the free set: shop cards and retired cards alike stay out of a plain draft.
+  const { GUEST_UNLOCKED_IDS } = require('../lib/chaos-collection.ts');
+  assert.ok(!GUEST_UNLOCKED_IDS.has('hostile-takeover'), 'the takeover is not a free card');
 });
 
 test('the capturer of a pawn defects to the victim side', () => {

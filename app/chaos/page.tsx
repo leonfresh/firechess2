@@ -2823,6 +2823,8 @@ function getPieceDisplayName(
       if (m.id === "dragon-rook" && pieceType === "r") return "Dragon Rook";
     }
   }
+  if (pieceType === "n" && mods.some(m => m.id === "vaulting-knight")) return "Vaulting Knight";
+  if (pieceType === "r" && mods.some(m => m.id === "bank-shot")) return "Bank Shot Rook";
   return PIECE_BASE_LABELS[pieceType]?.name ?? pieceType.toUpperCase();
 }
 
@@ -3073,6 +3075,8 @@ function getChaosMoveLabel(pieceType: string, mods: ChaosModifier[]): string {
   const base = PIECE_BASE_LABELS[pieceType]?.moveLabel ?? "";
   const extra: string[] = [];
   const modIds = new Set(mods.map((m) => m.id));
+  if (modIds.has("vaulting-knight") && pieceType === "n") extra.push("+ 2-square straight jumps");
+  if (modIds.has("bank-shot") && pieceType === "r") extra.push("+ one 90° turn at an empty board edge");
   if (modIds.has("dragon-bishop") && pieceType === "b")
     extra.push("+ 1 orthogonal step");
   if (modIds.has("dragon-rook") && pieceType === "r")
@@ -3468,7 +3472,7 @@ export default function ChaosChessPage() {
   const [shopOwned, setShopOwned] = useState<Set<string>>(new Set());
   useEffect(() => {
     let active = true;
-    fetch("/api/chaos/collection", {
+    const refreshCollection = () => fetch("/api/chaos/collection", {
       headers: chaosHeaders(),
       cache: "no-store",
     })
@@ -3484,7 +3488,10 @@ export default function ChaosChessPage() {
         );
       })
       .catch(() => {});
+    void refreshCollection();
+    window.addEventListener("chaos-collection-changed", refreshCollection);
     return () => {
+      window.removeEventListener("chaos-collection-changed", refreshCollection);
       active = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -3586,7 +3593,7 @@ export default function ChaosChessPage() {
       const unlocked = authenticated ? authUnlockedIds : draftUnlockedIds;
       const choices = rollDraftChoices(
         phase,
-        alreadyDrafted,
+        [...alreadyDrafted, ...ALL_MODIFIERS.filter(m => SHOP_CARD_IDS.has(m.id) && !unlocked.has(m.id))],
         seed,
         pieceCounts,
         anomaly,
@@ -3872,12 +3879,12 @@ export default function ChaosChessPage() {
 
   const startRicochetAnim = useCallback(
     (
-      move: { from: string; to: string; bounceSquare?: string },
+      move: { from: string; to: string; bounceSquare?: string; modifierId?: string },
       bishopColor: "w" | "b",
     ) => {
       const bounceSquare = move.bounceSquare ?? move.from;
-      const pieceCode = `${bishopColor}B`;
-      const pieceUrl = presentation.activity ? `/activity/pieces/${pieceCode}.svg` : getPieceImageUrl(
+      const pieceCode = `${bishopColor}${move.modifierId === "bank-shot" ? "R" : "B"}`;
+      const pieceUrl = presentation.activity ? `/activity/pieces/${bishopColor}${move.modifierId === "bank-shot" ? "BS" : "BB"}.svg` : getPieceImageUrl(
         pieceTheme.setName ?? "cburnett",
         pieceCode,
       );
@@ -5310,7 +5317,7 @@ export default function ChaosChessPage() {
                     setTimeout(() => triggerEffect("explosion", targets), 250);
                   } else if (mid === "usurper") {
                     triggerEffect("teleport", [chaosMove.from, chaosMove.to]);
-                  } else if (mid === "bishop-bounce") {
+                  } else if ((mid === "bishop-bounce" || mid === "bank-shot")) {
                     triggerEffect("ricochet", [chaosMove.from, chaosMove.to]);
                     startRicochetAnim(chaosMove, aiColor as "w" | "b");
                   } else if (mid === "rook-cannon") {
@@ -7599,7 +7606,7 @@ export default function ChaosChessPage() {
             setTimeout(() => triggerEffect("explosion", targets), 250);
           } else if (mid === "usurper") {
             triggerEffect("teleport", [from, to]);
-          } else if (mid === "bishop-bounce") {
+          } else if ((mid === "bishop-bounce" || mid === "bank-shot")) {
             triggerEffect("ricochet", [from, to]);
             startRicochetAnim(chaosMove, playerColor === "white" ? "w" : "b");
           } else if (mid === "rook-cannon") {

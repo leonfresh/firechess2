@@ -78,9 +78,10 @@ export function ActivityLobby(props: ChaosLobbyViewProps) {
       <div className="eyebrow"><span /> CHESS WITH A TWIST</div>
       <h1>Small pieces.<br /><em>Big trouble.</em></h1>
       <p>Draft ridiculous powers. Surprise your friends.<br className="wide-only" /> Make the board your playground.</p>
+    <ActivityCollection shopEntry />
     <section className="lobby-destinations" aria-label="Explore Chaos Chess">
       <div className="destination-heading"><span className="eyebrow">AROUND THE ARENA</span><span>More ways to play along</span></div>
-      <nav className="destination-grid" aria-label="Community and games"><ActivityCareer card/><ChaosWatchButton card label="Watch live" initialTab="live"/><ActivityReplays card/><ActivityCollection card/></nav>
+      <nav className="destination-grid" aria-label="Community and games"><ActivityCareer card/><ActivityCollection card/><ChaosWatchButton card label="Watch live" initialTab="live"/><ActivityReplays card/></nav>
     </section>
       <div className="hero-toys" aria-label="Rocket pawn and nuclear queen power previews">
         <div className="hero-card pawn-card"><PowerArt id="pawn-charge" /><span>TORPEDO PAWNS <b>↗</b></span></div>

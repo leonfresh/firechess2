@@ -4,6 +4,11 @@ export const POWER_ART_SPRITES: Record<string, string> = {
   'dragon-bishop': '0% 100%', 'kings-chains': '100% 100%',
 };
 export const POWER_ILLUSTRATIONS: Record<string, string> = {
+  "vaulting-knight": "vaulting-knight-v2",
+  "bank-shot": "bank-shot",
+  "conscription": "conscription",
+  "phalanx": "phalanx",
+  "hostile-takeover": "hostile-takeover",
   "camel": "camel-v2",
   "dragon-rook": "dragon-rook",
   "pawn-capture-forward": "pawn-bayonet",

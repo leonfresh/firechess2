@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import '../../app/globals.css';
 import './activity.css';
 import './arena.css';
+import './armoury.css';
 
 export const metadata: Metadata = {
   title: 'Chaos Chess · Discord Activity',

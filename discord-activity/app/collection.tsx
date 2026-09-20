@@ -1,15 +1,18 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import { ALL_MODIFIERS, type ModifierTier } from "@/lib/chaos-chess";
+import { ChaosNavLink } from "@/components/chaos-nav-link";
+import { useActivityDialog } from "./use-activity-dialog";
+import { useEffect, useId, useState } from "react";
+import { ACTIVE_MODIFIERS, type ModifierTier } from "@/lib/chaos-chess";
 import { ALL_ANOMALIES } from "@/lib/chaos-anomalies";
 import { GUEST_UNLOCKED_IDS } from "@/lib/chaos-collection";
 import { chaosIdentityHeaders } from "@/lib/chaos-client-identity";
 import { getGuestId } from "@/lib/guest-id";
 import { ChaosHubIcon } from "@/components/chaos-hub-icon";
+import { ShopPowerPreview } from "./shop-power-preview";
 import { PowerArt } from "./power-art";
 
-/** The nine fairy pieces, in board-art order. Every one has a modifier entry that explains it. */
-const PIECE_IDS = ["camel","dragon-rook","knook","archbishop","amazon","night-rider","rook-cannon","pawn-capture-forward","railgun"] as const;
+/** Persistent fairy-piece identities, each linked to the power that explains it. */
+const PIECE_IDS = ["camel","dragon-rook","knook","archbishop","amazon","night-rider","rook-cannon","pawn-capture-forward","railgun","vaulting-knight","bank-shot"] as const;
 
 const TIERS: { id: ModifierTier; label: string; blurb: string }[] = [
   { id: "common", label: "Common", blurb: "Everyday kit" },
@@ -31,43 +34,39 @@ type ShopCard = {
   owned: boolean;
 };
 
-/**
- * The Armoury: every power, fairy piece and tarot anomaly in one place, with what the player has
- * collected so far. Unlocks come from the collection API (guest set for Discord players, the full
- * set for a signed-in FireChess account) and the next unlock is measured in games played.
- */
-export function ActivityCollection({ card = false }: { card?: boolean }) {
-  const [open, setOpen] = useState(false),
-    [tab, setTab] = useState<Tab>("powers");
+/** Shared collection and gold shop, available from the lobby without leaving the game. */
+export function ActivityCollection({ card = false, shopEntry = false, page = false }: { card?: boolean; shopEntry?: boolean; page?: boolean }) {
+  const [open, setOpen] = useState(page),
+    [tab, setTab] = useState<Tab>(shopEntry ? "shop" : "powers");
   const [unlocked, setUnlocked] = useState<Set<string> | null>(null);
-  const [games, setGames] = useState<number | null>(null);
   /** Gold balance from the collection API: null when the player has no earning identity yet. */
   const [gold, setGold] = useState<{ total: number; week: number } | null>(null);
   /** Shop cards with prices and ownership, straight from the collection API. */
   const [shop, setShop] = useState<ShopCard[] | null>(null);
   const [buying, setBuying] = useState<string | null>(null);
+  const [confirmBuy, setConfirmBuy] = useState<string | null>(null);
+  const [notice, setNotice] = useState("");
+  const [retry, setRetry] = useState(0);
   const [shopError, setShopError] = useState<string | null>(null);
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    if (open) dialog.current?.showModal();
-    else dialog.current?.close();
-  }, [open]);
+  const { ref: dialog, onBackdropClick } = useActivityDialog(page ? false : open, () => setOpen(false));
   useEffect(() => {
     if (!open) return;
     let active = true;
     const headers = { "X-Guest-Id": getGuestId(), ...chaosIdentityHeaders() };
     setUnlocked(null);
-    setGames(null);
     setGold(null);
     setShop(null);
     setShopError(null);
+    setConfirmBuy(null);
+    setNotice("");
     void (async () => {
       try {
         const r = await fetch("/api/chaos/collection", {
           headers,
           cache: "no-store",
         });
-        const d = r.ok ? await r.json() : null;
+        if (!r.ok) throw new Error("Collection unavailable");
+        const d = await r.json();
         if (active)
           setUnlocked(new Set<string>(d?.unlockedIds ?? GUEST_UNLOCKED_IDS));
         if (active && typeof d?.gold === "number")
@@ -77,26 +76,16 @@ export function ActivityCollection({ card = false }: { card?: boolean }) {
           });
         if (active && Array.isArray(d?.shop)) setShop(d.shop as ShopCard[]);
       } catch {
-        if (active) setUnlocked(new Set<string>(GUEST_UNLOCKED_IDS));
-      }
-      try {
-        const r = await fetch("/api/chaos/career?page=0", {
-          headers,
-          cache: "no-store",
-        });
-        const d = r.ok ? await r.json() : null;
-        if (active)
-          setGames(typeof d?.profile?.games === "number" ? d.profile.games : 0);
-      } catch {
-        if (active) setGames(0);
+        if (active) { setUnlocked(new Set<string>(GUEST_UNLOCKED_IDS)); setShopError("The Armoury could not load. Please try again."); }
       }
     })();
     return () => {
       active = false;
     };
-  }, [open]);
+  }, [open, retry]);
   /** Buy a shop card. The server decides the price; the UI only shows what it reports back. */
   const buy = async (cardId: string) => {
+    if (buying) return;
     setBuying(cardId);
     setShopError(null);
     try {
@@ -104,6 +93,7 @@ export function ActivityCollection({ card = false }: { card?: boolean }) {
         method: "POST",
         headers: {
           "content-type": "application/json",
+          "X-Guest-Id": getGuestId(),
           ...chaosIdentityHeaders(),
         },
         body: JSON.stringify({ cardId }),
@@ -119,6 +109,9 @@ export function ActivityCollection({ card = false }: { card?: boolean }) {
           : prev,
       );
       setUnlocked((prev) => new Set([...(prev ?? []), cardId]));
+      setConfirmBuy(null);
+      setNotice(`${ACTIVE_MODIFIERS.find(m => m.id === cardId)?.name ?? "Power"} unlocked. It can now appear in future drafts.`);
+      window.dispatchEvent(new Event("chaos-collection-changed"));
       if (typeof d?.gold === "number")
         setGold((g) => ({ total: d.gold, week: g?.week ?? 0 }));
     } catch {
@@ -131,15 +124,15 @@ export function ActivityCollection({ card = false }: { card?: boolean }) {
   const badge = (id: string) =>
     unlocked === null ? "…" : has(id) ? "✓" : "🔒";
   const inTier = (tier: ModifierTier, owned: boolean) =>
-    ALL_MODIFIERS.filter((m) => m.tier === tier && has(m.id) === owned).length;
+    ACTIVE_MODIFIERS.filter((m) => m.tier === tier && has(m.id) === owned).length;
   const collected = unlocked
-    ? ALL_MODIFIERS.filter((m) => has(m.id)).length
+    ? ACTIVE_MODIFIERS.filter((m) => has(m.id)).length
     : null;
   const shopCards = shop ?? [];
   const shopLocked = shopCards.filter((c) => !c.owned).length;
-  const titleId = card ? "lobby-collection-title" : "nav-collection-title";
+  const titleId = useId();
   const row = (id: string) => {
-    const mod = ALL_MODIFIERS.find((m) => m.id === id);
+    const mod = ACTIVE_MODIFIERS.find((m) => m.id === id);
     if (!mod) return null;
     return (
       <li key={mod.id} data-locked={unlocked ? !has(mod.id) : false}>
@@ -154,38 +147,12 @@ export function ActivityCollection({ card = false }: { card?: boolean }) {
       </li>
     );
   };
-  return (
-    <>
-      <button
-        className={card ? "lobby-destination" : "sound-button"}
-        data-tone="mint"
-        onClick={() => setOpen(true)}
-      >
-        {card ? (
-          <>
-            <span className="destination-icon">
-              <ChaosHubIcon kind="collection" />
-            </span>
-            <strong>Collection</strong>
-            <small>Every power &amp; piece</small>
-            <span className="destination-arrow" aria-hidden="true">
-              ↗
-            </span>
-          </>
-        ) : (
-          "Collection"
-        )}
-      </button>
-      <dialog
-        className="career-dialog collection-dialog"
-        ref={dialog}
-        onCancel={() => setOpen(false)}
-        aria-labelledby={titleId}
-      >
+  const Heading = page ? "h1" : "h2";
+  const content = <>
         <header className="career-heading">
           <div>
             <span className="eyebrow">THE ARMOURY</span>
-            <h2 id={titleId}>Your collection</h2>
+            <Heading id={titleId}>{tab === "shop" ? "The power shop" : "Your collection"}</Heading>
           </div>
           {gold ? (
             <span
@@ -198,36 +165,36 @@ export function ActivityCollection({ card = false }: { card?: boolean }) {
               {gold.week > 0 ? <small>+{gold.week} this week</small> : null}
             </span>
           ) : null}
-          <button
-            className="sound-button"
+          {!page && <button
+            className="sound-button modal-close"
+            autoFocus
             onClick={() => setOpen(false)}
             aria-label="Close collection"
           >
             ✕
-          </button>
+          </button>}
         </header>
         <p className="career-note" role="status">
           {collected === null
             ? "Counting your kit…"
-            : `${collected} of ${ALL_MODIFIERS.length} powers in your kit.`}
-          {games ? ` ${games} ${games === 1 ? "game" : "games"} played.` : ""}
+            : `${collected} of ${ACTIVE_MODIFIERS.length} powers in your kit.`}
           {shopLocked > 0
             ? ` ${shopLocked} card${shopLocked === 1 ? "" : "s"} still in the shop.`
-            : " Everything is unlocked."}
+            : shop ? " All shop powers owned." : ""}
         </p>
         <nav className="career-tabs" aria-label="Collection sections">
           {(
             [
-              ["powers", `Powers (${ALL_MODIFIERS.length})`],
+              ["shop", "Power shop"],
+              ["powers", `Powers (${ACTIVE_MODIFIERS.length})`],
               ["pieces", `Pieces (${PIECE_IDS.length})`],
               ["anomalies", `Anomalies (${ALL_ANOMALIES.length})`],
-              ["shop", shop ? `Shop (${shopCards.length})` : "Shop"],
             ] as [Tab, string][]
-          ).map(([id, label]) => (
+          ).map(([id, label]) => id === "shop" && !page ? <ChaosNavLink key={id} href="/shop">{label} ↗</ChaosNavLink> : (
             <button
               key={id}
               aria-pressed={tab === id}
-              onClick={() => setTab(id)}
+              onClick={() => { setTab(id); setConfirmBuy(null); }}
             >
               {label}
             </button>
@@ -247,7 +214,7 @@ export function ActivityCollection({ card = false }: { card?: boolean }) {
                   </small>
                 </div>
                 <ul className="career-list collection-list">
-                  {ALL_MODIFIERS.filter((m) => m.tier === tier.id).map((m) =>
+                  {ACTIVE_MODIFIERS.filter((m) => m.tier === tier.id).map((m) =>
                     row(m.id),
                   )}
                 </ul>
@@ -259,47 +226,28 @@ export function ActivityCollection({ card = false }: { card?: boolean }) {
             {PIECE_IDS.map((id) => row(id))}
           </ul>
         ) : tab === "shop" ? (
-          <div>
-            {shopError ? (
-              <p className="career-note" role="alert">
-                {shopError}
-              </p>
-            ) : null}
-            <ul className="career-list collection-list">
-              {shopCards.map((card) => (
-                <li key={card.id} data-locked={!card.owned}>
-                  <PowerArt id={card.id} />
-                  <span>
-                    <strong>
-                      {card.icon} {card.name}
-                    </strong>
-                    <small>
-                      {card.tier} ·{" "}
-                      {card.owned ? "In your collection" : `${card.price} gold`}
-                    </small>
-                    <small>{card.description}</small>
-                  </span>
-                  {card.owned ? (
-                    <b className="collection-badge" data-owned="true">
-                      ✓
-                    </b>
-                  ) : (
-                    <button
-                      className="sound-button"
-                      disabled={buying === card.id}
-                      onClick={() => buy(card.id)}
-                    >
-                      {buying === card.id ? "Buying…" : `Buy · ${card.price}`}
-                    </button>
-                  )}
-                </li>
-              ))}
-            </ul>
-            <p className="career-note">
-              Gold is earned by finishing games: 10 a game, +15 for a win, +5 on a
-              clock, and +25 for your first win each day.
-            </p>
-          </div>
+          <section className="power-shop" aria-label="Power shop">
+            <div className="shop-intro"><span className="eyebrow">NEW TRICKS. PERMANENT UNLOCKS.</span><p>Buy a power once with earned gold. It joins your drafts—not your opponent’s.</p></div>
+            {shop && gold === null && <p className="shop-signin"><a href="https://www.firechess.com/api/chaos/website-login">Sign in to earn gold</a><span>Or play signed in through Discord. 26 starter powers are free.</span></p>}
+            {notice && <p className="shop-success" role="status">✓ {notice}</p>}
+            {shopError && <div className="shop-error" role="alert">{shopError} {!shop && <button className="sound-button" onClick={() => setRetry(r => r + 1)}>Try again</button>}</div>}
+            {!shop && !shopError && <p className="shop-loading" role="status">Opening the Armoury…</p>}
+            {shop && !shop.length && <p className="career-empty">New powers are on their way. Your existing collection is ready to play.</p>}
+            <div className="shop-grid">
+              {shopCards.map(item => {
+                const affordable = gold !== null && gold.total >= item.price;
+                return <article className="shop-power" data-tier={item.tier} data-owned={item.owned} key={item.id}>
+                  <div className="shop-power-visual"><PowerArt id={item.id} /><span className="shop-rarity">{item.tier}</span>{item.owned && <span className="shop-owned">✓ Owned</span>}</div>
+                  <div className="shop-power-copy"><h3>{item.name}</h3><p>{item.description}</p><small>{({"vaulting-knight":"All knights · stacks with hybrids", "bank-shot":"All rooks · one turn at the edge", "night-rider":"One knight · repeated L-jumps", "phantom-rook":"All rooks · pass through allies", "bishop-bounce":"All bishops · ricochet movement", "queen-teleport":"Queen · once per match"} as Record<string,string>)[item.id] ?? "Permanent draft unlock"}</small></div>
+                  <div className="shop-power-action">
+                    {item.owned ? <p className="shop-ready">✓ Ready for your drafts</p> : confirmBuy === item.id ? <div className="shop-confirm"><p>Unlock for <strong>{item.price} gold</strong>?</p><button className="primary-action" disabled={!!buying || !affordable} onClick={() => buy(item.id)}>{buying === item.id ? "Unlocking…" : "Confirm unlock"}</button><button className="shop-cancel" disabled={!!buying} onClick={() => setConfirmBuy(null)}>Not now</button></div> : <><button className="shop-buy" disabled={!!buying || !affordable} onClick={() => setConfirmBuy(item.id)}><span>Unlock power</span><b>◈ {item.price}</b></button><small>{gold === null ? "Sign in to earn and spend gold" : !affordable ? `${item.price - gold.total} more gold needed` : "Yours to keep"}</small></>}
+                  </div>
+                  <ShopPowerPreview id={item.id} />
+                </article>;
+              })}
+            </div>
+            <div className="shop-earn"><div><span className="eyebrow">PLAY YOUR WAY TO MORE</span><h3>Every finished game counts.</h3></div><ul><li><b>+10</b> Finish a game</li><li><b>+15</b> Win bonus</li><li><b>+5</b> Timed game</li><li><b>+25</b> First daily win</li></ul></div>
+          </section>
         ) : (
           <ul className="career-list collection-list">
             {ALL_ANOMALIES.map((a) => (
@@ -330,11 +278,32 @@ export function ActivityCollection({ card = false }: { card?: boolean }) {
           </ul>
         )}
         <p className="career-note">
-          Every base card is unlocked. Shop cards are bought once with gold and
+          26 starter powers are unlocked. Shop cards are bought once with earned gold and
           then drafted like any other. Anomalies are never locked — Pro players
           just see more choices at the start of a match.
         </p>
-      </dialog>
-    </>
-  );
+  </>;
+  return <>
+{!page && !shopEntry && (      <button
+        className={shopEntry ? "armoury-entry" : card ? "lobby-destination" : "sound-button"}
+        data-tone="mint"
+        onClick={() => { setTab(shopEntry ? "shop" : "powers"); setOpen(true); }}
+      >
+        {shopEntry ? (<><span className="armoury-entry-art"><PowerArt id="bank-shot" /></span><span><small>THE ARMOURY</small><strong>Power shop</strong><span>Earn gold. Add new tricks to your drafts.</span></span><b aria-hidden="true">↗</b></>) : card ? (
+          <>
+            <span className="destination-icon">
+              <ChaosHubIcon kind="collection" />
+            </span>
+            <strong>Collection</strong>
+            <small>Every power &amp; piece</small>
+          </>
+        ) : (
+          "Collection"
+        )}
+      </button>
+)}{!page && shopEntry && <ChaosNavLink href="/shop" className="armoury-entry"><span className="armoury-entry-art"><PowerArt id="bank-shot" /></span><span><small>THE ARMOURY</small><strong>Power shop</strong><span>Find your next trick.</span></span><b aria-hidden="true">↗</b></ChaosNavLink>}
+    {page ? <section className="armoury-page" aria-labelledby={titleId}>{content}</section> : !shopEntry &&
+      <dialog className="career-dialog collection-dialog" ref={dialog} onClick={onBackdropClick}
+        onCancel={() => setOpen(false)} aria-labelledby={titleId}>{content}</dialog>}
+  </>;
 }

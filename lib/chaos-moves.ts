@@ -189,6 +189,66 @@ type MoveGen = (
   modifiers: ChaosModifier[],
 ) => ChaosMove[];
 
+const VAULT_OFFSETS = [[-2, 0], [2, 0], [0, -2], [0, 2]] as const;
+
+function genVaultingKnight(game: Chess, color: Color): ChaosMove[] {
+  const moves: ChaosMove[] = [];
+  for (const from of allSquaresOf(game, "n", color)) {
+    const [f, r] = sqToCoords(from);
+    for (const [df, dr] of VAULT_OFFSETS) {
+      const to = sq(f + df, r + dr);
+      if (!to || isFriendly(game, to, color) || isEnemyKing(game, to, color)) continue;
+      if (wouldLeaveKingInCheck(game, from, to, color)) continue;
+      moves.push({ from, to, type: game.get(to) ? "capture" : "move",
+        modifierId: "vaulting-knight", label: "Vaulting Knight (2-square jump)" });
+    }
+  }
+  return moves;
+}
+
+/** Shared geometry for legal moves and threat detection. The bend must be empty;
+ * the second leg includes its first blocker so defended squares remain attacks. */
+function bankShotPaths(game: Chess, from: Square): { to: Square; bend: Square }[] {
+  const paths: { to: Square; bend: Square }[] = [];
+  const [f, r] = sqToCoords(from);
+  for (const [df, dr] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+    let cf = f + df, cr = r + dr;
+    while (sq(cf, cr)) {
+      const bend = sq(cf, cr)!;
+      if (game.get(bend)) break;
+      // Reach the edge in the direction of travel, not a side edge passed along.
+      if (!sq(cf + df, cr + dr)) {
+        for (const sign of [-1, 1]) {
+          const tf = dr * sign, tr = df * sign;
+          let bf = cf + tf, br = cr + tr;
+          while (sq(bf, br)) {
+            const to = sq(bf, br)!;
+            paths.push({ to, bend });
+            if (game.get(to)) break;
+            bf += tf; br += tr;
+          }
+        }
+        break;
+      }
+      cf += df; cr += dr;
+    }
+  }
+  return paths;
+}
+
+function genBankShot(game: Chess, color: Color): ChaosMove[] {
+  const moves: ChaosMove[] = [];
+  for (const from of allSquaresOf(game, "r", color)) {
+    for (const { to, bend } of bankShotPaths(game, from)) {
+      if (isFriendly(game, to, color) || isEnemyKing(game, to, color)) continue;
+      if (wouldLeaveKingInCheck(game, from, to, color)) continue;
+      moves.push({ from, to, type: game.get(to) ? "capture" : "move",
+        modifierId: "bank-shot", label: "Bank Shot (turn at board edge)", bounceSquare: bend });
+    }
+  }
+  return moves;
+}
+
 /** Pawns can move 2 from any rank */
 function genPawnCharge(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
@@ -1612,6 +1672,8 @@ const MODIFIER_GENERATORS: Record<
   string,
   (game: Chess, color: Color, trackedSquare?: string | null) => ChaosMove[]
 > = {
+  "vaulting-knight": genVaultingKnight,
+  "bank-shot": genBankShot,
   "pawn-charge": genPawnCharge,
   "pawn-capture-forward": genPawnBayonet,
   conscription: genPawnConscription,
@@ -1681,12 +1743,12 @@ export function getChaosMoves(
       if (seen.has(key)) continue;
       seen.add(key);
       // A ranged attacker can disappear to Kamikaze retaliation and uncover its king.
-      if (m.pieceStays && opponentModifiers?.some(mod => mod.id === "kamikaze-bishop")) {
+      if (m.modifierId === "bank-shot" || m.modifierId === "vaulting-knight" || (m.pieceStays && opponentModifiers?.some(mod => mod.id === "kamikaze-bishop"))) {
         const resolved = executeChaosMove(game, m, modifiers, opponentModifiers);
         if (!resolved) continue;
         const king = allSquaresOf(resolved, "k", color)[0];
         const enemy = color === "w" ? "b" : "w";
-        if (!king || resolved.isAttacked(king, enemy) || getChaosAttackedSquares(resolved, opponentModifiers, enemy, assignedSquares).has(king)) continue;
+        if (!king || resolved.isAttacked(king, enemy) || getChaosAttackedSquares(resolved, opponentModifiers ?? [], enemy, assignedSquares).has(king)) continue;
       }
       // Also verify this move doesn't expose our king to an opponent chaos attack
       if (
@@ -1810,6 +1872,21 @@ export function getChaosAttackedSquares(
     [1, 1],
   ];
   const allDirs: number[][] = [...cardinals, ...diagonals];
+
+  if (modIds.has("vaulting-knight")) {
+    for (const from of allSquaresOf(game, "n", attackerColor)) {
+      const [f, r] = sqToCoords(from);
+      for (const [df, dr] of VAULT_OFFSETS) {
+        const to = sq(f + df, r + dr);
+        if (to) attacked.add(to);
+      }
+    }
+  }
+  if (modIds.has("bank-shot")) {
+    for (const from of allSquaresOf(game, "r", attackerColor)) {
+      for (const { to } of bankShotPaths(game, from)) attacked.add(to);
+    }
+  }
 
   /* Knook: first knight attacks along rook lines */
   if (modIds.has("knook")) {
@@ -2511,7 +2588,7 @@ export function executeChaosMove(
     // Railgun captures in several directions; every direct hit gets collateral.
     const targets = move.modifierId === "railgun" ? [move.to, ...(move.sideEffects ?? [])] : [move.to];
     for (const target of targets) {
-      const collateral = getCollateralSquare(game, move.from, target);
+      const collateral = getCollateralSquare(game, move.modifierId === "bank-shot" && move.bounceSquare ? move.bounceSquare as Square : move.from, target);
       if (collateral) tmp.remove(collateral);
     }
   }

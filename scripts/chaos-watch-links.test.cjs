@@ -19,29 +19,13 @@ test('watch entry buttons open the full page instead of a modal',()=>{
  assert.equal(card.props.className,'lobby-destination');
  assert.equal(card.props.href,'/watch');
 });
-test('the activity replays card opens the watchtower as a modal',()=>{
- const values=[];let cursor=0;
- const react={...require('react'),useEffect(){},useRef(v){return {current:v}},useMemo(fn){return fn()},useState(v){const i=cursor++;if(!(i in values))values[i]=v;return [values[i],n=>values[i]=typeof n==='function'?n(values[i]):n]}};
- const ChaosWatch=p=>({type:'section',props:p});
- const shims={'@/components/chaos-watch':{ChaosWatch},'@/components/chaos-hub-icon':{ChaosHubIcon:()=>({type:'svg',props:{}})},'@/components/chaos-watch.module.css':{__esModule:true,default:{dialog:'dialog_hash'}}};
- const module={exports:{}};
- vm.runInNewContext(ts.transpile(fs.readFileSync('discord-activity/app/replays.tsx','utf8'),{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022,esModuleInterop:true}),
-  {module,exports:module.exports,require:n=>shims[n]??(n==='react'?react:n==='react/jsx-runtime'?require(n):{}),Date,URL,Math,console,setTimeout,clearTimeout});
- const {ActivityReplays}=module.exports;
- const first=walk(ActivityReplays({card:true}));
- const card=first.find(n=>n.props?.className==='lobby-destination');
- assert.equal(card.type,'button','the replays card is a button — activity.css hides anchors');
- assert.equal(card.props.href,undefined,'the replays card must not navigate away');
- card.props.onClick();
- cursor=0;
- const nodes=walk(ActivityReplays({card:true}));
- const dialog=nodes.find(n=>n.type==='dialog');
- assert.ok(dialog,'opening the card renders a dialog');
- assert.equal(dialog.props.className,'dialog_hash');
- const watch=walk(dialog).find(n=>n.type===ChaosWatch);
- assert.ok(watch,'the dialog hosts the watchtower');
- assert.equal(watch.props.initialTab,'archive','replays open on the archive tab');
- assert.equal(typeof watch.props.onClose,'function','the modal can close itself');
+test('the activity replays card links to the archive page',()=>{
+ const ChaosWatchButton=()=>null,module={exports:{}};
+ vm.runInNewContext(ts.transpile(fs.readFileSync('discord-activity/app/replays.tsx','utf8'),{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}),{module,exports:module.exports,require:n=>n==='@/components/chaos-watch'?{ChaosWatchButton}:require(n)});
+ const card=module.exports.ActivityReplays({card:true});
+ assert.equal(card.type,ChaosWatchButton);
+ assert.equal(card.props.initialTab,'archive');
+ assert.equal(card.props.card,true);
 });
 test('the watchtower opens as a page, never a dialog',()=>{
  const source=fs.readFileSync('components/chaos-watch.tsx','utf8');

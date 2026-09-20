@@ -1,14 +1,14 @@
 import { Chess, type Square } from "chess.js";
-import { ALL_MODIFIERS, rollDraftChoices, type ChaosState, type PieceType } from "./chaos-chess";
+import { ALL_MODIFIERS, SHOP_CARD_IDS, rollDraftChoices, type ChaosState, type PieceType } from "./chaos-chess";
 import { applyDraftEffect } from "./chaos-moves";
 
 export const DRAFT_DURATION_MS = 20_000;
 export type ServerDraft = { id: string; color: "white" | "black"; phase: number; choices: string[]; deadline: number; rerolled?: boolean };
-export function draftChoices(fen: string, state: ChaosState, color: "white" | "black", phase: number, excluded: string[] = []) {
+export function draftChoices(fen: string, state: ChaosState, color: "white" | "black", phase: number, excluded: string[] = [], ownedShop: readonly string[] = []) {
   const own = color === "white" ? "player" : "ai";
   const counts: Partial<Record<PieceType, number>> = {};
   for (const p of new Chess(fen).board().flat()) if (p?.color === (color === "white" ? "w" : "b")) counts[p.type] = (counts[p.type] ?? 0) + 1;
-  return rollDraftChoices(phase, [...state[`${own}Modifiers`], ...ALL_MODIFIERS.filter(m => excluded.includes(m.id))], undefined, counts,
+  return rollDraftChoices(phase, [...state[`${own}Modifiers`], ...ALL_MODIFIERS.filter(m => (excluded.includes(m.id) || (SHOP_CARD_IDS.has(m.id) && !ownedShop.includes(m.id))))], undefined, counts,
     state[`${own}Anomaly`], state[own === "player" ? "spentPlayerModIds" : "spentAiModIds"] ?? []).map(m => m.id);
 }
 export function applyServerDraft(fen: string, state: ChaosState, draft: ServerDraft, id: string) {

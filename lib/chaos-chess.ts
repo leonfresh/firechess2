@@ -26,10 +26,12 @@ export const RAILGUN_MAX_SHOTS = 2;
  * Cards that are not part of the free set: they are bought with gold (see lib/chaos-shop.ts).
  * Everything else in ALL_MODIFIERS is unlocked for every player, signed in or not.
  */
+export const RETIRED_SHOP_CARD_IDS: ReadonlySet<string> = new Set([
+  "conscription", "phalanx", "hostile-takeover",
+]);
 export const SHOP_CARD_IDS: ReadonlySet<string> = new Set([
-  "conscription",
-  "phalanx",
-  "hostile-takeover",
+  "vaulting-knight", "bank-shot",
+  "night-rider", "phantom-rook", "bishop-bounce", "queen-teleport",
 ]);
 
 export type PieceType = "p" | "n" | "b" | "r" | "q" | "k";
@@ -132,6 +134,18 @@ export interface ChaosState {
 /* ================================================================== */
 
 export const ALL_MODIFIERS: ChaosModifier[] = [
+  {
+    id: "vaulting-knight",
+    name: "Vaulting Knight",
+    description: "Knights also jump exactly 2 squares straight. Leap over pieces; capture on landing.",
+    tier: "rare", icon: "↟", piece: "n", phases: [1, 2],
+  },
+  {
+    id: "bank-shot",
+    name: "Bank Shot",
+    description: "Rooks can reach an empty board edge, turn 90°, then slide along it. Pieces block the path.",
+    tier: "epic", icon: "↱", piece: "r", phases: [2, 3],
+  },
   // ── Phase 1 (Turn 5) — Movement & Minor Buffs ──
   {
     id: "pawn-charge",
@@ -653,6 +667,8 @@ export function getChaosPieceValCp(
     "kamikaze-bishop": 140, // bishop detonates on capture — wipes up to 8 adjacent enemies
     "pawn-charge": 10,
     "pawn-capture-forward": 15,
+    "vaulting-knight": 45, // extra short jumps; keeps the knight useful in crowded positions
+    "bank-shot": 65, // edge threats, with blockers and only one bend
     conscription: 15,
     phalanx: 30, // three fresh pawns ≈ a rook's worth of structure, paid for in one draft
     "pawn-fortress": 50, // 50% respawn on capture ≈ +0.5 value
@@ -718,6 +734,7 @@ export function rollDraftChoices(
 
   let pool = ALL_MODIFIERS.filter(
     (m) =>
+      !RETIRED_SHOP_CARD_IDS.has(m.id) &&
       m.phases.includes(effectivePhase) &&
       !draftedIds.has(m.id) &&
       !removedIds.has(m.id),
@@ -733,7 +750,8 @@ export function rollDraftChoices(
     const spentSet = new Set(spentIds ?? []);
     const fallback = ALL_MODIFIERS.filter(
       (m) =>
-        m.phases.includes(effectivePhase) &&
+        !RETIRED_SHOP_CARD_IDS.has(m.id) &&
+      m.phases.includes(effectivePhase) &&
         !permanentIds.has(m.id) &&
         spentSet.has(m.id) &&
         !removedIds.has(m.id),
@@ -771,6 +789,9 @@ export function rollDraftChoices(
   return result;
 }
 
+/** Current catalogue. Historical definitions above still decode saved matches. */
+export const ACTIVE_MODIFIERS = ALL_MODIFIERS.filter(m => !RETIRED_SHOP_CARD_IDS.has(m.id));
+
 /** Simple seeded PRNG (mulberry32) */
 function seededRandom(seed: number): () => number {
   let s = seed | 0;
@@ -804,6 +825,7 @@ export function ensureUnlockedChoice(
   const taken = new Set([...alreadyDrafted.map((m) => m.id), ...spentIds]);
   const candidates = ALL_MODIFIERS.filter(
     (m) =>
+      !RETIRED_SHOP_CARD_IDS.has(m.id) &&
       unlockedIds.has(m.id) &&
       m.phases.includes(phase) &&
       !taken.has(m.id),
