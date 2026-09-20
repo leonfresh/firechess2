@@ -1,6 +1,6 @@
 ---
-title: "Shirov vs Topalov 1998: The Immortal Bh3!! Sacrifice Explained"
-description: "Why did Shirov play Bh3!! against Topalov in 1998? Explore the greatest endgame sacrifice on an interactive board with engine analysis."
+title: "Shirov vs Topalov Bh3!!: The Move That Stunned Kasparov"
+description: "Shirov's 47...Bh3!! stunned even Kasparov. Play through the greatest endgame sacrifice on an interactive board with full Stockfish analysis."
 date: 2026-09-20
 author: "FireChess Team"
 tags: ["shirov topalov bh3", "greatest chess moves", "famous chess games", "endgame sacrifice", "chess brilliancy", "zugzwang"]
