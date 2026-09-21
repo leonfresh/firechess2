@@ -92,10 +92,10 @@ export default function LeaderboardPage() {
               ⚡ Chaos Chess ELO
             </Link>
             <Link
-              href="/leaderboard/coins"
+              href="/leaderboard/gold"
               className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-sm font-semibold text-amber-400 transition-all hover:bg-amber-500/20"
             >
-              🪙 Coins Earned
+              🪙 Chaos Gold
             </Link>
           </div>
         </div>

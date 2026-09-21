@@ -18,7 +18,6 @@ export default {
       afterFiles: [],
       fallback: [
         { source: '/api/chaos/:path*', destination: `${backend.origin}/api/chaos/:path*` },
-        { source: '/api/leaderboard/:path*', destination: `${backend.origin}/api/leaderboard/:path*` },
         ...assets.map(entry => ({
           source: `/${entry.name}${entry.isDirectory() ? '/:path*' : ''}`,
           destination: `${backend.origin}/${entry.name}${entry.isDirectory() ? '/:path*' : ''}`,

@@ -1,12 +1,15 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),ts=require('typescript');
-/** The leaderboard dialog: the Coins tab must be lazy, button-driven, and load the website's
- * public coin board (lifetime coins earned) through the activity's /api/leaderboard proxy. */
-const COINS={entries:[
- {userId:'u1',name:'LeonFresh',chaosUsername:null,balance:1678,spent:1910,earned:3588},
- {userId:'u2',name:'Tanakrit Nithitirawut',chaosUsername:null,balance:256,spent:995,earned:1251},
- {userId:'u3',name:'Max',chaosUsername:'Maximus',balance:576,spent:0,earned:576}],
- totals:{players:509,earned:22833}};
-const STANDINGS={ranked:[{name:'Alpha',rating:1500,games:4,wins:3,losses:1,draws:0}],community:[{name:'Alpha',rating:1500,games:4,wins:3,losses:1,draws:0}]};
+/** The leaderboard dialog: the Gold tab must rank Chaos players by lifetime gold earned,
+ * served from the same /api/chaos/standings payload as the other tabs. */
+const STANDINGS={
+ ranked:[{name:'Alpha',rating:1500,games:4,wins:3,losses:1,draws:0}],
+ community:[{name:'Alpha',rating:1500,games:4,wins:3,losses:1,draws:0}],
+ gold:[
+  {name:'Kofta paneer',gold:95,games:5,earned:95,spent:0},
+  {name:'SwordFish',gold:50,games:3,earned:50,spent:0},
+  {name:'MrLeli',gold:50,games:0,earned:50,spent:0},
+  {name:'Andy',gold:30,games:2,earned:30,spent:0}],
+ goldTotals:{players:9,earned:545}};
 function load(){
  let cursor=0,effectSlot=0;const values=[];const lastDeps=[];const calls=[];
  const react={...require('react'),useId:()=>"career-test",
@@ -24,7 +27,7 @@ function load(){
  vm.runInNewContext(ts.transpile(fs.readFileSync('discord-activity/app/career.tsx','utf8'),{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022,esModuleInterop:true}),
   {module,exports:module.exports,require:name=>shims[name]??(name==='react'?react:name==='react/jsx-runtime'?require(name):{}),Date,URL,Math,console,setTimeout,clearTimeout,Set,Promise,
    window:{dispatchEvent(){}},
-   fetch:async url=>{calls.push(String(url));const d=String(url).includes('/api/leaderboard/coins')?COINS:STANDINGS;return{ok:true,json:async()=>d}}});
+   fetch:async url=>{calls.push(String(url));return{ok:true,json:async()=>STANDINGS}}});
  const render=()=>{cursor=0;effectSlot=0;return walk(module.exports.ActivityCareer({card:true}))};
  return {render,calls};
 }
@@ -33,47 +36,42 @@ const texts=nodes=>nodes.flatMap(n=>{const c=n.props?.children;if(typeof c==='st
 const flush=async()=>{await new Promise(r=>setTimeout(r,0));await new Promise(r=>setTimeout(r,0));};
 const tabButtons=nodes=>nodes.filter(n=>n.props?.['aria-pressed']!==undefined&&n.type==='button');
 
-test('the leaderboard card is a button and the dialog gains a Coins tab',()=>{
+test('the leaderboard card is a button and the dialog has a Gold tab',()=>{
  const {render}=load();
  const nodes=render();
  const card=nodes.find(n=>n.props?.className==='lobby-destination');
  assert.equal(card.type,'button','the leaderboard card must be a button — activity.css hides anchors');
- assert.deepEqual(tabButtons(nodes).map(n=>n.props.children),['Community','Rated ladder','Coins','My games']);
+ assert.deepEqual(tabButtons(nodes).map(n=>n.props.children),['Community','Rated ladder','Gold','My games']);
 });
 
-test('the coin board is fetched lazily, only when the Coins tab is opened',async()=>{
+test('opening the dialog fetches the chaos standings once, which carries the gold board',async()=>{
  const {render,calls}=load();
  let nodes=render();
- assert.ok(!calls.some(u=>u.includes('/api/leaderboard/coins')),'closed dialog must not request the coin board');
+ assert.ok(!calls.length,'closed dialog must not fetch');
  nodes.find(n=>n.props?.className==='lobby-destination').props.onClick();
  render();
  await flush();
- assert.ok(!calls.some(u=>u.includes('/api/leaderboard/coins')),'community tab must not request the coin board');
- tabButtons(render()).find(n=>n.props.children==='Coins').props.onClick();
- render();
- await flush();
- assert.ok(calls.filter(u=>u.includes('/api/leaderboard/coins?limit=25')).length===1,'opening Coins fetches the board exactly once');
+ assert.deepEqual(calls,['/api/chaos/standings'],'the gold board rides the standings payload — no second endpoint');
+ assert.ok(!calls.some(u=>u.includes('/api/leaderboard')),'no FireChess-website board is fetched from the activity');
 });
 
-test('the Coins tab lists players by lifetime coins earned',async()=>{
+test('the Gold tab lists chaos players by lifetime gold earned',async()=>{
  const {render}=load();
  render().find(n=>n.props?.className==='lobby-destination').props.onClick();
  render();
  await flush();
- tabButtons(render()).find(n=>n.props.children==='Coins').props.onClick();
- render();
- await flush();
+ tabButtons(render()).find(n=>n.props.children==='Gold').props.onClick();
  const body=texts(render());
- assert.ok(body.includes('LeonFresh')&&body.includes('Tanakrit Nithitirawut')&&body.includes('Maximus'),'rows use chaos names, falling back to account names');
- assert.ok(body.includes('3,588')&&body.includes('1,251'),'rows show lifetime earned, formatted');
- assert.ok(body.includes('1,678')&&body.includes('in the bank')&&body.includes('1,910')&&body.includes('spent'),'rows still show balance and spend');
- assert.ok(body.includes('COINS EARNED'),'the column header names the metric');
- assert.ok(body.includes('22,833')&&body.includes('509'),'the note reports site-wide totals');
- assert.ok(/never costs your rank/.test(body),'the note explains spending does not cost rank');
+ assert.ok(body.includes('Kofta paneer')&&body.includes('SwordFish')&&body.includes('MrLeli'),'rows list the chaos players');
+ assert.ok(body.includes('95')&&body.includes('50'),'rows show lifetime earned');
+ assert.ok(body.includes('in hand'),'rows still show the balance still in hand');
+ assert.ok(body.includes('GOLD EARNED'),'the column header names the metric');
+ assert.ok(body.includes('545')&&body.includes('9'),'the note reports site-wide totals');
+ assert.ok(/Buying powers spends gold but never removes you from this board/.test(body),'the note explains spending does not cost rank');
 });
 
-test('an empty board renders the empty state instead of a blank list',async()=>{
+test('an empty gold board renders the empty state instead of a blank list',async()=>{
  const src=fs.readFileSync('discord-activity/app/career.tsx','utf8');
- assert.match(src,/No coins earned yet\./,'an empty coin board must render its own empty state');
- assert.match(src,/coins\.entries\.length \?/,'the list renders only when entries exist');
+ assert.match(src,/No gold earned yet\./,'an empty gold board must render its own empty state');
+ assert.match(src,/standings\.gold\.length \?/,'the gold list renders only when rows exist');
 });
