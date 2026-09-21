@@ -84,12 +84,18 @@ export default function LeaderboardPage() {
             The best FireChess analysis reports ranked by composite score.
             Score is based on accuracy, CPL, opening leaks, and missed tactics.
           </p>
-          <div className="mt-4 flex items-center justify-center gap-4">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-4">
             <Link
               href="/leaderboard/chaos"
               className="inline-flex items-center gap-1.5 rounded-lg border border-purple-500/30 bg-purple-500/10 px-4 py-1.5 text-sm font-semibold text-purple-400 transition-all hover:bg-purple-500/20"
             >
               ⚡ Chaos Chess ELO
+            </Link>
+            <Link
+              href="/leaderboard/coins"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-sm font-semibold text-amber-400 transition-all hover:bg-amber-500/20"
+            >
+              🪙 Coins Earned
             </Link>
           </div>
         </div>
