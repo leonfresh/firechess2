@@ -394,6 +394,9 @@ export function reduceCommand(room: SyncRoom, userId: string, command: any, now 
     // separately because chess.js rejects a board with a missing king.
     patch.moveHistory = [...(Array.isArray(room.moveHistory) ? room.moveHistory : []), {
       from:capture.from,to:capture.to,color:side,fen:room.fen,kingCapture:true,
+      // The winning capture is a move like any other: give it its turn number so the in-game move
+      // log files it under the right row instead of an unnumbered one.
+      moveNumber:game.moveNumber(),
       powers:{white:state.playerModifiers.map(m=>m.id),black:state.aiModifiers.map(m=>m.id)},
     }];
     meta.result = {winner: color, reason: "King captured"};

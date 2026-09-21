@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs'), vm = require('node:vm'), ts = require('typescript');
 require.extensions['.ts'] = (m, f) => m._compile(ts.transpile(fs.readFileSync(f, 'utf8'), {module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}), f);
 const watch = require('../lib/chaos-watch.ts');
+const moveLog = require('../lib/chaos-move-log.ts');
 const discord = 'discord_123456789012345678';
 
 test('archive platforms distinguish Discord, browser guests, accounts and cross-platform games', () => {
@@ -20,7 +21,9 @@ function route(rows) {
     require: name => name === 'next/server' ? {NextResponse:{json:body=>body}}
       : name === '@/lib/db' ? {db:{execute:async()=>({rows})}}
       : name === 'drizzle-orm' ? {sql:()=>({})}
-      : name === '@/lib/chaos-watch' ? watch : {},
+      : name === '@/lib/chaos-watch' ? watch
+      : name === '@/lib/chaos-move-log' ? moveLog
+      : {},
   });
   return module.exports.GET;
 }

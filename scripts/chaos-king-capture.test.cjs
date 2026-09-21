@@ -4,6 +4,8 @@ const {test}=require('node:test'),assert=require('node:assert/strict');
 const {Chess}=require('chess.js');
 const {createChaosState,ALL_MODIFIERS}=require('../lib/chaos-chess.ts');
 const {reduceCommand,metadata}=require('../lib/chaos-room-sync.ts');
+const {moveLogRows,moveLogCount}=require('../lib/chaos-move-log.ts');
+const {getKingCaptureMove}=require('../lib/chaos-outcome.ts');
 function fixture(side='w',hostColor='white',power='standard') {
   const from=side==='w'?'a1':'h8',to=power==='fools-king'?(side==='w'?'b3':'g6'):(side==='w'?'a4':'h5');
   const game=new Chess(`7k/8/8/8/8/8/8/K7 ${side} - - 0 10`);
@@ -15,6 +17,19 @@ function fixture(side='w',hostColor='white',power='standard') {
   const actor=(side==='w'?'white':'black')===hostColor?'host':'guest';
   const command={id:'king-capture-test-00000001',baseRevision:0,message:{type:'king_capture',from,to}};
   return {room,actor,command,from,to};
+}
+/** Run the client's king-capture interception block with every dependency stubbed. */
+function runClientBlock(mode,side) {
+  const source=fs.readFileSync(require.resolve('../app/chaos/page.tsx'),'utf8');
+  const start=source.indexOf('      // King-capture via chaos move — chess.js rejects kingless FENs');
+  const end=source.indexOf('      // First check if this is a chaos move',start);
+  assert.ok(start>0&&end>start);
+  const block=ts.transpile(source.slice(start,end),{target:ts.ScriptTarget.ES2022});
+  const {room,from,to}=fixture(side),sent=[],logged=[],stub=()=>{};
+  const game=new Chess(room.fen);
+  const run=new Function('game','chaosState','playerColor','toServerChaosState','getKingCaptureMove','gameMode','partySendRef','isAnimatingEndRef','addMoveToLog','setLastMoveHighlight','triggerEffect','playSound','spawnPepe','PEPE','setTimeout','setGameResult','setGameStatus','setEndReason','setEventLog','KING_DEATH_POPUP_DELAY','from','to',block);
+  const result=run(game,room.chaosState,side==='w'?'white':'black',s=>s,getKingCaptureMove,mode,{current:m=>sent.push(m)},{current:false},(g,san,color)=>logged.push({san,color,turn:g.moveNumber()}),stub,stub,stub,stub,{gigachad:'g',clap:'c'},stub,stub,stub,stub,stub,900,from,to);
+  return {result,game,room,from,to,sent,logged};
 }
 for(const side of ['w','b'])for(const hostColor of ['white','black'])for(const power of ['standard','king-ascension','strength','fools-king'])test(`${side}/${hostColor}: ${power} king capture ends the game`,()=>{
   const {room,actor,command,from,to}=fixture(side,hostColor,power);
@@ -35,19 +50,39 @@ test('illegal, frozen, protected, stale and wrong-turn king captures cannot clai
     assert.throws(()=>reduceCommand(room,kind==='turn'?'guest':actor,command,1000),undefined,kind);
   }
 });
-
-test('client intercepts a normal king capture and waits for the server result',()=>{
-  const source=fs.readFileSync(require.resolve('../app/chaos/page.tsx'),'utf8');
-  const start=source.indexOf('      // King-capture via chaos move — chess.js rejects kingless FENs');
-  const end=source.indexOf('      // First check if this is a chaos move',start);
-  assert.ok(start>0&&end>start);
-  const block=ts.transpile(source.slice(start,end),{target:ts.ScriptTarget.ES2022});
+test('the winning capture carries its turn number so the move log can file it',()=>{
   for(const side of ['w','b']){
-    const {room,from,to}=fixture(side),sent=[];
-    const game=new Chess(room.fen);
-    const run=new Function('game','chaosState','playerColor','toServerChaosState','getKingCaptureMove','gameMode','partySendRef','from','to',block);
-    const result=run(game,room.chaosState,side==='w'?'white':'black',s=>s,require('../lib/chaos-outcome.ts').getKingCaptureMove,'multiplayer',{current:m=>sent.push(m)},from,to);
+    const {room,actor,command,from,to}=fixture(side);
+    const patch=reduceCommand(room,actor,command,1000),saved={...room,...patch};
+    const entry=saved.moveHistory.at(-1);
+    assert.equal(entry.kingCapture,true);
+    assert.equal(entry.moveNumber,10,'the capture is the move being played, so it takes the current turn number');
+    const rows=moveLogRows(saved.moveHistory);
+    assert.equal(rows.length,1,'one capture is one row, not an extra unnumbered one');
+    assert.deepEqual(rows[0],{moveNumber:10,[side==='w'?'white':'black']:`${from}–${to}`});
+    assert.equal(moveLogCount(saved.moveHistory),10);
+  }
+});
+test('unnumbered captures still land in their own row and keep the count honest',()=>{
+  const rows=moveLogRows([{color:'w',from:'e2',to:'e4',moveNumber:1},{color:'b',from:'e7',to:'e5',moveNumber:1},{color:'w',from:'a2',to:'b3',kingCapture:true}]);
+  assert.deepEqual(rows,[{moveNumber:1,white:'e2–e4',black:'e7–e5'},{moveNumber:2,white:'a2–b3'}]);
+  assert.equal(moveLogCount([{color:'w',moveNumber:1},{color:'b',moveNumber:1},{color:'w',kingCapture:true}]),2);
+  assert.equal(moveLogCount(null),0);
+  assert.deepEqual(moveLogRows([{moveNumber:1,white:'stale'},{color:'b',from:'g8',to:'f6',moveNumber:1}]),[{moveNumber:1,black:'g8–f6'}],'entries with no side are ignored');
+});
+test('client intercepts a normal king capture and waits for the server result',()=>{
+  for(const side of ['w','b']){
+    const {result,game,room,from,to,sent,logged}=runClientBlock('multiplayer',side);
     assert.equal(result,true);assert.deepEqual(sent,[{type:'king_capture',from,to}]);
+    assert.deepEqual(logged,[],'the server result rebuilds the log, so do not log it locally');
     assert.equal(game.fen(),room.fen,'Do not produce an invalid kingless FEN');
+  }
+});
+test('against the AI the winning capture is logged as the move that ended the game',()=>{
+  for(const side of ['w','b']){
+    const {result,game,room,from,to,logged}=runClientBlock('ai',side);
+    assert.equal(result,true);
+    assert.deepEqual(logged,[{san:`${from}–${to}`,color:side,turn:10}]);
+    assert.equal(game.fen(),room.fen,'Log against the pre-capture position so the row number is right');
   }
 });

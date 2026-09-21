@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { projectClock, type MatchClock } from "@/lib/chaos-clock";
 import { visualState, archiveFrames, archivePlatform } from "@/lib/chaos-watch";
+import { moveLogCount } from "@/lib/chaos-move-log";
 export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const headers = { "Cache-Control": "no-store" };
@@ -92,7 +93,7 @@ export async function GET(req: NextRequest) {
           result: { winner: m.winner, reason: m.reason },
           rated: m.rated,
           platform: archivePlatform(m.host_id, m.guest_id),
-          moveCount: Array.isArray(record.moves) ? Math.ceil(record.moves.length / 2) : null,
+          moveCount: Array.isArray(record.moves) ? moveLogCount(record.moves) : null,
           endedAt: m.ended_at,
           frames: archiveFrames(record),
           legacy: !record.frames?.length,
@@ -118,7 +119,11 @@ export async function GET(req: NextRequest) {
    where r.status='playing' and r."guestId" is not null and r."updatedAt">now()-interval '2 hours'
    order by r."updatedAt" desc,r.id desc limit 21 offset ${page * 20}`)
       : await db.execute(sql`select m.id,m.host_color,m.host_id,m.guest_id,m.winner,m.reason,m.rated,m.ended_at as date,
-   case when jsonb_typeof(m.record->'moves')='array' then (jsonb_array_length(m.record->'moves')+1)/2 else null end as move_count,
+   case when jsonb_typeof(m.record->'moves')='array' then greatest(
+     coalesce((select max((x->>'moveNumber')::int) from jsonb_array_elements(m.record->'moves') x
+                where x->>'moveNumber' ~ '^[0-9]+$'), 0),
+     (jsonb_array_length(m.record->'moves')+1)/2
+   ) else null end as move_count,
    m.record->'timeControlSeconds' as base,m.record->'incrementSeconds' as increment,
    coalesce(h.name,'Guest player') as host,coalesce(g.name,'Guest player') as guest
    from chaos_match m left join chaos_player h on h.id=m.host_id left join chaos_player g on g.id=m.guest_id

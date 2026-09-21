@@ -3,6 +3,7 @@ import {ChaosImpact} from "@/components/chaos-impact";
 import {kamikazeImpact} from "@/lib/chaos-impact";
 import {buildChaosCustomPieces, SINGLE_PIECE_MODIFIERS} from "@/components/chaos-pieces";
 import { getKingCaptureMove } from "@/lib/chaos-outcome";
+import { moveLogRows } from "@/lib/chaos-move-log";
 import { chaosIdentityHeaders } from '@/lib/chaos-client-identity';
 import { CHAOS_TIME_CONTROLS, projectClock, timeControl as resolveTimeControl, type MatchClock } from "@/lib/chaos-clock";
 
@@ -6882,13 +6883,7 @@ export default function ChaosChessPage() {
           if (saved.draftProtocol === 2) {
             pendingMoveBeforeDraftRef.current = null; pendingDraftAfterRevealRef.current = null;
             if (Array.isArray(saved.history)) {
-              const rows = new Map<number, MoveLogEntry>();
-              for (const move of saved.history) {
-                const row: MoveLogEntry = rows.get(move.moveNumber) ?? {moveNumber: move.moveNumber};
-                row[move.color === "w" ? "white" : "black"] = `${move.from}–${move.to}`;
-                rows.set(move.moveNumber, row);
-              }
-              setMoveLog([...rows.values()]);
+              setMoveLog(moveLogRows(saved.history));
               const last = saved.history.at(-1);
               if (saved.history.length > serverMoveCountRef.current && last?.color !== (savedColor === "white" ? "w" : "b")) playSound("move");
               serverMoveCountRef.current = saved.history.length;
@@ -7539,6 +7534,9 @@ export default function ChaosChessPage() {
         }
         // Let the board animation play before showing game-over popup
         isAnimatingEndRef.current = true;
+        // The winning capture is a move: log it so the move log and the game-over turn count match
+        // the archived game instead of coming up one move short.
+        addMoveToLog(game, `${from}–${to}`, game.turn());
         setLastMoveHighlight({
           [from]: { backgroundColor: "rgba(220,38,38,0.4)" },
           [to]: { backgroundColor: "rgba(255,215,0,0.55)" },
