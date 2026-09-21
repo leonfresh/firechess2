@@ -16,3 +16,42 @@ export function kamikazeImpact(before: string, after: string, armed: {w:boolean;
   if (!target || !mover) return null;
   return {square:target.square, pieces:[`${target.color}B`, `${mover.color}${mover.type.toUpperCase()}`]};
 }
+
+export type WatchImpact = {kind:"kamikaze"|"checkmate"|"nuclear"|"promotion"|"castle"|"capture"|"check"|"power";square:string;pieces?:string[]};
+type Frame = {fen:string;from?:string;to?:string;state:{white:string[];black:string[];playerNuclearCooldownUntil?:number;aiNuclearCooldownUntil?:number}};
+export function watchTransition(before:Frame, after:Frame, result?:{winner:string;reason:string}|null): {effects:WatchImpact[];sound:"chaos-mate"|"chaos-blast"|"capture"|"check"|"move"|"correct"|"select"|null} {
+ const effects:WatchImpact[]=[];
+ let old:Chess,next:Chess;
+ try {old=new Chess(before.fen);next=new Chess(after.fen);} catch{return {effects,sound:null};}
+ const mate=result && /checkmate/i.test(result.reason) && ['white','black'].includes(result.winner);
+ if(mate){const king=next.board().flat().find(p=>p?.type==='k'&&p.color===(result.winner==='white'?'b':'w'));if(king)effects.push({kind:'checkmate',square:king.square});}
+ const ply=(g:Chess)=>(g.moveNumber()-1)*2+(g.turn()==='b'?1:0);
+ // Polls can skip moves. Never invent an explosion from an arbitrary board jump.
+ const oneMove=ply(next)-ply(old)===1;
+ if(!oneMove){
+  if(mate)return {effects,sound:'chaos-mate'};
+  const unlocked=['white','black'].some(c=>after.state[c as 'white'|'black'].some(id=>!before.state[c as 'white'|'black'].includes(id)));
+  if(ply(next)===ply(old) && unlocked)return {effects:[{kind:'power',square:'d4'}],sound:'select'};
+  return {effects,sound:null};
+ }
+ const impact=kamikazeImpact(before.fen,after.fen,{w:before.state.white.includes('kamikaze-bishop'),b:before.state.black.includes('kamikaze-bishop')});
+ let sound:ReturnType<typeof watchTransition>['sound']='move';
+ if(impact){effects.push({kind:'kamikaze',square:impact.square,pieces:impact.pieces});sound='chaos-blast';}
+ else if(after.from && after.to){
+  const from=after.from as Parameters<Chess['get']>[0],to=after.to as Parameters<Chess['get']>[0];
+  const mover=old.get(from),landed=next.get(to),victim=old.get(to);
+  if(mover){
+   const mods=mover.color==='w'?before.state.white:before.state.black;
+   const cooldown=mover.color==='w'?'playerNuclearCooldownUntil':'aiNuclearCooldownUntil';
+   if(mover.type==='q' && victim && mods.includes('nuclear-queen') && (after.state[cooldown]??0)>(before.state[cooldown]??0)) {effects.push({kind:'nuclear',square:to});sound='chaos-blast';}
+   else if(mover.type==='p' && landed?.color===mover.color && landed.type!=='p'){effects.push({kind:'promotion',square:to});sound='correct';}
+   else if(mover.type==='k' && Math.abs(from.charCodeAt(0)-to.charCodeAt(0))===2 && landed?.type==='k'){
+    const rank=from[1],rookFrom=(to[0]==='g'?'h':'a')+rank,rookTo=(to[0]==='g'?'f':'d')+rank;
+    if(old.get(rookFrom as typeof from)?.type==='r' && !next.get(rookFrom as typeof from) && next.get(rookTo as typeof from)?.type==='r'){effects.push({kind:'castle',square:to},{kind:'castle',square:rookTo});sound='select';}
+   }
+   if(!effects.length && (victim || next.board().flat().filter(Boolean).length<old.board().flat().filter(Boolean).length)){effects.push({kind:'capture',square:to});sound='capture';}
+  }
+ }
+ if(!mate && next.isCheck()){const king=next.board().flat().find(p=>p?.type==='k'&&p.color===next.turn());if(king)effects.push({kind:'check',square:king.square});if(sound==='move')sound='check';}
+ return {effects,sound:mate?'chaos-mate':sound};
+}

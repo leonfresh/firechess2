@@ -244,3 +244,9 @@ Verification: 67 sync, transport, draft, clock and opening-abort tests passed, p
 - Checkmate gets a gold particle burst at the losing king and a dedicated original finale cue. The Activity result still waits 2,500ms before covering the board.
 - Added a bounded board jolt; reduced-motion users receive a static label without flying particles or shake. Master mute also silences the new cues.
 - Verified both-colour mutual kills, snapshot deduplication, ordinary-capture exclusion, mute handling and result delay (6 tests), TypeScript checks, and isolated desktop/mobile animation rendering. Full two-client live-match effects remain a playtest check.
+
+### Spectator and replay effects — 2026-09-21
+- Live Watch and replay forward playback now use committed board transitions for kamikaze bursts, Nuclear Queen blasts, promotion sparkles, castling rings, capture pulses, checks and new power picks. Authoritative recorded results trigger the checkmate finale.
+- Initial loads, backward steps, timeline scrubbing, repeated live snapshots and room/rematch switches stay quiet. Forward Next and autoplay trigger effects; flipped boards keep effects on their correct squares.
+- Live polling still runs every 3 seconds. Skipped moves are intentionally not reconstructed from ambiguous positions.
+- Fixed a desktop-to-mobile resize overflow in the Watch board. Checked 390px width, real archived checkmate forward/seek behavior and 14 focused effect/audio/replay/navigation tests. Both TypeScript projects passed.

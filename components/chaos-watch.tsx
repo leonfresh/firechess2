@@ -1,4 +1,6 @@
 "use client";
+import {WatchEffects} from "./chaos-watch-effects";
+import {watchTransition, type WatchImpact} from "@/lib/chaos-impact";
 import { ChaosNavLink } from "./chaos-nav-link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
@@ -143,6 +145,7 @@ export function ChaosWatch({
   /** Square the pointer is over: hovering a piece shows where it can go. */
   const [hover, setHover] = useState<string | null>(null);
   const board = useRef<HTMLDivElement>(null);
+  const forwardEffect = useRef(false);
   useEffect(() => {
     setError("");
     setDetail(null);
@@ -207,7 +210,7 @@ export function ChaosWatch({
       setAuto(false);
       return;
     }
-    const timer = setTimeout(() => setIndex((i) => Math.min(i + 1, detail.frames!.length - 1)), 1000);
+    const timer = setTimeout(() => {forwardEffect.current=true;setIndex((i) => Math.min(i + 1, detail.frames!.length - 1));}, 1200);
     return () => clearTimeout(timer);
   }, [auto, index, detail]);
   const frames = detail?.frames ?? [];
@@ -358,24 +361,29 @@ export function ChaosWatch({
       setMuted(true);
     }
   };
-  /* Cue every position change the viewer sees — live polls and replay stepping alike. */
-  const lastFen = useRef("");
-  useEffect(() => {
-    const fen = frame?.fen ?? "";
-    const before = lastFen.current;
-    lastFen.current = fen;
-    if (!fen || !before || before === fen) return;
-    const boardBefore = before.split(" ")[0];
-    const boardNow = fen.split(" ")[0];
-    // Ignore game switches and archive jumps across different positions.
-    if (boardBefore.split("/").length !== boardNow.split("/").length) return;
-    const pieceCount = (board: string) => (board.match(/[a-zA-Z]/g) ?? []).length;
-    if (fen.includes("#")) playSound("applause");
-    else if (pieceCount(boardNow) < pieceCount(boardBefore))
-      playSound("capture");
-    else if (fen.includes("+")) playSound("check");
-    else playSound("move");
-  }, [frame?.fen]);
+  const [watchEffects,setWatchEffects]=useState<WatchImpact[]>([]);
+  const [effectSequence,setEffectSequence]=useState(0);
+  const effectPrevious=useRef<{key:string;frame:WatchFrame;index:number;terminal:boolean}|null>(null);
+  const terminal=!!detail?.result && (!!selected?.live || index===frames.length-1);
+  const watchKey=selected?`${selected.live?'live':'replay'}:${selected.id}:${detail?.gameNumber??0}`:'';
+  useEffect(()=>{
+    const previous=effectPrevious.current;
+    const forward=forwardEffect.current;
+    forwardEffect.current=false;
+    if(!frame){effectPrevious.current=null;setWatchEffects([]);return;}
+    effectPrevious.current={key:watchKey,frame,index,terminal};
+    setWatchEffects([]);
+    if(!previous || previous.key!==watchKey || document.visibilityState!=='visible')return;
+    const advance=selected?.live || (forward && index===previous.index+1);
+    if(!advance)return;
+    if(previous.frame.fen===frame.fen && JSON.stringify(previous.frame.state)===JSON.stringify(frame.state) && previous.terminal===terminal)return;
+    const transition=watchTransition(previous.frame,frame,terminal&&!previous.terminal?detail?.result:null);
+    setWatchEffects(transition.effects);
+    setEffectSequence(n=>n+1);
+    if(transition.sound)playSound(transition.sound);
+    const timer=setTimeout(()=>setWatchEffects([]),2400);
+    return()=>clearTimeout(timer);
+  },[frame,index,watchKey,terminal,selected?.live,detail?.result?.reason,detail?.result?.winner]);
   const clockChip = (clock: MatchClock | null | undefined, side: "w" | "b") =>
     clock ? (
       <b className={clockState(liveClock(clock, side), clock.active === side)}>
@@ -595,7 +603,7 @@ export function ChaosWatch({
                     {selected.live && clockChip(detail.clock, flipped ? "w" : "b")}
                   </span>
                 </div>
-                <div className={styles.board} ref={board}>
+                <div className={styles.board} ref={board} data-impact={watchEffects.some(e=>["kamikaze","nuclear","checkmate"].includes(e.kind)) || undefined}>
                   {frame && rendered ? (
                     <Chessboard
                       id="spectator-board"
@@ -614,6 +622,7 @@ export function ChaosWatch({
                   ) : (
                     <p>This position is unavailable.</p>
                   )}
+                  <WatchEffects key={effectSequence} effects={watchEffects} flipped={flipped}/>
                 </div>
                 <div className={styles.player}>
                   <strong>{flipped ? detail.black : detail.white}</strong>
@@ -658,6 +667,7 @@ export function ChaosWatch({
                         disabled={index >= frames.length - 1}
                         onClick={() => {
                           setAuto(false);
+                          forwardEffect.current=true;
                           setIndex((i) => i + 1);
                         }}
                         aria-label="Next position"
