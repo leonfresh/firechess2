@@ -25,13 +25,27 @@ type Standing = {
 };
 type Career = { profile: Standing | null; games: Game[]; hasMore: boolean };
 type Standings = { ranked: Standing[]; community: Standing[] };
+/** A row of the website's coin board (lifetime coins earned = balance + spent). */
+type CoinPlayer = {
+  userId: string;
+  name: string | null;
+  chaosUsername: string | null;
+  balance: number;
+  spent: number;
+  earned: number;
+};
+type Coins = { entries: CoinPlayer[]; totals?: { players: number; earned: number } };
 export function ActivityCareer({ card = false }: { card?: boolean }) {
   const [open, setOpen] = useState(false),
-    [tab, setTab] = useState<"community" | "ranked" | "history">("community"),
+    [tab, setTab] = useState<"community" | "ranked" | "coins" | "history">(
+      "community",
+    ),
     [page, setPage] = useState(0),
     [retry, setRetry] = useState(0);
   const [standings, setStandings] = useState<Standings | null>(null),
     [career, setCareer] = useState<Career | null>(null);
+  const [coins, setCoins] = useState<Coins | null>(null),
+    [coinsError, setCoinsError] = useState("");
   const [publicError, setPublicError] = useState(""),
     [personalError, setPersonalError] = useState(""),
     [personalLoading, setPersonalLoading] = useState(false);
@@ -86,8 +100,27 @@ export function ActivityCareer({ card = false }: { card?: boolean }) {
       active = false;
     };
   }, [open, history, page, retry]);
+  /* Coins: fetched the first time the tab is opened, from the website's public coin board. */
+  useEffect(() => {
+    if (!open || tab !== "coins" || coins || coinsError) return;
+    let active = true;
+    fetch("/api/leaderboard/coins?limit=25")
+      .then(async (r) => {
+        if (!r.ok) throw Error();
+        return r.json();
+      })
+      .then((d) => {
+        if (active) setCoins({ entries: d.entries ?? [], totals: d.totals });
+      })
+      .catch(() => {
+        if (active) setCoinsError("Could not load the coin board. Try again.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [open, tab, retry, coins, coinsError]);
   const rows = tab === "ranked" ? standings?.ranked : standings?.community;
-  const error = history ? personalError : publicError;
+  const error = history ? personalError : tab === "coins" ? "" : publicError;
   return (
     <>
       <button
@@ -142,6 +175,9 @@ export function ActivityCareer({ card = false }: { card?: boolean }) {
           >
             Rated ladder
           </button>
+          <button aria-pressed={tab === "coins"} onClick={() => setTab("coins")}>
+            Coins
+          </button>
           <button aria-pressed={history} onClick={() => setTab("history")}>
             My games
           </button>
@@ -153,7 +189,11 @@ export function ActivityCareer({ card = false }: { card?: boolean }) {
               : "Your completed multiplayer matches, with replays."
             : tab === "ranked"
               ? "Competitive ratings from timed matchmaking. New players start at 1200."
-              : "All-time wins from casual and rated games. Both players must have moved. Sorted by wins, then draws."}
+              : tab === "coins"
+                ? coins?.totals && coins.totals.earned > 0
+                  ? `Lifetime coins earned on the FireChess website — ${coins.totals.earned.toLocaleString()} by ${coins.totals.players.toLocaleString()} players. Spending in the Coin Shop never costs your rank.`
+                  : "Lifetime coins earned on the FireChess website from the daily puzzle, study tasks, scans and streaks. Spending in the Coin Shop never costs your rank."
+                : "All-time wins from casual and rated games. Both players must have moved. Sorted by wins, then draws."}
         </p>
         {error ? (
           <div className="career-empty" role="alert">
@@ -230,6 +270,56 @@ export function ActivityCareer({ card = false }: { card?: boolean }) {
                 </button>
               </div>
             </>
+          )
+        ) : tab === "coins" ? (
+          coinsError ? (
+            <div className="career-empty" role="alert">
+              <p>{coinsError}</p>
+              <button
+                className="primary-action"
+                onClick={() => {
+                  setCoinsError("");
+                  setRetry((r) => r + 1);
+                }}
+              >
+                Try again <span aria-hidden="true">↻</span>
+              </button>
+            </div>
+          ) : !coins ? (
+            <p role="status">Loading the coin board…</p>
+          ) : coins.entries.length ? (
+            <>
+              <div className="career-columns">
+                <span>PLAYER</span>
+                <span>COINS EARNED</span>
+              </div>
+              <ol className="career-list">
+                {coins.entries.map((c, i) => (
+                  <li key={c.userId} data-podium={i < 3 ? i + 1 : undefined}>
+                    <span className="career-rank">{i + 1}</span>
+                    <span>
+                      <strong>{c.chaosUsername ?? c.name ?? "Anonymous"}</strong>
+                      <small>
+                        {c.balance.toLocaleString()} in the bank ·{" "}
+                        {c.spent.toLocaleString()} spent
+                      </small>
+                    </span>
+                    <b>{c.earned.toLocaleString()}</b>
+                  </li>
+                ))}
+              </ol>
+            </>
+          ) : (
+            <div className="career-empty">
+              <span className="career-empty-icon">
+                <ChaosHubIcon kind="leaderboard" />
+              </span>
+              <h3>No coins earned yet.</h3>
+              <p>
+                Earn coins on FireChess.com with the daily puzzle, study tasks
+                and scans — spending in the Coin Shop never costs your rank.
+              </p>
+            </div>
           )
         ) : !standings ? (
           <p role="status">Loading standings…</p>
