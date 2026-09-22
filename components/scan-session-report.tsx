@@ -191,6 +191,64 @@ function FloatingSectionNav({ sections }: { sections: FloatingNavSection[] }) {
   );
 }
 
+// ── Next-section footer ──────────────────────────────────────────────────────
+
+type ReportSectionLink = { id: string; label: string };
+
+function scrollToReportSection(id: string) {
+  document
+    .getElementById(id)
+    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/**
+ * Footer nav at the bottom of every report section.
+ *
+ * The order comes from the parent's `reportSectionSequence` rather than the
+ * DOM, so it stays correct while a scan is still streaming sections in and
+ * sections appear one after another.
+ */
+function SectionNextNav({
+  currentId,
+  sections,
+}: {
+  currentId: string;
+  sections: ReportSectionLink[];
+}) {
+  const index = sections.findIndex((section) => section.id === currentId);
+  if (index < 0) return null;
+
+  const next = sections[index + 1];
+  const isLast = index === sections.length - 1;
+
+  return (
+    <div className="mt-8 flex flex-col gap-3 border-t border-[#1e1a24] pt-5 sm:flex-row sm:items-center sm:justify-between">
+      <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#565061]">
+        {isLast ? "End of report" : `Section ${index + 1} of ${sections.length}`}
+      </span>
+      {next ? (
+        <button
+          type="button"
+          onClick={() => scrollToReportSection(next.id)}
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#ff5a1f]/30 bg-[#ff5a1f]/[0.08] px-4 py-2 text-sm font-semibold text-[#ff8c42] transition hover:border-[#ff5a1f]/60 hover:bg-[#ff5a1f]/[0.16] hover:text-white"
+        >
+          Next: {next.label}
+          <span aria-hidden="true">↓</span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#1e1a24] bg-[#121015] px-4 py-2 text-sm font-semibold text-[#8d8696] transition hover:border-[#ff5a1f]/25 hover:text-white"
+        >
+          Back to top
+          <span aria-hidden="true">↑</span>
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 function nextCompactRevealTarget(current: number, total: number) {
@@ -2234,18 +2292,18 @@ export function ScanSessionReport({
       label: "Overview",
       icon: "📊",
     },
+    showStructural && {
+      id: "section-structural",
+      label: "Structures",
+      icon: "🏗️",
+      countColor: "bg-emerald-500/20 text-emerald-300",
+    },
     showBrilliants && {
       id: "section-brilliant",
       label: "Brilliant",
       icon: "💎",
       count: brilliantMoves.length || undefined,
       countColor: "bg-[#1e1a24] text-[#f0edf2]",
-    },
-    showStructural && {
-      id: "section-structural",
-      label: "Structures",
-      icon: "🏗️",
-      countColor: "bg-emerald-500/20 text-emerald-300",
     },
     showOpenings && {
       id: "section-openings",
@@ -2275,18 +2333,18 @@ export function ScanSessionReport({
       count: timeMoments.length || undefined,
       countColor: "bg-[#1e1a24] text-[#f0edf2]",
     },
-    timePositionalReport.insights.length > 0 && {
-      id: "section-time-positional",
-      label: "Cross-Ref",
-      icon: "🔗",
-      count: timePositionalReport.insights.length || undefined,
-      countColor: "bg-[#1e1a24] text-[#f0edf2]",
-    },
     positionalMotifs.length > 0 && {
       id: "section-positional",
       label: "Positional",
       icon: "🏛️",
       count: positionalMotifs.length || undefined,
+      countColor: "bg-[#1e1a24] text-[#f0edf2]",
+    },
+    timePositionalReport.insights.length > 0 && {
+      id: "section-time-positional",
+      label: "Cross-Ref",
+      icon: "🔗",
+      count: timePositionalReport.insights.length || undefined,
       countColor: "bg-[#1e1a24] text-[#f0edf2]",
     },
     !!result && {
@@ -2295,6 +2353,26 @@ export function ScanSessionReport({
       icon: "🎯",
     },
   ].filter(Boolean) as FloatingNavSection[];
+
+  // Ordered exactly as the sections render, so each section's footer can point
+  // at the one below it. Includes the sections the floating rail skips
+  // (best game, tactical themes, lesson builder).
+  const reportSectionSequence: ReportSectionLink[] = [
+    categoryData.length > 0 && { id: "section-overview", label: "Performance overview" },
+    showStructural && structuralReport && { id: "section-structural", label: "Positional structures" },
+    showBrilliants && { id: "section-brilliant", label: "Brilliant moves" },
+    showBestGame && bestGame && { id: "section-best-game", label: "Best game" },
+    showOpenings && { id: "section-openings", label: "Opening report" },
+    tacticalMotifs.length > 0 && { id: "section-motifs", label: "Tactical themes" },
+    showTactics && { id: "section-tactics", label: "Missed tactics" },
+    showEndgames && { id: "section-endgames", label: "Endgame report" },
+    showTimeManagement && { id: "section-time", label: "Time management" },
+    positionalMotifs.length > 0 && { id: "section-positional", label: "Positional habits" },
+    positionalMotifs.length > 0 && { id: "section-lesson", label: "Lesson builder" },
+    timePositionalReport.insights.length > 0 && { id: "section-time-positional", label: "Time x Positional" },
+    !!result && { id: "section-training", label: "What to do next" },
+  ].filter(Boolean) as ReportSectionLink[];
+
   return (
     <>
       <ReportEntryChoice
@@ -2823,6 +2901,8 @@ export function ScanSessionReport({
                 </div>
               </div>
             </div>
+
+            <SectionNextNav currentId="section-overview" sections={reportSectionSequence} />
           </section>
         )}
 
@@ -2840,6 +2920,8 @@ export function ScanSessionReport({
             {!isProcessing && result.games && result.games.length > 0 ? (
               <OppositeCastlingCard games={result.games} />
             ) : null}
+
+            <SectionNextNav currentId="section-structural" sections={reportSectionSequence} />
           </section>
         ) : null}
 
@@ -2908,6 +2990,8 @@ export function ScanSessionReport({
                 total={brilliantMoves.length}
               />
             ) : null}
+
+            <SectionNextNav currentId="section-brilliant" sections={reportSectionSequence} />
           </section>
         ) : null}
 
@@ -3053,6 +3137,8 @@ export function ScanSessionReport({
                 </div>
               </div>
             </div>
+
+            <SectionNextNav currentId="section-best-game" sections={reportSectionSequence} />
           </section>
         ) : null}
 
@@ -3203,11 +3289,13 @@ export function ScanSessionReport({
                 </CardCarousel>
               </div>
             ) : null}
+
+            <SectionNextNav currentId="section-openings" sections={reportSectionSequence} />
           </section>
         ) : null}
 
         {tacticalMotifs.length > 0 ? (
-          <section className="space-y-4">
+          <section id="section-motifs" className="space-y-4">
             <SectionHeader
               eyebrow="Patterns"
               title="Recurring tactical themes"
@@ -3217,6 +3305,8 @@ export function ScanSessionReport({
             />
 
             <TacticalPatternAnalysis motifs={tacticalMotifs} />
+
+            <SectionNextNav currentId="section-motifs" sections={reportSectionSequence} />
           </section>
         ) : null}
 
@@ -3298,6 +3388,8 @@ export function ScanSessionReport({
                 total={missedTactics.length}
               />
             ) : null}
+
+            <SectionNextNav currentId="section-tactics" sections={reportSectionSequence} />
           </section>
         ) : null}
 
@@ -3419,6 +3511,8 @@ export function ScanSessionReport({
                 total={endgameMistakes.length}
               />
             ) : null}
+
+            <SectionNextNav currentId="section-endgames" sections={reportSectionSequence} />
           </section>
         ) : null}
 
@@ -3538,6 +3632,8 @@ export function ScanSessionReport({
                 total={timeMoments.length}
               />
             ) : null}
+
+            <SectionNextNav currentId="section-time" sections={reportSectionSequence} />
           </section>
         ) : null}
 
@@ -3557,6 +3653,8 @@ export function ScanSessionReport({
               showTrainer={scan.status === "ready"}
               hasProAccess={hasProAccess}
             />
+
+            <SectionNextNav currentId="section-positional" sections={reportSectionSequence} />
           </section>
         ) : null}
 
@@ -3568,6 +3666,8 @@ export function ScanSessionReport({
               coachNote={analysis?.sectionNotes?.positional ?? analysis?.coachNote}
               topWeakness={analysis?.weaknesses?.[0]}
             />
+
+            <SectionNextNav currentId="section-lesson" sections={reportSectionSequence} />
           </section>
         ) : null}
 
@@ -3580,6 +3680,8 @@ export function ScanSessionReport({
               badge={`${timePositionalReport.insights.length} pattern${timePositionalReport.insights.length === 1 ? "" : "s"}`}
             />
             <TimePositionalCrossRef report={timePositionalReport} />
+
+            <SectionNextNav currentId="section-time-positional" sections={reportSectionSequence} />
           </section>
         ) : null}
 
@@ -3608,6 +3710,8 @@ export function ScanSessionReport({
               issueCount={followUpIssueCount}
               isProcessing={isProcessing}
             />
+
+            <SectionNextNav currentId="section-training" sections={reportSectionSequence} />
           </section>
         ) : null}
 
