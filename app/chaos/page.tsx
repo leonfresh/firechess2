@@ -9934,8 +9934,15 @@ export default function ChaosChessPage() {
             </a>
           </div>
 
-          {/* ── Game of the Week: the best archived Chaos game of the last 7 days ── */}
-          <ChaosWeekStrip className="mb-6 w-full max-w-2xl sm:mb-8" />
+          {/* ── Game of the Week: the best archived Chaos game of the last 7 days.
+                 This page is shared with the Discord Activity (it has no /chaos routes), so the
+                 links follow the presentation the Activity installs. ── */}
+          <ChaosWeekStrip
+            className="mb-6 w-full max-w-2xl sm:mb-8"
+            replayBase={presentation.activity ? "/watch?match=" : undefined}
+            weekHref={presentation.activity ? "/watch?tab=archive" : undefined}
+            weekLabel={presentation.activity ? "All replays →" : undefined}
+          />
 
           {/* The games-played unlock ladder is gone: every base card is free and the shop is
               the only gate, so there is no "next unlock" to show. Gold progress lives in the

@@ -345,6 +345,19 @@ export function ChaosWatch({
       ? clock[side] -
         (clock.active === side ? Math.max(0, now - received) : 0)
       : 0;
+  /** The Discord Activity serves this component without /chaos routes, so the link to the
+   *  full week page only makes sense on the website (the Activity keeps its tabs inline). */
+  const [inActivityShell, setInActivityShell] = useState(false);
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      setInActivityShell(
+        /(^|\.)chaos\.firechess\.com$/.test(window.location.hostname) || params.has('frame_id'),
+      );
+    } catch {
+      /* keep the website link */
+    }
+  }, []);
   const [muted, setMuted] = useState(false);
   const restoreVolume = useRef(0.6);
   useEffect(() => {
@@ -436,12 +449,12 @@ export function ChaosWatch({
         <>
           <div className={styles.hero}>
             <div><span className={styles.heroLabel}>GOOD SEATS. BAD IDEAS.</span><h1>Watch the board<br/><em>go off script.</em></h1><p>Catch a match live, or rewind the moment everything changed. Every move. Every ridiculous power.</p>
-              <ChaosNavLink
+              {!inActivityShell && <ChaosNavLink
                 href="/chaos/week"
                 style={{display:"inline-flex",alignItems:"center",gap:8,marginTop:12,padding:"8px 14px",border:"1px solid rgba(214,250,100,.35)",borderRadius:12,color:"#d7fa64",fontSize:13,fontWeight:700,textDecoration:"none"}}
               >
                 🏆 Game of the Week — the best Chaos game of the last 7 days
-              </ChaosNavLink></div>
+              </ChaosNavLink>}</div>
             <div className={styles.heroArt} aria-hidden="true"><span>EXPECT THE UNEXPECTED</span><img src="/pieces/fairy/wVK.svg" alt=""/><img src="/pieces/fairy/bBS.svg" alt=""/><b>↗</b></div>
           </div>
           <nav className={styles.tabs}>

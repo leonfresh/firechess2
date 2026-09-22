@@ -41,17 +41,39 @@ export function ChaosWeekStrip({
   label = 'Game of the Week',
   initial = null,
   initialGames = null,
+  replayBase,
+  weekHref,
+  weekLabel,
 }: {
   tone?: 'chaos' | 'site';
   thumbnail?: boolean;
   className?: string;
   label?: string;
+  /** Where the replay lives. Defaults to /watch?match= inside the Discord Activity, which has
+   *  no /chaos routes, and /chaos/replay/ on the website. */
+  replayBase?: string;
+  /** Where the full week lives. Defaults by environment. */
+  weekHref?: string;
+  weekLabel?: string;
   /** Server-fetched winner: renders in the HTML instead of after a client fetch. */
   initial?: Winner | null;
   initialGames?: number | null;
 }) {
   const [winner, setWinner] = useState<Winner | null>(initial);
   const [games, setGames] = useState<number | null>(initialGames);
+  /** The Discord Activity serves this component from chaos.firechess.com (or in an iframe with
+   *  ?frame_id=) and has no /chaos/* routes: replays are /watch?match=<id> there. */
+  const [activityHost, setActivityHost] = useState(false);
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      setActivityHost(
+        /(^|\.)chaos\.firechess\.com$/.test(window.location.hostname) || params.has('frame_id'),
+      );
+    } catch {
+      /* SSR or a locked-down frame: keep the website links. */
+    }
+  }, []);
 
   useEffect(() => {
     if (initial) return;
@@ -71,6 +93,9 @@ export function ChaosWeekStrip({
 
   if (!winner) return null;
 
+  const replayHref = `${replayBase ?? (activityHost ? '/watch?match=' : '/chaos/replay/')}${encodeURIComponent(winner.roomId)}`;
+  const fullWeekHref = weekHref ?? (activityHost ? '/watch?tab=archive' : '/chaos/week');
+  const fullWeekLabel = weekLabel ?? (activityHost ? 'All replays →' : 'The week →');
   const site = tone === 'site';
   const accent = TIER_COLOR[winner.tier] ?? TIER_COLOR.QUIET;
   const won = winner.winner === 'draw' ? null : winner.winner === 'white' ? winner.white : winner.black;
@@ -87,7 +112,7 @@ export function ChaosWeekStrip({
       }
     >
       {thumbnail && (
-        <Link href={`/chaos/replay/${winner.roomId}`} className="hidden shrink-0 sm:block" aria-hidden="true" tabIndex={-1}>
+        <Link href={replayHref} className="hidden shrink-0 sm:block" aria-hidden="true" tabIndex={-1}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/api/chaos/week/image"
@@ -117,18 +142,18 @@ export function ChaosWeekStrip({
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <Link
-          href={`/chaos/replay/${winner.roomId}`}
+          href={replayHref}
           className="chaos-week-link rounded-lg px-3 py-1.5 text-xs font-bold transition-all"
           style={{ border: `1px solid ${accent}55`, background: `${accent}18`, color: accent }}
         >
           Watch the replay
         </Link>
         <Link
-          href="/chaos/week"
+          href={fullWeekHref}
           className="chaos-week-link text-xs font-semibold underline underline-offset-2"
           style={{ color: 'var(--muted, #9fb6c6)' }}
         >
-          The week →
+          {fullWeekLabel}
         </Link>
       </div>
     </div>

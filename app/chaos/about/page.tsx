@@ -1,10 +1,22 @@
 import type { Metadata } from "next";
 import styles from "./page.module.css";
+import { unstable_cache } from "next/cache";
 import { ChaosWeekStrip } from "@/components/chaos-week-strip";
 import { getChaosWeek } from "@/lib/chaos-week";
 
-/** Hourly: the Game of the Week strip is server-rendered into the HTML. */
-export const revalidate = 3600;
+/**
+ * The Game of the Week strip is server-rendered, so this page reads the archive on
+ * request. It must NOT be prerendered: a DB round-trip at build time blew the 60s
+ * static-generation budget and failed the whole deploy. The week lookup is cached
+ * for an hour instead, which is all the freshness the strip needs.
+ */
+export const dynamic = "force-dynamic";
+
+const cachedWeek = unstable_cache(
+  async () => getChaosWeek().catch(() => null),
+  ["chaos-week-strip"],
+  { revalidate: 3600, tags: ["chaos-week"] },
+);
 
 export const metadata: Metadata = {
   title: "Chaos Chess — Chess with a few unfair advantages",
@@ -14,7 +26,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ChaosIntroduction() {
-  const week = await getChaosWeek().catch(() => null);
+  const week = await cachedWeek();
   const winner = week?.winner ?? null;
   return <div className={styles.page}>
     <section className={styles.hero} aria-labelledby="chaos-title">

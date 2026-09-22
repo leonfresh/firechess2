@@ -25,11 +25,19 @@ export function ChaosShareButton({
   const image = `/api/chaos/share/image?match=${encodeURIComponent(matchId)}`;
   const square = `/api/chaos/share/image?match=${encodeURIComponent(matchId)}&size=square`;
 
-  const replayUrl = () =>
-    baseUrl ??
-    (typeof window !== 'undefined'
-      ? `${window.location.origin}/chaos/replay/${encodeURIComponent(matchId)}`
-      : `/chaos/replay/${encodeURIComponent(matchId)}`);
+  /** Website replays live at /chaos/replay/<room>. The Discord Activity has no /chaos routes:
+   *  its replays are /share?match=<id>. Resolve by environment so no call site can 404. */
+  const replayUrl = () => {
+    if (baseUrl) return baseUrl;
+    if (typeof window === 'undefined') return `/chaos/replay/${encodeURIComponent(matchId)}`;
+    const params = new URLSearchParams(window.location.search);
+    const inActivity =
+      /(^|\.)chaos\.firechess\.com$/.test(window.location.hostname) || params.has('frame_id');
+    const path = inActivity
+      ? `/share?match=${encodeURIComponent(matchId)}`
+      : `/chaos/replay/${encodeURIComponent(matchId)}`;
+    return `${window.location.origin}${path}`;
+  };
 
   async function share() {
     const url = replayUrl();

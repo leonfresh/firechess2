@@ -76,7 +76,10 @@ export function ActivityResult(props: ChaosResultProps) {
       {props.powers.length > 0 && <div className="result-loadout" aria-label="Your drafted powers">{props.powers.map(power => <span key={power.id} data-tier={power.tier}>{power.name}</span>)}</div>}
       <div className="result-actions"><p role="status">{autoIn !== null ? <>Next game starts in {autoIn}s · <button type="button" className="link-action" onClick={() => setAutoIn(null)}>not now</button></> : waiting ? 'Rematch requested. Waiting for your opponent…' : props.rematchReceived ? 'Your opponent wants another round!' : 'Ready for another round?'}</p>
         <button type="button" className="primary-action" disabled={waiting} onClick={props.onRematch}>{waiting ? 'Waiting for opponent…' : props.practice ? 'Play again' : props.rematchReceived ? 'Accept rematch' : autoIn !== null ? `Play again (${autoIn})` : 'Rematch'}<span aria-hidden="true">↗</span></button>
-        {shareId && <ChaosShareButton matchId={shareId}/>}
+        {shareId && <ChaosShareButton
+          matchId={shareId}
+          baseUrl={typeof window === 'undefined' ? undefined : `${window.location.origin}/share?match=${encodeURIComponent(shareId)}`}
+        />}
         {waiting && props.onCancelRematch && <button type="button" className="secondary-action" onClick={props.onCancelRematch}>Cancel request</button>}
         <button type="button" className="secondary-action" onClick={leave}>Back to lobby</button>
       </div>
