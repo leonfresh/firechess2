@@ -248,7 +248,7 @@ You've read about the five mistakes. Now how do you find them in your own games?
 
 ### Step 1: Scan Your Games on FireChess
 
-Go to [FireChess's analysis page](/analyze) and upload your last 20 games. The scanner automatically detects patterns like repeated pawn structure weaknesses, piece trades that lowered your accuracy, and positional moves that increased your [centipawn loss](/blog/what-is-centipawn-loss).
+Go to [FireChess's analysis page](/analyze) and upload your last 20 games. The scanner automatically detects patterns like repeated pawn structure weaknesses, [piece trades](/blog/chess-bishop-vs-knight) that lowered your accuracy, and positional moves that increased your [centipawn loss](/blog/what-is-centipawn-loss).
 
 ### Step 2: Look at the Accuracy Drop After Exchanges
 

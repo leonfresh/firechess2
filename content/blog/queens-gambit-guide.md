@@ -78,7 +78,7 @@ Black's most reliable response is 4...Be7, preparing to unpin with ...O-O and po
 
 **5.e3 O-O 6.Nf3 h6 7.Bh4 b6** (the Tartakower Variation) or **7.Bxf6** (the Exchange Variation).
 
-**The Exchange Variation** (7.Bxf6 Bxf6 8.cxd5 exd5) is a critical decision point. White trades the bishop pair for a solid pawn structure, leading to the famous **Carlsbad structure**:
+**The Exchange Variation** (7.Bxf6 Bxf6 8.cxd5 exd5) is a critical decision point. White trades the [bishop pair](/blog/chess-bishop-vs-knight) for a solid pawn structure, leading to the famous **Carlsbad structure**:
 
 <chess-position fen="rnbq1rk1/ppp1b1pp/4pn2/3p4/2PP4/2N1P3/PP3PPP/R1BQKBNR w KQ - 0 6" caption="The Carlsbad pawn structure after the Exchange Variation. White has a majority on the kingside, Black on the queenside — a classic endgame imbalance." arrows="f1e2:green,c3d5:orange" badge="blunder"></chess-position>
 

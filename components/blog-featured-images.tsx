@@ -136,6 +136,10 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <StopRepeatingArt />;
     case "chess-psychology-tilting":
       return <ChessPsychologyTiltingArt />;
+    case "chess-how-many-games-per-day":
+      return <HowManyGamesArt />;
+    case "chess-bishop-vs-knight":
+      return <BishopVsKnightArt />;
     default:
       return <DefaultArt />;
   }
@@ -3719,6 +3723,91 @@ function ChessPsychologyTiltingArt() {
       {[[70,30],[310,120],[350,40],[130,170]].map(([x,y],i) => (
         <circle key={`cpt${i}`} cx={x} cy={y} r={1.2} fill="#8b5cf6" fillOpacity={0.25+i*0.05}>
           <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2.4+i*0.4}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Games per day — clock + chess pieces + diminishing curve           */
+/* ================================================================== */
+function HowManyGamesArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="hmg-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#10b981" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="#0c1220" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="hmg-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#0c1220" />
+          <stop offset="100%" stopColor="#14102a" />
+        </linearGradient>
+      </defs>
+      <rect width="400" height="200" fill="url(#hmg-bg)" />
+      <ellipse cx="200" cy="100" rx="180" ry="90" fill="url(#hmg-glow)" />
+      {/* clock face */}
+      <circle cx="140" cy="85" r="40" fill="none" stroke="#10b981" strokeWidth="2" strokeOpacity="0.6" />
+      <line x1="140" y1="85" x2="140" y2="60" stroke="#10b981" strokeWidth="2" />
+      <line x1="140" y1="85" x2="160" y2="80" stroke="#10b981" strokeWidth="1.5" />
+      <circle cx="140" cy="85" r="2.5" fill="#10b981" />
+      {/* chess pieces scattered */}
+      <text x="80" y="150" fontSize="18" fill="#f1f5f9" fillOpacity="0.15" fontFamily="serif">♚</text>
+      <text x="250" y="45" fontSize="14" fill="#f1f5f9" fillOpacity="0.12" fontFamily="serif">♞</text>
+      <text x="300" y="140" fontSize="16" fill="#f1f5f9" fillOpacity="0.15" fontFamily="serif">♝</text>
+      <text x="180" y="170" fontSize="12" fill="#f1f5f9" fillOpacity="0.1" fontFamily="serif">♟</text>
+      {/* diminishing returns curve */}
+      <path d="M200,160 Q240,155 260,130 Q280,105 300,100 Q320,95 340,93 Q360,91 380,90"
+        fill="none" stroke="#10b981" strokeWidth="2" strokeOpacity="0.7" />
+      <circle cx="260" cy="130" r="3" fill="#10b981" fillOpacity="0.5" />
+      <circle cx="300" cy="100" r="3" fill="#f59e0b" fillOpacity="0.5" />
+      <circle cx="380" cy="90" r="3" fill="#e13c48" fillOpacity="0.5" />
+      {/* title */}
+      <text x="200" y="188" textAnchor="middle" fill="#f1f5f9" fontSize="11" fontWeight="700" fontFamily="system-ui, sans-serif">GAMES PER DAY</text>
+      {/* sparkles */}
+      {[[60,40],[320,30],[370,60],[100,100],[290,170]].map(([x,y],i) => (
+        <circle key={`hmg${i}`} cx={x} cy={y} r={1.2} fill="#10b981" fillOpacity={0.2+i*0.04}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2+i*0.3}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Bishop vs Knight — two silhouetted pieces facing off              */
+/* ================================================================== */
+function BishopVsKnightArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="bvn-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#0c1220" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="bvn-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#0c1220" />
+          <stop offset="100%" stopColor="#14102a" />
+        </linearGradient>
+      </defs>
+      <rect width="400" height="200" fill="url(#bvn-bg)" />
+      <ellipse cx="200" cy="100" rx="180" ry="90" fill="url(#bvn-glow)" />
+      {/* bishop silhouette — left side */}
+      <text x="120" y="120" fontSize="64" fill="#8b5cf6" fillOpacity="0.35" fontFamily="serif" textAnchor="middle">♝</text>
+      {/* knight silhouette — right side */}
+      <text x="280" y="120" fontSize="64" fill="#10b981" fillOpacity="0.35" fontFamily="serif" textAnchor="middle">♞</text>
+      {/* diagonal slash between them */}
+      <line x1="165" y1="60" x2="235" y2="140" stroke="#f1f5f9" strokeWidth="1.5" strokeOpacity="0.15" />
+      {/* center glow accent */}
+      <circle cx="200" cy="100" r="12" fill="#8b5cf6" fillOpacity="0.08" />
+      <circle cx="200" cy="100" r="6" fill="#10b981" fillOpacity="0.08" />
+      {/* title */}
+      <text x="200" y="180" textAnchor="middle" fill="#f1f5f9" fontSize="12" fontWeight="700" fontFamily="system-ui, sans-serif">BISHOP vs KNIGHT</text>
+      {/* sparkles */}
+      {[[70,35],[330,45],[50,160],[350,155],[200,55]].map(([x,y],i) => (
+        <circle key={`bvn${i}`} cx={x} cy={y} r={1.2} fill={i%2===0?"#8b5cf6":"#10b981"} fillOpacity={0.2+i*0.04}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2+i*0.3}s`} repeatCount="indefinite" />
         </circle>
       ))}
     </svg>

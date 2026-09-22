@@ -41,7 +41,7 @@ For a deeper look at which openings naturally fight for the center at each ratin
 
 ---
 
-## Principle 2: Develop Your Pieces Before Attacking
+## Principle 2: [develop your pieces](/blog/chess-bishop-vs-knight) Before Attacking
 
 This is the principle that gets violated most often at the club level, and it costs the most games. The temptation to launch an early attack is enormous — your opponent plays a slow move, you see a possible tactic, and you go for it. But if you haven't developed your pieces first, the attack will fail.
 

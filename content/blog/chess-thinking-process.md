@@ -323,7 +323,7 @@ Want to see your own numbers? Upload your last 20 games to [FireChess's scanner]
 
 ### Q: What is the chess thinking process?
 
-The chess thinking process is a four-step framework for choosing moves: evaluate the position, generate candidate moves, calculate consequences, and make a decision. It replaces "going with your gut" with a repeatable method that catches blind spots and reduces blunders. Most club players skip the evaluation and candidate steps, leading to avoidable mistakes.
+The chess thinking process is a four-step framework for choosing moves: [evaluate the position](/blog/chess-bishop-vs-knight), generate candidate moves, calculate consequences, and make a decision. It replaces "going with your gut" with a repeatable method that catches blind spots and reduces blunders. Most club players skip the evaluation and candidate steps, leading to avoidable mistakes.
 
 ### Q: How long should I think per move in a chess game?
 

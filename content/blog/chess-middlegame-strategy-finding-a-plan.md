@@ -177,7 +177,7 @@ Once you've chosen a plan, commit to it — but stay flexible. A plan isn't a su
 
 ### The IQP Decision: A Practical Example
 
-<chess-position fen="r2q1rk1/pp2bpp1/5n1p/2np4/6bB/2NBP3/PP2NPPP/R2Q1RK1 w - - 0 12" orientation="white" caption="Black has an isolated queen pawn on d5. White's plan: trade minor pieces, attack the d5 pawn, and reach an endgame where the IQP is a weakness. Black's plan: keep pieces on, use the d5 square for pieces, and attack with piece activity before the pawn becomes a target." arrows="a1c1:green,h4f6:orange" badge="inaccuracy"></chess-position>
+<chess-position fen="r2q1rk1/pp2bpp1/5n1p/2np4/6bB/2NBP3/PP2NPPP/R2Q1RK1 w - - 0 12" orientation="white" caption="Black has an isolated queen pawn on d5. White's plan: trade [minor piece](/blog/chess-bishop-vs-knight)s, attack the d5 pawn, and reach an endgame where the IQP is a weakness. Black's plan: keep pieces on, use the d5 square for pieces, and attack with piece activity before the pawn becomes a target." arrows="a1c1:green,h4f6:orange" badge="inaccuracy"></chess-position>
 
 This position illustrates a classic planning decision. Black has an isolated queen pawn on d5 — structurally weak in the endgame but a source of dynamic piece activity in the middlegame. White should aim to trade pieces (especially the light-squared bishops) and place a rook on the d-file, building pressure against d5. Black should avoid trades, keep the position complex, and look for a central break with ...d4 or kingside play with ...Ne4. The entire game will revolve around whether the IQP is a strength or a weakness — and that depends on who executes their plan better.
 

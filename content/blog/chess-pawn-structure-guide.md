@@ -361,7 +361,7 @@ Before you move a piece, ask: "What kind of pawn structure do I have?" The answe
 
 ### Q: Look at master games in YOUR openings
 
-If you play the French Defense, study games by Petrosian, Botvinnik, and modern GMs who specialize in that structure. If you play the Sicilian Dragon, study how the Yugoslav Attack pawn storm works against your pawn formation. [Chess opening principles](/blog/chess-opening-principles) start with the first few moves, but the pawn structure determines everything that follows.
+If you play the French Defense, study games by Petrosian, Botvinnik, and modern GMs who specialize in that structure. If you play the Sicilian Dragon, study how the Yugoslav Attack pawn storm works against your pawn formation. [Chess opening principles](/blog/chess-opening-principles) start with the first few moves, but the [pawn structure determines](/blog/chess-bishop-vs-knight) everything that follows.
 
 ### Q: Review your structural mistakes
 
