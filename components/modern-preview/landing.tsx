@@ -9,6 +9,7 @@ import { LandingDetails } from "./landing-details";
 import { ArrowDown, ArrowRight, ArrowUpRight, Crosshair, Layers3, TrendingUp, Zap, MessagesSquare } from "lucide-react";
 import { SAMPLE_REPORTS } from "@/lib/sample-reports";
 import { PreviewHeader } from "./shared";
+import { ChaosWeekStrip } from "@/components/chaos-week-strip";
 import s from "./modern.module.css";
 
 const featuredUsernames = ["XQCow1", "BIG_TONKA_T", "hikaru"];
@@ -40,6 +41,7 @@ export function ModernLanding() {
         <span className={s.chaosBannerCopy}><strong>Looking for Chaos Chess?</strong><span>Jump into a game with wild pieces and unexpected powers.</span></span>
         <span className={s.chaosBannerAction}>Play Chaos Chess <ArrowRight size={18} aria-hidden="true" /></span>
       </Link>
+      <ChaosWeekStrip tone="site" thumbnail className="mt-3" />
       <section className={s.hero}>
         <div className={s.heroCopy}><div className={s.heroEyebrow}><span className={s.greenDot} /> YOUR PERSONAL CHESS BREAKDOWN</div><h1>You play the games.<br />We find <span>your edge.</span></h1><p className={s.heroDescription}>Understand the mistakes you keep making.<br className={s.desktopBreak} /> Get a clear plan to turn them into your strengths.</p><ScanForm /><Link className={s.sampleLink} href="/report/8c8d499e-1f04-4121-aabc-71a818b98ce6"><span className={s.playCircle}><ArrowUpRight size={15} /></span>Take a look inside a report <span className={s.muted}>No scan needed</span></Link></div>
         <div className={s.previewAtmosphere}>

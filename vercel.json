@@ -3,6 +3,10 @@
   "installCommand": "npm ci",
   "crons": [
     {
+      "path": "/api/chaos/week/post",
+      "schedule": "0 9 * * 1"
+    },
+    {
       "path": "/api/cron/weekly-digest",
       "schedule": "0 14 * * 1"
     },

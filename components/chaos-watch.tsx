@@ -435,7 +435,13 @@ export function ChaosWatch({
       ) : (
         <>
           <div className={styles.hero}>
-            <div><span className={styles.heroLabel}>GOOD SEATS. BAD IDEAS.</span><h1>Watch the board<br/><em>go off script.</em></h1><p>Catch a match live, or rewind the moment everything changed. Every move. Every ridiculous power.</p></div>
+            <div><span className={styles.heroLabel}>GOOD SEATS. BAD IDEAS.</span><h1>Watch the board<br/><em>go off script.</em></h1><p>Catch a match live, or rewind the moment everything changed. Every move. Every ridiculous power.</p>
+              <ChaosNavLink
+                href="/chaos/week"
+                style={{display:"inline-flex",alignItems:"center",gap:8,marginTop:12,padding:"8px 14px",border:"1px solid rgba(214,250,100,.35)",borderRadius:12,color:"#d7fa64",fontSize:13,fontWeight:700,textDecoration:"none"}}
+              >
+                🏆 Game of the Week — the best Chaos game of the last 7 days
+              </ChaosNavLink></div>
             <div className={styles.heroArt} aria-hidden="true"><span>EXPECT THE UNEXPECTED</span><img src="/pieces/fairy/wVK.svg" alt=""/><img src="/pieces/fairy/bBS.svg" alt=""/><b>↗</b></div>
           </div>
           <nav className={styles.tabs}>

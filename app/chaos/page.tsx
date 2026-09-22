@@ -61,6 +61,8 @@ import { ChaosLobby } from "@/components/chaos-lobby";
 import { OpeningMoveNotice, AbortedMatch } from "@/components/chaos-opening-move";
 import { ChaosChat, type ChatLine } from "@/components/chaos-chat";
 import { useChaosPresentation } from "@/components/chaos-presentation";
+import { ChaosShareButton } from "@/components/chaos-share-button";
+import { ChaosWeekStrip } from "@/components/chaos-week-strip";
 import { pendingDraftKey, recoverPendingDraft } from "@/lib/chaos-pending-draft";
 import { useSession } from "@/components/session-provider";
 import { getGuestId } from "@/lib/guest-id";
@@ -9932,6 +9934,9 @@ export default function ChaosChessPage() {
             </a>
           </div>
 
+          {/* ── Game of the Week: the best archived Chaos game of the last 7 days ── */}
+          <ChaosWeekStrip className="mb-6 w-full max-w-2xl sm:mb-8" />
+
           {/* The games-played unlock ladder is gone: every base card is free and the shop is
               the only gate, so there is no "next unlock" to show. Gold progress lives in the
               Armoury, next to the cards it buys. */}
@@ -11755,6 +11760,19 @@ export default function ChaosChessPage() {
                     {/* /left column */}
                     {/* Right column: buttons + links */}
                     <div className="flex flex-col gap-2 w-full">
+                      {/* ── Big share card: the artefact players take to Discord / X ── */}
+                      {gameMode !== "ai" && roomId && (
+                        <ChaosShareButton
+                          matchId={roomId}
+                          headline={
+                            gameResult === playerColor
+                              ? "I just won a Chaos Chess match"
+                              : gameResult === "draw"
+                                ? "A Chaos Chess draw that went the distance"
+                                : "I just lost a Chaos Chess match — worth a watch"
+                          }
+                        />
+                      )}
                       {/* Rematch (multiplayer) */}
                       {gameMode !== "ai" &&
                         !rematchRequested &&
