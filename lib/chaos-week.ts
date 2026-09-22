@@ -97,10 +97,15 @@ export async function getEndingShares(): Promise<Record<string, number>> {
   return endingShareTable(result.rows as { reason: string; n: number }[]);
 }
 
+/** Unnamed players (guest identities) would read "Guest player vs Guest player" on a
+ * card or the front page, so fall back to the side they played. */
+const displayName = (name: string, side: "white" | "black") =>
+  name === "Guest player" ? (side === "white" ? "White" : "Black") : name;
+
 function toEntry(row: MatchRow, shares: Record<string, number>): ChaosCard {
   const hostIsWhite = row.host_color === "white";
-  const white = String(hostIsWhite ? row.host : row.guest).slice(0, 40);
-  const black = String(hostIsWhite ? row.guest : row.host).slice(0, 40);
+  const white = displayName(String(hostIsWhite ? row.host : row.guest).slice(0, 40), "white");
+  const black = displayName(String(hostIsWhite ? row.guest : row.host).slice(0, 40), "black");
   const record = row.record ?? {};
   const delta = row.host_delta !== null && row.host_delta !== undefined ? Number(row.host_delta) : null;
   const scored = scoreChaosGame({
