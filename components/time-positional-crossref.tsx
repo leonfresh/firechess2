@@ -13,9 +13,9 @@ const VERDICT_COLORS = {
     accent: "amber",
     label: "Rushed",
     icon: "💨",
-    cardBg: "border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06]",
+    cardBg: "border-[#ff5a1f]/25 bg-[color:var(--report-panel,rgba(255,90,31,0.06))]",
     bar: "bg-[#ff5a1f]",
-    chip: "bg-[#ff5a1f]/[0.08] text-[#ff8c42]",
+    chip: "bg-[color:var(--report-panel,rgba(255,90,31,0.08))] text-[color:var(--report-accent-text,#ff8c42)]",
   },
   wasted: {
     accent: "red",
@@ -37,39 +37,39 @@ function InsightCard({ insight, onLearn }: { insight: TimePositionalInsight; onL
   const cpPawns = (insight.avgCpLossOnMotif / 100).toFixed(1);
 
   return (
-    <div className={`overflow-hidden rounded-2xl border ${colors.cardBg}`}>
+    <div className={`overflow-hidden rounded-[var(--report-radius,1rem)] border ${colors.cardBg}`}>
       <div className={`h-[3px] w-full ${colors.bar} opacity-60`} style={{ width: `${Math.max(10, Number(pct))}%` }} />
 
       <div className="p-5 md:p-6">
         {/* Header */}
         <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1e1a24] text-lg">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--report-radius,0.75rem)] bg-[color:var(--report-surface,#1e1a24)] text-lg">
               {insight.motifIcon}
             </span>
             <div>
               <p className="text-sm font-bold text-white">{insight.motifName}</p>
-              <p className="text-[11px] text-[#8d8696]">
+              <p className="text-[length:var(--report-small,11px)] text-[color:var(--report-muted,#8d8696)]">
                 x {insight.overlapCount} correlated moments
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold ${colors.chip}`}>
+            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[length:var(--report-small,10px)] font-bold ${colors.chip}`}>
               {colors.icon} {colors.label}
             </span>
-            <span className="rounded-full bg-[#1e1a24] px-2.5 py-1 text-[10px] font-bold text-[#f0edf2]">
+            <span className="rounded-full bg-[color:var(--report-surface,#1e1a24)] px-2.5 py-1 text-[length:var(--report-small,10px)] font-bold text-[color:var(--report-text,#f0edf2)]">
               {pct}% overlap
             </span>
           </div>
         </div>
 
         {/* Insight text */}
-        <p className="text-sm leading-relaxed text-[#f0edf2]">{insight.insight}</p>
+        <p className="text-sm leading-relaxed text-[color:var(--report-text,#f0edf2)]">{insight.insight}</p>
 
         {/* Stats row */}
-        <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-[#565061]">
+        <div className="mt-3 flex flex-wrap gap-3 text-[length:var(--report-small,11px)] text-[color:var(--report-muted,#565061)]">
           <span>~{insight.avgSecondsOnMotif.toFixed(1)}s avg per move</span>
           <span>·</span>
           <span>~{cpPawns} pawns lost each</span>
@@ -80,7 +80,7 @@ function InsightCard({ insight, onLearn }: { insight: TimePositionalInsight; onL
             <button
               type="button"
               onClick={onLearn}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] px-3 py-1.5 text-[11px] font-semibold text-[#ff8c42] transition hover:border-[#ff5a1f]/25 hover:bg-[#ff5a1f]/[0.14] hover:text-[#ff8c42]"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#ff5a1f]/25 bg-[color:var(--report-panel,rgba(255,90,31,0.06))] px-3 py-1.5 text-[length:var(--report-small,11px)] font-semibold text-[color:var(--report-accent-text,#ff8c42)] transition hover:border-[#ff5a1f]/25 hover:bg-[color:var(--report-panel,rgba(255,90,31,0.14))] hover:text-[color:var(--report-accent-text,#ff8c42)]"
             >
               📖 Learn this pattern
             </button>
@@ -93,7 +93,7 @@ function InsightCard({ insight, onLearn }: { insight: TimePositionalInsight; onL
             <button
               type="button"
               onClick={() => setExpanded(!expanded)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#1e1a24] bg-[#ff5a1f]/[0.04] px-3 py-1.5 text-[11px] font-semibold text-[#8d8696] transition hover:border-[#ff5a1f]/25 hover:bg-[#1e1a24] hover:text-white"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[color:var(--report-line,#1e1a24)] bg-[color:var(--report-panel,rgba(255,90,31,0.04))] px-3 py-1.5 text-[length:var(--report-small,11px)] font-semibold text-[color:var(--report-muted,#8d8696)] transition hover:border-[#ff5a1f]/25 hover:bg-[color:var(--report-surface,#1e1a24)] hover:text-white"
             >
               {expanded ? "Hide" : "Show"} example positions
               <svg
@@ -109,7 +109,7 @@ function InsightCard({ insight, onLearn }: { insight: TimePositionalInsight; onL
                 {insight.exampleFens.map((fen, i) => (
                   <div
                     key={i}
-                    className="overflow-hidden rounded-xl border border-[#1e1a24] bg-[#ff5a1f]/[0.03]"
+                    className="overflow-hidden rounded-[var(--report-radius,0.75rem)] border border-[color:var(--report-line,#1e1a24)] bg-[color:var(--report-panel,rgba(255,90,31,0.03))]"
                   >
                     <div className="p-2">
                       <Chessboard
@@ -124,7 +124,7 @@ function InsightCard({ insight, onLearn }: { insight: TimePositionalInsight; onL
                         customBoardStyle={{ borderRadius: "8px", overflow: "hidden" }}
                       />
                     </div>
-                    <p className="px-3 pb-3 text-[10px] text-[#565061]">
+                    <p className="px-3 pb-3 text-[length:var(--report-small,10px)] text-[color:var(--report-muted,#565061)]">
                       Example {i + 1}
                     </p>
                   </div>
@@ -147,10 +147,10 @@ export function TimePositionalCrossRef({
 
   if (report.insights.length === 0) {
     return (
-      <div className="rounded-[1.5rem] border border-emerald-500/[0.12] bg-emerald-500/[0.04] p-5 sm:p-6">
+      <div className="rounded-[var(--report-radius,1.5rem)] border border-emerald-500/[0.12] bg-emerald-500/[0.04] p-5 sm:p-6">
         <div className="flex items-center gap-3">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/[0.15] text-xs text-emerald-400">✓</span>
-          <span className="text-sm text-[#f0edf2]">{report.summary}</span>
+          <span className="text-sm text-[color:var(--report-text,#f0edf2)]">{report.summary}</span>
         </div>
       </div>
     );
@@ -162,20 +162,20 @@ export function TimePositionalCrossRef({
   return (
     <div className="space-y-4">
       {/* Summary banner */}
-      <div className="rounded-2xl border border-transparent bg-gradient-to-r from-[#ff5a1f]/[0.06] via-[#ff8c42]/[0.04] to-[#ff8c42]/[0.04] px-5 py-4">
+      <div className="rounded-[var(--report-radius,1rem)] border border-transparent bg-gradient-to-r from-[#ff5a1f]/[0.06] via-[#ff8c42]/[0.04] to-[#ff8c42]/[0.04] px-5 py-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#ff8c42]">
+            <p className="text-[length:var(--report-small,10px)] font-bold uppercase tracking-[0.18em] text-[color:var(--report-accent-text,#ff8c42)]">
               Time x Positional
             </p>
-            <p className="mt-1 text-sm leading-relaxed text-[#f0edf2]">
+            <p className="mt-1 text-sm leading-relaxed text-[color:var(--report-text,#f0edf2)]">
               {report.summary}
             </p>
           </div>
-          <div className="flex items-center gap-3 text-[11px] text-[#565061]">
+          <div className="flex items-center gap-3 text-[length:var(--report-small,11px)] text-[color:var(--report-muted,#565061)]">
             <span>{report.totalOverlaps} overlaps found</span>
             {report.unmatchedCount > 0 && (
-              <span className="text-[#565061]">· {report.unmatchedCount} unmatched</span>
+              <span className="text-[color:var(--report-muted,#565061)]">· {report.unmatchedCount} unmatched</span>
             )}
           </div>
         </div>
@@ -186,10 +186,10 @@ export function TimePositionalCrossRef({
         {rushedInsights.length > 0 && (
           <div>
             <div className="mb-3 flex items-center gap-2">
-              <span className="rounded-full bg-[#ff5a1f]/[0.08] px-2.5 py-1 text-[10px] font-bold text-[#ff8c42]">
+              <span className="rounded-full bg-[color:var(--report-panel,rgba(255,90,31,0.08))] px-2.5 py-1 text-[length:var(--report-small,10px)] font-bold text-[color:var(--report-accent-text,#ff8c42)]">
                 💨 Rushed moves &amp; positional habits
               </span>
-              <span className="text-[10px] text-[#565061]">
+              <span className="text-[length:var(--report-small,10px)] text-[color:var(--report-muted,#565061)]">
                 Moving too fast in positions that needed a check
               </span>
             </div>
@@ -208,10 +208,10 @@ export function TimePositionalCrossRef({
         {wastedInsights.length > 0 && (
           <div>
             <div className="mb-3 flex items-center gap-2">
-              <span className="rounded-full bg-red-500/15 px-2.5 py-1 text-[10px] font-bold text-red-400">
+              <span className="rounded-full bg-red-500/15 px-2.5 py-1 text-[length:var(--report-small,10px)] font-bold text-red-400">
                 ⏳ Overthinking &amp; positional habits
               </span>
-              <span className="text-[10px] text-[#565061]">
+              <span className="text-[length:var(--report-small,10px)] text-[color:var(--report-muted,#565061)]">
                 Spending too long on decisions that pattern recognition should handle
               </span>
             </div>
@@ -229,11 +229,11 @@ export function TimePositionalCrossRef({
       </div>
 
       {/* Coaching takeaway */}
-      <div className="rounded-[1.25rem] border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.06] p-4 sm:p-5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#ff8c42]">
+      <div className="rounded-[1.25rem] border border-[#ff5a1f]/25 bg-[color:var(--report-panel,rgba(255,90,31,0.06))] p-4 sm:p-5">
+        <p className="text-[length:var(--report-small,10px)] font-semibold uppercase tracking-[0.18em] text-[color:var(--report-accent-text,#ff8c42)]">
           Coach takeaway
         </p>
-        <p className="mt-2 text-sm leading-relaxed text-[#f0edf2]">
+        <p className="mt-2 text-sm leading-relaxed text-[color:var(--report-text,#f0edf2)]">
           {rushedInsights.length > 0 && wastedInsights.length > 0
             ? "You have both rushing and overthinking patterns tied to specific positional mistakes. Fix the rushing first — those are costing more per move. Once your fast decisions are cleaner, work on speeding up the routine positions you're overthinking."
             : rushedInsights.length > 0

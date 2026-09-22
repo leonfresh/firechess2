@@ -37,18 +37,18 @@ export function OpeningIdeas({ ideas, onOpenAnalysis }: OpeningIdeasProps) {
     <section id="section-opening-ideas" className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#565061]">
+          <p className="text-[length:var(--report-small,10px)] font-bold uppercase tracking-[0.22em] text-[color:var(--report-muted,#565061)]">
             Opening Ideas
           </p>
           <h3 className="text-xl font-bold text-white">
             Interesting alternatives worth trying
           </h3>
-          <p className="mt-1 text-sm text-[#8d8696]">
+          <p className="mt-1 text-sm text-[color:var(--report-muted,#8d8696)]">
             High-win-rate, highly-played database moves you haven&apos;t tried
             from positions you keep reaching.
           </p>
         </div>
-        <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-3 py-1.5 text-[11px] font-semibold text-[#ff8c42]">
+        <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#ff5a1f]/25 bg-[color:var(--report-panel,rgba(255,90,31,0.08))] px-3 py-1.5 text-[length:var(--report-small,11px)] font-semibold text-[color:var(--report-accent-text,#ff8c42)]">
           <Sparkles className="h-3 w-3" />
           {ideas.length} idea{ideas.length !== 1 ? "s" : ""}
         </span>
@@ -94,10 +94,10 @@ function OpeningIdeaCard({
   const rating = idea.averageRating ? `${Math.round(idea.averageRating)} avg` : "";
 
   return (
-    <div className="flex flex-col rounded-[1.75rem] border border-[#1e1a24] bg-[#121015] p-5 transition hover:border-[#ff5a1f]/25 sm:p-6">
+    <div className="flex flex-col rounded-[1.75rem] border border-[color:var(--report-line,#1e1a24)] bg-[color:var(--report-surface,#121015)] p-5 transition hover:border-[#ff5a1f]/25 sm:p-6">
       <div className="flex gap-4">
         {/* Board with suggestion arrow */}
-        <div className="relative h-[132px] w-[132px] shrink-0 overflow-hidden rounded-xl border border-[#1e1a24]">
+        <div className="relative h-[132px] w-[132px] shrink-0 overflow-hidden rounded-[var(--report-radius,0.75rem)] border border-[color:var(--report-line,#1e1a24)]">
           <Chessboard
             position={idea.fenBefore}
             boardWidth={132}
@@ -107,28 +107,28 @@ function OpeningIdeaCard({
             customDarkSquareStyle={{ backgroundColor: "#779952" }}
             customLightSquareStyle={{ backgroundColor: "#edeed1" }}
           />
-          <span className="absolute left-1.5 top-1.5 rounded-md bg-black/70 px-1.5 py-0.5 text-[9px] font-bold text-white backdrop-blur">
+          <span className="absolute left-1.5 top-1.5 rounded-md bg-black/70 px-1.5 py-0.5 text-[length:var(--report-small,9px)] font-bold text-white backdrop-blur">
             {idea.openingName || "Your recurring position"}
           </span>
         </div>
 
         {/* Copy */}
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#565061]">
+          <p className="text-[length:var(--report-small,10px)] font-bold uppercase tracking-[0.18em] text-[color:var(--report-muted,#565061)]">
             #{index + 1} · you reach this {idea.reachCount}×
           </p>
-          <p className="mt-1.5 text-[13px] text-[#8d8696]">
+          <p className="mt-1.5 text-[13px] text-[color:var(--report-muted,#8d8696)]">
             You keep playing{" "}
-            <span className="font-bold text-[#f0edf2]">{idea.userMove}</span>
+            <span className="font-bold text-[color:var(--report-text,#f0edf2)]">{idea.userMove}</span>
             {idea.userMoveCount > 1 ? ` (${idea.userMoveCount}×)` : ""} — but{" "}
-            <span className="font-bold text-[#ff8c42]">
+            <span className="font-bold text-[color:var(--report-accent-text,#ff8c42)]">
               {idea.suggestedMove}
             </span>{" "}
             scores better:
           </p>
 
           {idea.suggestedOpeningName ? (
-            <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-2.5 py-1 text-xs font-semibold text-[#ff8c42]">
+            <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[#ff5a1f]/25 bg-[color:var(--report-panel,rgba(255,90,31,0.08))] px-2.5 py-1 text-xs font-semibold text-[color:var(--report-accent-text,#ff8c42)]">
               <Lightbulb className="h-3.5 w-3.5" />
               {idea.suggestedOpeningName}
             </p>
@@ -138,11 +138,11 @@ function OpeningIdeaCard({
             {/* Their current move in DB */}
             {compare && idea.userMoveDbWinRate !== undefined ? (
               <div>
-                <div className="flex justify-between text-[10px] text-[#565061]">
+                <div className="flex justify-between text-[length:var(--report-small,10px)] text-[color:var(--report-muted,#565061)]">
                   <span>{idea.userMove} in DB</span>
                   <span>{(idea.userMoveDbWinRate * 100).toFixed(1)}% · {formatGames(idea.userMoveDbGames ?? 0)} games</span>
                 </div>
-                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#1e1a24]">
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[color:var(--report-surface,#1e1a24)]">
                   <div
                     className="h-full rounded-full bg-[#8d8696]/50"
                     style={{ width: `${Math.min(100, idea.userMoveDbWinRate * 100)}%` }}
@@ -153,15 +153,15 @@ function OpeningIdeaCard({
 
             {/* Suggestion */}
             <div>
-              <div className="flex justify-between text-[10px]">
-                <span className="font-semibold text-[#ff8c42]">
+              <div className="flex justify-between text-[length:var(--report-small,10px)]">
+                <span className="font-semibold text-[color:var(--report-accent-text,#ff8c42)]">
                   {idea.suggestedMove} — {idea.suggestedOpeningName?.split(": ").pop() ?? "suggested"}
                 </span>
-                <span className="text-[#565061]">
+                <span className="text-[color:var(--report-muted,#565061)]">
                   {(idea.suggestedWinRate * 100).toFixed(1)}% · {formatGames(idea.suggestedGames)} games{rating ? ` · ${rating}` : ""}
                 </span>
               </div>
-              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#1e1a24]">
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[color:var(--report-surface,#1e1a24)]">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42]"
                   style={{ width: `${Math.min(100, idea.suggestedWinRate * 100)}%` }}
@@ -171,13 +171,13 @@ function OpeningIdeaCard({
           </div>
 
           {dbDelta !== null && dbDelta > 0.001 ? (
-            <p className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-[#8d8696]">
-              <ArrowRight className="h-3 w-3 text-[#ff5a1f]" />
+            <p className="mt-2 flex items-center gap-1 text-[length:var(--report-small,11px)] font-semibold text-[color:var(--report-muted,#8d8696)]">
+              <ArrowRight className="h-3 w-3 text-[color:var(--report-accent-text,#ff5a1f)]" />
               +{(dbDelta * 100).toFixed(1)}pp better in the database
             </p>
           ) : null}
 
-          <p className="mt-1 text-[10px] text-[#565061]">
+          <p className="mt-1 text-[length:var(--report-small,10px)] text-[color:var(--report-muted,#565061)]">
             Your results with {idea.userMove}: {idea.userWins}W {idea.userDraws}D {idea.userLosses}L
             {userMoveTotal > 0 ? ` (${(userWinRate * 100).toFixed(0)}% win rate)` : ""}
           </p>
@@ -185,11 +185,11 @@ function OpeningIdeaCard({
       </div>
 
       {/* Actions */}
-      <div className="mt-4 flex items-center gap-2.5 border-t border-[#1e1a24] pt-3.5">
+      <div className="mt-4 flex items-center gap-2.5 border-t border-[color:var(--report-line,#1e1a24)] pt-3.5">
         <button
           type="button"
           onClick={() => onOpenAnalysis(idea)}
-          className="inline-flex items-center gap-1.5 rounded-full border border-[#ff5a1f]/25 bg-[#ff5a1f]/[0.08] px-3.5 py-1.5 text-xs font-semibold text-[#ff8c42] transition hover:bg-[#ff5a1f]/[0.14]"
+          className="inline-flex items-center gap-1.5 rounded-full border border-[#ff5a1f]/25 bg-[color:var(--report-panel,rgba(255,90,31,0.08))] px-3.5 py-1.5 text-xs font-semibold text-[color:var(--report-accent-text,#ff8c42)] transition hover:bg-[color:var(--report-panel,rgba(255,90,31,0.14))]"
         >
           Explore this move
         </button>
@@ -197,10 +197,10 @@ function OpeningIdeaCard({
           href={`https://lichess.org/analysis/${encodeURIComponent(idea.fenBefore)}`}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-full border border-[#1e1a24] px-3.5 py-1.5 text-xs font-medium text-[#8d8696] transition hover:bg-[#ff5a1f]/[0.08] hover:text-white"
+          className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--report-line,#1e1a24)] px-3.5 py-1.5 text-xs font-medium text-[color:var(--report-muted,#8d8696)] transition hover:bg-[color:var(--report-panel,rgba(255,90,31,0.08))] hover:text-white"
         >
           Open on Lichess
-          <span className="text-[10px]">↗</span>
+          <span className="text-[length:var(--report-small,10px)]">↗</span>
         </a>
       </div>
     </div>

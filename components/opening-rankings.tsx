@@ -40,7 +40,7 @@ type Props = {
 
 function winRateColor(wr: number) {
   if (wr >= 55) return "text-emerald-400";
-  if (wr >= 45) return "text-[#ff8c42]";
+  if (wr >= 45) return "text-[color:var(--report-accent-text,#ff8c42)]";
   return "text-red-400";
 }
 
@@ -52,7 +52,7 @@ function winRateBarBg(wr: number) {
 
 function winRateBadgeBg(wr: number) {
   if (wr >= 55) return "bg-emerald-500/15";
-  if (wr >= 45) return "bg-[#ff5a1f]/[0.08]";
+  if (wr >= 45) return "bg-[color:var(--report-panel,rgba(255,90,31,0.08))]";
   return "bg-red-500/15";
 }
 
@@ -132,7 +132,7 @@ export function OpeningRankings({ openingSummaries }: Props) {
       {/* ── Section header ── */}
       <div className="glass-card border-indigo-500/15 bg-gradient-to-r from-indigo-500/[0.04] to-transparent p-6">
         <div className="flex items-center gap-4">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/15 text-3xl shadow-lg shadow-indigo-500/10">
+          <span className="flex h-14 w-14 items-center justify-center rounded-[var(--report-radius,1rem)] bg-indigo-500/15 text-3xl shadow-lg shadow-indigo-500/10">
             📊
           </span>
           <div className="flex-1">
@@ -142,7 +142,7 @@ export function OpeningRankings({ openingSummaries }: Props) {
                 {rankings.length} opening{rankings.length !== 1 ? "s" : ""}
               </span>
             </h2>
-            <p className="mt-1 text-sm text-[#8d8696]">
+            <p className="mt-1 text-sm text-[color:var(--report-muted,#8d8696)]">
               {rankings.length >= 2 ? (
                 <>
                   Lowest:{" "}
@@ -155,7 +155,7 @@ export function OpeningRankings({ openingSummaries }: Props) {
                     {best.name} ({best.winRate}%)
                   </span>
                   {" · "}
-                  <span className="text-[#565061]">{totalGames} games total</span>
+                  <span className="text-[color:var(--report-muted,#565061)]">{totalGames} games total</span>
                 </>
               ) : (
                 <>All your openings ranked by win rate — lowest to highest.</>
@@ -170,21 +170,21 @@ export function OpeningRankings({ openingSummaries }: Props) {
         {rankings.map((entry, idx) => (
           <div
             key={entry.key}
-            className="group rounded-xl border border-[#1e1a24] bg-gradient-to-r from-white/[0.02] to-transparent p-3 transition-all duration-200 hover:border-[#1e1a24] hover:bg-[#ff5a1f]/[0.04]"
+            className="group rounded-[var(--report-radius,0.75rem)] border border-[color:var(--report-line,#1e1a24)] bg-gradient-to-r from-white/[0.02] to-transparent p-3 transition-all duration-200 hover:border-[color:var(--report-line,#1e1a24)] hover:bg-[color:var(--report-panel,rgba(255,90,31,0.04))]"
           >
             {/* Top row: rank badge + name + color + win-rate label */}
             <div className="mb-2 flex items-center gap-2">
               <div
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[10px] font-extrabold ${winRateBadgeBg(entry.winRate)} ${winRateColor(entry.winRate)}`}
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[length:var(--report-small,10px)] font-extrabold ${winRateBadgeBg(entry.winRate)} ${winRateColor(entry.winRate)}`}
               >
                 #{idx + 1}
               </div>
               <h3 className="min-w-0 flex-1 truncate text-sm font-bold text-white">{entry.name}</h3>
               <span
-                className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[length:var(--report-small,10px)] font-semibold ${
                   entry.userColor === "white"
                     ? "bg-[#ff5a1f]/10 text-white"
-                    : "bg-slate-600/30 text-[#f0edf2]"
+                    : "bg-slate-600/30 text-[color:var(--report-text,#f0edf2)]"
                 }`}
               >
                 {entry.userColor === "white" ? "♔" : "♚"}{" "}
@@ -197,7 +197,7 @@ export function OpeningRankings({ openingSummaries }: Props) {
 
             <div className="flex items-center gap-3">
               {/* Board — larger */}
-              <div className="w-[120px] h-[120px] shrink-0 overflow-hidden border border-[#1e1a24]">
+              <div className="w-[120px] h-[120px] shrink-0 overflow-hidden border border-[color:var(--report-line,#1e1a24)]">
                 <Chessboard
                   id={`opening-rank-${idx}`}
                   position={entry.fen}
@@ -215,7 +215,7 @@ export function OpeningRankings({ openingSummaries }: Props) {
               <div className="min-w-0 flex-1">
                 {/* Win rate bar */}
                 <div className="flex items-center gap-3">
-                  <div className="h-2 flex-1 rounded-full bg-[#1e1a24]">
+                  <div className="h-2 flex-1 rounded-full bg-[color:var(--report-surface,#1e1a24)]">
                     <div
                       className={`h-2 rounded-full ${winRateBarBg(entry.winRate)} transition-all duration-700`}
                       style={{ width: `${Math.max(entry.winRate, 2)}%` }}
@@ -227,18 +227,18 @@ export function OpeningRankings({ openingSummaries }: Props) {
                 </div>
 
                 {/* W / D / L stats */}
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-[#565061]">
-                  <span className="font-medium text-[#8d8696]">
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-[color:var(--report-muted,#565061)]">
+                  <span className="font-medium text-[color:var(--report-muted,#8d8696)]">
                     {entry.games} game{entry.games !== 1 ? "s" : ""}
                   </span>
                   <span className="text-emerald-400/70">+{entry.wins}W</span>
-                  <span className="text-[#8d8696]/70">={entry.draws}D</span>
+                  <span className="text-[color:var(--report-muted,#8d8696)]/70">={entry.draws}D</span>
                   <span className="text-red-400/70">&minus;{entry.losses}L</span>
                 </div>
 
                 {/* Win rate label (mobile) */}
                 <div className="mt-2 sm:hidden">
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${winRateBadgeBg(entry.winRate)} ${winRateColor(entry.winRate)}`}>
+                  <span className={`rounded-full px-2 py-0.5 text-[length:var(--report-small,10px)] font-semibold ${winRateBadgeBg(entry.winRate)} ${winRateColor(entry.winRate)}`}>
                     {winRateLabel(entry.winRate)}
                   </span>
                 </div>

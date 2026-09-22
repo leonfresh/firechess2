@@ -170,6 +170,7 @@ async function parallelForEach<T>(
   items: T[],
   concurrency: number,
   fn: (item: T, index: number) => Promise<void>,
+  onItemComplete?: () => void,
 ): Promise<void> {
   let nextIndex = 0;
   const yieldToMain = () => new Promise<void>((r) => setTimeout(r, 0));
@@ -178,6 +179,7 @@ async function parallelForEach<T>(
     while (nextIndex < items.length) {
       const i = nextIndex++;
       await fn(items[i], i);
+      onItemComplete?.();
       sinceYield++;
       // Yield to browser every 4 tasks to keep UI responsive
       if (sinceYield >= 4) {
@@ -3870,6 +3872,23 @@ export async function analyzeOpeningLeaksInBrowser(
         const seenTacticFens = new Set<string>();
 
         let tacticsGamesCompleted = 0;
+        let tacticsLastProgressAt = 0;
+        let lastReportedGame: number | undefined;
+        function reportGameProgress(gameIndex?: number, ply?: number) {
+          const active = gameIndex != null && ply != null;
+          const now = Date.now();
+          if (active && gameIndex === lastReportedGame && now - tacticsLastProgressAt < 1000) return;
+          if (active) lastReportedGame = gameIndex;
+          tacticsLastProgressAt = now;
+          emitProgress(options, {
+            phase: "tactics",
+            message: "Scanning for missed tactics",
+            detail: `${tacticsGamesCompleted} of ${games.length} games complete${active ? ` · Checking game ${gameIndex + 1}, move ${Math.floor(ply / 2) + 1}` : tacticsGamesCompleted < games.length ? " · Engine analysis continues" : " · Finalizing section"}`,
+            current: tacticsGamesCompleted,
+            total: games.length,
+            percent: tacticsStart + Math.floor((tacticsGamesCompleted / games.length) * tacticsSpan),
+          });
+        }
         await parallelForEach(
           games.map((game, i) => ({ game, gameIndex: i })),
           stockfishPool.size,
@@ -3894,25 +3913,6 @@ export async function analyzeOpeningLeaksInBrowser(
               const gameRating =
                 userColor === "white" ? game.whiteRating : game.blackRating;
               if (gameRating && gameRating > 0) playerRatings.push(gameRating);
-            }
-
-            tacticsGamesCompleted++;
-            if (
-              tacticsGamesCompleted % 10 === 0 ||
-              tacticsGamesCompleted === games.length
-            ) {
-              emitProgress(options, {
-                phase: "tactics",
-                message: `⚔️ Scanning for missed tactics`,
-                detail: `Game ${tacticsGamesCompleted} of ${games.length}`,
-                current: tacticsGamesCompleted,
-                total: games.length,
-                percent:
-                  tacticsStart +
-                  Math.round(
-                    (tacticsGamesCompleted / games.length) * tacticsSpan,
-                  ),
-              });
             }
 
             const chess = new Chess();
@@ -3947,6 +3947,7 @@ export async function analyzeOpeningLeaksInBrowser(
                 if (hasForcingMoves) {
                   // === Two-pass depth screening ===
                   // Pass 1: cheap screen at low depth
+                  reportGameProgress(gameIndex, ply);
                   const screenBefore = await stockfishPool.evaluateFen(
                     fenBefore,
                     SCREEN_DEPTH,
@@ -4165,6 +4166,7 @@ export async function analyzeOpeningLeaksInBrowser(
               if (!ok) break;
             }
           },
+          () => { tacticsGamesCompleted++; reportGameProgress(); },
         );
 
         missedTactics.sort((a, b) => b.cpLoss - a.cpLoss);
@@ -4194,6 +4196,23 @@ export async function analyzeOpeningLeaksInBrowser(
         const ENDGAME_SCREEN_DEPTH = 8;
 
         let endgameGamesCompleted = 0;
+        let endgamesLastProgressAt = 0;
+        let lastReportedGame: number | undefined;
+        function reportGameProgress(gameIndex?: number, ply?: number) {
+          const active = gameIndex != null && ply != null;
+          const now = Date.now();
+          if (active && gameIndex === lastReportedGame && now - endgamesLastProgressAt < 1000) return;
+          if (active) lastReportedGame = gameIndex;
+          endgamesLastProgressAt = now;
+          emitProgress(options, {
+            phase: "endgames",
+            message: "Scanning endgames",
+            detail: `${endgameGamesCompleted} of ${games.length} games complete${active ? ` · Checking game ${gameIndex + 1}, move ${Math.floor(ply / 2) + 1}` : endgameGamesCompleted < games.length ? " · Engine analysis continues" : " · Finalizing section"}`,
+            current: endgameGamesCompleted,
+            total: games.length,
+            percent: endgameStart + Math.floor((endgameGamesCompleted / games.length) * endgameSpan),
+          });
+        }
         await parallelForEach(
           games.map((game, i) => ({ game, gameIndex: i })),
           stockfishPool.size,
@@ -4216,25 +4235,6 @@ export async function analyzeOpeningLeaksInBrowser(
               const gameRating =
                 userColor === "white" ? game.whiteRating : game.blackRating;
               if (gameRating && gameRating > 0) playerRatings.push(gameRating);
-            }
-
-            endgameGamesCompleted++;
-            if (
-              endgameGamesCompleted % 10 === 0 ||
-              endgameGamesCompleted === games.length
-            ) {
-              emitProgress(options, {
-                phase: "endgames",
-                message: "♟️ Scanning endgames",
-                detail: `Game ${endgameGamesCompleted} of ${games.length}`,
-                current: endgameGamesCompleted,
-                total: games.length,
-                percent:
-                  endgameStart +
-                  Math.round(
-                    (endgameGamesCompleted / games.length) * endgameSpan,
-                  ),
-              });
             }
 
             const chess = new Chess();
@@ -4260,6 +4260,7 @@ export async function analyzeOpeningLeaksInBrowser(
 
                 // Get eval at endgame start to track conversion/hold — always evaluate,
                 // regardless of whose move it is (previous code skipped ~50% of games)
+                reportGameProgress(gameIndex, ply);
                 const startEv = await stockfishPool.evaluateFen(
                   fenBefore,
                   Math.min(engineDepth, 12),
@@ -4304,7 +4305,8 @@ export async function analyzeOpeningLeaksInBrowser(
 
                 // Evaluate the user's endgame move — two-pass depth screening
                 // Pass 1: cheap screen at low depth
-                const screenBefore = await stockfishPool.evaluateFen(
+                reportGameProgress(gameIndex, ply);
+                  const screenBefore = await stockfishPool.evaluateFen(
                   fenBefore,
                   ENDGAME_SCREEN_DEPTH,
                 );
@@ -4521,6 +4523,7 @@ export async function analyzeOpeningLeaksInBrowser(
               }
             }
           },
+          () => { endgameGamesCompleted++; reportGameProgress(); },
         );
 
         endgameMistakes.sort((a, b) => b.cpLoss - a.cpLoss);

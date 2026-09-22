@@ -8,11 +8,11 @@ import { PRICING_TIERS } from "@/components/home/pricing-teaser";
 import { PreviewHeader } from "./shared";
 import s from "./modern.module.css";
 
-const FREE_FEATURES = ["50 games per scan · depth 12","Full overview and finding counts","3 openings, 3 tactics and 3 endgames","1 brilliant, clock and positional example","Review and practice unlocked positions"];
+const FREE_FEATURES = ["50 games per scan · depth 12","Full overview and finding counts","Up to 6 tactics, positional and endgame positions each","Up to 6 opening, brilliant and clock positions each","Theme coaching, threat maps and report sessions"];
 const COMPARISON = [
   ["Games per scan","50","Larger scans"], ["Engine depth","Up to 12","Up to 24"],
-  ["Report overview & section totals","Included","Included"], ["Openings, tactics & endgames","3 examples each","All findings"],
-  ["Brilliants, clock & positional examples","1 each","All findings"], ["Interactive boards & practice","Unlocked examples","All findings"],
+  ["Report overview & section totals","Included","Included"], ["Tactical, positional & endgame practice","Up to 6 per category","All stored positions"],
+  ["Opening, brilliant & clock examples","Up to 6 each","All findings"], ["Threat maps & report training sessions","Included","Included"],
   ["Detailed repertoire & coaching","Limited examples","Full breakdown"], ["Report history & comparisons","Latest report","Full history"],
 ];
 export function ModernPricing() {

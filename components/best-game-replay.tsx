@@ -37,8 +37,8 @@ import type { BestGame } from "@/lib/best-game";
 
 export function BestGameReplay({
   bestGame,
-  accentClass = "border-[#1e1a24] bg-[#121015] text-[#f0edf2] hover:border-[#ff5a1f]/25",
-  chipClass = "bg-[#121015] border-[#1e1a24] text-[#8d8696]",
+  accentClass = "border-[color:var(--report-line,#1e1a24)] bg-[color:var(--report-surface,#121015)] text-[color:var(--report-text,#f0edf2)] hover:border-[#ff5a1f]/25",
+  chipClass = "bg-[color:var(--report-surface,#121015)] border-[color:var(--report-line,#1e1a24)] text-[color:var(--report-muted,#8d8696)]",
 }: {
   bestGame: BestGame;
   /** Class overrides so the controls adapt to the hosting surface's palette. */
@@ -121,7 +121,7 @@ export function BestGameReplay({
   return (
     <div className="w-full">
       <div ref={boardRef} className="mx-auto w-full">
-        <div className="overflow-hidden rounded-xl border border-[#1e1a24] shadow-lg shadow-black/30">
+        <div className="overflow-hidden rounded-[var(--report-radius,0.75rem)] border border-[color:var(--report-line,#1e1a24)] shadow-lg shadow-black/30">
           <Chessboard
             id={boardId}
             position={pos}
@@ -191,9 +191,9 @@ export function BestGameReplay({
                 key={`${p.moveNumber}-${p.san}-${i}`}
                 type="button"
                 onClick={() => setStep(idx)}
-                className={`rounded-md border px-1.5 py-0.5 font-mono text-[11px] font-semibold transition ${
+                className={`rounded-md border px-1.5 py-0.5 font-mono text-[length:var(--report-small,11px)] font-semibold transition ${
                   active
-                    ? "border-[#ff5a1f]/40 bg-[#ff5a1f]/[0.12] text-[#ff8c42]"
+                    ? "border-[#ff5a1f]/40 bg-[color:var(--report-panel,rgba(255,90,31,0.12))] text-[color:var(--report-accent-text,#ff8c42)]"
                     : p.isMate
                       ? "border-red-500/30 bg-red-500/[0.08] text-red-300"
                       : chipClass

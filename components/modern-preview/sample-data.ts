@@ -21,6 +21,7 @@ export type PreviewPattern = {
   cpLoss?: number | null;
   sideline?: { approved: boolean; score?: number; games?: number };
   promotion?: string;
+  lastMove?: { from: string; to: string; san: string };
   gameUrl?: string;
   tags?: string[];
 };

@@ -65,18 +65,18 @@ export function PositionPerformance({ leaks, hasProAccess }: PositionPerformance
     <section id="section-position-performance" className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#565061]">
+          <p className="text-[length:var(--report-small,10px)] font-bold uppercase tracking-[0.22em] text-[color:var(--report-muted,#565061)]">
             Position Performance
           </p>
           <h3 className="text-xl font-bold text-white">
             Positions you own &amp; positions that own you
           </h3>
-          <p className="mt-1 text-sm text-[#8d8696]">
+          <p className="mt-1 text-sm text-[color:var(--report-muted,#8d8696)]">
             Your best and worst recurring positions, ranked by frequency and impact.
           </p>
         </div>
         {!hasProAccess && (
-          <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-orange-500/20 bg-orange-500/[0.08] px-3 py-1.5 text-[11px] font-semibold text-orange-300">
+          <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-orange-500/20 bg-orange-500/[0.08] px-3 py-1.5 text-[length:var(--report-small,11px)] font-semibold text-orange-300">
             <Lock className="h-3 w-3" />
             Pro shows up to 10
           </span>
@@ -89,7 +89,7 @@ export function PositionPerformance({ leaks, hasProAccess }: PositionPerformance
           <div className="mb-4 flex items-center gap-2">
             <Skull className="h-5 w-5 text-red-400" />
             <h4 className="text-sm font-bold text-white">Toughest positions</h4>
-            <span className="ml-auto rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-400">
+            <span className="ml-auto rounded-full bg-red-500/10 px-2 py-0.5 text-[length:var(--report-small,10px)] font-bold text-red-400">
               {worst.length}
             </span>
           </div>
@@ -98,7 +98,7 @@ export function PositionPerformance({ leaks, hasProAccess }: PositionPerformance
               <PositionCard key={i} leak={leak} type="worst" />
             ))}
             {!hasProAccess && worst.length < PRO_LIMIT && (
-              <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-[#1e1a24] py-4 text-xs text-[#565061]">
+              <div className="flex items-center justify-center gap-2 rounded-[var(--report-radius,0.75rem)] border border-dashed border-[color:var(--report-line,#1e1a24)] py-4 text-xs text-[color:var(--report-muted,#565061)]">
                 <Sparkles className="h-3.5 w-3.5 text-orange-400" />
                 Upgrade to Pro for up to 10 positions
               </div>
@@ -111,7 +111,7 @@ export function PositionPerformance({ leaks, hasProAccess }: PositionPerformance
           <div className="mb-4 flex items-center gap-2">
             <Trophy className="h-5 w-5 text-emerald-400" />
             <h4 className="text-sm font-bold text-white">Strongest positions</h4>
-            <span className="ml-auto rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+            <span className="ml-auto rounded-full bg-emerald-500/10 px-2 py-0.5 text-[length:var(--report-small,10px)] font-bold text-emerald-400">
               {best.length}
             </span>
           </div>
@@ -120,7 +120,7 @@ export function PositionPerformance({ leaks, hasProAccess }: PositionPerformance
               <PositionCard key={i} leak={leak} type="best" />
             ))}
             {!hasProAccess && best.length < PRO_LIMIT && (
-              <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-[#1e1a24] py-4 text-xs text-[#565061]">
+              <div className="flex items-center justify-center gap-2 rounded-[var(--report-radius,0.75rem)] border border-dashed border-[color:var(--report-line,#1e1a24)] py-4 text-xs text-[color:var(--report-muted,#565061)]">
                 <Sparkles className="h-3.5 w-3.5 text-orange-400" />
                 Upgrade to Pro for up to 10 positions
               </div>
@@ -140,9 +140,9 @@ function PositionCard({ leak, type }: { leak: RepeatedOpeningLeak; type: "best" 
   const lossRate = total > 0 ? losses / total : 0;
 
   return (
-    <div className="flex gap-3 rounded-xl border border-[#1e1a24] bg-black/20 p-3">
+    <div className="flex gap-3 rounded-[var(--report-radius,0.75rem)] border border-[color:var(--report-line,#1e1a24)] bg-black/20 p-3">
       {/* Mini board */}
-      <div className="h-[120px] w-[120px] shrink-0 overflow-hidden rounded-lg border border-[#1e1a24]">
+      <div className="h-[120px] w-[120px] shrink-0 overflow-hidden rounded-lg border border-[color:var(--report-line,#1e1a24)]">
         <Chessboard
           position={leak.fenBefore}
           boardWidth={120}
@@ -154,23 +154,23 @@ function PositionCard({ leak, type }: { leak: RepeatedOpeningLeak; type: "best" 
 
       {/* Info */}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[11px] font-semibold text-white">
+        <p className="truncate text-[length:var(--report-small,11px)] font-semibold text-white">
           {leak.openingName || "Unknown position"}
         </p>
-        <p className="mt-0.5 text-[10px] text-[#565061]">
+        <p className="mt-0.5 text-[length:var(--report-small,10px)] text-[color:var(--report-muted,#565061)]">
           Reached {leak.reachCount || total} times · {total} games
         </p>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
-          <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${type === "worst" ? "bg-red-500/15 text-red-400" : "bg-emerald-500/15 text-emerald-400"}`}>
+          <span className={`rounded px-1.5 py-0.5 text-[length:var(--report-small,9px)] font-bold ${type === "worst" ? "bg-red-500/15 text-red-400" : "bg-emerald-500/15 text-emerald-400"}`}>
             {type === "worst"
               ? `${(lossRate * 100).toFixed(0)}% loss rate`
               : `${(wr * 100).toFixed(0)}% win rate`}
           </span>
-          <span className="rounded bg-[#ff5a1f]/[0.08] px-1.5 py-0.5 text-[9px] font-bold text-[#ff8c42]">
+          <span className="rounded bg-[color:var(--report-panel,rgba(255,90,31,0.08))] px-1.5 py-0.5 text-[length:var(--report-small,9px)] font-bold text-[color:var(--report-accent-text,#ff8c42)]">
             {(leak.cpLoss / 100).toFixed(1)} avg cp
           </span>
         </div>
-        <p className="mt-1 text-[9px] text-[#565061]">
+        <p className="mt-1 text-[length:var(--report-small,9px)] text-[color:var(--report-muted,#565061)]">
           {wins}W / {losses}L / {leak.userDraws ?? 0}D
         </p>
       </div>
