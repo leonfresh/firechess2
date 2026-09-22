@@ -39,16 +39,22 @@ export function ChaosWeekStrip({
   thumbnail = false,
   className = '',
   label = 'Game of the Week',
+  initial = null,
+  initialGames = null,
 }: {
   tone?: 'chaos' | 'site';
   thumbnail?: boolean;
   className?: string;
   label?: string;
+  /** Server-fetched winner: renders in the HTML instead of after a client fetch. */
+  initial?: Winner | null;
+  initialGames?: number | null;
 }) {
-  const [winner, setWinner] = useState<Winner | null>(null);
-  const [games, setGames] = useState<number | null>(null);
+  const [winner, setWinner] = useState<Winner | null>(initial);
+  const [games, setGames] = useState<number | null>(initialGames);
 
   useEffect(() => {
+    if (initial) return;
     let alive = true;
     fetch('/api/chaos/week', { cache: 'no-store' })
       .then((response) => (response.ok ? response.json() : null))
@@ -61,7 +67,7 @@ export function ChaosWeekStrip({
     return () => {
       alive = false;
     };
-  }, []);
+  }, [initial]);
 
   if (!winner) return null;
 
@@ -112,12 +118,16 @@ export function ChaosWeekStrip({
       <div className="flex shrink-0 items-center gap-2">
         <Link
           href={`/chaos/replay/${winner.roomId}`}
-          className="rounded-lg px-3 py-1.5 text-xs font-bold transition-all"
+          className="chaos-week-link rounded-lg px-3 py-1.5 text-xs font-bold transition-all"
           style={{ border: `1px solid ${accent}55`, background: `${accent}18`, color: accent }}
         >
           Watch the replay
         </Link>
-        <Link href="/chaos/week" className="text-xs font-semibold underline underline-offset-2" style={{ color: 'var(--muted, #9fb6c6)' }}>
+        <Link
+          href="/chaos/week"
+          className="chaos-week-link text-xs font-semibold underline underline-offset-2"
+          style={{ color: 'var(--muted, #9fb6c6)' }}
+        >
           The week →
         </Link>
       </div>

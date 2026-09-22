@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 import styles from "./page.module.css";
+import { ChaosWeekStrip } from "@/components/chaos-week-strip";
+import { getChaosWeek } from "@/lib/chaos-week";
+
+/** Hourly: the Game of the Week strip is server-rendered into the HTML. */
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Chaos Chess — Chess with a few unfair advantages",
@@ -8,7 +13,9 @@ export const metadata: Metadata = {
   openGraph: { title: "Chaos Chess", description: "Your next move could change the rules. Play in your browser or Discord.", url: "https://www.firechess.com/chaos", images: [{ url: "/chaos-brand/cover.webp" }] },
 };
 
-export default function ChaosIntroduction() {
+export default async function ChaosIntroduction() {
+  const week = await getChaosWeek().catch(() => null);
+  const winner = week?.winner ?? null;
   return <div className={styles.page}>
     <section className={styles.hero} aria-labelledby="chaos-title">
       <div>
@@ -24,6 +31,9 @@ export default function ChaosIntroduction() {
       </div>
       <div className={styles.cover}><img src="/chaos-brand/cover.webp" alt="The playful world of Chaos Chess" fetchPriority="high" /><span>Familiar board. Unfamiliar possibilities.</span></div>
     </section>
+    <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 24px" }}>
+      <ChaosWeekStrip initial={winner} initialGames={week?.gamesScored ?? null} thumbnail />
+    </div>
     <section className={styles.steps} aria-label="How to play">
       {[
         ["01", "Pick your twist", "Start with an anomaly that changes the way you play."],

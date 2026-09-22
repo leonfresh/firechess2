@@ -10,6 +10,7 @@ import type { AnomalyDefinition } from '@/lib/chaos-anomalies';
 import { PowerArt } from './power-art';
 export { PowerArt } from './power-art';
 import { ActivityReplays } from './replays';
+import { ChaosWeekStrip } from '@/components/chaos-week-strip';
 import { ActivityCollection } from './collection';
 import { CHAOS_TIME_CONTROLS } from '@/lib/chaos-clock';
 import { useChaosAccount } from '@/lib/use-chaos-account';
@@ -81,6 +82,7 @@ export function ActivityLobby(props: ChaosLobbyViewProps) {
     <ActivityCollection shopEntry />
     <section className="lobby-destinations" aria-label="Explore Chaos Chess">
       <div className="destination-heading"><span className="eyebrow">AROUND THE ARENA</span><span>More ways to play along</span></div>
+      <ChaosWeekStrip className="mt-3 mb-3" />
       <nav className="destination-grid" aria-label="Community and games"><ActivityCareer card/><ActivityCollection card/><ChaosWatchButton card label="Watch live" initialTab="live"/><ActivityReplays card/></nav>
     </section>
       <div className="hero-toys" aria-label="Rocket pawn and nuclear queen power previews">
@@ -132,9 +134,16 @@ export function ActivityLobby(props: ChaosLobbyViewProps) {
           <div className="challenge-filters" aria-label="Challenge filter"><button aria-pressed={challengeFilter==='all'} onClick={()=>setChallengeFilter('all')}>All clocks</button><button aria-pressed={challengeFilter==='clock'} onClick={()=>setChallengeFilter('clock')}>My clock · {props.unlimited?'No rush':props.clockLabel}</button></div>
           <div className="challenge-columns" aria-hidden="true"><span>Player / rating</span><span>Clock / mode</span><span /></div>
           {roomsError ? <p role="status">{roomsError}</p> : !roomsLoaded ? <p role="status">Looking for challengers…</p> : <>
-            {rooms.filter(r=>challengeFilter==='all'||(props.unlimited?(r.timeControlSeconds??0)<=0:`${(r.timeControlSeconds??0)/60}+${r.incrementSeconds}`===props.clockLabel)).map(room=><button type="button" className="challenge-row" data-call={room.sameInstance?'true':undefined} key={room.roomCode} disabled={busy||room.yours||rooms.some(r=>r.yours)} onClick={()=>void run(()=>props.joinOpenRoom(room.roomCode))} aria-label={`${room.yours?'Your challenge':`Play ${room.name}`}, ${room.rating??'unrated'}, ${(room.timeControlSeconds??0)<=0?'No rush':`${room.timeControlSeconds!/60}+${room.incrementSeconds}`}${room.sameInstance?' in this call':''} `}>
+            {rooms.filter(r=>challengeFilter==='all'||(props.unlimited?(r.timeControlSeconds??0)<=0:`${(r.timeControlSeconds??0)/60}+${r.incrementSeconds}`===props.clockLabel)).map(room=><button type="button" className="challenge-row" data-call={room.sameInstance?'true':undefined} key={room.roomCode} disabled={busy||(!room.yours&&rooms.some(r=>r.yours))} onClick={()=>void run(async()=>{
+              if(room.yours){
+                window.dispatchEvent(new Event('chaos-cancel-seek'));
+                const response=await fetch('/api/chaos/matchmake',{method:'DELETE',headers:{'X-Guest-Id':getGuestId(),...chaosIdentityHeaders()},credentials:'include'});
+                if(!response.ok)throw new Error('Could not cancel');
+                setRooms(previous=>previous.filter(r=>!r.yours));
+              } else await props.joinOpenRoom(room.roomCode);
+            })} aria-label={`${room.yours?'Cancel your challenge':`Play ${room.name}`}, ${room.rating??'unrated'}, ${(room.timeControlSeconds??0)<=0?'No rush':`${room.timeControlSeconds!/60}+${room.incrementSeconds}`}${room.sameInstance?' in this call':''} `}>
               <span className="challenge-player"><strong>{room.yours?'You':room.name}</strong><small>{room.rating===null?'Unrated':`${room.rating}${room.games<10?'?':''}`}{room.yours?' · Seeking a game':''}</small></span>
-              <span><strong>{(room.timeControlSeconds??0)<=0?'No rush':`${room.timeControlSeconds!/60}+${room.incrementSeconds}`}</strong><small>{!room.ratedEligible ? 'Casual' : account.isLoading ? 'Checking eligibility' : account.error ? 'Eligibility unavailable' : account.data?.player ? 'Rated eligible' : 'Casual · sign in for rated'}{room.sameInstance && <em className="call-flag"> · in this call</em>}</small></span><span className="challenge-arrow" aria-hidden="true">{room.yours?'…':'↗'}</span>
+              <span><strong>{(room.timeControlSeconds??0)<=0?'No rush':`${room.timeControlSeconds!/60}+${room.incrementSeconds}`}</strong><small>{!room.ratedEligible ? 'Casual' : account.isLoading ? 'Checking eligibility' : account.error ? 'Eligibility unavailable' : account.data?.player ? 'Rated eligible' : 'Casual · sign in for rated'}{room.sameInstance && <em className="call-flag"> · in this call</em>}</small></span><span className="challenge-arrow" aria-hidden="true">{room.yours?'Cancel':'↗'}</span>
             </button>)}
             {!rooms.some(r=>challengeFilter==='all'||(props.unlimited?(r.timeControlSeconds??0)<=0:`${(r.timeControlSeconds??0)/60}+${r.incrementSeconds}`===props.clockLabel))&&<div className="challenge-empty"><strong>No challengers{challengeFilter==='clock'?' on this clock':''} yet.</strong><p>Post a challenge with your selected clock. Other players can join you here.</p></div>}
           </>}
