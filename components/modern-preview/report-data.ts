@@ -4,7 +4,7 @@ import type { AnalyzeResponse } from "@/lib/types";
 import type { ComputedScanReport, ScanSessionConfig } from "@/lib/scan-session";
 import type { PatternCategory, PreviewPattern } from "./sample-data";
 
-export type PreviewScan = { id: string; chessUsername: string; source: string; config: ScanSessionConfig; result: AnalyzeResponse | null; reportMeta: ComputedScanReport | null };
+export type PreviewScan = { id: string; chessUsername: string; source: string; createdAt?: string | null; config: ScanSessionConfig; result: AnalyzeResponse | null; reportMeta: ComputedScanReport | null };
 export const CATEGORIES: PatternCategory[] = ["Openings", "Tactics", "Endgames", "Brilliants", "Clock", "Positional"];
 export const FREE_FINDING_LIMITS: Record<PatternCategory, number> = { Openings: 6, Tactics: 6, Endgames: 6, Brilliants: 6, Clock: 6, Positional: 6 };
 export const FREE_SCAN_GAMES = 50;

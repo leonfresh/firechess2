@@ -3,6 +3,60 @@ import { getPatternQuote, POSITIONAL_PATTERNS } from "./positional-quotes";
 import type { PreviewPattern } from "../components/modern-preview/sample-data";
 
 const PIECES = { p: "pawn", n: "knight", b: "bishop", r: "rook", q: "queen", k: "king" };
+export function trainingHeading(rating?: number | null) {
+  return typeof rating === "number" && Number.isFinite(rating) && rating > 0 && rating < 2000 ? "Your road to 2000" : "Your next training focus";
+}
+
+export const TRAINING_HABITS = [
+  { id: "safety", title: "Keep your pieces safe", cue: "Before moving, ask what changed. Check their checks and captures, then count attacks and defences on the piece you want to move.", mission: "For your next three games, do a threat check before every move.", categories: ["Tactics", "Clock"] },
+  { id: "development", title: "Give every piece a job", cue: "Develop toward useful central squares and prepare king safety. Castle when it is safe; respond to an immediate threat first.", mission: "Before repeating a piece move in the opening, look for a piece that still needs developing.", categories: ["Openings"] },
+  { id: "decisions", title: "Look one reply further", cue: "Before trading, picture their recapture. Compare piece values, activity and pawn structure. Keep tension when exchanging helps them more.", mission: "Name your opponent’s strongest reply before committing to a capture.", categories: ["Positional", "Brilliants"] },
+  { id: "endings", title: "Finish with a plan", cue: "Bring your king into the game when it is safe. Check pawn races and look for an active role for your remaining pieces.", mission: "In your next ending, identify the opponent’s pawn threat before choosing your own plan.", categories: ["Endgames"] },
+] as const;
+
+export function habitPositions(patterns: PreviewPattern[], habitId: string) {
+  const habit = TRAINING_HABITS.find(h => h.id === habitId);
+  return habit ? patterns.filter(p => (habit.categories as readonly string[]).includes(p.category)) : [];
+}
+
+/** Describe only consequences verified on the board, not an inferred reason for the mistake. */
+export function describeReply(fen: string, uci: string) {
+  const board = new Chess(fen);
+  const move = board.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] });
+  const consequence = board.isCheckmate() ? "delivers checkmate" : move.captured ? `captures your ${PIECES[move.captured]}${board.isCheck() ? " with check" : ""}` : board.isCheck() ? "gives check" : `places their ${PIECES[move.piece]} on ${move.to}`;
+  const pinnedDefenders: string[] = [];
+  if (move.captured && !board.isCheck()) {
+    const player = board.turn();
+    const king = board.board().flat().find(p => p?.type === "k" && p.color === player);
+    const legalRecaptures = board.moves({ verbose: true }).filter(m => m.to === move.to && m.captured);
+    for (const square of board.attackers(move.to, player)) {
+      const piece = board.get(square);
+      if (!king || !piece || piece.type === "k" || legalRecaptures.some(m => m.from === square)) continue;
+      const exposed = new Chess(board.fen());
+      exposed.remove(square);
+      const enemy = player === "w" ? "b" : "w";
+      if (!exposed.isAttacked(king.square, enemy)) continue;
+      exposed.remove(move.to); exposed.put(piece, move.to);
+      if (exposed.isAttacked(king.square, enemy)) pinnedDefenders.push(`Your ${PIECES[piece.type]} on ${square} attacks ${move.to}, but cannot recapture: moving it exposes your king on ${king.square}.`);
+    }
+  }
+  return { fen: board.fen(), from: move.from, to: move.to, san: move.san, text: `${move.san} ${consequence}${move.promotion ? ` and promotes to a ${PIECES[move.promotion]}` : ""}.`, pinnedDefenders };
+}
+
+export function coachingPriority(patterns: PreviewPattern[]) {
+  const groups = new Map<string, PreviewPattern[]>();
+  const seen = new Set<string>();
+  for (const pattern of patterns) {
+    if (pattern.category === "Brilliants") continue;
+    const key = `${pattern.fen}|${pattern.played}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const theme = coachingTheme(pattern);
+    groups.set(theme, [...(groups.get(theme) ?? []), pattern]);
+  }
+  const first = [...groups.entries()].sort((a, b) => b[1].length - a[1].length)[0];
+  return first ? { theme: first[0], positions: first[1], mission: themeHabit(first[0]) } : null;
+}
 export type PieceDanger = { square: Square; piece: string; attackers: Square[]; defenders: Square[]; level: "red" | "yellow" | "green" };
 
 /** Geometric attacks, not a static exchange evaluation: pinned pieces still count. */

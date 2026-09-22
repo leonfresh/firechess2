@@ -210,3 +210,42 @@
 @media(max-width:600px){.insightHeading{padding:16px}.insightHeading h2{font-size:17px}}
 
 .themeMore{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:14px;margin-top:18px}.themeMore>span{font-size:13px;color:var(--muted)}
+
+/* Semantic accents preserve readable descriptions and explain colors in words. */
+.mentalMetrics>div,.mentalColors>article{--metric-color:#a9caff;--metric-border:#496382;--metric-tint:#1c2738;border-top:3px solid var(--metric-color);background:var(--metric-tint)}
+.mentalMetrics>[data-tone=good],.mentalColors>[data-tone=good]{--metric-color:#8aebc3;--metric-border:#3e7768;--metric-tint:#172c29}
+.mentalMetrics>[data-tone=watch],.mentalColors>[data-tone=watch]{--metric-color:#f6ce81;--metric-border:#806737;--metric-tint:#2d281f}
+.mentalMetrics>[data-tone=focus],.mentalColors>[data-tone=focus]{--metric-color:#ffadb5;--metric-border:#88535b;--metric-tint:#32222a}
+.mentalMetrics>div>dd:first-of-type,.mentalColors article>strong{color:var(--metric-color)}
+.mentalMetrics .mentalMetricStatus{display:table;font-size:11px;font-weight:600;line-height:1.5;border:1px solid var(--metric-border);border-radius:5px;padding:3px 8px;color:var(--metric-color);margin:0 0 12px}
+.mentalColors .mentalTrack>span{background:var(--metric-color)}
+
+/* Shared report coaching styles stay in the shell stylesheet. */
+.habitRoadmap { padding: 24px; border: 1px solid #354252; border-radius: 14px; background: #161e2b; margin: 20px 0; color: #e9eef5; }
+.habitRoadmap h2 { margin: 10px 0; font-size: 23px; }
+.habitRoadmap p, .threatQuestions p { color: #bfcbdc; line-height: 1.65; }
+.habitChoices { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; margin: 20px 0; }
+.habitChoices button { display: flex; flex-direction: column; gap: 10px; text-align: left; color: #e9eef5; padding: 16px; background: #1d2736; border: 1px solid #45536a; border-radius: 9px; cursor: pointer; }
+.habitChoices button[aria-pressed="true"] { border-color: #ff843e; background: #30261f; }
+.habitChoices small { color: #ffab76; } .habitChoices span { color: #bfcbdc; font-size: 12px; }
+.habitMission { padding: 20px; background: #192f2d; border-left: 3px solid #63d5a2; border-radius: 8px; }
+.habitMission h3 { margin-top: 0; } .habitCredit { font-size: 12px; } .habitCredit a { color: #a9c9ff; text-decoration: underline; }
+.threatQuestions { padding: 17px; border: 1px solid #43536c; border-radius: 10px; background: #192435; margin: 14px 0; }
+.threatQuestions > strong { color: #ffb180; } .threatQuestions button { margin: 5px 6px 5px 0; }
+.threatQuestions label { display: inline-flex; align-items: center; gap: 8px; margin: 6px 12px 8px 0; color: #e9eef5; }
+.threatQuestions input { width: 60px; background: #101722; color: #fff; border: 1px solid #61728c; padding: 8px; border-radius: 5px; }
+@media (max-width: 800px) { .habitChoices { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 450px) { .habitChoices { grid-template-columns: 1fr; } .habitRoadmap { padding: 16px; } }
+.habitRoadmap, .sessionCard { scroll-margin-top: 96px; }
+.habitMission h3 { font-size: 18px; margin-bottom: 10px; }
+.habitMission p { margin: 8px 0 14px; }
+.habitCredit { margin-top: 16px; }
+
+.threatQuestions select { color: #e9eef5; background: #101722; border: 1px solid #61728c; padding: 9px; border-radius: 5px; max-width: 100%; }
+.priorityExamples { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin: 16px 0; }
+.priorityExamples button { display: flex; flex-direction: column; align-items: flex-start; text-align: left; white-space: normal; }
+.priorityExamples small { color: #bfcbdc; line-height: 1.5; }
+.habitRoadmap > .habitMission { margin-top: 20px; }
+.missionComparison, .reviewQueue { margin: 20px 0; padding: 18px; border: 1px solid #43536c; border-radius: 10px; background: #192435; }
+.missionComparison small { color: #bfcbdc; }
+@media (max-width: 700px) { .priorityExamples { grid-template-columns: 1fr; } }

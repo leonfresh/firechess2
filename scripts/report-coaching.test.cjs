@@ -72,3 +72,38 @@ test('previous move is recovered from the source game without revealing the puzz
   assert.equal(buildReportPositions({...result,games:[]},false)[0].lastMove, undefined);
   assert.equal(buildReportPositions({...result,games:[{...result.games[0],moves:'invalid'}]},false)[0].lastMove, undefined);
 });
+
+const { trainingHeading, habitPositions, describeReply } = require('../lib/report-coaching.ts');
+test('Road to 2000 requires a known positive rating below 2000', () => {
+  for (const rating of [null, undefined, 0, -1, NaN, Infinity, 2000, 2300]) assert.equal(trainingHeading(rating), 'Your next training focus');
+  for (const rating of [800, 1999]) assert.equal(trainingHeading(rating), 'Your road to 2000');
+});
+test('habit sessions select only matching accessible report positions', () => {
+  const available = PATTERNS.slice(0, 6);
+  const selected = habitPositions(available, 'safety');
+  assert.ok(selected.every(p => available.includes(p) && ['Tactics', 'Clock'].includes(p.category)));
+  assert.deepEqual(habitPositions(available, 'unknown'), []);
+  assert.ok(buildTrainingSession(selected, []).every(p => selected.includes(p)));
+});
+test('opponent reply describes a legal capture and rejects impossible moves', () => {
+  const reply = describeReply('4k3/8/8/8/r2Q4/8/8/4K3 b - - 0 1', 'a4d4');
+  assert.equal(reply.text, 'Rxd4 captures your queen.');
+  assert.equal(reply.from, 'a4'); assert.equal(reply.to, 'd4');
+  assert.throws(() => describeReply('4k3/8/8/8/r2Q4/8/8/4K3 b - - 0 1', 'a4b5'));
+});
+
+test('a pinned defender is explained only when recapturing exposes its king', () => {
+  const pinned = describeReply('k3r3/8/6b1/8/8/3N4/4P3/4K3 b - - 0 1', 'g6d3');
+  assert.match(pinned.text, /captures your knight/);
+  assert.equal(pinned.pinnedDefenders.length, 1);
+  assert.match(pinned.pinnedDefenders[0], /pawn on e2.*king on e1/);
+  const free = describeReply('k7/8/6b1/8/8/3N4/4P3/4K3 b - - 0 1', 'g6d3');
+  assert.deepEqual(free.pinnedDefenders, []);
+});
+test('priority excludes highlights and duplicate positions', () => {
+  const {coachingPriority} = require('../lib/report-coaching.ts');
+  assert.equal(coachingPriority([{...PATTERNS[0],category:'Brilliants'}]), null);
+  const focus = coachingPriority([PATTERNS[0], {...PATTERNS[0], id:'duplicate'}]);
+  assert.equal(focus.positions.length, 1);
+  assert.equal(coachingPriority([]), null);
+});
