@@ -173,8 +173,8 @@ export function ActivityCareer({ card = false }: { card?: boolean }) {
               ? "Competitive ratings from timed matchmaking. New players start at 1200."
               : tab === "gold"
                 ? standings && standings.goldTotals.earned > 0
-                  ? `Lifetime gold earned in Chaos Chess — ${standings.goldTotals.earned.toLocaleString()} by ${standings.goldTotals.players.toLocaleString()} players. Finishing a game pays 10, a win +15, a timed clock +5, the first win of the day +25. Buying powers spends gold but never removes you from this board.`
-                  : "Finish a Chaos game to earn gold — 10 a game, +15 for a win, +5 on a clock and +25 for your first win of the day. Buying powers spends gold but never removes you from this board."
+                  ? `Lifetime gold earned in Chaos Chess — ${standings.goldTotals.earned.toLocaleString()} by ${standings.goldTotals.players.toLocaleString()} players. Finishing a game pays 10, a win +15, a timed clock +5, the first win of the day +25, and a daily streak up to +50 a day. Buying powers spends gold but never removes you from this board.`
+                  : "Finish a Chaos game to earn gold — 10 a game, +15 for a win, +5 on a clock and +25 for your first win of the day, plus up to +50 a day for a streak. Buying powers spends gold but never removes you from this board."
                 : "All-time wins from casual and rated games. Both players must have moved. Sorted by wins, then draws."}
         </p>
         {error ? (
@@ -286,7 +286,7 @@ export function ActivityCareer({ card = false }: { card?: boolean }) {
               <h3>No gold earned yet.</h3>
               <p>
                 Finish a Chaos game to earn gold — 10 a game, +15 for a win,
-                +5 on a clock and +25 for your first win of the day. Buying
+                +5 on a clock, +25 for your first win of the day and up to +50 a day for a streak. Buying
                 powers spends gold but never leaves this board.
               </p>
             </div>
