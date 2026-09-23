@@ -6,6 +6,7 @@
 type SoundName =
   | "chaos-blast"
   | "chaos-mate"
+  | "chaos-pew"
   | "move"
   | "capture"
   | "check"
@@ -45,6 +46,7 @@ type SoundName =
 const SOUND_PATHS: Record<SoundName, string> = {
   "chaos-blast": "/sounds/chaos-blast.wav",
   "chaos-mate": "/sounds/chaos-mate.wav",
+  "chaos-pew": "/sounds/chaos-pew.wav",
   move: "/sounds/Move.mp3",
   capture: "/sounds/Capture.mp3",
   check: "/sounds/Check.mp3",

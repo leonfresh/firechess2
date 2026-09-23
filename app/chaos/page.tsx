@@ -1,6 +1,6 @@
 "use client";
 import {ChaosImpact} from "@/components/chaos-impact";
-import {kamikazeImpact} from "@/lib/chaos-impact";
+import {kamikazeImpact,sniperImpact} from "@/lib/chaos-impact";
 import {buildChaosCustomPieces, SINGLE_PIECE_MODIFIERS} from "@/components/chaos-pieces";
 import { getKingCaptureMove } from "@/lib/chaos-outcome";
 import { moveLogRows } from "@/lib/chaos-move-log";
@@ -2440,8 +2440,8 @@ function BoardEffectsOverlay({
             const y = orientation === "white" ? (7 - rank) * sq : rank * sq;
 
             let inner: React.ReactNode = null;
-            if (type === "kamikaze" || type === "checkmate") {
-              inner = <ChaosImpact mate={type === "checkmate"} pieces={pieces}/>;
+            if (type === "kamikaze" || type === "checkmate" || type === "sniper") {
+              inner = <ChaosImpact mate={type === "checkmate"} kind={type === "sniper" ? "sniper" : undefined} pieces={pieces}/>;
             } else if (type === "explosion") {
               inner = (
                 <div
@@ -3231,6 +3231,7 @@ function PieceInfoPanel({
 
 const EFFECT_DURATIONS: Record<string, number> = {
   kamikaze: 1500,
+  sniper: 1500,
   checkmate: 2400,
   explosion: 750,
   nuke: 1000,
@@ -3896,6 +3897,20 @@ export default function ChaosChessPage() {
         setBoardEffects(e=>[...e,{id,type:"kamikaze",squares:[impact.square],pieces:presentation.activity?impact.pieces:undefined}]);
         setTimeout(()=>setBoardEffects(e=>e.filter(x=>x.id!==id)),1500);
         playSound("chaos-blast");
+      } else {
+        // Sniper bishop: the shooter holds its square and the target simply vanishes.
+        const snipers = {w:false,b:false};
+        snipers[own] = chaosState.playerModifiers.some(m=>m.id === "sniper-bishop");
+        snipers[theirs] = chaosState.aiModifiers.some(m=>m.id === "sniper-bishop");
+        if (snipers.w || snipers.b) {
+          const shot = sniperImpact(previous.fen, impactFen, snipers);
+          if (shot) {
+            const id = ++effectIdRef.current;
+            setBoardEffects(e=>[...e,{id,type:"sniper",squares:[shot.square],pieces:presentation.activity?shot.pieces:undefined}]);
+            setTimeout(()=>setBoardEffects(e=>e.filter(x=>x.id!==id)),1500);
+            playSound("chaos-pew");
+          }
+        }
       }
     }
     if (gameStatus === "game-over" && previous.status !== "game-over" && /checkmate/i.test(endReason)) {

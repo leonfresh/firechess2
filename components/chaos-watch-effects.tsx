@@ -5,9 +5,9 @@ import styles from './chaos-watch-effects.module.css';
 export function WatchEffects({effects,flipped}:{effects:WatchImpact[];flipped:boolean}) {
  return <div className={styles.stage} aria-hidden="true">{effects.map((effect,i)=>{
  const file=effect.square.charCodeAt(0)-97,rank=Number(effect.square[1])-1;
- const big=['kamikaze','checkmate','nuclear','promotion','power'].includes(effect.kind);
+ const big=['kamikaze','sniper','checkmate','nuclear','promotion','power'].includes(effect.kind);
  return <div key={i} className={styles.anchor} data-kind={effect.kind} style={{left:`${(flipped?7-file:file)*12.5}%`,top:`${(flipped?rank:7-rank)*12.5}%`, '--label-y':(flipped?rank:7-rank)===0?'28px':'-28px'} as CSSProperties}>
- {big?<ChaosImpact mate={effect.kind==='checkmate'} kind={effect.kind} pieces={effect.pieces}/>:<div className={styles.pulse}>{effect.kind==='check'?'!':effect.kind==='castle'?'♜':''}</div>}
+ {big?<ChaosImpact mate={effect.kind==='checkmate'} kind={effect.kind} showLabel={effect.kind!=='power' || i===effects.findIndex(e=>e.kind==='power')} pieces={effect.pieces} column={flipped?7-file:file} row={flipped?rank:7-rank}/>:<div className={styles.pulse}>{effect.kind==='power'?'✦':effect.kind==='check'?'!':effect.kind==='castle'?'♜':''}</div>}
  </div>;
  })}</div>;
 }
