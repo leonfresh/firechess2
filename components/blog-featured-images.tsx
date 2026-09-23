@@ -140,6 +140,8 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <HowManyGamesArt />;
     case "chess-bishop-vs-knight":
       return <BishopVsKnightArt />;
+    case "chess-when-to-trade-pieces":
+      return <TradePiecesArt />;
     default:
       return <DefaultArt />;
   }
@@ -3813,3 +3815,43 @@ function BishopVsKnightArt() {
     </svg>
   );
 }
+function TradePiecesArt() {
+  return (
+    <svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="tp-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#0c1220" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="tp-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#0c1220" />
+          <stop offset="100%" stopColor="#14102a" />
+        </linearGradient>
+      </defs>
+      <rect width="400" height="200" fill="url(#tp-bg)" />
+      <ellipse cx="200" cy="100" rx="180" ry="90" fill="url(#tp-glow)" />
+      {/* balance scale — left side has a knight, right side has a bishop */}
+      <line x1="200" y1="40" x2="200" y2="130" stroke="#f1f5f9" strokeWidth="2" strokeOpacity="0.3" />
+      <line x1="130" y1="80" x2="270" y2="80" stroke="#f1f5f9" strokeWidth="1.5" strokeOpacity="0.25" />
+      {/* left pan — knight */}
+      <line x1="130" y1="80" x2="110" y2="110" stroke="#f1f5f9" strokeWidth="1" strokeOpacity="0.2" />
+      <line x1="130" y1="80" x2="150" y2="110" stroke="#f1f5f9" strokeWidth="1" strokeOpacity="0.2" />
+      <text x="130" y="108" fontSize="32" fill="#f59e0b" fillOpacity="0.5" fontFamily="serif" textAnchor="middle">♞</text>
+      {/* right pan — bishop */}
+      <line x1="270" y1="80" x2="250" y2="110" stroke="#f1f5f9" strokeWidth="1" strokeOpacity="0.2" />
+      <line x1="270" y1="80" x2="290" y2="110" stroke="#f1f5f9" strokeWidth="1" strokeOpacity="0.2" />
+      <text x="270" y="108" fontSize="32" fill="#e13c48" fillOpacity="0.5" fontFamily="serif" textAnchor="middle">♝</text>
+      {/* question mark in center */}
+      <text x="200" y="115" fontSize="28" fill="#f1f5f9" fillOpacity="0.15" fontFamily="system-ui, sans-serif" textAnchor="middle" fontWeight="bold">?</text>
+      {/* title */}
+      <text x="200" y="170" textAnchor="middle" fill="#f1f5f9" fontSize="12" fontWeight="700" fontFamily="system-ui, sans-serif">WHEN TO TRADE</text>
+      {/* sparkles */}
+      {[[60,30],[340,40],[80,160],[320,150],[200,25]].map(([x,y],i) => (
+        <circle key={`tp${i}`} cx={x} cy={y} r={1.2} fill={i%2===0?"#f59e0b":"#e13c48"} fillOpacity={0.2+i*0.04}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2+i*0.3}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+

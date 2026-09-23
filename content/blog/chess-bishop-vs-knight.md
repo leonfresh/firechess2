@@ -7,7 +7,7 @@ tags: ["bishop vs knight", "chess pieces", "positional chess", "middlegame strat
 canonical: https://firechess.com/blog/chess-bishop-vs-knight
 ---
 
-Every club player has heard the rule: "Bishops are better in open positions, knights are better in closed ones." It's true — and it's also dangerously incomplete. Knowing *when* a bishop outperforms a knight (and vice versa) is one of the most practical positional skills you can develop. It decides which pieces to trade, which pawn breaks to aim for, and how to evaluate middlegames that look equal on the surface.
+Every club player has heard the rule: "Bishops are better in open positions, knights are better in closed ones." It's true — and it's also dangerously incomplete. Knowing *when* a bishop outperforms a knight (and vice versa) is one of the most practical positional skills you can develop. It decides which pieces to trade (see our [complete trading guide](/blog/chess-when-to-trade-pieces)), which pawn breaks to aim for, and how to evaluate middlegames that look equal on the surface.
 
 This guide breaks down the bishop vs knight question with real positions from actual openings. You'll see exactly what makes a bishop "good" or "bad," why a knight on the right square can be worth a rook, and how to make the right trade decision in your own games. Upload your recent games to [FireChess's scanner at /analyze](/analyze) and look at the piece-activity breakdown — it shows where your bishops and knights spent their moves, and whether you traded them at the right moment.
 

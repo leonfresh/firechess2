@@ -362,7 +362,7 @@ No, and chasing zero blunders is counterproductive. Even grandmasters make occas
 
 ### Q: Why do I blunder more when I'm winning?
 
-This is one of the most common patterns in chess psychology. When you're ahead material, your brain relaxes — the perceived danger drops, and your checking habits loosen. You start playing "hope chess" moves that assume your opponent won't find the best reply, because you feel entitled to the win. The result is catastrophic: you hang a piece, allow a back rank mate, or walk into a fork that equalizes the game. The fix is counterintuitive: **when you're winning, slow down.** You have a material advantage, which means you can afford to play safe, consolidate, and trade pieces. The worst time to play fast is when you're ahead.
+This is one of the most common patterns in chess psychology. When you're ahead material, your brain relaxes — the perceived danger drops, and your checking habits loosen. You start playing "hope chess" moves that assume your opponent won't find the best reply, because you feel entitled to the win. The result is catastrophic: you hang a piece, allow a back rank mate, or walk into a fork that equalizes the game. The fix is counterintuitive: **when you're winning, slow down.** You have a material advantage, which means you can afford to play safe, consolidate, and trade pieces ([see our trading guide](/blog/chess-when-to-trade-pieces)). The worst time to play fast is when you're ahead.
 
 ### Q: How long does it take to significantly reduce blunders?
 

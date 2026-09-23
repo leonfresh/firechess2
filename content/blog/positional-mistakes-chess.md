@@ -145,6 +145,8 @@ Study Kasparov's pawn storms to see how it's done right — he always had a mass
 
 ## Mistake #5: Trading Away Your Best Pieces
 
+For a complete framework on exchange decisions, see our guide on [when to trade pieces in chess](/blog/chess-when-to-trade-pieces).
+
 Of all positional mistakes, this is the most insidious because it feels like you're doing something logical. You trade pieces — what's wrong with that? The problem is that not all trades are equal. Trading your most active piece for your opponent's least active piece is a positional sin that club players commit constantly.
 
 Here's a position from a typical Queen's Gambit Declined where Black has traded the dark-squared bishop for a knight but kept the light-squared bishop — which is completely blocked:

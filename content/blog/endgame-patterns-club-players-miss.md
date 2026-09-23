@@ -200,7 +200,7 @@ A passed pawn in a rook ending is like having an extra piece. It ties the oppone
 
 The concept of the "outside passed pawn" is closely related. When both sides have passed pawns, the player whose passed pawn is farther from the action (the "outside" pawn) has a decisive advantage. The opponent's king must chase that distant pawn, leaving the other side's king free to gobble up pawns on the opposite flank. Recognizing when to create an outside passed pawn — even at the cost of a pawn — is a hallmark of strong endgame play.
 
-Another common mistake is **premature pawn exchanges**. Club players often trade pawns "because it simplifies," but every exchange changes the pawn structure and can hand the opponent a passed pawn or eliminate your own majority. Before capturing, ask: "Does this exchange help me or my opponent create a passed pawn?" If the answer is your opponent, don't capture.
+Another common mistake is **premature pawn exchanges**. Club players often trade pawns "because it simplifies," but every exchange changes the pawn structure and can hand the opponent a passed pawn or eliminate your own majority. Before capturing, ask: "Does this exchange help me or my opponent create a passed pawn?" (Our [piece trading guide](/blog/chess-when-to-trade-pieces) covers the full decision framework.) If the answer is your opponent, don't capture.
 
 ## How to Fix These Weaknesses
 
