@@ -1,5 +1,5 @@
 ---
-title: "Shirov vs Topalov 1998: The Immortal Bh3!! Sacrifice Explained"
+title: "Shirov vs Topalov 1998: Bh3!! Endgame Sacrifice Explained"
 description: "Alexei Shirov's 47...Bh3!! against Topalov is chess's greatest endgame sacrifice. Interactive board + Stockfish analysis explains why computers missed it."
 date: 2026-09-23
 author: "FireChess Team"
