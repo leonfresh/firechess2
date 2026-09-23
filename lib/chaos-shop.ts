@@ -1,3 +1,5 @@
+import { ALL_ANOMALIES } from "./chaos-anomalies";
+import { ANOMALY_PRICES, anomalyKey } from "./chaos-anomaly-unlocks";
 /**
  * The gold shop: cards you buy once and then draft forever.
  *
@@ -53,4 +55,9 @@ export function isShopCard(id: string): boolean {
 /** The shop cards a player owns, given every unlock row loaded for them. */
 export function ownedShopIds(unlockRows: readonly string[]): string[] {
   return unlockRows.filter((id) => SHOP_CARD_IDS.has(id));
+}
+
+/** Combined catalogue; anomaly storage IDs are namespaced away from modifier IDs. */
+export function fullShopCatalog(): ShopEntry[] {
+ return [...shopCatalog(), ...ALL_ANOMALIES.filter(a=>a.id in ANOMALY_PRICES).map(a=>({id:anomalyKey(a.id),name:a.name,description:a.description,icon:a.icon,tier:'anomaly',phases:[],price:ANOMALY_PRICES[a.id]}))];
 }

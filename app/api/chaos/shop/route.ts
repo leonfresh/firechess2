@@ -11,7 +11,7 @@ import { chaosPlayerUnlock } from "@/lib/schema";
 import { eq, sql } from "drizzle-orm";
 import { getChaosUserId, isGuestId } from "@/lib/chaos-auth";
 import { ALL_MODIFIERS } from "@/lib/chaos-chess";
-import { isShopCard, priceOf, shopCatalog } from "@/lib/chaos-shop";
+import { fullShopCatalog } from "@/lib/chaos-shop";
 
 /** The chaos_player id behind a request: the activity's identity header, else the website session. */
 async function callerId(req: NextRequest): Promise<string | null> {
@@ -31,7 +31,7 @@ async function ownedIds(playerId: string | null): Promise<string[]> {
 export async function GET(req: NextRequest) {
   const owned = new Set(await ownedIds(await callerId(req)));
   return NextResponse.json({
-    cards: shopCatalog().map((card) => ({ ...card, owned: owned.has(card.id) })),
+    cards: fullShopCatalog().map((card) => ({ ...card, owned: owned.has(card.id) })),
   });
 }
 
@@ -52,14 +52,9 @@ export async function POST(req: NextRequest) {
   }
 
   const cardId = body.cardId;
-  const mod = cardId ? ALL_MODIFIERS.find((m) => m.id === cardId) : undefined;
-  if (!cardId || !mod || !isShopCard(cardId)) {
-    return NextResponse.json({ error: "Unknown card" }, { status: 400 });
-  }
-  const price = priceOf(mod);
-  if (price === null) {
-    return NextResponse.json({ error: "Not for sale" }, { status: 400 });
-  }
+  const item = typeof cardId === "string" ? fullShopCatalog().find(item => item.id === cardId) : undefined;
+  if (!item) return NextResponse.json({error:"Unknown card"},{status:400});
+  const price = item.price;
 
   const result = await db.execute(sql`select * from buy_chaos_power(${playerId}, ${cardId}, ${price})`);
   const purchase = result.rows[0] as { outcome: string; balance: number } | undefined;

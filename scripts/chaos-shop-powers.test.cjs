@@ -95,3 +95,32 @@ for(const hostColor of ['white','black']) test(`opponent ownership never leaks i
   assert.ok(metadata({...room,...patch}).draft.choices.every(id=>!SHOP_CARD_IDS.has(id)));
  }
 });
+for(const color of ['w','b']) test(`Phantom is quiet phasing; Cannon retains jump captures for ${color}`,()=>{
+ const g=new Chess(`7k/8/8/8/8/8/8/K7 ${color} - - 0 10`),enemy=color==='w'?'b':'w';
+ for(const [sq,type,c] of [['d4','r',color],['e4','p',color],['h4','n',enemy]])g.put({type,color:c},sq);
+ const phantom=moves(g,['phantom-rook'],color);
+ assert.ok(phantom.some(m=>m.from==='d4'&&m.to==='f4'&&m.type==='move'));
+ assert.ok(!phantom.some(m=>m.to==='h4'));
+ assert.ok(!getChaosAttackedSquares(g,mods('phantom-rook'),color).has('h4'));
+ assert.ok(moves(g,['rook-cannon'],color).some(m=>m.to==='h4'&&m.type==='capture'));
+ assert.ok(moves(g,['phantom-rook','rook-cannon'],color).some(m=>m.to==='h4'&&m.modifierId==='rook-cannon'));
+ g.put({type:'p',color},'f4');assert.ok(moves(g,['phantom-rook'],color).some(m=>m.to==='g4'));
+ assert.ok(!moves(g,['rook-cannon'],color).some(m=>m.to==='h4'));
+ g.remove('e4');g.remove('f4');assert.ok(g.moves({square:'d4',verbose:true}).some(m=>m.to==='h4'),'normal rook captures stay legal');
+ g.put({type:'p',color:enemy},'e4');assert.ok(!moves(g,['phantom-rook'],color).some(m=>['f4','g4','h4'].includes(m.to)));
+});
+for(const color of ['w','b']) test(`server enforces quiet Phantom phasing for ${color}`,()=>{
+ const state=createSyncState(true);state[color==='w'?'playerModifiers':'aiModifiers']=mods('phantom-rook');
+ state._sync.picks={host:null,guest:null};state._sync.openingMoveRule=false;
+ const g=new Chess(`7k/8/8/8/8/8/8/K7 ${color} - - 0 10`);
+ for(const [sq,type,c] of [['d4','r',color],['e4','p',color],['h4','n',color==='w'?'b':'w']])g.put({type,color:c},sq);
+ const room={id:'phantom-rule',hostId:'host',guestId:'guest',hostColor:'white',fen:g.fen(),chaosState:state,status:'playing',moveHistory:[]};
+ const submit=(to,fen)=>reduceCommand(room,color==='w'?'host':'guest',{id:`phantom-rule-action-${color}-${to}`,baseRevision:metadata(room).stateRevision,message:{type:'chaos_move',newFen:fen,lastMoveFrom:'d4',lastMoveTo:to,chaosState:cleanState(state)}},1000);
+ const quiet=moves(g,['phantom-rook'],color).find(m=>m.to==='f4');
+ assert.equal(new Chess(submit('f4',executeChaosMove(g,quiet,mods('phantom-rook')).fen()).fen).get('f4').type,'r');
+ const illegal=new Chess(g.fen());illegal.remove('d4');illegal.remove('h4');illegal.put({type:'r',color},'h4');
+ const fen=illegal.fen().split(' ');fen[1]=color==='w'?'b':'w';
+ assert.throws(()=>submit('h4',fen.join(' ')),/Move is not enabled by this piece/);
+});
+
+

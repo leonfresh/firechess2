@@ -61,6 +61,7 @@ import { ChaosLobby } from "@/components/chaos-lobby";
 import { OpeningMoveNotice, AbortedMatch } from "@/components/chaos-opening-move";
 import { ChaosChat, type ChatLine } from "@/components/chaos-chat";
 import { useChaosPresentation } from "@/components/chaos-presentation";
+import {ChaosAchievements} from "@/components/chaos-achievements";
 import { ChaosShareButton } from "@/components/chaos-share-button";
 import { ChaosWeekStrip } from "@/components/chaos-week-strip";
 import { pendingDraftKey, recoverPendingDraft } from "@/lib/chaos-pending-draft";
@@ -9933,6 +9934,8 @@ export default function ChaosChessPage() {
               🃏 My Collection
             </a>
           </div>
+
+          <ChaosAchievements replayBase={presentation.activity ? "/watch?match=" : "/chaos/replay/"} />
 
           {/* ── Game of the Week: the best archived Chaos game of the last 7 days.
                  This page is shared with the Discord Activity (it has no /chaos routes), so the

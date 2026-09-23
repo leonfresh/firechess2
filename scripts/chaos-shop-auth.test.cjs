@@ -8,7 +8,7 @@ function route(identity){
  if(name==='@/lib/db')return{db};
  if(name==='@/lib/schema')return{chaosPlayerUnlock:{playerId:'player_id'}};
  if(name==='drizzle-orm')return{eq:(column,value)=>({column,value})};
- if(name==='@/lib/chaos-shop')return{shopCatalog:()=>[]};
+ if(name==='@/lib/chaos-shop')return{fullShopCatalog:()=>[]};
  return{};
  }});
  return{...module.exports,calls};

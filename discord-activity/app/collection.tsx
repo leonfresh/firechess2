@@ -1,18 +1,20 @@
 "use client";
 import { ChaosNavLink } from "@/components/chaos-nav-link";
 import { useActivityDialog } from "./use-activity-dialog";
-import { useEffect, useId, useState } from "react";
+import { type RefObject, useEffect, useId, useState } from "react";
 import { ACTIVE_MODIFIERS, type ModifierTier } from "@/lib/chaos-chess";
+import { ANOMALY_PRICES, cosmeticMastery } from "@/lib/chaos-anomaly-unlocks";
 import { ALL_ANOMALIES } from "@/lib/chaos-anomalies";
 import { GUEST_UNLOCKED_IDS } from "@/lib/chaos-collection";
 import { chaosIdentityHeaders } from "@/lib/chaos-client-identity";
 import { getGuestId } from "@/lib/guest-id";
 import { ChaosHubIcon } from "@/components/chaos-hub-icon";
 import { ShopPowerPreview } from "./shop-power-preview";
+import { FAIRY_PIECE_CODES } from "@/lib/chaos-piece-art";
 import { PowerArt } from "./power-art";
 
 /** Persistent fairy-piece identities, each linked to the power that explains it. */
-const PIECE_IDS = ["camel","dragon-rook","knook","archbishop","amazon","night-rider","rook-cannon","pawn-capture-forward","railgun","vaulting-knight","bank-shot"] as const;
+const PIECE_IDS = ACTIVE_MODIFIERS.filter(mod => FAIRY_PIECE_CODES[mod.id]).map(mod => mod.id);
 
 const TIERS: { id: ModifierTier; label: string; blurb: string }[] = [
   { id: "common", label: "Common", blurb: "Everyday kit" },
@@ -22,6 +24,27 @@ const TIERS: { id: ModifierTier; label: string; blurb: string }[] = [
 ];
 
 type Tab = "powers" | "pieces" | "anomalies" | "shop";
+
+/** Anomaly art ships per unlock; until a card has art the emoji icon stands in, so the
+ *  Armoury never shows a broken image next to a price. */
+function AnomalyArt({ id, icon }: { id: string; icon?: string }) {
+  const [missing, setMissing] = useState(false);
+  if (missing)
+    return (
+      <span className="shop-anomaly-art" aria-hidden="true" style={{ display: "grid", placeItems: "center", fontSize: 46 }}>
+        {icon || "🔮"}
+      </span>
+    );
+  return (
+    <img
+      className="shop-anomaly-art"
+      src={`/activity/anomalies/${id}.webp`}
+      alt=""
+      loading="lazy"
+      onError={() => setMissing(true)}
+    />
+  );
+}
 
 /** One row of the shop, as the collection API reports it. */
 type ShopCard = {
@@ -35,9 +58,18 @@ type ShopCard = {
 };
 
 /** Shared collection and gold shop, available from the lobby without leaving the game. */
-export function ActivityCollection({ card = false, shopEntry = false, page = false }: { card?: boolean; shopEntry?: boolean; page?: boolean }) {
+export function ActivityCollection({ card = false, shopEntry = false, page = false, triggerRef }: { card?: boolean; shopEntry?: boolean; page?: boolean; triggerRef?: RefObject<HTMLButtonElement | null> }) {
   const [open, setOpen] = useState(page),
     [tab, setTab] = useState<Tab>(shopEntry ? "shop" : "powers");
+  const [anomalyUnlocked, setAnomalyUnlocked] = useState<string[]>(ALL_ANOMALIES.filter(a=>!(a.id in ANOMALY_PRICES)).map(a=>a.id));
+  const [mastery, setMastery] = useState<Record<string, ReturnType<typeof cosmeticMastery>>>({});
+  const [shopCategory, setShopCategory] = useState("powers");
+  useEffect(()=>{if(new URLSearchParams(window.location.search).get("category")==="anomalies")setShopCategory("anomalies");},[]);
+  const masteryBadge = (id: string) => {
+    const progress = mastery[id];
+    if (!progress?.games) return null;
+    return <small className="mastery-progress" data-tier={progress.tier}>{progress.tier === "none" ? "Frame progress" : `${progress.tier[0].toUpperCase()+progress.tier.slice(1)} mastery frame`} · {progress.games}{progress.next ? ` / ${progress.next}` : ""} games</small>;
+  };
   const [unlocked, setUnlocked] = useState<Set<string> | null>(null);
   /** Gold balance from the collection API: null when the player has no earning identity yet. */
   const [gold, setGold] = useState<{ total: number; week: number } | null>(null);
@@ -74,6 +106,8 @@ export function ActivityCollection({ card = false, shopEntry = false, page = fal
             total: d.gold,
             week: typeof d.goldWeek === "number" ? d.goldWeek : 0,
           });
+        if (active && Array.isArray(d?.anomalyUnlockedIds)) setAnomalyUnlocked(d.anomalyUnlockedIds);
+        if (active && d?.mastery) setMastery(d.mastery);
         if (active && Array.isArray(d?.shop)) setShop(d.shop as ShopCard[]);
       } catch {
         if (active) { setUnlocked(new Set<string>(GUEST_UNLOCKED_IDS)); setShopError("The Armoury could not load. Please try again."); }
@@ -109,8 +143,9 @@ export function ActivityCollection({ card = false, shopEntry = false, page = fal
           : prev,
       );
       setUnlocked((prev) => new Set([...(prev ?? []), cardId]));
+      if (cardId.startsWith("anomaly:")) setAnomalyUnlocked(prev=>[...prev,cardId.slice(8)]);
       setConfirmBuy(null);
-      setNotice(`${ACTIVE_MODIFIERS.find(m => m.id === cardId)?.name ?? "Power"} unlocked. It can now appear in future drafts.`);
+      setNotice(`${shop?.find(m => m.id === cardId)?.name ?? "Card"} unlocked. It can now appear among your choices in future matches.`);
       window.dispatchEvent(new Event("chaos-collection-changed"));
       if (typeof d?.gold === "number")
         setGold((g) => ({ total: d.gold, week: g?.week ?? 0 }));
@@ -128,18 +163,24 @@ export function ActivityCollection({ card = false, shopEntry = false, page = fal
   const collected = unlocked
     ? ACTIVE_MODIFIERS.filter((m) => has(m.id)).length
     : null;
-  const shopCards = shop ?? [];
+  const shopCards = (shop ?? []).filter(c=>c.id.startsWith("anomaly:") === (shopCategory === "anomalies"));
   const shopLocked = shopCards.filter((c) => !c.owned).length;
   const titleId = useId();
   const row = (id: string) => {
     const mod = ACTIVE_MODIFIERS.find((m) => m.id === id);
     if (!mod) return null;
     return (
-      <li key={mod.id} data-locked={unlocked ? !has(mod.id) : false}>
+      <li key={mod.id} data-mastery={mastery[mod.id]?.tier} data-locked={unlocked ? !has(mod.id) : false}>
         <PowerArt id={mod.id} piece={mod.piece || "p"} />
         <span>
           <strong>{mod.name}</strong>
-          <small>{mod.description}</small>
+          <small>{mod.description}</small>{masteryBadge(mod.id)}
+          <span className="collection-piece-preview" aria-label={`${mod.name} board pieces`}>
+            <span className="collection-piece-pair">
+              {(["w", "b"] as const).map(color => <img key={color} src={`/activity/pieces/${color}${FAIRY_PIECE_CODES[mod.id] ?? (mod.piece || "p").toUpperCase()}.svg`} alt={`${color === "w" ? "White" : "Black"} ${mod.name} piece`} width={48} height={48} loading="lazy" draggable={false} />)}
+            </span>
+            <span>On the board{!FAIRY_PIECE_CODES[mod.id] && <em>Original piece design</em>}</span>
+          </span>
         </span>
         <b className="collection-badge" data-owned={has(mod.id)}>
           {badge(mod.id)}
@@ -200,6 +241,7 @@ export function ActivityCollection({ card = false, shopEntry = false, page = fal
             </button>
           ))}
         </nav>
+        <aside className="mastery-note"><strong>Style earned through play</strong><span>Finish multiplayer games with a power or anomaly to earn its bronze (5), silver (15) and gold (40) collection frame. Cosmetic only—abilities never get stronger. Gold-eligible matches count, including past games.</span></aside>
         {tab === "powers" ? (
           <div>
             {TIERS.map((tier) => (
@@ -227,8 +269,9 @@ export function ActivityCollection({ card = false, shopEntry = false, page = fal
           </ul>
         ) : tab === "shop" ? (
           <section className="power-shop" aria-label="Power shop">
-            <div className="shop-intro"><span className="eyebrow">NEW TRICKS. PERMANENT UNLOCKS.</span><p>Buy a power once with earned gold. It joins your drafts—not your opponent’s.</p></div>
-            {shop && gold === null && <p className="shop-signin"><a href="https://www.firechess.com/api/chaos/website-login">Sign in to earn gold</a><span>Or play signed in through Discord. 26 starter powers are free.</span></p>}
+            <nav className="career-tabs" aria-label="Shop categories">{["powers","anomalies"].map(category=><button key={category} aria-pressed={shopCategory===category} onClick={()=>{setShopCategory(category);setConfirmBuy(null);}}>{category === "powers" ? "Powers" : "Anomalies"}</button>)}</nav>
+            <div className="shop-intro"><span className="eyebrow">NEW TRICKS. PERMANENT UNLOCKS.</span><p>Buy once with earned gold. Unlocks expand your own choices, never your opponent’s. No packs, duplicates or ability levels.</p></div>
+            {shop && gold === null && <p className="shop-signin"><a href="https://www.firechess.com/api/chaos/website-login">Sign in to earn gold</a><span>Or play signed in through Discord. 26 starter powers and 11 starter anomalies are free.</span></p>}
             {notice && <p className="shop-success" role="status">✓ {notice}</p>}
             {shopError && <div className="shop-error" role="alert">{shopError} {!shop && <button className="sound-button" onClick={() => setRetry(r => r + 1)}>Try again</button>}</div>}
             {!shop && !shopError && <p className="shop-loading" role="status">Opening the Armoury…</p>}
@@ -236,11 +279,11 @@ export function ActivityCollection({ card = false, shopEntry = false, page = fal
             <div className="shop-grid">
               {shopCards.map(item => {
                 const affordable = gold !== null && gold.total >= item.price;
-                return <article className="shop-power" data-tier={item.tier} data-owned={item.owned} key={item.id}>
-                  <div className="shop-power-visual"><PowerArt id={item.id} /><span className="shop-rarity">{item.tier}</span>{item.owned && <span className="shop-owned">✓ Owned</span>}</div>
-                  <div className="shop-power-copy"><h3>{item.name}</h3><p>{item.description}</p><small>{({"vaulting-knight":"All knights · stacks with hybrids", "bank-shot":"All rooks · one turn at the edge", "night-rider":"One knight · repeated L-jumps", "phantom-rook":"All rooks · pass through allies", "bishop-bounce":"All bishops · ricochet movement", "queen-teleport":"Queen · once per match"} as Record<string,string>)[item.id] ?? "Permanent draft unlock"}</small></div>
+                return <article className="shop-power" data-mastery={mastery[item.id]?.tier} data-tier={item.tier} data-owned={item.owned} key={item.id}>
+                  <div className="shop-power-visual">{item.id.startsWith("anomaly:") ? <AnomalyArt id={item.id.slice(8)} icon={item.icon} /> : <PowerArt id={item.id} />}<span className="shop-rarity">{item.tier}</span>{item.owned && <span className="shop-owned">✓ Owned</span>}</div>
+                  <div className="shop-power-copy"><h3>{item.name}</h3><p>{item.description}</p>{masteryBadge(item.id)}<small>{({"vaulting-knight":"All knights · stacks with hybrids", "bank-shot":"All rooks · one turn at the edge", "night-rider":"One knight · repeated L-jumps", "phantom-rook":"All rooks · phase to empty squares", "bishop-bounce":"All bishops · ricochet movement", "queen-teleport":"Queen · once per match"} as Record<string,string>)[item.id] ?? (item.id.startsWith("anomaly:") ? "Personal opening anomaly unlock" : "Permanent draft unlock")}</small></div>
                   <div className="shop-power-action">
-                    {item.owned ? <p className="shop-ready">✓ Ready for your drafts</p> : confirmBuy === item.id ? <div className="shop-confirm"><p>Unlock for <strong>{item.price} gold</strong>?</p><button className="primary-action" disabled={!!buying || !affordable} onClick={() => buy(item.id)}>{buying === item.id ? "Unlocking…" : "Confirm unlock"}</button><button className="shop-cancel" disabled={!!buying} onClick={() => setConfirmBuy(null)}>Not now</button></div> : <><button className="shop-buy" disabled={!!buying || !affordable} onClick={() => setConfirmBuy(item.id)}><span>Unlock power</span><b>◈ {item.price}</b></button><small>{gold === null ? "Sign in to earn and spend gold" : !affordable ? `${item.price - gold.total} more gold needed` : "Yours to keep"}</small></>}
+                    {item.owned ? <p className="shop-ready">✓ In your collection</p> : confirmBuy === item.id ? <div className="shop-confirm"><p>Unlock for <strong>{item.price} gold</strong>?</p><button className="primary-action" disabled={!!buying || !affordable} onClick={() => buy(item.id)}>{buying === item.id ? "Unlocking…" : "Confirm unlock"}</button><button className="shop-cancel" disabled={!!buying} onClick={() => setConfirmBuy(null)}>Not now</button></div> : <><button className="shop-buy" disabled={!!buying || !affordable} onClick={() => setConfirmBuy(item.id)}><span>Unlock {item.id.startsWith("anomaly:") ? "anomaly" : "power"}</span><b>◈ {item.price}</b></button><small>{gold === null ? "Sign in to earn and spend gold" : !affordable ? `${item.price - gold.total} more gold needed` : "Yours to keep"}</small></>}
                   </div>
                   <ShopPowerPreview id={item.id} />
                 </article>;
@@ -251,7 +294,7 @@ export function ActivityCollection({ card = false, shopEntry = false, page = fal
         ) : (
           <ul className="career-list collection-list">
             {ALL_ANOMALIES.map((a) => (
-              <li key={a.id}>
+              <li key={a.id} data-mastery={mastery[`anomaly:${a.id}`]?.tier} data-locked={!anomalyUnlocked.includes(a.id)}>
                 <img
                   className="anomaly-art"
                   src={`/activity/anomalies/${a.id}.webp`}
@@ -271,20 +314,19 @@ export function ActivityCollection({ card = false, shopEntry = false, page = fal
                       ? "Once per match"
                       : "Match ability"}
                   </small>
-                  <small>{a.description}</small>
+                  <small>{a.description}</small>{masteryBadge(`anomaly:${a.id}`)}
+                  <small>{!(a.id in ANOMALY_PRICES) ? "✓ Free starter" : anomalyUnlocked.includes(a.id) ? "✓ Owned" : <ChaosNavLink href="/shop?category=anomalies">Unlock in shop · {ANOMALY_PRICES[a.id]} gold ↗</ChaosNavLink>}</small>
                 </span>
               </li>
             ))}
           </ul>
         )}
         <p className="career-note">
-          26 starter powers are unlocked. Shop cards are bought once with earned gold and
-          then drafted like any other. Anomalies are never locked — Pro players
-          just see more choices at the start of a match.
+          26 starter powers and 11 starter anomalies are free. Buy more with earned gold. Mastery frames are cosmetic: every ability always has the same strength.
         </p>
   </>;
   return <>
-{!page && !shopEntry && (      <button
+{!page && !shopEntry && (      <button ref={triggerRef} hidden={!!triggerRef}
         className={shopEntry ? "armoury-entry" : card ? "lobby-destination" : "sound-button"}
         data-tone="mint"
         onClick={() => { setTab(shopEntry ? "shop" : "powers"); setOpen(true); }}

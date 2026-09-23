@@ -27,5 +27,7 @@ try {
  await client.query('ROLLBACK TO SAVEPOINT before_failure');
  assert.equal((await client.query("SELECT gold FROM chaos_player WHERE id='shop-test'")).rows[0].gold,350);
  assert.equal((await client.query("SELECT count(*)::int AS n FROM chaos_player_unlock WHERE modifier_id='vaulting-knight'")).rows[0].n,0);
+ assert.deepEqual(await buy('anomaly:chariot',150),{outcome:'purchased',balance:200});
+ assert.deepEqual(await buy('anomaly:chariot',150),{outcome:'owned',balance:200});
  console.log('PASS: earned unlock preservation, full purchase, duplicate prevention, balance guard, rollback on ledger failure. All temporary fixtures rolled back.');
 } finally {await client.query('ROLLBACK');await client.end();}

@@ -50,7 +50,7 @@ test('prices stay within reach of the gold the archive pays out', () => {
 
 test('the buy route prices server-side and cannot be talked out of the balance guard', () => {
   const src = fs.readFileSync('app/api/chaos/shop/route.ts', 'utf8');
-  assert.ok(src.includes('priceOf(mod)'), 'the price must come from the server catalogue');
+  assert.ok(src.includes('fullShopCatalog().find') && src.includes('const price = item.price'), 'the price must come from the server catalogue');
   assert.ok(!/body\.(price|amount|cost)/.test(src), 'the route must never read a price from the request body');
   assert.ok(src.includes('buy_chaos_power'), 'purchase must use the atomic database operation');
   const migration = fs.readFileSync('migrations/chaos-shop-expansion.sql','utf8');
@@ -61,7 +61,7 @@ test('the buy route prices server-side and cannot be talked out of the balance g
 
 test('the collection API advertises the shop and counts owned cards as unlocked', () => {
   const src = fs.readFileSync('app/api/chaos/collection/route.ts', 'utf8');
-  assert.ok(src.includes('shopCatalog()'), 'the collection response must carry the catalogue');
+  assert.ok(src.includes('fullShopCatalog()'), 'the collection response must carry the catalogue');
   assert.ok(/owned: ownedSet\.has\(card\.id\)/.test(src), 'each shop card must report ownership');
   assert.ok(src.includes('ownedShop') && src.includes('unlockedIds'), 'owned shop cards must join the unlocked set');
   assert.ok(!src.includes('getProgressionInfo') && !src.includes('PROGRESSION_UNLOCK_ORDER'), 'the games-played ladder must be gone');
