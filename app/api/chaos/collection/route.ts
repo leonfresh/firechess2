@@ -1,3 +1,6 @@
+import { readChaosMastery } from "@/lib/chaos-mastery";
+import { ALL_ANOMALIES } from "@/lib/chaos-anomalies";
+import { ownsAnomaly } from "@/lib/chaos-anomaly-unlocks";
 /**
  * GET  /api/chaos/collection           — returns the caller's unlocked modifier IDs
  * GET  /api/chaos/collection?user=name — public: returns a user's unlocked IDs by display name
@@ -19,7 +22,7 @@ import { auth } from "@/lib/auth";
 import { getChaosUserId, isGuestId } from "@/lib/chaos-auth";
 import { GUEST_UNLOCKED_IDS } from "@/lib/chaos-collection";
 import { ACTIVE_MODIFIERS, SHOP_CARD_IDS } from "@/lib/chaos-chess";
-import { shopCatalog, ownedShopIds } from "@/lib/chaos-shop";
+import { fullShopCatalog, ownedShopIds } from "@/lib/chaos-shop";
 
 /* ── GET ─────────────────────────────────────────────────────────── */
 export async function GET(req: NextRequest) {
@@ -62,14 +65,16 @@ export async function GET(req: NextRequest) {
   const { gold, goldWeek } = await readGold(playerId);
   const ownedShop = playerId ? await readShopUnlocks(playerId) : [];
   const ownedSet = new Set(ownedShop);
-  const shop = shopCatalog().map((card) => ({ ...card, owned: ownedSet.has(card.id) }));
+  const anomalyUnlockedIds = ALL_ANOMALIES.filter(a=>ownsAnomaly(a.id,ownedShop)).map(a=>a.id);
+  const mastery = await readChaosMastery(playerId);
+  const shop = fullShopCatalog().map((card) => ({ ...card, owned: ownedSet.has(card.id) }));
 
   if (!session?.user?.id) {
     // Guest: every base card is free, plus anything their identity has bought, plus their gold
     return NextResponse.json({
-      unlockedIds: [...GUEST_UNLOCKED_IDS, ...ownedShop],
+      unlockedIds: [...GUEST_UNLOCKED_IDS, ...ownedShopIds(ownedShop)],
       total: ACTIVE_MODIFIERS.length,
-      shop,
+      shop, anomalyUnlockedIds, mastery,
       gold,
       goldWeek,
     });
@@ -92,14 +97,14 @@ export async function GET(req: NextRequest) {
   const unlocked = new Set([
     ...GUEST_UNLOCKED_IDS,
     ...rows.map((r) => r.modifierId),
-    ...ownedShop,
+    ...ownedShopIds(ownedShop),
   ]);
 
   return NextResponse.json({
     unlockedIds: [...unlocked],
     total: ACTIVE_MODIFIERS.length,
     gamesPlayed,
-    shop,
+    shop, anomalyUnlockedIds, mastery,
     gold,
     goldWeek,
   });
@@ -111,7 +116,7 @@ async function readShopUnlocks(playerId: string): Promise<string[]> {
     .select({ modifierId: chaosPlayerUnlock.modifierId })
     .from(chaosPlayerUnlock)
     .where(eq(chaosPlayerUnlock.playerId, playerId));
-  return ownedShopIds(rows.map((r) => r.modifierId));
+  return rows.map(r=>r.modifierId);
 }
 
 /**
