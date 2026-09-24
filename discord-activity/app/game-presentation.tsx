@@ -1,5 +1,7 @@
 'use client';
 import {ChaosAchievements} from '@/components/chaos-achievements';
+import { presenceEnabled } from './discord-sdk';
+import { disableRichPresence, enableRichPresence } from './activity-connection';
 import {ActivityCareer} from './career';
 import {ChaosWatchButton} from '@/components/chaos-watch';
 import { chaosIdentityHeaders } from '@/lib/chaos-client-identity';
@@ -84,6 +86,7 @@ export function ActivityLobby(props: ChaosLobbyViewProps) {
       <div className="lobby-shortcuts"><div className="destination-heading"><span className="eyebrow">EXPLORE THE ARENA</span></div>
       <nav className="destination-grid" aria-label="Community and games"><ActivityCareer card/><ActivityCollection card/><ChaosWatchButton card label="Watch live" initialTab="live"/><ActivityReplays card/></nav>
       </div>
+      <PresenceToggle />
       <button type="button" className="community-link" onClick={()=>window.open('https://discord.gg/YS8fc4FtEk','_blank','noopener,noreferrer')} aria-label="Join our Discord community (opens in a new tab)"><span><strong>Join our Discord community</strong><small>Find rivals, share feedback, and talk Chaos Chess.</small></span><span aria-hidden="true">↗</span></button>
       <div className="how-it-works"><span><b>01</b> Play chess</span><span><b>02</b> Pick a power</span><span><b>03</b> Cause trouble</span></div>
       <details className="first-match-guide"><summary>First match? Here’s how it works.</summary><ol>
@@ -268,4 +271,27 @@ export function ActivityAnomalyPicker(props: {choices: AnomalyDefinition[]; reve
       <div className="draft-footer"><button className="secondary-action" onClick={props.onSkip}>Play without an anomaly</button><button className="primary-action" disabled={!ready||!props.selected} onClick={()=>{if(props.selected)props.onPick(props.selected);}}>Take this anomaly <span>↗</span></button></div>
     </>}
   </div></div>;
+}
+
+/** Opt-in: show "vs Sam · Nuclear Queen" on your Discord profile instead of just "Playing Chaos Chess". */
+function PresenceToggle() {
+  const [inDiscord, setInDiscord] = useState(false);
+  const [on, setOn] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState('');
+  useEffect(() => { setInDiscord(!!discordInstanceId()); setOn(presenceEnabled()); }, []);
+  if (!inDiscord) return null;
+  const toggle = async () => {
+    setBusy(true); setNote('');
+    if (on) { disableRichPresence(); setOn(false); }
+    else if (await enableRichPresence()) setOn(true);
+    else setNote('Discord didn’t grant permission. Your games stay private.');
+    setBusy(false);
+  };
+  return <div className="presence-toggle">
+    <button type="button" role="switch" aria-checked={on} disabled={busy} onClick={() => void toggle()}>
+      <span aria-hidden="true" className="presence-switch" /><span><strong>Show my games on my Discord profile</strong><small>{on ? 'Friends see who you’re playing and your powers.' : 'Friends see who you’re playing and your powers. You can turn it off anytime.'}</small></span>
+    </button>
+    {note && <p role="status">{note}</p>}
+  </div>;
 }

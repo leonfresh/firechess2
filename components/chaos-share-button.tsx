@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { tagShareUrl } from '@/lib/chaos-share-tag';
 
 /**
  * The big share card shown after a match — win OR loss. Renders the same card the
@@ -27,7 +28,8 @@ export function ChaosShareButton({
 
   /** Website replays live at /chaos/replay/<room>. The Discord Activity has no /chaos routes:
    *  its replays are /share?match=<id>. Resolve by environment so no call site can 404. */
-  const replayUrl = () => {
+  const replayUrl = () => tagShareUrl(untaggedReplayUrl(), 'replay');
+  const untaggedReplayUrl = () => {
     if (baseUrl) return baseUrl;
     if (typeof window === 'undefined') return `/chaos/replay/${encodeURIComponent(matchId)}`;
     const params = new URLSearchParams(window.location.search);

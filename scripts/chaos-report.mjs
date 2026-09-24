@@ -18,6 +18,7 @@ try{
   console.table({...s.funnel,joinRate:pct(s.funnel.joined,s.funnel.created),hostsNeverPlayedRate:pct(s.funnel.hostsNeverPlayed,s.funnel.hosts)});
   console.log('Discord launches');console.table({...s.launches,playedRate:pct(s.launches.launchersWhoPlayed,s.launches.players)});
   console.log('Daily');console.table(s.daily);
+  console.log('Viral ratio (new players brought in by other players)');console.table({...s.viral,perActive:s.viral.perActive.toFixed(2)});
   console.log('Discord launches by source');console.table(s.sources.launches);
   if(s.sources.inviters.length){console.log('Top inviters (share links)');console.table(s.sources.inviters);}
   if(s.sources.firstTouch.length){console.log('First touch (where identities first arrived from)');console.table(s.sources.firstTouch);}

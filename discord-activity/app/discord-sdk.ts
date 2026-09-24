@@ -26,6 +26,7 @@ type Sdk = {
   commands: {
     openInviteDialog: () => Promise<unknown>;
     shareLink: (args: {message: string; custom_id?: string}) => Promise<{success: boolean}>;
+    setActivity: (args: {activity: {type: number; details?: string; state?: string; timestamps?: {start?: number}}}) => Promise<unknown>;
     getInstanceConnectedParticipants: () => Promise<{participants: DiscordParticipant[]}>;
   };
 };
@@ -65,4 +66,33 @@ export async function connectedParticipants(): Promise<DiscordParticipant[]> {
     const result = await sdk?.commands.getInstanceConnectedParticipants();
     return result?.participants ?? [];
   } catch { return []; }
+}
+
+/* ── Rich presence (opt-in) ──────────────────────────────────────────────────────────────────
+ * Discord already shows "Playing Chaos Chess". Custom details ("vs Sam · Nuclear Queen, Camel")
+ * need the rpc.activities.write scope, which players grant from the lobby toggle
+ * (enableRichPresence in activity-connection.ts). Until then setPresence is a no-op. Discord
+ * rate-limits setActivity, so updates are coalesced to one every PRESENCE_INTERVAL_MS. */
+export const PRESENCE_OPT_IN_KEY = 'chaos-rich-presence';
+const PRESENCE_INTERVAL_MS = 5_000;
+let presenceGranted = false;
+let lastSent = 0, pending: ChaosPresence | null = null, timer: ReturnType<typeof setTimeout> | null = null, lastKey = '';
+export type ChaosPresence = {details: string; state?: string; startedAt?: number};
+
+export function setPresenceGranted(granted: boolean) { presenceGranted = granted; }
+export function presenceEnabled(): boolean { return presenceGranted; }
+
+export function setPresence(presence: ChaosPresence) {
+  if (!presenceGranted || !sdk) return;
+  const key = JSON.stringify(presence);
+  if (key === lastKey) return;
+  pending = presence;
+  const send = () => {
+    timer = null;
+    if (!pending || !sdk) return;
+    const next = pending; pending = null; lastSent = Date.now(); lastKey = JSON.stringify(next);
+    void sdk.commands.setActivity({activity: {type: 0, details: next.details.slice(0, 128), state: next.state?.slice(0, 128),
+      timestamps: next.startedAt ? {start: next.startedAt} : undefined}}).catch(() => {});
+  };
+  if (!timer) timer = setTimeout(send, Math.max(0, PRESENCE_INTERVAL_MS - (Date.now() - lastSent)));
 }

@@ -23,6 +23,7 @@ function route(rows) {
       : name === 'drizzle-orm' ? {sql:()=>({})}
       : name === '@/lib/chaos-watch' ? watch
       : name === '@/lib/chaos-move-log' ? moveLog
+      : name === '@/lib/chaos-replay-drama' ? require('../lib/chaos-replay-drama.ts')
       : {},
   });
   return module.exports.GET;
@@ -35,6 +36,17 @@ test('archive list exposes move counts and platform without leaking account IDs'
   assert.equal(data.games[0].white,'Bob');
   assert.ok(!JSON.stringify(data).includes(discord));
   assert.ok(!JSON.stringify(data).includes('private-web-id'));
+});
+
+test('replay cards carry the key position, drama and deduplicated powers', async () => {
+  const fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+  const powers = [{id:'camel',name:'Camel',icon:'🐪'},{id:'camel',name:'Camel',icon:'🐪'},{id:'amazon',name:'The Amazon',icon:'👑'}];
+  const data = await route([{id:'m',host:'A',guest:'B',host_color:'white',host_id:'guest_x',guest_id:'guest_y',winner:'white',reason:'Checkmate',moves:[],fen,white_powers:powers,black_powers:null}])({nextUrl:new URL('https://example.test/api/chaos/watch?tab=archive')});
+  const card = data.games[0];
+  assert.equal(card.thumbFen, fen, 'falls back to the final position');
+  assert.ok(card.drama > 0 && card.highlights.includes('Checkmate finish'));
+  assert.deepEqual(card.powers.white.map(p => p.id), ['camel','amazon']);
+  assert.equal(JSON.stringify(card.powers.black), '[]');
 });
 
 test('replay totals round unfinished move pairs and exclude anomaly frames', async () => {

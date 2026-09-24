@@ -110,6 +110,11 @@ export default function AdminChaosPage() {
             <Tile label="Rematches" value={pct(s.summary.rematches, s.summary.games)} sub={`${fmt(s.summary.rematches)} games`} />
             <Tile label="Lost on time" value={pct(s.summary.timeouts, s.summary.games)} sub={`${fmt(s.summary.timeouts)} games`} />
           </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <Tile label="New players brought in by players" value={fmt(s.viral.brought)} sub={`${pct(s.viral.brought, s.viral.newPlayers)} of ${fmt(s.viral.newPlayers)} new players`} />
+            <Tile label="Brought in per active player" value={s.viral.perActive.toFixed(2)} sub="Above 1.00 means it spreads on its own" />
+            <Tile label="Arrived on their own" value={fmt(Math.max(0, s.viral.newPlayers - s.viral.brought))} sub="Discovery, search, direct" />
+          </div>
 
           <DailyChart daily={s.daily} />
 

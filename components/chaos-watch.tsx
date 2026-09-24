@@ -3,7 +3,7 @@ import {getKingCaptureMove} from "@/lib/chaos-outcome";
 import {createChaosState} from "@/lib/chaos-chess";
 import {WatchEffects} from "./chaos-watch-effects";
 import {watchTransition, type WatchImpact} from "@/lib/chaos-impact";
-import { ChaosNavLink } from "./chaos-nav-link";
+import { ChaosNavLink, chaosHref } from "./chaos-nav-link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "./chessboard-compat";
@@ -29,7 +29,14 @@ type Entry = {
   moveCount?: number | null;
   platform?: string;
   clock?: MatchClock | null;
+  /** Replay cards (archive only): the most dramatic position and why the game is worth a look. */
+  thumbFen?: string | null;
+  thumbLabel?: string;
+  drama?: number;
+  highlights?: string[];
+  powers?: { white: CardPower[]; black: CardPower[] };
 };
+type CardPower = { id: string; name: string; icon: string };
 type Detail = {
   id: string;
   white: string;
@@ -112,16 +119,18 @@ export function ChaosWatch({
   initialMatch,
   initialRoom,
   initialTab = "live",
+  initialPage = 0,
 }: {
   onClose?: () => void;
   initialMatch?: string;
   initialRoom?: string;
   initialTab?: "live" | "archive";
+  initialPage?: number;
 }) {
   const [tab, setTab] = useState<"live" | "archive">(
       initialMatch ? "archive" : initialTab,
     ),
-    [page, setPage] = useState(0);
+    [page, setPage] = useState(Math.max(0, Math.floor(initialPage) || 0));
   const [selected, setSelected] = useState<{
     id: string;
     live: boolean;
@@ -326,15 +335,70 @@ export function ChaosWatch({
       styles[square] = { ...(styles[square] ?? {}), ...style };
     return styles;
   }, [frame?.from, frame?.to, hoverHints]);
+  /* The URL follows the view on the Watchtower route, so the browser's Back button returns from a
+     game to the list (tab and page kept) and a reload keeps your place. Opening a game pushes a
+     history entry; tabs and pages replace the current one. Elsewhere (a /chaos/replay or /share
+     page) "All games" goes to the Watchtower's replay list. */
+  const onWatchRoute = () => !onClose && /\/watch\/?$/.test(window.location.pathname);
+  const viewUrl = (next: { selected: { id: string; live: boolean } | null; tab: "live" | "archive"; page: number }) => {
+    const url = new URL(window.location.href);
+    for (const key of ["match", "room", "tab", "page"]) url.searchParams.delete(key);
+    if (next.selected) url.searchParams.set(next.selected.live ? "room" : "match", next.selected.id);
+    if (next.tab === "archive") url.searchParams.set("tab", "archive");
+    if (next.page > 0) url.searchParams.set("page", String(next.page));
+    return url.pathname + url.search + url.hash;
+  };
+  const openGame = (id: string, live: boolean) => {
+    if (onWatchRoute()) window.history.pushState({ ...window.history.state, chaosWatchGame: true }, "", viewUrl({ selected: { id, live }, tab, page }));
+    setSelected({ id, live });
+  };
   const leave = () => {
-    setSelected(null);
     setAuto(false);
     setHover(null);
+    if (onWatchRoute() && window.history.state?.chaosWatchGame) { window.history.back(); return; }
+    if (!onClose && !onWatchRoute()) { window.location.assign(chaosHref("/watch?tab=archive")); return; }
+    setSelected(null);
   };
+  useEffect(() => {
+    if (onClose) return;
+    const restore = () => {
+      if (!onWatchRoute()) return;
+      const q = new URLSearchParams(window.location.search);
+      const match = q.get("match"), room = q.get("room");
+      setSelected(match ? { id: match, live: false } : room ? { id: room, live: true } : null);
+      setTab(match || q.get("tab") === "archive" ? "archive" : "live");
+      setPage(Math.max(0, Math.floor(Number(q.get("page"))) || 0));
+      setAuto(false);
+      setHover(null);
+    };
+    window.addEventListener("popstate", restore);
+    return () => window.removeEventListener("popstate", restore);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onClose]);
+  useEffect(() => {
+    if (selected || !onWatchRoute()) return;
+    const next = viewUrl({ selected: null, tab, page });
+    if (next !== window.location.pathname + window.location.search + window.location.hash)
+      window.history.replaceState(window.history.state, "", next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, page, selected]);
+  /* The week's wildest games, shown above the first page of replays. */
+  const [top, setTop] = useState<Entry[] | null>(null);
+  useEffect(() => {
+    if (tab !== "archive" || top) return;
+    let active = true;
+    fetch("/api/chaos/watch?tab=archive&top=week")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (active && Array.isArray(d?.games)) setTop(d.games); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [tab, top]);
   const share = async () => {
     try {
       const url = new URL(selected!.live ? "/watch" : "/share", "https://chaos.firechess.com");
       url.searchParams.set(selected!.live ? "room" : "match", selected!.id);
+      url.searchParams.set("utm_source", "share");
+      url.searchParams.set("utm_medium", "watch");
       await navigator.clipboard.writeText(url.toString());
       setCopied(true);
     } catch {
@@ -505,13 +569,28 @@ export function ChaosWatch({
           <p role="status">Finding games…</p>
         ) : (
           <>
+            {tab === "archive" && page === 0 && top && top.length > 0 && (
+              <section className={styles.topWeek} aria-labelledby="top-week-title">
+                <h3 id="top-week-title"><span aria-hidden="true">🔥</span> Wildest games this week</h3>
+                <ul className={styles.cards}>
+                  {top.map((g, i) => (
+                    <li key={g.id}><ReplayCard game={g} rank={i + 1} onOpen={() => openGame(g.id, false)} /></li>
+                  ))}
+                </ul>
+              </section>
+            )}
+            {tab === "archive" ? (
+              <ul className={styles.cards}>
+                {list.games.map((g) => (
+                  <li key={g.id}><ReplayCard game={g} onOpen={() => openGame(g.id, false)} /></li>
+                ))}
+              </ul>
+            ) : (
             <ul className={styles.list}>
               {list.games.map((g) => (
                 <li key={g.id}>
                   <button
-                    onClick={() =>
-                      setSelected({ id: g.id, live: tab === "live" })
-                    }
+                    onClick={() => openGame(g.id, tab === "live")}
                   >
                     <span className={styles.matchNames}>
                       <span className={styles.matchBadge}>{tab === "live" ? "● LIVE NOW" : "↶ REPLAY"}</span>
@@ -534,25 +613,14 @@ export function ChaosWatch({
                           {clockChip(g.clock, "b")}
                         </span>
                       )}
-                      <small>
-                        {tab === "archive"
-                          ? new Date(g.date).toLocaleString()
-                          : "Read-only spectator"}
-                      </small>
-                      {tab === "archive" && (
-                        <span className={styles.archiveFacts}>
-                          <span title="Full moves: one White and Black turn, including an unfinished final pair. Power picks are excluded.">
-                            {g.moveCount == null ? "Move count unavailable" : `${g.moveCount} ${g.moveCount === 1 ? "move" : "moves"}`}
-                          </span>
-                          <span>{g.platform ?? "Platform unavailable"}</span>
-                        </span>
-                      )}
+                      <small>Read-only spectator</small>
                     </span>
                     <span aria-hidden>↗</span>
                   </button>
                 </li>
               ))}
             </ul>
+            )}
             {!list.games.length && (
               <div className={styles.empty}>
                 <h3>
@@ -807,5 +875,75 @@ export function ChaosWatch({
           </>
         ))}
     </section>
+  );
+}
+
+/** Tiny static board for a replay card: plain pieces, no interaction, nothing to hydrate. */
+function ReplayThumb({ fen, label }: { fen?: string | null; label?: string }) {
+  const rows = (fen ?? "").split(" ")[0].split("/");
+  const squares: (string | null)[] = [];
+  for (const row of rows) for (const ch of row) {
+    if (/[1-8]/.test(ch)) for (let i = 0; i < Number(ch); i++) squares.push(null);
+    else if (/[prnbqk]/i.test(ch)) squares.push(ch);
+  }
+  if (rows.length !== 8 || squares.length !== 64) return <span className={styles.thumb} aria-hidden="true" />;
+  return (
+    <span className={styles.thumb} aria-hidden="true" title={label}>
+      {squares.map((piece, i) => (
+        <span key={i} data-dark={(Math.floor(i / 8) + i) % 2 === 1 || undefined}>
+          {piece && <img src={`/pieces/merida/${piece === piece.toUpperCase() ? "w" : "b"}${piece.toUpperCase()}.svg`} alt="" loading="lazy" />}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function ago(date: string): string {
+  const minutes = Math.max(0, Math.round((Date.now() - new Date(date).getTime()) / 60000));
+  if (minutes < 60) return minutes <= 1 ? "just now" : `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  return days < 30 ? `${days}d ago` : new Date(date).toLocaleDateString();
+}
+
+function PowerIcons({ powers, side }: { powers?: CardPower[]; side: string }) {
+  if (!powers?.length) return <span className={styles.noPowers}>No powers</span>;
+  return (
+    <span className={styles.powerIcons} aria-label={`${side} powers: ${powers.map((p) => p.name).join(", ")}`}>
+      {powers.map((p) => <span key={p.id} title={p.name}>{p.icon}</span>)}
+    </span>
+  );
+}
+
+function ReplayCard({ game: g, rank, onOpen }: { game: Entry; rank?: number; onOpen: () => void }) {
+  const result = g.winner === "draw" ? "Draw" : g.winner ? `${g.winner[0].toUpperCase()}${g.winner.slice(1)} won` : "Finished";
+  return (
+    <button type="button" className={styles.card} data-top={rank ? "true" : undefined} onClick={onOpen}>
+      <ReplayThumb fen={g.thumbFen} label={g.thumbLabel} />
+      <span className={styles.cardBody}>
+        <span className={styles.cardTop}>
+          <span className={styles.matchBadge}>{rank ? `#${rank} THIS WEEK` : "↶ REPLAY"}</span>
+          {typeof g.drama === "number" && g.drama > 0 && <span className={styles.dramaPill} title="Drama score: captures, comebacks, lead changes and how it ended">🔥 {g.drama}</span>}
+        </span>
+        <span className={styles.cardNames}>
+          <span data-won={g.winner === "white" || undefined}><i aria-hidden="true">♔</i>{g.white}</span>
+          <small>vs</small>
+          <span data-won={g.winner === "black" || undefined}><i aria-hidden="true">♚</i>{g.black}</span>
+        </span>
+        <span className={styles.cardResult}>{result}{g.reason ? ` · ${g.reason}` : ""}</span>
+        {!!g.highlights?.length && (
+          <span className={styles.chips}>{g.highlights.slice(0, 2).map((h) => <span key={h}>{h}</span>)}</span>
+        )}
+        <span className={styles.cardPowers}>
+          <PowerIcons powers={g.powers?.white} side="White" />
+          <small>vs</small>
+          <PowerIcons powers={g.powers?.black} side="Black" />
+        </span>
+        <span className={styles.cardMeta}>
+          {[g.moveCount != null ? `${g.moveCount} moves` : null, control(g.base, g.increment), g.rated ? "Rated" : "Casual", g.platform, ago(g.date)].filter(Boolean).join(" · ")}
+        </span>
+      </span>
+    </button>
   );
 }

@@ -24,6 +24,7 @@ export function achievementShare(id:string,match:string){
  if(!badge || !match || match.length>150)return null;
  const url=new URL('https://chaos.firechess.com/share');
  url.searchParams.set('match',match);url.searchParams.set('achievement',id);
+ url.searchParams.set('utm_source','share');url.searchParams.set('utm_medium','achievement');
  const title=`I earned ${badge.name} (${badge.tier}) in Chaos Chess!`;
  const text=`${title} ${badge.description} Watch the game:`;
  const reddit=new URL('https://www.reddit.com/submit');reddit.searchParams.set('url',url.href);reddit.searchParams.set('title',title);reddit.searchParams.set('type','LINK');

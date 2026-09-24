@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { tagShareUrl } from '@/lib/chaos-share-tag';
 
 /**
  * Share controls for the Game of the Week. On the website the canonical link is
@@ -18,7 +19,7 @@ export function ChaosWeekShare({
   baseUrl?: string;
 }) {
   const [status, setStatus] = useState('');
-  const url = baseUrl ?? (typeof window !== 'undefined' ? `${window.location.origin}/chaos/replay/${matchId}` : `/chaos/replay/${matchId}`);
+  const url = tagShareUrl(baseUrl ?? (typeof window !== 'undefined' ? `${window.location.origin}/chaos/replay/${matchId}` : `/chaos/replay/${matchId}`), 'week');
 
   async function share() {
     try {

@@ -6696,6 +6696,25 @@ export default function ChaosChessPage() {
     if (code) void joinRoom(code);
   }, [joinRoom, presentation]);
 
+  /* ── Rich presence (Discord, opt-in): what friends see on this player's profile. ── */
+  const presenceStartRef = useRef<number | undefined>(undefined);
+  const myPowerNames = chaosState.playerModifiers.map((m) => m.name);
+  useEffect(() => {
+    if (!presentation.setPresence) return;
+    const powers = myPowerNames.length ? `${myPowerNames.slice(0, 2).join(", ")}${myPowerNames.length > 2 ? ` +${myPowerNames.length - 2}` : ""}` : "No powers yet";
+    if (gameStatus === "setup" || gameStatus === "waiting") {
+      presenceStartRef.current = undefined;
+      presentation.setPresence({ details: gameStatus === "waiting" ? "Waiting for a friend" : "In the lobby", state: "Looking for a match" });
+    } else if (gameStatus === "game-over") {
+      const outcome = gameResult === "draw" ? "Drew" : gameResult === playerColor ? "Won" : gameResult === "aborted" ? "Match ended" : "Lost";
+      presentation.setPresence({ details: gameMode === "ai" ? `${outcome} vs Stockfish` : `${outcome} vs ${opponentLabel}`, state: powers });
+    } else {
+      presenceStartRef.current ??= Date.now();
+      presentation.setPresence({ details: gameMode === "ai" ? "Practising vs Stockfish" : `vs ${opponentLabel}`, state: powers, startedAt: presenceStartRef.current });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presentation, gameStatus, gameMode, gameResult, playerColor, opponentLabel, myPowerNames.join("|")]);
+
   /* ── Where did this player come from? Re-sent when the identity changes (sign-in). ── */
   useEffect(() => {
     recordChaosFirstTouch(presentation.activity ? "activity" : "website");

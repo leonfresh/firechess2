@@ -4,6 +4,19 @@ import { sql } from "drizzle-orm";
 import { projectClock, type MatchClock } from "@/lib/chaos-clock";
 import { visualState, archiveFrames, archivePlatform } from "@/lib/chaos-watch";
 import { moveLogCount } from "@/lib/chaos-move-log";
+import { replayDrama } from "@/lib/chaos-replay-drama";
+
+type PowerRow = { id?: string; name?: string; icon?: string };
+/** Just what a replay card shows: icon and name, deduplicated, at most six per side. */
+function cardPowers(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  return (value as PowerRow[]).flatMap((m) => {
+    if (!m?.id || seen.has(m.id)) return [];
+    seen.add(m.id);
+    return [{ id: String(m.id), name: String(m.name ?? m.id), icon: String(m.icon ?? "✦") }];
+  }).slice(0, 6);
+}
 export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const headers = { "Cache-Control": "no-store" };
@@ -112,6 +125,27 @@ export async function GET(req: NextRequest) {
         Math.floor(Number(req.nextUrl.searchParams.get("page")) || 0),
       ),
     );
+    // "Wildest this week": the three most dramatic finished games of the last 7 days.
+    if (!live && req.nextUrl.searchParams.get("top") === "week") {
+      const week = await db.execute(sql`select m.id,m.host_color,m.host_id,m.guest_id,m.winner,m.reason,m.rated,m.ended_at as date,
+   m.record->'timeControlSeconds' as base,m.record->'incrementSeconds' as increment,
+   m.record->'moves' as moves,m.record->>'fen' as fen,
+   m.record->'state'->'playerModifiers' as white_powers,m.record->'state'->'aiModifiers' as black_powers,
+   coalesce(h.name,'Guest player') as host,coalesce(g.name,'Guest player') as guest
+   from chaos_match m left join chaos_player h on h.id=m.host_id left join chaos_player g on g.id=m.guest_id
+   where m.ended_at > now() - interval '7 days' and m.reason !~* 'abort|disconnect|abandon'
+   order by m.ended_at desc limit 300`);
+      const games = week.rows
+        .map((m) => ({
+          id: m.id, white: m.host_color === "white" ? m.host : m.guest, black: m.host_color === "black" ? m.host : m.guest,
+          date: m.date, base: m.base, increment: m.increment, winner: m.winner, reason: m.reason, rated: m.rated,
+          moveCount: Array.isArray(m.moves) ? Math.ceil(m.moves.length / 2) : null,
+          platform: archivePlatform(m.host_id, m.guest_id), ...replayCard(m),
+        }))
+        .sort((a, b) => b.drama - a.drama || String(b.date).localeCompare(String(a.date)))
+        .slice(0, 3);
+      return NextResponse.json({ games, hasMore: false }, { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=900" } });
+    }
     const data = live
       ? await db.execute(sql`select r.id,r."hostColor" as host_color,r."timeControlSeconds" as base,r."incrementSeconds" as increment,
    r."chaosState"->'_sync'->'clock' as clock,
@@ -126,6 +160,8 @@ export async function GET(req: NextRequest) {
      (jsonb_array_length(m.record->'moves')+1)/2
    ) else null end as move_count,
    m.record->'timeControlSeconds' as base,m.record->'incrementSeconds' as increment,
+   m.record->'moves' as moves,m.record->>'fen' as fen,
+   m.record->'state'->'playerModifiers' as white_powers,m.record->'state'->'aiModifiers' as black_powers,
    coalesce(h.name,'Guest player') as host,coalesce(g.name,'Guest player') as guest
    from chaos_match m left join chaos_player h on h.id=m.host_id left join chaos_player g on g.id=m.guest_id
    order by m.ended_at desc,m.id desc limit 21 offset ${page * 20}`);
@@ -145,7 +181,7 @@ export async function GET(req: NextRequest) {
             reason: m.reason,
             rated: m.rated,
             moveCount: m.move_count,
-            ...(!live ? { platform: archivePlatform(m.host_id, m.guest_id) } : {}),
+            ...(!live ? { platform: archivePlatform(m.host_id, m.guest_id), ...replayCard(m) } : {}),
             ...(live && m.clock
               ? { clock: projectClock(m.clock as MatchClock, listNow) }
               : {}),
@@ -161,4 +197,17 @@ export async function GET(req: NextRequest) {
       { status: 503, headers },
     );
   }
+}
+
+/** Card extras for a finished game: the most dramatic position, why it is worth watching, and powers. */
+function replayCard(m: Record<string, unknown>) {
+  const moves = Array.isArray(m.moves) ? m.moves : [];
+  const drama = replayDrama({ moves }, String(m.winner ?? ""), String(m.reason ?? ""));
+  return {
+    thumbFen: drama.moment?.fen ?? (typeof m.fen === "string" ? m.fen : null),
+    thumbLabel: drama.moment?.label ?? "Final position",
+    drama: Math.max(0, Math.round(drama.score)),
+    highlights: drama.reasons,
+    powers: { white: cardPowers(m.white_powers), black: cardPowers(m.black_powers) },
+  };
 }

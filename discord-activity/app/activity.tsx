@@ -9,12 +9,12 @@ import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { SessionProvider } from '@/components/session-provider';
 import { ChaosPresentation } from '@/components/chaos-presentation';
-import { discordCustomId, shareInvite } from './discord-sdk';
+import { discordCustomId, setPresence, shareInvite } from './discord-sdk';
 import { ActivityLobby, ActivityDraft, ActivityHud, ActivityOpponentReveal, ActivityAnomalyPicker, PowerArt } from './game-presentation';
 import { getSoundVolume, setSoundVolume, getMemeVolume, setMemeVolume } from '@/lib/sounds';
 import { prepareActivityAudio } from './sound-pack';
 
-const presentation = { activity: true, invite: shareInvite, launchJoinCode: discordCustomId, Result: ActivityResult, AnomalyPicker: ActivityAnomalyPicker, Lobby: ActivityLobby, Draft: ActivityDraft, Hud: ActivityHud, PowerArt, OpponentReveal: ActivityOpponentReveal };
+const presentation = { activity: true, invite: shareInvite, launchJoinCode: discordCustomId, setPresence, Result: ActivityResult, AnomalyPicker: ActivityAnomalyPicker, Lobby: ActivityLobby, Draft: ActivityDraft, Hud: ActivityHud, PowerArt, OpponentReveal: ActivityOpponentReveal };
 const ChaosChess = dynamic(() => import('../../app/chaos/page'), {
   ssr: false,
   loading: () => <p className="p-8 text-center text-white">Loading Chaos Chess…</p>,

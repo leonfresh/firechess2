@@ -64,6 +64,8 @@ export const ChaosPresentation = createContext<{
   invite?: (roomCode: string) => Promise<boolean>;
   /** Room code this session was invited into (a Discord share link), if any. */
   launchJoinCode?: () => string | null;
+  /** Rich presence for players who opted in (Discord only); a no-op otherwise. */
+  setPresence?: (presence: { details: string; state?: string; startedAt?: number }) => void;
   Result?: ComponentType<ChaosResultProps>;
   Lobby?: ComponentType<ChaosLobbyViewProps>;
   Draft?: ComponentType<ChaosDraftViewProps>;

@@ -38,7 +38,7 @@ export async function loadChaosAdminStats(query: QueryRunner, rawDays: unknown =
   const played = (col: string) => `EXISTS (SELECT 1 FROM chaos_match m WHERE (m.host_id = ${col} OR m.guest_id = ${col}) AND m.ended_at > ${since})`;
 
   const [summary, daily, launchesDaily, funnel, launches, buckets, cohorts, streaks, endings, economy, purchases, powers, anomalies,
-    launchSources, inviters, firstTouch] =
+    launchSources, inviters, firstTouch, broughtFriend, broughtAny] =
     await Promise.all([
       query(`WITH g AS (SELECT * FROM chaos_match WHERE ended_at > ${since}),
         pl AS (SELECT host_id pid FROM g UNION ALL SELECT guest_id FROM g),
@@ -126,6 +126,9 @@ export async function loadChaosAdminStats(query: QueryRunner, rawDays: unknown =
       optional(`SELECT surface, coalesce(nullif(utm_source, ''), nullif(ref, ''), referrer_host, 'direct') AS source,
           count(*)::int players, count(*) FILTER (WHERE ${played("f.player_id")})::int played
         FROM chaos_first_touch f WHERE created_at > ${since} GROUP BY 1, 2 ORDER BY 3 DESC LIMIT 20`),
+      // Viral ratio: new players (first game in range) who arrived through another player.
+      query(`${broughtIn(seats, since, false)}`),
+      optional(`${broughtIn(seats, since, true)}`),
     ]);
 
   const launchByDay = new Map(launchesDaily.map((r) => [String(r.day), num(r.launches)]));
@@ -173,6 +176,10 @@ export async function loadChaosAdminStats(query: QueryRunner, rawDays: unknown =
       ledger: economy.map((r) => ({ reason: String(r.reason), entries: num(r.entries), gold: num(r.gold) })),
       purchases: purchases.map((r) => ({ item: String(r.item), bought: num(r.bought), gold: num(r.gold) })),
     },
+    viral: (() => {
+      const brought = num((broughtAny[0] ?? broughtFriend[0])?.brought);
+      return { brought, newPlayers: num(s.new_players), players: num(s.players), perActive: num(s.players) ? brought / num(s.players) : 0 };
+    })(),
     sources: {
       launches: launchSources.map((r) => ({ source: String(r.source), launches: num(r.launches), players: num(r.players), played: num(r.played) })),
       inviters: inviters.map((r) => ({ name: String(r.name), invited: num(r.invited), played: num(r.played), lobbyInvites: num(r.lobby_invites) })),
@@ -183,4 +190,21 @@ export async function loadChaosAdminStats(query: QueryRunner, rawDays: unknown =
       anomalies: anomalies.map((r) => ({ id: String(r.id), games: num(r.games), wins: num(r.wins), draws: num(r.draws), score: score(r) })),
     },
   };
+}
+
+/**
+ * New players in the range who came through someone else: joined a Discord instance another player
+ * had already launched, or (once migrations/chaos-attribution.sql has run) launched from a share link
+ * or first arrived on an invite/share-tagged link.
+ */
+function broughtIn(seats: string, since: string, withLinks: boolean): string {
+  const links = withLinks
+    ? `OR n.pid IN (SELECT player_id FROM chaos_launch WHERE referrer_id IS NOT NULL)
+       OR n.pid IN (SELECT player_id FROM chaos_first_touch WHERE utm_source IN ('share', 'invite'))`
+    : "";
+  return `WITH firsts AS (SELECT pid, min(ended_at) f FROM ${seats} s GROUP BY pid),
+    n AS (SELECT pid FROM firsts WHERE f > ${since})
+    SELECT count(*)::int brought FROM n WHERE n.pid IN (SELECT l.player_id FROM chaos_launch l WHERE EXISTS (
+      SELECT 1 FROM chaos_launch e WHERE e.instance_id = l.instance_id AND e.player_id <> l.player_id AND e.created_at < l.created_at))
+    ${links}`;
 }
