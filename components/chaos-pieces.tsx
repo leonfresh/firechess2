@@ -678,20 +678,29 @@ export function buildChaosCustomPieces(
           mod.id === "undead-army" &&
           !!undeadRevived?.[pieceColor as "w" | "b"];
 
-        const def = MODIFIER_OVERLAYS[mod.id];
+        // Powers without a dedicated overlay still get their card icon as a badge.
+        const def: OverlayDef | undefined = MODIFIER_OVERLAYS[mod.id] ?? (mod.icon ? { icon: mod.icon } : undefined);
         if (!def) continue;
         // Equipment is part of these toy sculpts; don't cover it with the old crosshair/emoji.
         if (actualSet === 'chaos-toy') continue; // Power badges below keep combinations readable.
 
-        // Skip icon/render overlays for most fairy piece replacements.
+        // A power drawn by the piece's own sculpt needs no badge. Anything else does: a power with
+        // no sculpt, a second sculpted power on the same piece, or a power on a piece whose look an
+        // anomaly (Star, Hierophant, Emperor, Fool's King) has taken over. Without this, drafting
+        // e.g. Dragon Bishop onto Hierophant bishops left no trace on the board.
         // Exception: mods whose badge should still be visible alongside the fairy SVG.
         const allowIconWithFairy =
           mod.id === "pawn-charge" ||
           mod.id === "pawn-capture-forward" ||
           mod.id === "dragon-bishop" ||
           mod.id === "dragon-rook";
-        if ((!fairySvgs || (allowIconWithFairy && actualSet !== 'chaos-toy')) && !skipUndeadIcon) {
-          if (def.icon) {
+        const artShown = !!fairySvgs && fairySvgs[pieceColor] === pieceUrl;
+        // A sculpted power that isn't the one on show is badged with its card icon; its old overlay
+        // shapes were drawn for plain pieces and would clash with another sculpt.
+        const hiddenSculpt = !!fairySvgs && !artShown;
+        const badgeIcon = def.icon ?? (hiddenSculpt ? mod.icon : undefined);
+        if ((!artShown || allowIconWithFairy) && !skipUndeadIcon) {
+          if (badgeIcon) {
             // For the War Pawn combo (Torpedo + Bayonet), render icons in all
             // 4 corners: each modifier occupies two opposite corners.
             if (
@@ -715,7 +724,7 @@ export function buildChaosCustomPieces(
                       filter: `drop-shadow(0 0 3px ${def.iconGlow ?? "rgba(255,255,255,0.6)"})`,
                     }}
                   >
-                    <Emoji emoji={def.icon} style={{ width: s, height: s }} />
+                    <Emoji emoji={badgeIcon} style={{ width: s, height: s }} />
                   </div>,
                 );
               }
@@ -772,12 +781,12 @@ export function buildChaosCustomPieces(
                     filter: `drop-shadow(0 0 3px ${badgeGlow})`,
                   }}
                 >
-                  <Emoji emoji={def.icon} style={{ width: s, height: s }} />
+                  <Emoji emoji={badgeIcon} style={{ width: s, height: s }} />
                 </div>
               ),
             );
           }
-          if (def.render) {
+          if (def.render && !hiddenSculpt) {
             // Custom SVG render — uses its own positioning (can stack with icon badge above)
             overlays.push(
               <React.Fragment key={`${mod.id}-render`}>

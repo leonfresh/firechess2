@@ -967,7 +967,15 @@ function ReplayCard({ game: g, rank, onOpen }: { game: Entry; rank?: number; onO
           <PowerIcons powers={g.powers?.black} side="Black" />
         </span>
         <span className={styles.cardMeta}>
-          {[g.moveCount != null ? `${g.moveCount} moves` : null, control(g.base, g.increment), g.rated ? "Rated" : "Casual", g.platform, ago(g.date)].filter(Boolean).join(" · ")}
+          {g.moveCount != null && <span className={styles.metaItem} title="Full moves played"><i aria-hidden="true">♟</i>{g.moveCount} {g.moveCount === 1 ? "move" : "moves"}</span>}
+          <span className={styles.metaItem} title="Clock"><i aria-hidden="true">⏱</i>{control(g.base, g.increment)}</span>
+          <span className={styles.metaItem} data-kind={g.rated ? "rated" : "casual"}>{g.rated ? "★ Rated" : "Casual"}</span>
+          {g.platform && g.platform !== "Platform unavailable" && (
+            <span className={styles.metaItem} data-platform={g.platform === "Discord" ? "discord" : g.platform === "Website" ? "web" : "mixed"}>
+              {g.platform === "Discord + Website" ? "Discord + Web" : g.platform}
+            </span>
+          )}
+          <time className={styles.metaTime} dateTime={g.date} title={new Date(g.date).toLocaleString()}>{ago(g.date)}</time>
         </span>
       </span>
     </button>
