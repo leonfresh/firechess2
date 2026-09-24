@@ -81,7 +81,7 @@ type LobbyProps = {
 const PRESENCE_INTERVAL = 20_000; // heartbeat every 20s while visible
 const CHAT_POLL_INTERVAL = 5_000; // poll chat every 5s while visible
 const MAX_SEARCH_TIME = 150; // seconds; must stay under MATCHMAKING_WINDOW_MS or a waiting room expires before it can be joined
-const WAIT_HINT_SECONDS = 20; // then offer an invite and the AI while you wait
+const WAIT_HINT_SECONDS = 10; // then offer an invite and the AI while you wait
 
 function isDocumentVisible() {
   return (
