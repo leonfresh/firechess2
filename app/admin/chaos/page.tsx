@@ -154,6 +154,23 @@ export default function AdminChaosPage() {
               />
             </Card>
 
+            <Card title="Where players come from" note="Discord launches: 'joined a friend' means someone else started that game instance first. Invite links and website first-touch fill in once migrations/chaos-attribution.sql has run.">
+              <Table
+                head={["Discord launch", "Launches", "Players", "Played a game"]}
+                rows={s.sources.launches.map((r) => [r.source, fmt(r.launches), fmt(r.players), `${fmt(r.played)} (${pct(r.played, r.players)})`])}
+              />
+              <p className="mb-2 mt-5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Top inviters (Discord share links)</p>
+              <Table
+                head={["Inviter", "Brought in", "Played", "From lobby invite"]}
+                rows={s.sources.inviters.map((r) => [r.name, fmt(r.invited), fmt(r.played), fmt(r.lobbyInvites)])}
+              />
+              <p className="mb-2 mt-5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">First touch (website and Activity)</p>
+              <Table
+                head={["Source", "Surface", "Players", "Played"]}
+                rows={s.sources.firstTouch.map((r) => [r.source, r.surface, fmt(r.players), `${fmt(r.played)} (${pct(r.played, r.players)})`])}
+              />
+            </Card>
+
             <Card title="Streaks" note="Consecutive Sydney days with a gold-paying game. Live = played today or yesterday.">
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 <Tile label="Live streaks" value={fmt(s.streaks.live)} />

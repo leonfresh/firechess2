@@ -27,10 +27,17 @@ export async function POST(req: NextRequest) {
     const launch = normalizeChaosLaunch(body);
     if (launch.instanceId) {
       try {
-        await db.execute(sql`insert into chaos_launch (id, player_id, guild_id, channel_id, instance_id)
-          values (${randomUUID()}, ${id}, ${launch.guildId}, ${launch.channelId}, ${launch.instanceId})
+        await db.execute(sql`insert into chaos_launch (id, player_id, guild_id, channel_id, instance_id, referrer_id, custom_id, location_id)
+          values (${randomUUID()}, ${id}, ${launch.guildId}, ${launch.channelId}, ${launch.instanceId}, ${launch.referrerId}, ${launch.customId}, ${launch.locationId})
           on conflict (player_id, instance_id) do nothing`);
-      } catch {}
+      } catch {
+        // Before migrations/chaos-attribution.sql has run the share-link columns do not exist yet.
+        try {
+          await db.execute(sql`insert into chaos_launch (id, player_id, guild_id, channel_id, instance_id)
+            values (${randomUUID()}, ${id}, ${launch.guildId}, ${launch.channelId}, ${launch.instanceId})
+            on conflict (player_id, instance_id) do nothing`);
+        } catch {}
+      }
     }
     return NextResponse.json({access_token:token.access_token, identity:signDiscordIdentity(id), player:{id,name}}, {headers});
   } catch { return NextResponse.json({error:'Could not sign in to Discord. Please try again.'}, {status:503,headers}); }

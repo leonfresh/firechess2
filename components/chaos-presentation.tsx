@@ -60,6 +60,10 @@ export type ChaosResultProps = {
 };
 export const ChaosPresentation = createContext<{
   activity?: boolean;
+  /** Invite a friend into our waiting room; resolves false when the host can't (fall back to a link). */
+  invite?: (roomCode: string) => Promise<boolean>;
+  /** Room code this session was invited into (a Discord share link), if any. */
+  launchJoinCode?: () => string | null;
   Result?: ComponentType<ChaosResultProps>;
   Lobby?: ComponentType<ChaosLobbyViewProps>;
   Draft?: ComponentType<ChaosDraftViewProps>;

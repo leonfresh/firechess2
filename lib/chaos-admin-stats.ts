@@ -7,7 +7,10 @@
  *
  * Days are Australia/Sydney calendar days, the boundary gold, daily wins and streaks already use.
  * Sources: chaos_match (finished games, written by the archive trigger), chaos_room (every room,
- * including ones nobody joined), chaos_launch (Discord Activity launches), chaos_gold_ledger.
+ * including ones nobody joined), chaos_launch (Discord Activity launches), chaos_gold_ledger, and
+ * chaos_first_touch (where each identity first arrived from). The share-link columns and
+ * chaos_first_touch come from migrations/chaos-attribution.sql; until it runs those queries return
+ * nothing instead of failing the whole report.
  */
 
 export type QueryRunner = (text: string) => Promise<Record<string, unknown>[]>;
@@ -31,7 +34,11 @@ export async function loadChaosAdminStats(query: QueryRunner, rawDays: unknown =
   const seats = `(SELECT host_id AS pid, ended_at, (ended_at AT TIME ZONE ${TZ})::date AS d FROM chaos_match
     UNION ALL SELECT guest_id, ended_at, (ended_at AT TIME ZONE ${TZ})::date FROM chaos_match)`;
 
-  const [summary, daily, launchesDaily, funnel, launches, buckets, cohorts, streaks, endings, economy, purchases, powers, anomalies] =
+  const optional = (text: string) => query(text).catch(() => [] as Record<string, unknown>[]);
+  const played = (col: string) => `EXISTS (SELECT 1 FROM chaos_match m WHERE (m.host_id = ${col} OR m.guest_id = ${col}) AND m.ended_at > ${since})`;
+
+  const [summary, daily, launchesDaily, funnel, launches, buckets, cohorts, streaks, endings, economy, purchases, powers, anomalies,
+    launchSources, inviters, firstTouch] =
     await Promise.all([
       query(`WITH g AS (SELECT * FROM chaos_match WHERE ended_at > ${since}),
         pl AS (SELECT host_id pid FROM g UNION ALL SELECT guest_id FROM g),
@@ -104,6 +111,21 @@ export async function loadChaosAdminStats(query: QueryRunner, rawDays: unknown =
         s AS (SELECT 'white' side, winner, st->>'playerAnomaly' a FROM g UNION ALL SELECT 'black', winner, st->>'aiAnomaly' FROM g)
         SELECT a AS id, count(*)::int games, count(*) FILTER (WHERE winner = side)::int wins,
           count(*) FILTER (WHERE winner = 'draw')::int draws FROM s WHERE a IS NOT NULL GROUP BY 1 ORDER BY 2 DESC, 1`),
+      // How each Discord launch started. "Joined a friend" = someone else launched that instance first.
+      query(`WITH l AS (SELECT l.*, EXISTS (SELECT 1 FROM chaos_launch e WHERE e.instance_id = l.instance_id
+            AND e.player_id <> l.player_id AND e.created_at < l.created_at) AS joined_friend FROM chaos_launch l WHERE created_at > ${since})
+        SELECT CASE WHEN guild_id IS NULL THEN 'DM or group chat' ELSE 'Server' END || CASE WHEN joined_friend THEN ' · joined a friend' ELSE ' · started it' END AS source,
+          count(*)::int launches, count(DISTINCT player_id)::int players,
+          count(DISTINCT player_id) FILTER (WHERE ${played("l.player_id")})::int played
+        FROM l GROUP BY 1 ORDER BY 2 DESC`),
+      optional(`SELECT l.referrer_id, coalesce(p.name, l.referrer_id) AS name, count(DISTINCT l.player_id)::int invited,
+          count(DISTINCT l.player_id) FILTER (WHERE ${played("l.player_id")})::int played,
+          count(*) FILTER (WHERE l.custom_id LIKE 'join:%')::int lobby_invites
+        FROM chaos_launch l LEFT JOIN chaos_player p ON p.id = 'discord_' || l.referrer_id
+        WHERE l.referrer_id IS NOT NULL AND l.created_at > ${since} GROUP BY 1, 2 ORDER BY 3 DESC LIMIT 15`),
+      optional(`SELECT surface, coalesce(nullif(utm_source, ''), nullif(ref, ''), referrer_host, 'direct') AS source,
+          count(*)::int players, count(*) FILTER (WHERE ${played("f.player_id")})::int played
+        FROM chaos_first_touch f WHERE created_at > ${since} GROUP BY 1, 2 ORDER BY 3 DESC LIMIT 20`),
     ]);
 
   const launchByDay = new Map(launchesDaily.map((r) => [String(r.day), num(r.launches)]));
@@ -150,6 +172,11 @@ export async function loadChaosAdminStats(query: QueryRunner, rawDays: unknown =
     economy: {
       ledger: economy.map((r) => ({ reason: String(r.reason), entries: num(r.entries), gold: num(r.gold) })),
       purchases: purchases.map((r) => ({ item: String(r.item), bought: num(r.bought), gold: num(r.gold) })),
+    },
+    sources: {
+      launches: launchSources.map((r) => ({ source: String(r.source), launches: num(r.launches), players: num(r.players), played: num(r.played) })),
+      inviters: inviters.map((r) => ({ name: String(r.name), invited: num(r.invited), played: num(r.played), lobbyInvites: num(r.lobby_invites) })),
+      firstTouch: firstTouch.map((r) => ({ surface: String(r.surface), source: String(r.source), players: num(r.players), played: num(r.played) })),
     },
     balance: {
       powers: powers.map((r) => ({ id: String(r.id), name: String(r.name ?? r.id), games: num(r.games), wins: num(r.wins), draws: num(r.draws), score: score(r) })),

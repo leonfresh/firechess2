@@ -57,7 +57,10 @@ import { Chess, type Color, type PieceSymbol, type Square } from "chess.js";
 import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { chaosMoveDecal } from "@/lib/chaos-move-decals";
 import { stockfishPool } from "@/lib/stockfish-client";
-import { ChaosLobby } from "@/components/chaos-lobby";
+import { ChaosLobby, type ChaosMatchFound, type ChaosOpenSeek } from "@/components/chaos-lobby";
+import { ChaosSeekWatcher } from "@/components/chaos-seek-watcher";
+import { inviteJoinCode } from "@/lib/chaos-launch";
+import { recordChaosFirstTouch } from "@/lib/chaos-first-touch";
 import { OpeningMoveNotice, AbortedMatch } from "@/components/chaos-opening-move";
 import { ChaosChat, type ChatLine } from "@/components/chaos-chat";
 import { useChaosPresentation } from "@/components/chaos-presentation";
@@ -3326,6 +3329,11 @@ export default function ChaosChessPage() {
 
   /* ── Mode / multiplayer ── */
   const [gameMode, setGameMode] = useState<GameMode>("ai");
+  /** Current mode for callbacks queued earlier (AI move timeouts): they must not act outside AI mode. */
+  const gameModeRef = useRef<GameMode>(gameMode);
+  gameModeRef.current = gameMode;
+  /** Our matchmaking seek, kept open while practising against the AI (ChaosSeekWatcher). */
+  const [backgroundSeek, setBackgroundSeek] = useState<ChaosOpenSeek | null>(null);
   const [roomId, setRoomId] = useState<string | null>(null);
   const [roomCode, setRoomCode] = useState<string>("");
   const [joinCode, setJoinCode] = useState<string>("");
@@ -5071,6 +5079,8 @@ export default function ChaosChessPage() {
       cs: ChaosState,
       onComplete?: (finalGame: Chess, finalCs: ChaosState) => void,
     ) => {
+      // A move queued during a practice game must not run after we switched into a real match.
+      if (gameModeRef.current !== "ai") return;
       // A captured king ends the game before evaluation can reload a kingless FEN.
       const aiSide = playerColor === "white" ? "b" : "w";
       if (g.turn() === aiSide) {
@@ -6649,6 +6659,25 @@ export default function ChaosChessPage() {
       ]);
     }
   }, [joinCode, recomputeChaosMoves]);
+
+  /* ── Invite links: ?join=CODE on the website, a share-link customId inside Discord ── */
+  const inviteJoinHandled = useRef(false);
+  useEffect(() => {
+    if (inviteJoinHandled.current) return;
+    inviteJoinHandled.current = true;
+    const url = new URL(window.location.href);
+    const code = inviteJoinCode(presentation.launchJoinCode?.() ?? url.searchParams.get("join"));
+    if (url.searchParams.has("join")) {
+      url.searchParams.delete("join");
+      window.history.replaceState(window.history.state, "", url);
+    }
+    if (code) void joinRoom(code);
+  }, [joinRoom, presentation]);
+
+  /* ── Where did this player come from? Re-sent when the identity changes (sign-in). ── */
+  useEffect(() => {
+    recordChaosFirstTouch(presentation.activity ? "activity" : "website");
+  }, [presentation.activity, authenticated]);
 
   /* ── PartyKit WebSocket: real-time sync ── */
   const onPartyMessage = useCallback(
@@ -9817,96 +9846,113 @@ export default function ChaosChessPage() {
 
   /* ────────────────────────── Render ────────────────────────── */
 
+  /** Enter a matchmaking game: from the lobby, or from a seek that stayed open during practice. */
+  const enterMatchmakingGame = (data: ChaosMatchFound) => {
+    setRoomId(data.roomId);
+    setRoomCode(data.roomCode);
+    setGameMode("matchmake");
+    setOpponentLabel("Random Opponent");
+
+    // Determine our color based on whether we joined or hosted
+    const myColor = data.joined
+      ? data.hostColor === "white"
+        ? "black"
+        : "white"
+      : data.hostColor === "white"
+        ? "white"
+        : "black";
+    setPlayerColor(myColor as "white" | "black");
+    setMatchmakeState("found");
+
+    // Initialize fresh game state (anomalies applied after both players pick)
+    const cs = createChaosState();
+    setChaosState(cs);
+    const g = new Chess();
+    setGame(g);
+    // Reset all per-game state/refs
+    prevPhaseRef.current = 0;
+    triggeredDraftForPhaseRef.current = -1;
+    pendingDraftAfterRevealRef.current = null;
+    justDraftedRef.current = false;
+    pendingMpAnomalyRef.current = null;
+    myAnomalyPickSentRef.current = false;
+    setMyPickSent(false);
+    setOpponentAnomalyPickedId(undefined);
+    setEndReason("");
+    setDrawOfferSent(false);
+    setDrawOfferReceived(false);
+    setRematchRequested(false);
+    setRematchReceived(false);
+    setSelectedSquare(null);
+    setLegalMoveSquares({});
+    setLastMoveHighlight({});
+    setAvailableChaosMoves([]);
+    setMoveLog([]);
+    setFloatingPepes([]);
+    setCapturedPawns({ w: 0, b: 0 });
+    // Reset ELO and timer state (timers will be synced from first poll)
+    setEloChange(null);
+    setEloSaved(false);
+    setAiEloSaved(false);
+    setMyRating(null);
+    setOpponentRating(null);
+    setTimers({ w: 0, b: 0 });
+    setUnlimitedTime(data.unlimitedTime ?? false);
+    setTimeControl(data.unlimitedTime ? null : resolveTimeControl(data.timeControlSeconds, data.incrementSeconds));
+    spawnPepe(PEPE.hyped);
+    startPolling(data.roomId, myColor);
+    // Notify via WebSocket
+    if (data.joined) {
+      setTimeout(() => {
+        if (partySendRef.current) {
+          partySendRef.current({ type: "join", guestId: "" });
+        }
+      }, 500);
+    }
+    // Show "matched" animation, then open anomaly picker for both
+    setGameStatus("matched");
+    setEventLog([
+      {
+        type: "info",
+        message:
+          "⚔️ Opponent found! Preparing anomaly selection…",
+        icon: "⚔️",
+        pepe: PEPE.hyped,
+      },
+    ]);
+    playSound("reveal-stinger");
+    if (matchedTransitionTimeoutRef.current)
+      clearTimeout(matchedTransitionTimeoutRef.current);
+    matchedTransitionTimeoutRef.current = setTimeout(() => {
+      setAnomalyPickerChoices(
+        rollOwnedAnomalyChoices(
+          3,
+          Math.floor(Math.random() * 1_000_000),
+        ),
+      );
+      setGameStatus("picking-anomaly");
+    }, 2500);
+  };
+
+  /** An opponent took our background seek: stop the practice game cleanly, then enter the match. */
+  const switchToFoundMatch = (data: ChaosMatchFound) => {
+    gameModeRef.current = "matchmake";
+    aiMoveTokenRef.current.cancelled = true;
+    aiMoveTokenRef.current = { cancelled: false };
+    setIsThinking(false);
+    setBackgroundSeek(null);
+    enterMatchmakingGame(data);
+  };
+
   const matchmakingLobby = (
               <ChaosLobby showChat={!presentation.activity}
                 isSignedIn={true}
                 unlimitedTime={unlimitedTime}
                 timeControlSeconds={timeControl?.base ?? 300} incrementSeconds={timeControl?.inc ?? 3}
-                onMatchFound={(data) => {
-                  setRoomId(data.roomId);
-                  setRoomCode(data.roomCode);
-                  setGameMode("matchmake");
-                  setOpponentLabel("Random Opponent");
-
-                  // Determine our color based on whether we joined or hosted
-                  const myColor = data.joined
-                    ? data.hostColor === "white"
-                      ? "black"
-                      : "white"
-                    : data.hostColor === "white"
-                      ? "white"
-                      : "black";
-                  setPlayerColor(myColor as "white" | "black");
-                  setMatchmakeState("found");
-
-                  // Initialize fresh game state (anomalies applied after both players pick)
-                  const cs = createChaosState();
-                  setChaosState(cs);
-                  const g = new Chess();
-                  setGame(g);
-                  // Reset all per-game state/refs
-                  prevPhaseRef.current = 0;
-                  triggeredDraftForPhaseRef.current = -1;
-                  pendingDraftAfterRevealRef.current = null;
-                  justDraftedRef.current = false;
-                  pendingMpAnomalyRef.current = null;
-                  myAnomalyPickSentRef.current = false;
-                  setMyPickSent(false);
-                  setOpponentAnomalyPickedId(undefined);
-                  setEndReason("");
-                  setDrawOfferSent(false);
-                  setDrawOfferReceived(false);
-                  setRematchRequested(false);
-                  setRematchReceived(false);
-                  setSelectedSquare(null);
-                  setLegalMoveSquares({});
-                  setLastMoveHighlight({});
-                  setAvailableChaosMoves([]);
-                  setMoveLog([]);
-                  setFloatingPepes([]);
-                  setCapturedPawns({ w: 0, b: 0 });
-                  // Reset ELO and timer state (timers will be synced from first poll)
-                  setEloChange(null);
-                  setEloSaved(false);
-                  setAiEloSaved(false);
-                  setMyRating(null);
-                  setOpponentRating(null);
-                  setTimers({ w: 0, b: 0 });
-                  setUnlimitedTime(data.unlimitedTime ?? false);
-                  setTimeControl(data.unlimitedTime ? null : resolveTimeControl(data.timeControlSeconds, data.incrementSeconds));
-                  spawnPepe(PEPE.hyped);
-                  startPolling(data.roomId, myColor);
-                  // Notify via WebSocket
-                  if (data.joined) {
-                    setTimeout(() => {
-                      if (partySendRef.current) {
-                        partySendRef.current({ type: "join", guestId: "" });
-                      }
-                    }, 500);
-                  }
-                  // Show "matched" animation, then open anomaly picker for both
-                  setGameStatus("matched");
-                  setEventLog([
-                    {
-                      type: "info",
-                      message:
-                        "⚔️ Opponent found! Preparing anomaly selection…",
-                      icon: "⚔️",
-                      pepe: PEPE.hyped,
-                    },
-                  ]);
-                  playSound("reveal-stinger");
-                  if (matchedTransitionTimeoutRef.current)
-                    clearTimeout(matchedTransitionTimeoutRef.current);
-                  matchedTransitionTimeoutRef.current = setTimeout(() => {
-                    setAnomalyPickerChoices(
-                      rollOwnedAnomalyChoices(
-                        3,
-                        Math.floor(Math.random() * 1_000_000),
-                      ),
-                    );
-                    setGameStatus("picking-anomaly");
-                  }, 2500);
+                onMatchFound={enterMatchmakingGame}
+                onPlayWhileWaiting={(seek) => {
+                  setBackgroundSeek(seek);
+                  startGame(Math.random() < 0.5 ? "white" : "black", "ai");
                 }}
                 onCancel={() => {
                   setMatchmakeState("idle");
@@ -10758,6 +10804,11 @@ export default function ChaosChessPage() {
 
   return (
     <>
+      {backgroundSeek && gameMode === "ai" && (
+        <ChaosSeekWatcher seek={backgroundSeek} unlimitedTime={unlimitedTime}
+          timeControlSeconds={timeControl?.base ?? 300} incrementSeconds={timeControl?.inc ?? 3}
+          onFound={switchToFoundMatch} onStop={() => setBackgroundSeek(null)} />
+      )}
       <div data-chaos-arena className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-gradient-to-b from-[#030712] via-[#0a0f1a] to-[#030712]">
         <ChaosParticles />
 

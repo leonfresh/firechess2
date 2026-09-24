@@ -17,8 +17,9 @@ async function handshake() {
   await sdk.ready();
   setDiscordSdk(sdk);
   const {code} = await sdk.commands.authorize({client_id:clientId,response_type:'code',state:'',prompt:'none',scope:['identify']});
-  // Guild/channel/instance travel with the handshake so traffic can be attributed to a server.
-  const response = await fetch('/api/chaos/discord-token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,guildId:sdk.guildId,channelId:sdk.channelId,instanceId:sdk.instanceId})});
+  // Launch context travels with the handshake so traffic can be attributed to a server, and a
+  // share-link launch to the player who shared it (referrerId) and the link's customId.
+  const response = await fetch('/api/chaos/discord-token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,guildId:sdk.guildId,channelId:sdk.channelId,instanceId:sdk.instanceId,referrerId:sdk.referrerId,customId:sdk.customId,locationId:sdk.locationId})});
   const signed = await response.json();
   if (!response.ok) throw new Error(signed.error || 'Discord sign-in failed');
   await sdk.commands.authenticate({access_token:signed.access_token});

@@ -117,3 +117,5 @@
 .collection-badge{font-size:15px;color:#f2d18b;min-width:22px;text-align:center}
 .collection-badge[data-owned=true]{color:#d4f77a}
 @media(max-width:620px){.collection-list .power-art,.collection-list .anomaly-art{width:42px;height:42px;flex:0 0 42px}.collection-list li{gap:9px}}
+.matchmaking-busy{margin:-6px 0 2px;text-align:center;font-size:11px;color:#b4bdd2}
+.matchmaking-wait{width:100%;padding:14px;border:1px dashed #d4f77a55;border-radius:14px;background:#d4f77a0d;text-align:center;font-size:12px;color:#dfe6f2}.matchmaking-wait>p:first-child{font-weight:800;color:#f8f6ef;margin-bottom:10px}.matchmaking-wait p{line-height:1.5}.matchmaking-wait-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}.matchmaking-wait-actions .secondary-action{margin:0;border-color:#d4f77a66;color:#e8f9bf}

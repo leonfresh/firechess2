@@ -19,6 +19,11 @@ function load(){
   '@/components/chaos-hub-icon':{ChaosHubIcon:()=>({type:'svg',props:{}})},
   './use-activity-dialog':{useActivityDialog:()=>({ref:{current:null},onBackdropClick(){}})},
   './power-art':{PowerArt:p=>({type:'div',props:{className:'power-art',...p}})},
+  // Stubs for the imports added with anomaly unlocks and the pieces tab (d8fdfd1).
+  '@/lib/chaos-piece-art':{FAIRY_PIECE_CODES:{camel:'Ca'}},
+  '@/lib/chaos-anomaly-unlocks':{ANOMALY_PRICES:{},cosmeticMastery:games=>({games,tier:'none',next:5})},
+  '@/components/chaos-nav-link':{ChaosNavLink:p=>({type:'a',props:p})},
+  './shop-power-preview':{ShopPowerPreview:()=>null},
  };
  vm.runInNewContext(ts.transpile(fs.readFileSync('discord-activity/app/collection.tsx','utf8'),{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022,esModuleInterop:true}),
   {module,exports:module.exports,require:name=>shims[name]??(name==='react'?react:name==='react/jsx-runtime'?require(name):{}),Date,URL,Math,console,setTimeout,clearTimeout,Set,Promise,Event:class {},window:{dispatchEvent(){}},

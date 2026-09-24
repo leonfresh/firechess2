@@ -8,6 +8,9 @@
  *  - Matchmaking timer with auto-cancel
  *  - Live chat for players waiting in the lobby
  *  - Polls chat messages periodically while the tab is visible
+ *  - After WAIT_HINT_SECONDS with no opponent: invite a friend into the waiting room, or play the AI
+ *    while the seek stays open (components/chaos-seek-watcher.tsx takes it over)
+ *  - "Usually busiest around 8pm your time" from /api/chaos/busy-hours
  */
 
 import {useChaosPresentation} from '@/components/chaos-presentation';
@@ -16,9 +19,10 @@ import { chaosIdentityHeaders } from '@/lib/chaos-client-identity';
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useChaosAccount } from "@/lib/use-chaos-account";
 import { getGuestId } from "@/lib/guest-id";
+import { busiestLocalHour, hourLabel } from "@/lib/chaos-busy-hours";
 
 /** Build headers for chaos API calls — includes guest ID for unauthenticated players */
-function chaosHeaders(json = false): Record<string, string> {
+export function chaosHeaders(json = false): Record<string, string> {
   const h: Record<string, string> = {};
   if (json) h["Content-Type"] = "application/json";
   // Always include guest ID — server prefers session if available
@@ -40,17 +44,24 @@ type LobbyMessage = {
   createdAt: string;
 };
 
+export type ChaosMatchFound = {
+  roomId: string;
+  roomCode: string;
+  hostColor: string;
+  joined: boolean; // true = joined existing room, false = opponent joined ours
+  unlimitedTime: boolean;
+  timeControlSeconds: number;
+  incrementSeconds: number;
+};
+
+/** Our own open matchmaking room, handed to the page so it can stay open during an AI game. */
+export type ChaosOpenSeek = { roomId: string; roomCode: string; hostColor: string };
+
 type LobbyProps = {
   /** Called when matchmaking finds a match or user cancels */
-  onMatchFound: (data: {
-    roomId: string;
-    roomCode: string;
-    hostColor: string;
-    joined: boolean; // true = joined existing room, false = opponent joined ours
-    unlimitedTime: boolean;
-    timeControlSeconds: number;
-    incrementSeconds: number;
-  }) => void;
+  onMatchFound: (data: ChaosMatchFound) => void;
+  /** Offered after WAIT_HINT_SECONDS: the page starts an AI game and keeps watching this seek. */
+  onPlayWhileWaiting?: (seek: ChaosOpenSeek) => void;
   onCancel: () => void;
   /** Whether the user is currently signed in */
   isSignedIn: boolean;
@@ -70,6 +81,7 @@ type LobbyProps = {
 const PRESENCE_INTERVAL = 20_000; // heartbeat every 20s while visible
 const CHAT_POLL_INTERVAL = 5_000; // poll chat every 5s while visible
 const MAX_SEARCH_TIME = 150; // seconds; must stay under MATCHMAKING_WINDOW_MS or a waiting room expires before it can be joined
+const WAIT_HINT_SECONDS = 20; // then offer an invite and the AI while you wait
 
 function isDocumentVisible() {
   return (
@@ -90,6 +102,7 @@ const PEPE_GIFS = [
 
 export function ChaosLobby({
   onMatchFound,
+  onPlayWhileWaiting,
   onCancel,
   isSignedIn,
   chatOnly,
@@ -101,7 +114,7 @@ export function ChaosLobby({
   const account = useChaosAccount();
   const generation = useRef(0);
   const cleanupRequest = useRef<Promise<unknown>>(Promise.resolve());
-  const {activity} = useChaosPresentation();
+  const {activity, invite} = useChaosPresentation();
   /* ── State ── */
   const [onlineCount, setOnlineCount] = useState<number | null>(null);
   const [messages, setMessages] = useState<LobbyMessage[]>([]);
@@ -111,6 +124,10 @@ export function ChaosLobby({
     "idle" | "searching" | "found"
   >("idle");
   const [elapsed, setElapsed] = useState(0);
+  const [busyHour, setBusyHour] = useState<number | null>(null);
+  const [inviteState, setInviteState] = useState<"idle" | "shared" | "copied" | "manual">("idle");
+  /** Set when the open seek is handed to the page, so unmounting must not cancel it. */
+  const handedOffRef = useRef(false);
 
   /* ── Refs ── */
   const presenceRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -238,6 +255,18 @@ export function ChaosLobby({
     };
   }, [clearAllIntervals, fetchMessages, sendHeartbeat]);
 
+  /* ── When is everyone around? (local time, computed in the browser) ── */
+  useEffect(() => {
+    let active = true;
+    fetch("/api/chaos/busy-hours")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (active && Array.isArray(d?.hoursUtc)) setBusyHour(busiestLocalHour(d.hoursUtc, new Date().getTimezoneOffset()));
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+
   /* ── Matchmaking: start search ── */
   const startSearch = useCallback(async () => {
     if (!isSignedIn || chatOnly) return;
@@ -245,6 +274,8 @@ export function ChaosLobby({
     const current = () => generation.current === attempt;
     setSearchState("searching");
     setElapsed(0);
+    setInviteState("idle");
+    handedOffRef.current = false;
 
     await cleanupRequest.current;
     if (!current()) return;
@@ -442,6 +473,7 @@ export function ChaosLobby({
   useEffect(() => {
     if (chatOnly) return;
     const abandon = () => {
+      if (handedOffRef.current) return; // the page's seek watcher owns the open room now
       ++generation.current;
       if (searchTimerRef.current) clearInterval(searchTimerRef.current);
       if (matchPollRef.current) clearInterval(matchPollRef.current);
@@ -458,6 +490,29 @@ export function ChaosLobby({
       abandon();
     };
   }, [chatOnly, account.data?.player?.id]);
+
+  /* ── Keep the seek open and let the page start an AI game meanwhile ── */
+  const playWhileWaiting = useCallback(() => {
+    const seek = ownRoomRef.current;
+    if (!seek || !onPlayWhileWaiting) return;
+    handedOffRef.current = true;
+    ++generation.current;
+    if (searchTimerRef.current) clearInterval(searchTimerRef.current);
+    if (matchPollRef.current) clearInterval(matchPollRef.current);
+    searchTimerRef.current = null;
+    matchPollRef.current = null;
+    ownRoomRef.current = null;
+    onPlayWhileWaiting(seek);
+  }, [onPlayWhileWaiting]);
+
+  /* ── Invite a friend straight into our waiting room ── */
+  const inviteFriend = useCallback(async () => {
+    const code = ownRoomRef.current?.roomCode;
+    if (!code) return;
+    if (invite && (await invite(code))) { setInviteState("shared"); return; }
+    try { await navigator.clipboard.writeText(inviteLink(code)); setInviteState("copied"); }
+    catch { setInviteState("manual"); }
+  }, [invite]);
 
   /* ── Time display ── */
   const timeLeft = MAX_SEARCH_TIME - elapsed;
@@ -476,6 +531,11 @@ export function ChaosLobby({
           {onlineCount === null ? "Checking who’s online…" : `${onlineCount} player${onlineCount !== 1 ? "s" : ""} online · including you`}
         </span>
       </div>
+      {busyHour !== null && (
+        <p className={activity ? "matchmaking-busy" : "-mt-2 text-center text-xs text-slate-400"}>
+          Usually busiest around {hourLabel(busyHour)} your time
+        </p>
+      )}
 
       {/* ── Search button / timer ── */}
       {!chatOnly && (
@@ -560,6 +620,30 @@ export function ChaosLobby({
                   style={{ width: `${progressPct}%` }}
                 />
               </div>
+
+              {elapsed >= WAIT_HINT_SECONDS && (
+                <div className={activity ? "matchmaking-wait" : "w-full rounded-xl border border-slate-600/40 bg-slate-900/60 p-3 text-center text-xs text-slate-300"} role="status">
+                  <p className={activity ? undefined : "mb-2 font-semibold text-white"}>It’s quiet right now.</p>
+                  <div className={activity ? "matchmaking-wait-actions" : "flex flex-wrap justify-center gap-2"}>
+                    <button type="button" onClick={() => void inviteFriend()}
+                      className={activity ? "secondary-action" : "rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 font-medium text-emerald-300 hover:bg-emerald-500/20"}>
+                      Invite a friend
+                    </button>
+                    {onPlayWhileWaiting && (
+                      <button type="button" onClick={playWhileWaiting}
+                        className={activity ? "secondary-action" : "rounded-lg border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 font-medium text-purple-300 hover:bg-purple-500/20"}>
+                        Play the AI while you wait
+                      </button>
+                    )}
+                  </div>
+                  {inviteState === "shared" && <p className="mt-2">Invite sent. They’ll land in this game.</p>}
+                  {inviteState === "copied" && <p className="mt-2">Link copied. It drops a friend straight into this game.</p>}
+                  {inviteState === "manual" && ownRoomRef.current && (
+                    <p className="mt-2 break-all">Share this link: {inviteLink(ownRoomRef.current.roomCode)}</p>
+                  )}
+                  {onPlayWhileWaiting && <p className="mt-2 opacity-80">We’ll keep looking and pull you into the match when someone joins.</p>}
+                </div>
+              )}
 
               <button
                 type="button"
@@ -685,6 +769,11 @@ export function ChaosLobby({
 }
 
 /* ── helpers ── */
+
+/** Website link that joins our waiting room; tagged so the friend's first touch reads as an invite. */
+function inviteLink(code: string): string {
+  return `${window.location.origin}/chaos?join=${code}&utm_source=invite&utm_medium=lobby`;
+}
 
 function formatTime(iso: string): string {
   try {

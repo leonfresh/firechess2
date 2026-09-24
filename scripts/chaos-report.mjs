@@ -18,6 +18,9 @@ try{
   console.table({...s.funnel,joinRate:pct(s.funnel.joined,s.funnel.created),hostsNeverPlayedRate:pct(s.funnel.hostsNeverPlayed,s.funnel.hosts)});
   console.log('Discord launches');console.table({...s.launches,playedRate:pct(s.launches.launchersWhoPlayed,s.launches.players)});
   console.log('Daily');console.table(s.daily);
+  console.log('Discord launches by source');console.table(s.sources.launches);
+  if(s.sources.inviters.length){console.log('Top inviters (share links)');console.table(s.sources.inviters);}
+  if(s.sources.firstTouch.length){console.log('First touch (where identities first arrived from)');console.table(s.sources.firstTouch);}
   console.log('Games per player');console.table(s.retention.buckets);
   console.log('Weekly cohorts (first game week)');console.table(s.retention.cohorts.map(c=>({...c,returnedPct:pct(c.returned,c.players),returned7dPct:pct(c.returned7d,c.players)})));
   console.log('Streaks (live = alive today or yesterday)');console.table(s.streaks);
