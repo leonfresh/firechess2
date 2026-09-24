@@ -1255,20 +1255,27 @@ function genEnPassantEverywhere(game: Chess, color: Color): ChaosMove[] {
  * onto rank 6). Keep the card text in `lib/chaos-chess.ts` and the two sync tests in step. */
 const EARLY_PROMO_RANK: Record<Color, number> = { w: 5, b: 2 };
 
-/** Early promotion: a pawn one rank below the target promotes by advancing or capturing onto it. */
+/**
+ * Early promotion: a pawn promotes by advancing or capturing onto the promotion rank, or onto any
+ * rank past it (a pawn that got there before the card was drafted). The last rank is left to
+ * chess.js's own promotion. Pawns carried there by other powers (Torpedo Pawns, Bayonet) promote
+ * through withEarlyPromotion in getChaosMoves.
+ */
 function genEarlyPromotion(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const promoRank = EARLY_PROMO_RANK[color];
   const dir = color === "w" ? 1 : -1;
+  const lastRank = color === "w" ? 7 : 0;
   const pawns = allSquaresOf(game, "p", color);
 
   for (const ps of pawns) {
     const [f, r] = sqToCoords(ps);
-    // Must be one rank below promo rank
-    if (r !== promoRank - dir) continue;
+    const targetRank = r + dir;
+    // The step must land on or past the promotion rank, short of the last rank.
+    if ((targetRank - promoRank) * dir < 0 || targetRank === lastRank) continue;
 
     // Forward move (empty target)
-    const target = sq(f, promoRank);
+    const target = sq(f, targetRank);
     if (
       target &&
       isEmpty(game, target) &&
@@ -1287,7 +1294,7 @@ function genEarlyPromotion(game: Chess, color: Color): ChaosMove[] {
 
     // Diagonal captures (left and right)
     for (const df of [-1, 1]) {
-      const capTarget = sq(f + df, promoRank);
+      const capTarget = sq(f + df, targetRank);
       if (!capTarget) continue;
       const capPiece = game.get(capTarget as any);
       if (!capPiece || capPiece.color === color) continue; // must capture enemy
@@ -1698,6 +1705,22 @@ const MODIFIER_GENERATORS: Record<
  *   which is blind to chaos-controlled squares.
  * @param anomalyOpts - Optional anomaly configuration for anomaly-based move generation.
  */
+/**
+ * Battlefield Promotion is a rule about where a pawn lands, not about how it got there: any forward
+ * pawn move from another power (a Torpedo Pawns double step, a Bayonet forward capture) that ends
+ * on or past the early promotion rank promotes too. Backward moves never do.
+ */
+function withEarlyPromotion(game: Chess, m: ChaosMove, color: Color): ChaosMove {
+  if (m.spawnPiece) return m;
+  const piece = game.get(m.from as Square);
+  if (piece?.type !== "p" || piece.color !== color) return m;
+  const dir = color === "w" ? 1 : -1;
+  const [, fromRank] = sqToCoords(m.from as Square);
+  const [, toRank] = sqToCoords(m.to as Square);
+  if ((toRank - fromRank) * dir <= 0 || (toRank - EARLY_PROMO_RANK[color]) * dir < 0) return m;
+  return { ...m, spawnPiece: { type: "q", color }, promotionChoice: true, label: `${m.label} + Battlefield Promotion` };
+}
+
 export function getChaosMoves(
   game: Chess,
   modifiers: ChaosModifier[],
@@ -1709,6 +1732,7 @@ export function getChaosMoves(
   const moves: ChaosMove[] = [];
   const seen = new Set<string>();
   const colorKey = color; // "w" or "b"
+  const earlyPromotion = modifiers.some((mod) => mod.id === "pawn-promotion-early");
 
   for (const mod of modifiers) {
     const gen = MODIFIER_GENERATORS[mod.id];
@@ -1753,6 +1777,11 @@ export function getChaosMoves(
       ) {
         continue;
       }
+      // The promoting version comes first, so the board (which takes the first match) offers the
+      // promotion; the plain move stays valid ("can promote"), which also keeps clients from before
+      // this fix in step with the server.
+      const promoted = earlyPromotion ? withEarlyPromotion(game, m, color) : m;
+      if (promoted !== m) moves.push(promoted);
       moves.push(m);
     }
   }

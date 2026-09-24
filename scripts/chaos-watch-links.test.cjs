@@ -5,7 +5,7 @@ function load(){
  const values=[];let cursor=0;
  const react={...require('react'),useEffect(){},useRef(v){return {current:v}},useMemo(fn){return fn()},useState(v){const i=cursor++;if(!(i in values))values[i]=v;return [values[i],n=>values[i]=typeof n==='function'?n(values[i]):n]}};
  const module={exports:{}};
- vm.runInNewContext(ts.transpile(fs.readFileSync('components/chaos-watch.tsx','utf8'),{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022,esModuleInterop:true}),{module,exports:module.exports,require:n=>n==='react'?react:n==='react/jsx-runtime'?require(n):n==='next/link'?require(n):n==='chess.js'?require(n):n.includes('chaos-watch')?{describeWatchFrame:f=>f.label,expandVisual:s=>({...s,playerModifiers:[],aiModifiers:[]})}:n.includes('chaos-pieces')?{buildChaosCustomPieces:()=>({})}:n.includes('chaos-anomalies')?{getAnomalyById:()=>undefined}:{},Date,URL,Math});
+ vm.runInNewContext(ts.transpile(fs.readFileSync('components/chaos-watch.tsx','utf8'),{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022,esModuleInterop:true}),{module,exports:module.exports,require:n=>n==='react'?react:n==='react/jsx-runtime'?require(n):n==='next/link'?require(n):n==='chess.js'?require(n):n.includes('chaos-watch')?{describeWatchFrame:f=>f.label,describeWatchPower:()=>null,expandVisual:s=>({...s,playerModifiers:[],aiModifiers:[]})}:n.includes('chaos-pieces')?{buildChaosCustomPieces:()=>({})}:n.includes('chaos-anomalies')?{getAnomalyById:()=>undefined}:{},Date,URL,Math});
  return {exports:module.exports,reset:()=>{cursor=0}};
 }
 const walk=(n,out=[])=>{if(!n)return out;if(Array.isArray(n)){n.forEach(x=>walk(x,out));return out}if(typeof n==='object'){out.push(n);walk(n.props?.children,out)}return out};

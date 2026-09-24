@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "./chessboard-compat";
 import { buildChaosCustomPieces } from "./chaos-pieces";
-import { describeWatchFrame, describeWatchAnomaly, expandVisual, type WatchFrame } from "@/lib/chaos-watch";
+import { describeWatchFrame, describeWatchAnomaly, describeWatchPower, expandVisual, type WatchFrame } from "@/lib/chaos-watch";
 import { getChaosMoves } from "@/lib/chaos-moves";
 import { chaosMoveDecal } from "@/lib/chaos-move-decals";
 import { getAnomalyById } from "@/lib/chaos-anomalies";
@@ -225,6 +225,16 @@ export function ChaosWatch({
     return () => clearTimeout(timer);
   }, [auto, index, detail]);
   const frames = detail?.frames ?? [];
+  /** What each move's power did (Usurper swap, Regicide revival, …), computed once per replay. */
+  const powerNotes = useMemo(
+    () => (detail?.frames ?? []).map((f, i, all) => describeWatchPower(all[i - 1], f)),
+    [detail?.frames],
+  );
+  /** Power moments reached so far, for the side rail: click one to jump to it. */
+  const powerFrames = useMemo(
+    () => powerNotes.flatMap((note, at) => (note && at <= index ? [{ note, at, label: frames[at].label }] : [])),
+    [powerNotes, frames, index],
+  );
   /** Picks revealed so far: the rail fills in one by one as the replay advances. */
   const pickFrames = useMemo(
     () =>
@@ -664,6 +674,7 @@ export function ChaosWatch({
                     ? `${detail.result.winner === "draw" ? "Draw" : detail.result.winner === "aborted" ? "No contest" : detail.result.winner + " wins"} · ${detail.result.reason}`
                     : detail.phase
                   : frame && describeWatchFrame(frame)}
+                {!selected.live && powerNotes[index] && <small className={styles.powerNote}>{powerNotes[index]}</small>}
               </span>
               {typeof detail.base === "number" && (
                 <b className={styles.chip} title="Time control">
@@ -855,6 +866,21 @@ export function ChaosWatch({
                       </section>
                     );
                   })}
+                {powerFrames.length > 0 && (
+                  <section>
+                    <h3>Power moments</h3>
+                    <ol>
+                      {powerFrames.map(({ note, at, label }) => (
+                        <li key={at}>
+                          <button aria-current={index === at ? "step" : undefined} onClick={() => { setAuto(false); setIndex(at); }}>
+                            {label.replace(/^(white|black)/, color => `${color === "white" ? detail.white : detail.black} (${color})`)}
+                          </button>
+                          <p>{note}</p>
+                        </li>
+                      ))}
+                    </ol>
+                  </section>
+                )}
                 {pickFrames.length > 0 && (
                   <section>
                     <h3>Pick history</h3>
