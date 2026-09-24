@@ -5,6 +5,7 @@ import { projectClock, type MatchClock } from "@/lib/chaos-clock";
 import { visualState, archiveFrames, archivePlatform } from "@/lib/chaos-watch";
 import { moveLogCount } from "@/lib/chaos-move-log";
 import { replayDrama } from "@/lib/chaos-replay-drama";
+import { recordSpectator, spectatorCount, spectatorCounts } from "@/lib/chaos-spectators";
 
 type PowerRow = { id?: string; name?: string; icon?: string };
 /** Just what a replay card shows: icon and name, deduplicated, at most six per side. */
@@ -23,12 +24,18 @@ export async function GET(req: NextRequest) {
   try {
     const roomId = req.nextUrl.searchParams.get("room"),
       matchId = req.nextUrl.searchParams.get("match");
+    // Players ask how many people are watching their game; they are never counted themselves.
+    const countOnly = req.nextUrl.searchParams.get("spectators");
+    if (countOnly) return NextResponse.json({ spectators: await spectatorCount(countOnly.slice(0, 150)) }, { headers });
     if ((roomId?.length ?? 0) > 150 || (matchId?.length ?? 0) > 150)
       return NextResponse.json(
         { error: "Invalid game" },
         { status: 400, headers },
       );
     if (roomId) {
+      // Live history: the viewer says how many recorded frames it already holds and gets the rest.
+      const have = Math.max(0, Math.min(10000, Math.floor(Number(req.nextUrl.searchParams.get("have")) || 0)));
+      const viewer = req.headers.get("x-watch-id") ?? "";
       const rows =
         await db.execute(sql`select r.id,r.fen,r.status,(r."moveHistory"->-1->>'pieceStays')::boolean as "pieceStays",r."hostColor",r."lastMoveFrom",r."lastMoveTo",r."timeControlSeconds",r."incrementSeconds",
     r."chaosState"-'_sync' as "chaosState",
@@ -37,7 +44,9 @@ export async function GET(req: NextRequest) {
      'draft',jsonb_build_object('color',r."chaosState"->'_sync'->'draft'->'color','deadline',r."chaosState"->'_sync'->'draft'->'deadline'),
      'opening',r."chaosState"->'_sync'->'opening'->'deadline',
      'picks',r."chaosState"->'_sync'->'picks') as meta,
-    coalesce(h.name,'Guest player') as host,coalesce(g.name,'Guest player') as guest
+    coalesce(h.name,'Guest player') as host,coalesce(g.name,'Guest player') as guest,
+    coalesce(jsonb_array_length(r."chaosState"->'_sync'->'replayFrames'),0) as frame_count,
+    (select coalesce(jsonb_agg(f order by i),'[]'::jsonb) from jsonb_array_elements(coalesce(r."chaosState"->'_sync'->'replayFrames','[]'::jsonb)) with ordinality e(f,i) where i > ${have}) as frames
     from chaos_room r left join chaos_player h on h.id=r."hostId" left join chaos_player g on g.id=r."guestId"
     where r.id=${roomId} and r."guestId" is not null and r.status<>'waiting'`);
       const room = rows.rows[0];
@@ -84,6 +93,13 @@ export async function GET(req: NextRequest) {
             : null,
           base: room.timeControlSeconds,
           increment: room.incrementSeconds,
+          frameCount: Number(room.frame_count) || 0,
+          frames: Array.isArray(room.frames) ? room.frames : [],
+          framesFrom: have,
+          // A heartbeat (beat=1, every 15s per tab) registers this viewer; other polls only read.
+          spectators: req.nextUrl.searchParams.get("beat") === "1" && viewer
+            ? await recordSpectator(String(room.id), viewer)
+            : await spectatorCount(String(room.id)),
         },
         { headers },
       );
@@ -166,6 +182,7 @@ export async function GET(req: NextRequest) {
    from chaos_match m left join chaos_player h on h.id=m.host_id left join chaos_player g on g.id=m.guest_id
    order by m.ended_at desc,m.id desc limit 21 offset ${page * 20}`);
     const listNow = Date.now();
+    const watching = live ? await spectatorCounts(data.rows.slice(0, 20).map((m) => String(m.id))) : null;
     return NextResponse.json(
       {
         games: data.rows
@@ -185,6 +202,7 @@ export async function GET(req: NextRequest) {
             ...(live && m.clock
               ? { clock: projectClock(m.clock as MatchClock, listNow) }
               : {}),
+            ...(live && watching ? { spectators: watching[String(m.id)] ?? 0 } : {}),
           })),
         hasMore: data.rows.length > 20,
         ...(live ? { serverNow: listNow } : {}),

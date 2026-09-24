@@ -377,3 +377,26 @@
 @media(max-width:700px){.cards,.topWeek .cards{grid-template-columns:1fr}.card{grid-template-columns:88px minmax(0,1fr);gap:14px;padding:14px!important}.thumb{width:88px}}
 @media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
 .powerNote{display:block;margin-top:4px;font-size:12px;font-weight:700;color:#ffd08f;text-transform:none}
+
+/* ── Game view: board first. At least 60/40 board to sidebar; the board column stays in view while
+   the sidebar (powers, power moments, picks) scrolls beside it. ── */
+.game{grid-template-columns:minmax(0,3fr) minmax(280px,2fr);gap:28px}
+.game>div:first-child{position:sticky;top:12px}
+.board{max-width:860px;width:fit-content;margin-inline:auto}
+.game>div:first-child>.player,.game>div:first-child>.controls,.game>div:first-child>.tabs{max-width:var(--board-w,874px);margin-inline:auto}
+.matchTitle{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:18px;font-size:clamp(17px,2.2vw,24px);font-weight:900;color:#f2ecd8}
+.matchTitle>small{font-size:12px;color:#8aa0b5;font-weight:700}
+.matchSide{display:inline-flex;align-items:center;gap:8px;overflow-wrap:anywhere}
+.matchSide>i{width:12px;height:12px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 2px #0f1b2c}
+.matchSide>i[data-side=w]{background:#f4ecd4}.matchSide>i[data-side=b]{background:#2a3242;border:1px solid #8aa0b5}
+.liveBadge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:#e5484d;color:#fff;font-size:11px;font-weight:900;letter-spacing:.12em}
+.liveBadge>i{width:7px;height:7px;border-radius:50%;background:#fff;animation:live-pulse 1.4s ease-in-out infinite}
+@keyframes live-pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.spectators,.spectatorsInline{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;background:#0f1b2c;border:1px solid #6b7f9255;color:#e8f0f8;font-size:13px;font-weight:900;font-variant-numeric:tabular-nums}
+.spectators svg,.spectatorsInline svg{color:#9fd0ff}
+.spectatorsInline{margin-left:8px;padding:2px 7px;font-size:10px;vertical-align:middle}
+.liveOn,.liveOff{font-weight:900!important;letter-spacing:.04em}
+.liveOn{background:#e5484d!important;border-color:#e5484d!important;color:#fff!important}
+.liveOff{background:#2b3d52!important;color:#ffd08f!important;border-color:#ffb45c88!important}
+@media(max-width:900px){.game{grid-template-columns:minmax(0,1fr) minmax(240px,.8fr)}}
+@media(max-width:650px){.game{grid-template-columns:1fr}.game>div:first-child{position:static}}

@@ -4,7 +4,8 @@ import {createChaosState} from "@/lib/chaos-chess";
 import {WatchEffects} from "./chaos-watch-effects";
 import {watchTransition, type WatchImpact} from "@/lib/chaos-impact";
 import { ChaosNavLink, chaosHref } from "./chaos-nav-link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { SpectatorCount } from "./chaos-spectator-count";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "./chessboard-compat";
 import { buildChaosCustomPieces } from "./chaos-pieces";
@@ -29,6 +30,7 @@ type Entry = {
   moveCount?: number | null;
   platform?: string;
   clock?: MatchClock | null;
+  spectators?: number;
   /** Replay cards (archive only): the most dramatic position and why the game is worth a look. */
   thumbFen?: string | null;
   thumbLabel?: string;
@@ -55,7 +57,20 @@ type Detail = {
   base?: number;
   increment?: number;
   result?: { winner: string; reason: string };
+  rated?: boolean;
+  /** Live: people watching right now (null when counts are unavailable). */
+  spectators?: number | null;
+  frameCount?: number;
+  framesFrom?: number;
 };
+/** Anonymous per-tab id for the spectator count; never tied to an account. */
+function watchId(): string {
+  try {
+    let id = sessionStorage.getItem("chaos-watch-id");
+    if (!id) { id = crypto.randomUUID(); sessionStorage.setItem("chaos-watch-id", id); }
+    return id;
+  } catch { return ""; }
+}
 const control = (base: number, inc: number) =>
   base > 0 ? `${base / 60}+${inc ?? 0}` : "No rush";
 const clockText = (ms: number) => {
@@ -156,7 +171,10 @@ export function ChaosWatch({
   /** Square the pointer is over: hovering a piece shows where it can go. */
   const [hover, setHover] = useState<string | null>(null);
   const board = useRef<HTMLDivElement>(null);
+  /** Live only: true while the board tracks the newest move; stepping back pauses it. */
+  const [following, setFollowing] = useState(true);
   const forwardEffect = useRef(false);
+  const liveFrames = useRef<{ game: number; frames: WatchFrame[] }>({ game: -1, frames: [] });
   useEffect(() => {
     setError("");
     setDetail(null);
@@ -166,6 +184,9 @@ export function ChaosWatch({
     setCopied(false);
     let active = true;
     let timer: ReturnType<typeof setTimeout>;
+    setFollowing(true);
+    liveFrames.current = { game: -1, frames: [] };
+    let lastBeat = 0;
     const load = async () => {
       if (!active) return;
       if (document.visibilityState !== "visible") {
@@ -173,17 +194,41 @@ export function ChaosWatch({
         return;
       }
       try {
-        const query = selected
+        let query = selected
           ? `${selected.live ? "room" : "match"}=${encodeURIComponent(selected.id)}`
           : `tab=${tab}&page=${page}`;
+        const beat = !!selected?.live && Date.now() - lastBeat > 15000;
+        if (selected?.live) query += `&have=${liveFrames.current.frames.length}${beat ? "&beat=1" : ""}`;
+        if (beat) lastBeat = Date.now();
         const r = await fetch(`/api/chaos/watch?${query}`, {
           cache: "no-store",
+          headers: beat ? { "x-watch-id": watchId() } : undefined,
         });
         if (!r.ok)
           throw Error("Could not load games. Reopen this view to retry.");
         const d = await r.json();
         if (!active) return;
-        if (selected) {
+        if (selected?.live) {
+          // Keep the whole live game: each poll only carries frames we don't have yet. A rematch
+          // (new gameNumber) or a gap starts the history over on the next poll.
+          const held = liveFrames.current;
+          const incoming: WatchFrame[] = Array.isArray(d.frames) ? d.frames : [];
+          let frames: WatchFrame[];
+          if (d.framesFrom === 0) {
+            frames = incoming;
+            liveFrames.current = { game: d.gameNumber ?? 0, frames };
+          } else if (d.gameNumber === held.game && d.framesFrom === held.frames.length) {
+            frames = [...held.frames, ...incoming];
+            liveFrames.current = { game: held.game, frames };
+          } else {
+            // Out of step (a rematch, or frames we never received): keep what is on screen for
+            // the same game and fetch the whole history on the next poll.
+            frames = d.gameNumber === held.game ? held.frames : [];
+            liveFrames.current = { game: -1, frames: [] };
+          }
+          setDetail({ ...d, frames });
+          setReceived(Date.now());
+        } else if (selected) {
           setDetail(d);
           setReceived(Date.now());
         } else {
@@ -219,6 +264,7 @@ export function ChaosWatch({
     if (!auto || !detail?.frames?.length) return;
     if (index >= detail.frames.length - 1) {
       setAuto(false);
+      if (selected?.live) setFollowing(true);
       return;
     }
     const timer = setTimeout(() => {forwardEffect.current=true;setIndex((i) => Math.min(i + 1, detail.frames!.length - 1));}, 1200);
@@ -236,6 +282,9 @@ export function ChaosWatch({
     [powerNotes, frames, index],
   );
   /** Picks revealed so far: the rail fills in one by one as the replay advances. */
+  useEffect(() => {
+    if (selected?.live && following) setIndex(Math.max(0, (detail?.frames?.length ?? 1) - 1));
+  }, [selected?.live, following, detail?.frames?.length]);
   const pickFrames = useMemo(
     () =>
       frames
@@ -243,17 +292,31 @@ export function ChaosWatch({
         .filter(({ frame, at }) => at <= index && / (picked|chose) /.test(frame.label)),
     [frames, index],
   );
+  /* As big as the column allows, but short enough that the players and move controls stay on
+     screen: width is capped by the viewport height too. Measures the column, not the board frame,
+     so the frame can hug the board. */
   useEffect(() => {
-    if (!board.current) return;
-    const observer = new ResizeObserver((entries) =>
-      setWidth(Math.min(520, entries[0].contentRect.width)),
-    );
-    observer.observe(board.current);
-    return () => observer.disconnect();
+    const column = board.current?.parentElement;
+    if (!column) return;
+    const fit = () => setWidth(Math.max(260, Math.min(860, column.clientWidth - 14, window.innerHeight - 250)));
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(column);
+    window.addEventListener("resize", fit);
+    return () => { observer.disconnect(); window.removeEventListener("resize", fit); };
   }, [!!detail]);
-  const frame = selected?.live
+  const frame = selected?.live && (following || !frames.length)
     ? detail?.frame
     : frames[Math.min(index, frames.length - 1)];
+  /** Live history steps; reaching the newest move resumes following. */
+  const goTo = (i: number, forward = false) => {
+    setAuto(false);
+    const last = frames.length - 1;
+    const next = Math.max(0, Math.min(i, last));
+    if (forward) forwardEffect.current = true;
+    if (selected?.live) setFollowing(next >= last);
+    setIndex(next);
+  };
   const rendered = useMemo(() => {
     if (!frame) return null;
     try {
@@ -472,7 +535,7 @@ export function ChaosWatch({
     effectPrevious.current={key:watchKey,frame,index,terminal};
     setWatchEffects([]);
     if(!previous || previous.key!==watchKey || document.visibilityState!=='visible')return;
-    const advance=selected?.live || (forward && index===previous.index+1);
+    const advance=(selected?.live && following) || (forward && index===previous.index+1);
     if(!advance)return;
     if(previous.frame.fen===frame.fen && JSON.stringify(previous.frame.state)===JSON.stringify(frame.state) && previous.terminal===terminal)return;
     const transition=watchTransition(previous.frame,frame,terminal&&!previous.terminal?detail?.result:null);
@@ -481,7 +544,7 @@ export function ChaosWatch({
     if(transition.sound)playSound(transition.sound);
     const timer=setTimeout(()=>setWatchEffects([]),2400);
     return()=>clearTimeout(timer);
-  },[frame,index,watchKey,terminal,selected?.live,detail?.result?.reason,detail?.result?.winner]);
+  },[frame,index,watchKey,terminal,selected?.live,following,detail?.result?.reason,detail?.result?.winner]);
   const clockChip = (clock: MatchClock | null | undefined, side: "w" | "b") =>
     clock ? (
       <b className={clockState(liveClock(clock, side), clock.active === side)}>
@@ -603,7 +666,7 @@ export function ChaosWatch({
                     onClick={() => openGame(g.id, tab === "live")}
                   >
                     <span className={styles.matchNames}>
-                      <span className={styles.matchBadge}>{tab === "live" ? "● LIVE NOW" : "↶ REPLAY"}</span>
+                      <span className={styles.matchBadge}>{tab === "live" ? "● LIVE NOW" : "↶ REPLAY"}{tab === "live" && <SpectatorCount count={g.spectators} compact />}</span>
                       <strong>{g.white}</strong>
                       <small>vs</small>
                       <strong>{g.black}</strong>
@@ -667,14 +730,21 @@ export function ChaosWatch({
           <p role="status">Loading the board…</p>
         ) : (
           <>
+            <div className={styles.matchTitle}>
+              {selected.live && !detail.result && <span className={styles.liveBadge}><i aria-hidden="true" />LIVE</span>}
+              <span className={styles.matchSide}><i aria-hidden="true" data-side="w" />{detail.white}</span>
+              <small>vs</small>
+              <span className={styles.matchSide}><i aria-hidden="true" data-side="b" />{detail.black}</span>
+              {selected.live && <SpectatorCount count={detail.spectators} />}
+            </div>
             <div className={styles.status} role="status">
               <span>
-                {selected.live
+                {selected.live && following
                   ? detail.result
                     ? `${detail.result.winner === "draw" ? "Draw" : detail.result.winner === "aborted" ? "No contest" : detail.result.winner + " wins"} · ${detail.result.reason}`
                     : detail.phase
                   : frame && describeWatchFrame(frame)}
-                {!selected.live && powerNotes[index] && <small className={styles.powerNote}>{powerNotes[index]}</small>}
+                {!(selected.live && following) && powerNotes[index] && <small className={styles.powerNote}>{powerNotes[index]}</small>}
               </span>
               {typeof detail.base === "number" && (
                 <b className={styles.chip} title="Time control">
@@ -687,24 +757,22 @@ export function ChaosWatch({
                 </b>
               )}
             </div>
-            {!selected.live && detail.result && (
-              <p>
-                {detail.result.winner === "draw"
-                  ? "Draw"
-                  : detail.result.winner + " wins"}{" "}
-                · {detail.result.reason}
-              </p>
-            )}
-            {!selected.live && (
-              <div className={styles.archiveFacts}>
-                <span title="Total full moves in the game, including an unfinished final pair. Power picks are excluded.">
-                  {detail.moveCount == null ? "Move count unavailable" : `${detail.moveCount} ${detail.moveCount === 1 ? "move" : "moves"}`}
+            <div className={styles.cardMeta}>
+              {!selected.live && detail.result && (
+                <span className={styles.metaItem} data-kind="rated">
+                  {detail.result.winner === "draw" ? "Draw" : `${detail.result.winner[0].toUpperCase()}${detail.result.winner.slice(1)} won`} · {detail.result.reason}
                 </span>
-                <span>{detail.platform ?? "Platform unavailable"}</span>
-              </div>
-            )}
+              )}
+              {!selected.live && detail.moveCount != null && (
+                <span className={styles.metaItem} title="Full moves, including an unfinished final pair. Power picks are excluded."><i aria-hidden="true">♟</i>{detail.moveCount} {detail.moveCount === 1 ? "move" : "moves"}</span>
+              )}
+              {typeof detail.rated === "boolean" && <span className={styles.metaItem} data-kind={detail.rated ? "rated" : "casual"}>{detail.rated ? "★ Rated" : "Casual"}</span>}
+              {!selected.live && detail.platform && detail.platform !== "Platform unavailable" && (
+                <span className={styles.metaItem} data-platform={detail.platform === "Discord" ? "discord" : detail.platform === "Website" ? "web" : "mixed"}>{detail.platform}</span>
+              )}
+            </div>
             <div className={styles.game}>
-              <div>
+              <div style={{ "--board-w": `${width + 14}px` } as CSSProperties}>
                 <div className={styles.player}>
                   <strong>{flipped ? detail.white : detail.black}</strong>
                   <span>
@@ -742,59 +810,58 @@ export function ChaosWatch({
                     {selected.live && clockChip(detail.clock, flipped ? "b" : "w")}
                   </span>
                 </div>
-                {!selected.live && frames.length > 0 && (
+                {frames.length > (selected.live ? 1 : 0) && (
                   <div className={styles.controls}>
                     <div>
                       <button
                         disabled={index === 0}
-                        onClick={() => {
-                          setAuto(false);
-                          setIndex(0);
-                        }}
+                        onClick={() => goTo(0)}
                         aria-label="First position"
                       >
                         ⏮
                       </button>
                       <button
                         disabled={index === 0}
-                        onClick={() => {
-                          setAuto(false);
-                          setIndex((i) => i - 1);
-                        }}
+                        onClick={() => goTo(index - 1)}
                         aria-label="Previous position"
                       >
                         ◀
                       </button>
-                      <button
+                      {!(selected.live && following) && <button
                         disabled={frames.length < 2}
                         onClick={() => {
                           if (!auto && index >= frames.length - 1) setIndex(0);
+                          if (selected.live) setFollowing(false);
                           setAuto((a) => !a);
                         }}
                       >
                         {auto ? "Pause" : index >= frames.length - 1 ? "Play again" : "Play"}
-                      </button>
+                      </button>}
                       <button
                         disabled={index >= frames.length - 1}
-                        onClick={() => {
-                          setAuto(false);
-                          forwardEffect.current=true;
-                          setIndex((i) => i + 1);
-                        }}
+                        onClick={() => goTo(index + 1, true)}
                         aria-label="Next position"
                       >
                         ▶
                       </button>
-                      <button
-                        disabled={index >= frames.length - 1}
-                        onClick={() => {
-                          setAuto(false);
-                          setIndex(frames.length - 1);
-                        }}
-                        aria-label="Final position"
-                      >
-                        ⏭
-                      </button>
+                      {selected.live ? (
+                        <button
+                          className={following ? styles.liveOn : styles.liveOff}
+                          aria-pressed={following}
+                          onClick={() => goTo(frames.length - 1)}
+                          aria-label={following ? "Following the live game" : "Back to the live position"}
+                        >
+                          {following ? "● Live" : "Back to live ⏭"}
+                        </button>
+                      ) : (
+                        <button
+                          disabled={index >= frames.length - 1}
+                          onClick={() => goTo(frames.length - 1)}
+                          aria-label="Final position"
+                        >
+                          ⏭
+                        </button>
+                      )}
                     </div>
                     <input
                       aria-label="Replay position"
@@ -802,14 +869,12 @@ export function ChaosWatch({
                       min={0}
                       max={frames.length - 1}
                       value={Math.min(index, frames.length - 1)}
-                      onChange={(e) => {
-                        setAuto(false);
-                        setIndex(Number(e.target.value));
-                      }}
+                      onChange={(e) => goTo(Number(e.target.value))}
                     />
                     <small>
-                      Position {Math.min(index + 1, frames.length)} /{" "}
-                      {frames.length}
+                      {selected.live && following
+                        ? `Following live · position ${frames.length}`
+                        : `Position ${Math.min(index + 1, frames.length)} / ${frames.length}${selected.live ? " · live game continues" : ""}`}
                     </small>
                   </div>
                 )}
@@ -917,7 +982,7 @@ function ReplayThumb({ fen, label }: { fen?: string | null; label?: string }) {
     <span className={styles.thumb} aria-hidden="true" title={label}>
       {squares.map((piece, i) => (
         <span key={i} data-dark={(Math.floor(i / 8) + i) % 2 === 1 || undefined}>
-          {piece && <img src={`/pieces/merida/${piece === piece.toUpperCase() ? "w" : "b"}${piece.toUpperCase()}.svg`} alt="" loading="lazy" />}
+          {piece && <img src={`/activity/pieces/${piece === piece.toUpperCase() ? "w" : "b"}${piece.toUpperCase()}.svg`} alt="" loading="lazy" />}
         </span>
       ))}
     </span>

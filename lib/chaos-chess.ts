@@ -361,7 +361,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     id: "collateral-rook",
     name: "Collateral Damage",
     description:
-      "Rook captures also destroy the piece directly behind the target, including allies.",
+      "Rook captures also destroy the piece directly behind the target, including allies. Kings are never destroyed this way.",
     warning:
       "Collateral hits do not capture the King — the Rook must land on the King's square directly.",
     tier: "epic",

@@ -59,6 +59,7 @@ import { chaosMoveDecal } from "@/lib/chaos-move-decals";
 import { stockfishPool } from "@/lib/stockfish-client";
 import { ChaosLobby, type ChaosMatchFound, type ChaosOpenSeek } from "@/components/chaos-lobby";
 import { ChaosSeekWatcher } from "@/components/chaos-seek-watcher";
+import { SpectatorCount } from "@/components/chaos-spectator-count";
 import { inviteJoinCode } from "@/lib/chaos-launch";
 import { recordChaosFirstTouch } from "@/lib/chaos-first-touch";
 import { OpeningMoveNotice, AbortedMatch } from "@/components/chaos-opening-move";
@@ -3947,6 +3948,25 @@ export default function ChaosChessPage() {
       playSound("chaos-mate");
     }
   }, [impactFen, gameStatus, endReason, gameResult, playerColor, chaosState.playerModifiers, chaosState.aiModifiers, presentation.activity, triggerEffect]);
+
+  /* How many people are watching this online game (players are never counted themselves). */
+  const [spectators, setSpectators] = useState<number | null>(null);
+  useEffect(() => {
+    setSpectators(null);
+    if (gameMode === "ai" || !roomId || !["matched", "picking-anomaly", "playing", "drafting", "game-over"].includes(gameStatus)) return;
+    let active = true;
+    const read = () => {
+      if (document.visibilityState !== "visible") return;
+      fetch(`/api/chaos/watch?spectators=${encodeURIComponent(roomId)}`, { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (active && typeof d?.spectators === "number") setSpectators(d.spectators); })
+        .catch(() => {});
+    };
+    read();
+    const timer = setInterval(read, 15000);
+    return () => { active = false; clearInterval(timer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameMode, roomId, gameStatus === "setup" || gameStatus === "waiting"]);
 
   /* Revived and summoned pieces (Pawn Fortress, Regicide, Undead Army, Knight Horde, Phalanx, The
      Wake) get a REVIVED! / SUMMONED! burst. Only boards one ply apart (a move) or on the same ply
@@ -11210,6 +11230,7 @@ export default function ChaosChessPage() {
               <span className="text-[11px] sm:text-xs font-medium text-slate-400">
                 {gameMode === "ai" ? `Stockfish (${aiLevel})` : opponentLabel}
               </span>
+              {gameMode !== "ai" && !!spectators && <SpectatorCount count={spectators} compact />}
               <InlineModifierIcons modifiers={chaosState.aiModifiers} />
               {timeControl && gameMode !== "ai" && !unlimitedTime && <span className="match-clock ml-auto" data-active={game.turn() === (playerColor === "white" ? "b" : "w") && gameStatus === "playing" && !waitingForOpponentDraft}>
                 {formatTimer(playerColor === "white" ? timers.b : timers.w)}
