@@ -122,7 +122,7 @@ export type PartyMessage =
   | { type: "ability"; square: string; chaosState?: unknown }
   | { type: "king_capture"; from: string; to: string }
   | { type: "kamikaze_king"; from: string; to: string }
-  | { type: "game_over"; winner: "white" | "black" | "draw" | "aborted"; reason: string }
+  | { type: "game_over"; capture?: {from:string;to:string;pieceStays?:boolean}; winner: "white" | "black" | "draw" | "aborted"; reason: string }
   | { type: "sync_error"; error: string; snapshot?: any }
   | { type: "sync_snapshot"; snapshot: any }
   | PartyMoveMessage

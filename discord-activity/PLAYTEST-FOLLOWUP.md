@@ -250,3 +250,39 @@ Verification: 67 sync, transport, draft, clock and opening-abort tests passed, p
 - Initial loads, backward steps, timeline scrubbing, repeated live snapshots and room/rematch switches stay quiet. Forward Next and autoplay trigger effects; flipped boards keep effects on their correct squares.
 - Live polling still runs every 3 seconds. Skipped moves are intentionally not reconstructed from ambiguous positions.
 - Fixed a desktop-to-mobile resize overflow in the Watch board. Checked 390px width, real archived checkmate forward/seek behavior and 14 focused effect/audio/replay/navigation tests. Both TypeScript projects passed.
+
+### Power-pick square correction — 2026-09-21
+- Removed the hard-coded d4 power-pick effect. Single-piece upgrades use recorded assignedSquares; type-wide powers use current friendly pieces of the modifier's type.
+- Missing/captured single-piece assignments produce no board effect instead of guessing a square. Power picks now use compact purple sparkles to keep multiple affected pieces readable.
+- Reproduced f1-vs-d4 regression before the fix; all eight impact tests and Activity TypeScript check pass afterward.
+
+### Piece artwork and Phantom Rook audit — September 21
+- Added white/black SVG sculpts for Phantom Rook, Nuclear Queen, Warp Queen, King's Chains, King's Wrath, King Ascension, Collateral Rook, Pawn Fortress, En Passant Everywhere, early promotion, and Toll Gate.
+- Stacked powers retain the primary transformation; additional powers use the compact badge display. War Pawn retains its combined charge/bayonet model. Nuclear cooldown remains visible separately.
+- Knight Horde and Undead Army deliberately use ordinary piece models: they summon/restore pieces rather than permanently alter their movement.
+- Phantom passes through allies only to empty squares. Clear-path rook captures remain; Cannon captures over exactly one blocker remain available when stacked. Updated draft/anomaly/collection text and authoritative legality/threat rules.
+- Validation: 119 targeted tests passed, both app TypeScript checks passed, both-colour SVG contact sheet reviewed.
+
+### Piece movement and capture juice — September 22
+- Added opt-in shared board motion for live Chaos games and forward replay/live-watch updates: eased travel, jumping-piece arcs, landing squash/shadows, capture tumbles and impact chips using the actual upgraded piece artwork.
+- Castling animates both pieces; promotion travels as the pawn; en passant removes its victim on the correct square. Dragged pieces settle at the drop location instead of replaying their travel.
+- Existing ricochet and king-capture sequences retain their dedicated animations. Replay seeks, reverse navigation, orientation changes, background tabs and reduced-motion preference suppress the new effects.
+- Checked a real replay in the browser (including Dragon Bishop taking Camel), mobile layout, reduced motion and seeking. 64 targeted tests and both app type checks passed.
+
+## Lobby seek lifecycle (2026-09-22)
+- Your own challenge row offers Cancel, including a seek left behind by an earlier page load.
+- Lobby mount, unmount, pagehide and account changes cancel waiting seeks; requests use keepalive for navigation.
+- Search generation guards discard late responses; a late-created room is explicitly cancelled.
+- Search start waits for initial cleanup; polling cannot overlap; timeout uses wall-clock time.
+- Server excludes both the current account and the browser guest UUID when pairing. Direct joining your own guest room is rejected after login.
+- Cancellation recognizes the same guest bearer identity after login and never cancels a playing room.
+- Expired challenges are marked cancelled during discovery, and expiry is rechecked in the atomic join.
+- Abrupt network loss can prevent navigation cleanup; server expiry remains the fallback (five minutes).
+
+## King captures and achievements (2026-09-22)
+- Presentation-only king finish shared by live boards, replays and spectating; valid engine FEN preserved.
+- Attacker glides to destination, king falls, particles/caption show the exact final action. Ranged attackers stay put. Reduced-motion alternative included; centre caption stays inside board edges.
+- Server history, snapshots, events and replay frames retain terminal capture and stationary attacker metadata. Legacy replay frames infer stationary captures from their powers when possible.
+- Signed-in homepage trophy cabinet: Crown snatcher, First blood, No escape, Fully loaded, Back for more, Chaos champion.
+- Progress and original unlock dates/replay IDs derived from authoritative archive for this account. Both colours handled; aborts/disconnections, self games and empty games excluded. Guest API access rejected. No schema migration, currency reward or client-reported unlocks.
+- Three generated transparent trophy assets, compact WebP delivery; source prompts in assets/achievements/README.md.

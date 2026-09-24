@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
       );
     if (roomId) {
       const rows =
-        await db.execute(sql`select r.id,r.fen,r.status,r."hostColor",r."lastMoveFrom",r."lastMoveTo",r."timeControlSeconds",r."incrementSeconds",
+        await db.execute(sql`select r.id,r.fen,r.status,(r."moveHistory"->-1->>'pieceStays')::boolean as "pieceStays",r."hostColor",r."lastMoveFrom",r."lastMoveTo",r."timeControlSeconds",r."incrementSeconds",
     r."chaosState"-'_sync' as "chaosState",
     jsonb_build_object('clock',r."chaosState"->'_sync'->'clock','result',r."chaosState"->'_sync'->'result',
      'gameNumber',r."chaosState"->'_sync'->'gameNumber',
@@ -54,6 +54,7 @@ export async function GET(req: NextRequest) {
             label: "Live position",
             from: room.lastMoveFrom,
             to: room.lastMoveTo,
+            pieceStays:typeof room.pieceStays === "boolean" ? room.pieceStays : undefined,
           },
           clock: meta.clock ? projectClock(meta.clock, now) : null,
           serverNow: now,

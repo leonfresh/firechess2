@@ -7,6 +7,9 @@
  * to the v5 `options` API. This avoids rewriting every <Chessboard> usage.
  */
 
+import {KingFinishLayer} from "./chaos-king-finish";
+import type {KingFinish} from "@/lib/chaos-king-finish";
+import { PieceMotionLayer, usePieceMotion } from "./chaos-piece-motion";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Chessboard as ChessboardV5, defaultPieces } from "react-chessboard";
 import type { ChessboardOptions } from "react-chessboard";
@@ -33,6 +36,9 @@ export interface ChessboardCompatProps {
   arePiecesDraggable?: boolean;
   isDraggablePiece?: (args: { piece: string; sourceSquare: string }) => boolean;
   animationDuration?: number;
+  /** Chaos movement/capture effects; opt-in so other boards remain unchanged. */
+  pieceJuice?: boolean;
+  kingCapture?: KingFinish | null;
   showBoardNotation?: boolean;
 
   // Styles
@@ -119,7 +125,9 @@ function convertArrows(v4Arrows?: V4ArrowTuple[] | any[]): Arrow[] | undefined {
 }
 
 export function Chessboard(props: ChessboardCompatProps) {
+  const generatedId = React.useId();
   const containerRef = useRef<HTMLDivElement>(null);
+  const droppedMove = useRef<{from: string; to: string; at: number} | null>(null);
   const [measuredWidth, setMeasuredWidth] = useState(props.boardWidth ?? 400);
 
   // Dedup ref: prevent double-fire when both onPieceClick and onSquareClick
@@ -171,7 +179,9 @@ export function Chessboard(props: ChessboardCompatProps) {
   // v5 uses document.querySelector(`#${id}-square-...`) internally for
   // animation calculations. IDs containing dots, slashes, or spaces break
   // CSS selectors, so we sanitise the id to only keep safe characters.
-  const safeId = props.id?.replace(/[^a-zA-Z0-9_-]/g, "-");
+  const safeId = (props.id ?? generatedId).replace(/[^a-zA-Z0-9_-]/g, "-");
+
+  const motion = usePieceMotion(position, props.boardOrientation ?? "white", !!props.pieceJuice && !props.kingCapture, props.customPieces, droppedMove.current);
 
   const options: ChessboardOptions = {
     id: safeId,
@@ -179,6 +189,7 @@ export function Chessboard(props: ChessboardCompatProps) {
     boardOrientation: props.boardOrientation,
     allowDragging: props.arePiecesDraggable,
     animationDurationInMs: props.animationDuration,
+    showAnimations: !props.pieceJuice && props.animationDuration !== 0,
     showNotation: props.showBoardNotation,
 
     // Styles
@@ -209,11 +220,13 @@ export function Chessboard(props: ChessboardCompatProps) {
     // Callbacks — adapt v4 signatures to v5
     onPieceDrop: props.onPieceDrop
       ? ({ piece, sourceSquare, targetSquare }: PieceDropHandlerArgs) => {
-          return props.onPieceDrop!(
+          const accepted = props.onPieceDrop!(
             sourceSquare ?? "",
             targetSquare ?? "",
             piece?.pieceType,
           );
+          if (accepted && sourceSquare && targetSquare) droppedMove.current = {from: sourceSquare, to: targetSquare, at: Date.now()};
+          return accepted;
         }
       : undefined,
 
@@ -374,12 +387,19 @@ export function Chessboard(props: ChessboardCompatProps) {
         })()
       : null;
 
-  const board = <ChessboardV5 options={options} />;
+  const board = <>
+    <ChessboardV5 options={options} />
+    {props.kingCapture && <KingFinishLayer key={`${props.kingCapture.from}:${props.kingCapture.to}`} capture={props.kingCapture} fen={position} width={measuredWidth} flipped={props.boardOrientation === "black"} boardId={safeId} renderers={props.customPieces}/> }
+    {motion && <>
+      <style>{`@media(prefers-reduced-motion:no-preference){${motion.plan.moves.map(move => `[data-motion-board="${safeId}"] [data-square="${move.to}"] [data-piece]`).join(",")}${motion.plan.moves.length ? "{visibility:hidden}" : ""}}`}</style>
+      <PieceMotionLayer key={motion.serial} motion={motion} width={measuredWidth} orientation={props.boardOrientation ?? "white"}/>
+    </>}
+  </>;
 
   // Wrap in a container div so we can measure width when boardWidth isn't provided
   if (props.boardWidth) {
     return (
-      <div style={{ position: "relative" }}>
+      <div ref={containerRef} data-motion-board={safeId} style={{ position: "relative" }}>
         {board}
         {promoOverlay}
       </div>
@@ -387,7 +407,7 @@ export function Chessboard(props: ChessboardCompatProps) {
   }
 
   return (
-    <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
+    <div ref={containerRef} data-motion-board={safeId} style={{ width: "100%", position: "relative" }}>
       {board}
       {promoOverlay}
     </div>

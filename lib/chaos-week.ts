@@ -25,6 +25,7 @@ export type ChaosWeekEntry = {
   platform: string;
   timeControl: string;
   score: number;
+  watchReasons: string[];
   tier: ChaosTier;
   headline: string;
   blurb: string;
@@ -133,6 +134,7 @@ function toEntry(row: MatchRow, shares: Record<string, number>): ChaosCard {
     timeControl: timeControlLabel(Number(record.timeControlSeconds ?? 0), Number(record.incrementSeconds ?? 0)),
     detail: scored,
     score: scored.score,
+    watchReasons: scored.watchReasons,
     tier: scored.tier,
     headline: scored.headline,
     blurb: scored.blurb,
@@ -157,7 +159,7 @@ export function weekKey(date = new Date()): string {
 }
 
 /**
- * The Game of the Week: every archived game from the last 7 days, scored on chaos
+ * The Game of the Week: signed-in opponents from the last 7 days, scored on chaos
  * events only. Deterministic — same window, same winner — so a page render, a
  * Discord post and a cron job all agree without storing a pick.
  */
@@ -174,21 +176,24 @@ export async function getChaosWeek(options?: { days?: number; limit?: number }):
     left join chaos_player h on h.id = m.host_id
     left join chaos_player g on g.id = m.guest_id
     where m.ended_at > now() - (${days} * interval '1 day')
+      and h.id is not null and g.id is not null
+      and left(m.host_id, 6) <> 'guest_' and left(m.guest_id, 6) <> 'guest_'
+      and m.host_id <> m.guest_id
     order by m.ended_at desc
     limit ${limit}`);
   const rows = result.rows as MatchRow[];
   const entries = rows
     .map((row) => toEntry(row, shares))
     // Stub games (aborted starts, 0-2 plies) are archive noise, never a highlight.
-    .filter((entry) => entry.plies >= 6 && !/abort/i.test(entry.reason))
-    // Deterministic tie-break: more signature powers, then longer, then the
+    .filter((entry) => entry.plies >= 6 && entry.moment !== null && !/abort|disconnect|abandon/i.test(entry.reason))
+    // Deterministic tie-break: more signature powers, then shorter, then the
     // EARLIER game wins — so a page render, the card and the cron post agree.
     .sort(
       (a, b) =>
         b.score - a.score ||
         b.signature.length - a.signature.length ||
-        b.plies - a.plies ||
-        (a.endedAt < b.endedAt ? -1 : 1),
+        a.plies - b.plies ||
+        a.endedAt.localeCompare(b.endedAt) || a.id.localeCompare(b.id),
     );
   const now = new Date();
   const start = new Date(now.getTime() - days * 86400000);

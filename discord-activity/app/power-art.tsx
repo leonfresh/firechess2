@@ -1,7 +1,8 @@
 import { POWER_ART_SPRITES, POWER_ILLUSTRATIONS } from './power-art-catalog';
 
 /** Codes for the fairy-piece vector fallbacks, keyed by the modifier that grants them. */
-export const FAIRY_PIECE_CODES: Record<string, string> = {'vaulting-knight':'VK','bank-shot':'BS',conscription:'CS','hostile-takeover':'HT',camel:'Ca','dragon-rook':'Dr',knook:'C',archbishop:'A',amazon:'Am','night-rider':'NR','rook-cannon':'RC','pawn-capture-forward':'PB',railgun:'RG'};
+import { FAIRY_PIECE_CODES } from "@/lib/chaos-piece-art";
+export { FAIRY_PIECE_CODES } from "@/lib/chaos-piece-art";
 
 /** Shared power artwork: atlas sprite, illustration, or the fairy-piece vector fallback. */
 export function PowerArt({ id, piece = 'p' }: { id: string; piece?: string }) {

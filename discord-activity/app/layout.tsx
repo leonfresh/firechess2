@@ -3,6 +3,7 @@ import '../../app/globals.css';
 import './activity.css';
 import './arena.css';
 import './armoury.css';
+import './lobby-layout.css';
 
 export const metadata: Metadata = {
   title: 'Chaos Chess · Discord Activity',

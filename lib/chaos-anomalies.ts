@@ -1,3 +1,4 @@
+import { ownsAnomaly } from "./chaos-anomaly-unlocks";
 /**
  * Chaos Chess — Opening Anomalies
  *
@@ -198,7 +199,7 @@ export const ALL_ANOMALIES: AnomalyDefinition[] = [
     tarotName: "The Chariot",
     name: "Unstoppable",
     description:
-      "Your Rooks phase through your own pieces from move 1. Phantom Rook is built-in and removed from your draft pool.",
+      "Your rooks phase through allies to empty squares from move 1. Captures need a clear path. Phantom Rook is built-in and removed from your draft pool.",
     icon: "🚀",
     trigger: "passive",
     injectModifiers: ["phantom-rook"],
@@ -477,9 +478,10 @@ function seededRandom(seed: number): () => number {
 export function rollAnomalyChoices(
   count: number,
   seed?: number,
+  owned: readonly string[] = [],
 ): AnomalyDefinition[] {
   const rng = seed != null ? seededRandom(seed) : Math.random;
-  const pool = [...ALL_ANOMALIES];
+  const pool = ALL_ANOMALIES.filter(a => ownsAnomaly(a.id, owned));
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];

@@ -25,6 +25,8 @@ export type WatchFrame = {
   label: string;
   from?: string;
   to?: string;
+  kingCapture?: boolean;
+  pieceStays?: boolean;
 };
 /** Discord Activity requires a signed discord_ identity before play. Browser
  * sessions and browser guests use the other identity formats. Return only the
@@ -72,8 +74,10 @@ export function archiveFrames(record: any): WatchFrame[] {
       label: `Move ${i + 1}: ${m.from} → ${m.to}`,
       from: m.from,
       to: m.to,
+      kingCapture:!!m.kingCapture,
+      pieceStays:!!m.pieceStays,
     }));
-  if (record.fen)
+  if (record.fen && !moves.at(-1)?.kingCapture)
     frames.push({
       fen: record.fen,
       state: visualState(record.state),

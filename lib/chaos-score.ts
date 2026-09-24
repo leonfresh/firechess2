@@ -1,11 +1,12 @@
+import { replayDrama } from "./chaos-replay-drama";
 /**
  * Chaos-native match scoring — deliberately engine-free.
  *
  * Stockfish "accuracy" is meaningless on a board where a Nuclear Queen deletes a
  * 3x3 and an armed Kamikaze Bishop removes itself. Worse, it would rank the
  * blandest games highest. So we score what actually makes a Chaos Chess game
- * worth watching: signature powers that reached the board, anomalies that got
- * played, king captures, chaos-flavoured endings and rarity.
+ * worth watching: captures, multi-piece destruction, material comebacks,
+ * lead changes and decisive finishes, with small bonuses for varied powers.
  *
  * Every input here already lives in `chaos_match.record` (moves[].powers, frames[],
  * state), so the entire archive is scorable retroactively with no new game
@@ -49,6 +50,7 @@ export type ChaosRecord = {
 
 export type ChaosScore = {
   score: number;
+  watchReasons: string[];
   tier: ChaosTier;
   headline: string;
   blurb: string;
@@ -199,7 +201,7 @@ export function scoreChaosGame(input: {
   // 2. Power activations: powers[side] is the active set per move, so the first
   // move a power appears on is the moment it reached the board.
   moves.forEach((move, index) => {
-    const ply = typeof move.moveNumber === "number" ? move.moveNumber * 2 + (move.color === "b" ? 1 : 0) : index + 1;
+    const ply = typeof move.moveNumber === "number" ? (move.moveNumber - 1) * 2 + (move.color === "b" ? 2 : 1) : index + 1;
     (["white", "black"] as ChaosSide[]).forEach((side) => {
       const list = (side === "white" ? move.powers?.white : move.powers?.black) ?? [];
       list.forEach((id) => {
@@ -263,30 +265,17 @@ export function scoreChaosGame(input: {
     events.push({ kind: "checkmate", side: null, ply: plies, label: `Checkmate on move ${moveOf}`, icon: "🏁", weight: 14 });
   }
 
-  // 5. Score. Weights are tuned against the archived ladder of endings so a
-  // routine time-out lands QUIET and a nuclear king-hunt lands MYTHIC.
-  let score = 10;
-  score += rarityBonus(share);
-  score += Math.min(18, signature.length * 5);
-  score += Math.min(12, (powersInPlay.white.length + powersInPlay.black.length) * 2);
-  score += anomalies.white ? 5 : 0;
-  score += anomalies.black ? 5 : 0;
-  score += anomalyUsed ? 6 : 0;
-  score += kingCaptured ? 10 : 0;
-  score += kamikaze ? 12 : 0;
-  score += checkmate && plies >= 60 ? 6 : 0;
-  score += Math.min(8, Math.floor(plies / 12));
-  if (input.rated) score += 4;
-
-  // Clutch: a signature power first reaching the board in the last fifth of the game.
-  const clutch = events.some((e) => e.kind === "signature" && plies >= 20 && e.ply >= plies * 0.8);
-  if (clutch) score += 5;
-
-  // Boring finishes should feel boring.
-  if (key === "time expired" && plies < 30) score -= 12;
-  if (key === "draw agreed" && plies < 40) score -= 10;
+  // Board action dominates; merely owning rare cards adds a small, capped bonus.
+  const drama = replayDrama(record, input.winner, input.reason);
+  let score = 8 + drama.score + Math.min(10, signature.length * 2)
+    + Math.min(6, powersInPlay.white.length + powersInPlay.black.length)
+    + (anomalyUsed ? 4 : 0);
+  // Rarity is a small tie-break for decisive finishes, never a reward for rare timeouts.
+  if (kingCaptured || kamikaze || checkmate) score += Math.min(4, rarityBonus(share) / 6);
   if (plies < 12) score -= 20;
-  score = Math.max(0, Math.min(100, Math.round(score)));
+  if (!drama.hasReplay) score = Math.min(score, 15);
+  score = Math.max(0, Math.min(100, Math.round(score * 0.82)));
+  const clutch = drama.deficit >= 3;
 
   const tier = TIERS.find((t) => score >= t.min)?.tier ?? "QUIET";
 
@@ -294,13 +283,13 @@ export function scoreChaosGame(input: {
   const momentIndex = kingCaptureFrame >= 0 ? kingCaptureFrame : frames.length - 1;
   const momentFrame = momentIndex >= 0 ? frames[momentIndex] : undefined;
   const momentFen = momentFrame?.fen ?? record.fen ?? null;
-  const moment: ChaosMoment | null = momentFen
+  const moment: ChaosMoment | null = drama.moment ?? (momentFen
     ? {
         fen: momentFen,
         ply: plyAtFrame(momentIndex, frames.length, plies),
         label: String(momentFrame?.label ?? "Final position"),
       }
-    : null;
+    : null);
 
   const topEvent = [...events].sort((a, b) => b.weight - a.weight)[0] ?? null;
 
@@ -321,7 +310,7 @@ export function scoreChaosGame(input: {
     });
   }
   if (kingCaptured) badges.push({ icon: "👑", name: "King captured", detail: input.reason });
-  if (clutch) badges.push({ icon: "🕐", name: "Clutch", detail: "Armed a power in the endgame" });
+  if (clutch) badges.push({ icon: "🕐", name: "Clutch", detail: `Recovered a ${drama.deficit}-point material deficit` });
   if (share < 0.05) badges.push({ icon: "💎", name: "Rare ending", detail: `${Math.max(1, Math.round(share * 1000) / 10)}% of games end this way` });
   if (anomalyUsed && !badges.some((b) => b.icon === "🔮")) badges.push({ icon: "🔮", name: "Anomaly used", detail: "Anomaly effect resolved" });
   if (plies >= 80) badges.push({ icon: "⏳", name: `${plies} plies`, detail: "Marathon" });
@@ -341,6 +330,7 @@ export function scoreChaosGame(input: {
 
   return {
     score,
+    watchReasons: drama.reasons,
     tier,
     headline: `${winnerName} — ${headline}`,
     blurb,

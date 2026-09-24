@@ -1,3 +1,4 @@
+import { loadOpeningOwnership } from "@/lib/chaos-opening-ownership";
 /**
  * GET    /api/chaos/matchmake — Find & atomically join an open matchmaking room
  * POST   /api/chaos/matchmake — Create a matchmaking room (auto-cancels stale ones)
@@ -10,7 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { chaosRooms } from "@/lib/schema";
-import { eq, and, ne, isNull, gte, sql } from "drizzle-orm";
+import { eq, and, ne, isNull, gte, sql, inArray, lt } from "drizzle-orm";
 import { createSyncState, startServerOpening, MATCHMAKING_WINDOW_MS } from "@/lib/chaos-room-sync";
 import { getChaosUserId, isGuestId } from "@/lib/chaos-auth";
 import { notifyLiveRoom } from "@/lib/chaos-live-token";
@@ -18,6 +19,14 @@ import { timeControl } from "@/lib/chaos-clock";
 
 /** Posted challenges older than this are abandoned: unlisted and no longer joinable */
 const STALE_THRESHOLD_MS = MATCHMAKING_WINDOW_MS;
+
+// The guest UUID is already a bearer identity for anonymous requests. Keep it
+// associated with this browser after sign-in to cancel/exclude its old seeks.
+function seekerIds(req: NextRequest, userId: string) {
+  const guest = req.headers.get("x-guest-id") ?? "";
+  return /^guest_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(guest)
+    ? [...new Set([userId, guest])] : [userId];
+}
 
 function generateRoomCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -34,7 +43,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const identities = seekerIds(req, userId);
   const cutoff = new Date(Date.now() - STALE_THRESHOLD_MS);
+
+  await db.update(chaosRooms).set({status:"cancelled", isMatchmaking:false, updatedAt:new Date()})
+    .where(and(eq(chaosRooms.status,"waiting"),eq(chaosRooms.isMatchmaking,true),isNull(chaosRooms.guestId),lt(chaosRooms.createdAt,cutoff)));
 
   // Listing never claims a seat and exposes only explicitly public queue rooms.
   if (req.nextUrl.searchParams.get("list") === "1") {
@@ -45,7 +58,7 @@ export async function GET(req: NextRequest) {
     const data = await db.execute(sql`select r."roomCode", r."timeControlSeconds", r."incrementSeconds",
       coalesce(p.name,'Guest player') as name, p.rating, coalesce(p.games,0) as games,
       (p.id is not null and r."timeControlSeconds">0) as "ratedEligible",
-      (r."hostId"=${userId}) as yours,
+      (r."hostId" in (${sql.join(identities.map(id => sql`${id}`), sql`, `)})) as yours,
       (${scoped}::text is not null and exists(select 1 from chaos_launch l
         where l.player_id=r."hostId" and l.instance_id=${scoped} and l.created_at > now() - interval '12 hours')) as "sameInstance"
       from chaos_room r left join chaos_player p on p.id=r."hostId"
@@ -70,7 +83,7 @@ export async function GET(req: NextRequest) {
           eq(chaosRooms.isMatchmaking, true),
           eq(chaosRooms.status, "waiting"),
           isNull(chaosRooms.guestId),
-          ne(chaosRooms.hostId, userId),
+          ...identities.map(id => ne(chaosRooms.hostId, id)),
           gte(chaosRooms.createdAt, cutoff),
           eq(chaosRooms.timeControlSeconds, control.base),
           eq(chaosRooms.incrementSeconds, control.inc),
@@ -86,7 +99,7 @@ export async function GET(req: NextRequest) {
   if (rooms.length > 0) {
     const room = rooms[0];
 
-    const openingState = startServerOpening(room);
+    const openingState = startServerOpening(room, Date.now(), await loadOpeningOwnership(room.hostId, userId));
     // Atomic join — only succeeds if room is still unclaimed
     const result = await db
       .update(chaosRooms)
@@ -100,6 +113,7 @@ export async function GET(req: NextRequest) {
       .where(
         and(
           eq(chaosRooms.id, room.id),
+          gte(chaosRooms.createdAt, new Date(Date.now() - STALE_THRESHOLD_MS)),
           eq(chaosRooms.status, "waiting"),
           isNull(chaosRooms.guestId),
         ),
@@ -140,7 +154,7 @@ export async function POST(req: NextRequest) {
     .set({ isMatchmaking: false, status: "cancelled", updatedAt: new Date() })
     .where(
       and(
-        eq(chaosRooms.hostId, userId),
+        inArray(chaosRooms.hostId, seekerIds(req, userId)),
         eq(chaosRooms.isMatchmaking, true),
         eq(chaosRooms.status, "waiting"),
       ),
@@ -190,7 +204,7 @@ export async function DELETE(req: NextRequest) {
       .update(chaosRooms)
       .set({ isMatchmaking: false, status: "cancelled", updatedAt: new Date() })
       .where(
-        and(eq(chaosRooms.id, body.roomId), eq(chaosRooms.hostId, userId), eq(chaosRooms.status, "waiting"), eq(chaosRooms.isMatchmaking, true), isNull(chaosRooms.guestId)),
+        and(eq(chaosRooms.id, body.roomId), inArray(chaosRooms.hostId, seekerIds(req, userId)), eq(chaosRooms.status, "waiting"), eq(chaosRooms.isMatchmaking, true), isNull(chaosRooms.guestId)),
       );
   } else {
     await db
@@ -198,7 +212,7 @@ export async function DELETE(req: NextRequest) {
       .set({ isMatchmaking: false, status: "cancelled", updatedAt: new Date() })
       .where(
         and(
-          eq(chaosRooms.hostId, userId),
+          inArray(chaosRooms.hostId, seekerIds(req, userId)),
           eq(chaosRooms.isMatchmaking, true),
           eq(chaosRooms.status, "waiting"),
         ),

@@ -1,0 +1,12 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),ts=require('typescript'),fs=require('fs');
+require.extensions['.ts']=(m,f)=>m._compile(ts.transpile(fs.readFileSync(f,'utf8'),{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}),f);
+const {replayDrama}=require('../lib/chaos-replay-drama.ts');
+const {scoreChaosGame}=require('../lib/chaos-score.ts');
+const fen=['7k/pp6/8/8/8/8/PP6/KQ6 w - - 0 1','7k/pp6/8/8/8/8/PP6/K7 b - - 0 1','7k/8/8/8/8/8/PP6/K7 w - - 0 2'];
+const record={moves:Array.from({length:30},()=>({})),frames:fen.map(fen=>({fen}))};
+test('multi-piece removals and material comeback are detected from boards',()=>{const r=replayDrama(record,'black','checkmate');assert.equal(r.explosions,1);assert.equal(r.deficit,9);assert.ok(r.reasons.some(r=>r.includes('9-point')));assert.equal(r.moment.fen,fen[2]);});
+test('repeated draft frames cannot inflate action score',()=>{const expanded={...record,frames:record.frames.flatMap(f=>[f,f,f])};assert.equal(replayDrama(expanded,'black','checkmate').score,replayDrama(record,'black','checkmate').score);});
+test('invalid replay boards do not earn board-action credit',()=>{const r=replayDrama({frames:[{fen:'bad'},{fen:'8/8/8/8/8/8/8/9 w'}]},'white','resignation');assert.equal(r.hasReplay,false);assert.equal(r.captures,0);});
+test('decisive replay beats same game ending in an idle timeout',()=>{assert.ok(scoreChaosGame({record,winner:'black',reason:'checkmate'}).score>scoreChaosGame({record,winner:'black',reason:'time expired'}).score);});
+test('padding moves and owning rare powers cannot outrank dramatic finish',()=>{const boring={moves:Array.from({length:150},()=>({powers:{white:['nuclear-queen','amazon','knook'],black:['railgun','undead-army']}})),frames:Array.from({length:150},()=>({fen:fen[0]}))};assert.ok(scoreChaosGame({record,winner:'black',reason:'checkmate'}).score>scoreChaosGame({record:boring,winner:'white',reason:'time expired'}).score);});
+test('rating and ending rarity do not reward a routine timeout',()=>{const base={record,winner:'black',reason:'time expired'};assert.equal(scoreChaosGame(base).score,scoreChaosGame({...base,rated:true,endingShare:.00001}).score);});

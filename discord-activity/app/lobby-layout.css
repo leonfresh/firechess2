@@ -1,0 +1,67 @@
+/* Play first; discovery and personal progress share a separate, full-width row. */
+.activity-lobby{align-items:start;row-gap:38px}
+.activity-lobby>.lobby-intro{align-self:center}
+.activity-lobby>.lobby-destinations{grid-column:1/-1;grid-row:2;margin:0;padding-top:28px;border-top:1px solid #ffffff16;min-width:0}
+.arena-highlights{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start;margin-bottom:24px}
+.arena-highlights:has(#achievements:empty){grid-template-columns:1fr}
+.arena-highlights #achievements:empty{display:none}
+.arena-highlights>section,.arena-highlights>#achievements>section{margin:0!important;height:100%}
+.arena-highlights>#achievements{min-width:0;scroll-margin-top:30px}
+.activity-lobby .destination-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.activity-lobby .lobby-destination{min-height:110px;align-items:center;text-align:center;justify-content:center}
+.activity-lobby .hero-toys{display:block;margin:24px auto;height:205px;width:390px;max-width:100%}
+.activity-lobby .play-panel{padding:24px}
+.activity-lobby .play-panel h2{margin:20px 0}
+.activity-lobby .panel-footer{margin-top:20px}
+.explore-nav{position:relative}
+.explore-trigger{display:flex;align-items:center;gap:10px;min-height:38px;color:#e6f0db}
+.explore-menu{position:absolute;top:calc(100% + 12px);right:0;width:290px;max-height:calc(100dvh - 130px);overflow:auto;padding:14px;border:1px solid #67728a;border-radius:18px;background:#202940;box-shadow:0 18px 60px #0009;display:grid;gap:4px;z-index:60}
+.explore-menu>.eyebrow{font-size:9px;padding:8px 10px}
+.chaos-activity .explore-menu>a,.explore-menu>button{display:block;width:100%;text-align:left;padding:10px 12px;border-radius:9px;background:transparent;color:#fff1cf;text-decoration:none;font-size:13px;font-weight:750;border:0;min-height:44px}
+.explore-menu small{display:block;font-size:11px;color:#aebed3;font-weight:400;margin-top:3px}
+.explore-menu>a:hover,.explore-menu>button:hover{background:#ffffff0c}
+.nav-tools>[hidden]{display:none!important}
+@media(max-width:1050px){.arena-highlights{grid-template-columns:1fr}.activity-brand small{display:none}.nav-tools{gap:8px}}
+@media(max-width:700px){
+ .activity-lobby{display:flex;flex-direction:column;padding:24px 18px;gap:28px}
+ .activity-lobby>.lobby-intro{order:0;width:100%;text-align:center}
+ .activity-lobby>.play-panel{order:1;width:100%}
+ .activity-lobby>.lobby-destinations{order:2;width:100%;padding-top:24px}
+ .activity-lobby .hero-toys{display:none}
+ .activity-lobby .community-link,.activity-lobby .how-it-works{display:none}
+ .activity-lobby .lobby-intro h1{font-size:42px;margin:12px 0}
+ .activity-lobby .lobby-intro>.eyebrow{justify-content:center}
+ .activity-lobby .armoury-entry{margin:20px 0 0;text-align:left}
+ .activity-lobby .destination-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+ .activity-lobby .lobby-destination{min-height:145px}
+ .activity-lobby .destination-icon{width:52px;height:52px}
+ .activity-lobby .destination-icon svg{width:34px!important;height:34px!important}
+ .activity-nav{height:auto;min-height:70px;flex-wrap:wrap;gap:12px;padding:14px 18px}
+ .activity-nav .nav-tools{gap:7px;flex-wrap:wrap;justify-content:flex-end}
+ .activity-nav .activity-brand{gap:7px}
+ .activity-nav .activity-brand strong{font-size:14px!important}
+ .activity-nav .sound-button{padding:8px 10px}
+ .explore-menu{position:fixed;top:116px;right:14px;width:min(310px,calc(100vw - 28px))}
+}
+
+@media(max-width:700px){
+ .activity-nav .nav-tools{width:100%;flex-wrap:nowrap;justify-content:space-between;gap:6px}
+ .activity-nav .explore-nav{position:absolute;right:18px;top:16px}
+ .activity-nav .nav-tools>.sound-button,.activity-nav .nav-tools>a{font-size:10px!important;padding:8px 10px}
+ .activity-nav .activity-brand{min-height:38px}
+ .activity-nav .discord-launch-link{gap:6px}
+ .activity-nav .discord-launch-link>span{display:inline}
+ .activity-lobby .mode-tabs button{font-size:11px;padding:10px 5px}
+ .activity-lobby .mode-tabs small{font-size:9px}
+}
+
+.arena-highlights #achievements{border-radius:22px}
+@media(min-width:701px){.arena-highlights:has(#achievements:empty)>section{grid-template-columns:180px minmax(0,1fr)}}
+@media(max-width:360px){.activity-nav{padding-inline:12px}.activity-nav .nav-tools>.sound-button,.activity-nav .nav-tools>a{font-size:9px!important;padding:8px 7px}.activity-nav .discord-launch-link svg{width:14px;height:14px}}
+
+/* Core destinations live beside matchmaking, before the weekly feature and trophies. */
+.lobby-shortcuts{margin:24px 0 28px}
+.activity-lobby .lobby-shortcuts .lobby-destination{min-height:145px}
+.activity-lobby .lobby-shortcuts .destination-icon{width:52px;height:52px;border-radius:15px}
+.activity-lobby .lobby-shortcuts .destination-icon svg{width:34px!important;height:34px!important}
+@media(min-width:701px) and (max-width:1100px){.activity-lobby .lobby-shortcuts .destination-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}

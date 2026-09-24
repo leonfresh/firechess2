@@ -1,4 +1,6 @@
 "use client";
+import {getKingCaptureMove} from "@/lib/chaos-outcome";
+import {createChaosState} from "@/lib/chaos-chess";
 import {WatchEffects} from "./chaos-watch-effects";
 import {watchTransition, type WatchImpact} from "@/lib/chaos-impact";
 import { ChaosNavLink } from "./chaos-nav-link";
@@ -346,7 +348,7 @@ export function ChaosWatch({
         (clock.active === side ? Math.max(0, now - received) : 0)
       : 0;
   /** The Discord Activity serves this component without /chaos routes, so the link to the
-   *  full week page only makes sense on the website (the Activity keeps its tabs inline). */
+   *  full week page only makes sense on the website (the Activity has the tabs inline). */
   const [inActivityShell, setInActivityShell] = useState(false);
   useEffect(() => {
     try {
@@ -378,6 +380,12 @@ export function ChaosWatch({
   const [effectSequence,setEffectSequence]=useState(0);
   const effectPrevious=useRef<{key:string;frame:WatchFrame;index:number;terminal:boolean}|null>(null);
   const terminal=!!detail?.result && (!!selected?.live || index===frames.length-1);
+  const royalFinish=useMemo(()=>{
+    if(!terminal || !/king captured/i.test(detail?.result?.reason??'') || !frame?.from || !frame.to)return null;
+    let pieceStays=frame.pieceStays;
+    if(pieceStays===undefined){try{const g=new Chess(frame.fen);pieceStays=getKingCaptureMove(g,{...createChaosState(),...expandVisual(frame.state)},g.turn(),frame.from,frame.to)?.pieceStays;}catch{}}
+    return {from:frame.from,to:frame.to,pieceStays};
+  },[terminal,frame,detail?.result?.reason]);
   const watchKey=selected?`${selected.live?'live':'replay'}:${selected.id}:${detail?.gameNumber??0}`:'';
   useEffect(()=>{
     const previous=effectPrevious.current;
@@ -627,6 +635,8 @@ export function ChaosWatch({
                     <Chessboard
                       id="spectator-board"
                       animationDuration={0}
+                      pieceJuice={!!selected.live || (!!forwardEffect.current && effectPrevious.current?.key === watchKey && index === effectPrevious.current.index + 1)}
+                      kingCapture={royalFinish}
                       position={frame.fen}
                       boardWidth={width}
                       boardOrientation={flipped ? "black" : "white"}

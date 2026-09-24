@@ -1,3 +1,4 @@
+import { loadOpeningOwnership } from "@/lib/chaos-opening-ownership";
 /**
  * POST /api/chaos/join — Join an existing Chaos Chess room
  * Body: { roomCode: string }
@@ -7,7 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { chaosRooms } from "@/lib/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, gte } from "drizzle-orm";
 import { getChaosUserId } from "@/lib/chaos-auth";
 import { notifyLiveRoom } from "@/lib/chaos-live-token";
 import { startServerOpening, MATCHMAKING_WINDOW_MS } from "@/lib/chaos-room-sync";
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
 
   const room = rooms[0];
 
-  if (room.hostId === userId) {
+  if ((room.hostId === userId || room.hostId === req.headers.get("x-guest-id"))) {
     return NextResponse.json(
       { error: "You can't join your own room" },
       { status: 400 },
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
   if (room.isMatchmaking && (room.createdAt?.getTime() ?? 0) < Date.now() - MATCHMAKING_WINDOW_MS) {
     return NextResponse.json({ error: "This challenge has expired. Choose another player." }, { status: 410 });
   }
-  const openingState = startServerOpening(room);
+  const openingState = startServerOpening(room, Date.now(), await loadOpeningOwnership(room.hostId, userId));
   // Join the room
   const joined = await db
     .update(chaosRooms)
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest) {
       isMatchmaking: false,
       updatedAt: new Date(),
     })
-    .where(and(eq(chaosRooms.id, room.id), eq(chaosRooms.status, "waiting"), isNull(chaosRooms.guestId)))
+    .where(and(eq(chaosRooms.id, room.id), eq(chaosRooms.status, "waiting"), isNull(chaosRooms.guestId), room.isMatchmaking ? gte(chaosRooms.createdAt, new Date(Date.now() - MATCHMAKING_WINDOW_MS)) : undefined))
     .returning({ id: chaosRooms.id });
   if (!joined.length) return NextResponse.json({ error: "Room is already full" }, { status: 409 });
 

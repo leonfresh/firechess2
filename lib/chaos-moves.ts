@@ -449,7 +449,7 @@ function genDragonRook(game: Chess, color: Color): ChaosMove[] {
   return moves;
 }
 
-/** Phantom Rook: rooks can slide through friendly pieces */
+/** Phantom Rook: phase through allies to empty squares; no jump captures. */
 function genPhantomRook(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const rooks = allSquaresOf(game, "r", color);
@@ -476,18 +476,7 @@ function genPhantomRook(game: Chess, color: Color): ChaosMove[] {
             passedFriendly = true;
             // Continue sliding through
           } else {
-            // Enemy piece — can capture if we passed through a friendly
-            if (passedFriendly) {
-              if (!wouldLeaveKingInCheck(game, rs, target, color)) {
-                moves.push({
-                  from: rs,
-                  to: target,
-                  type: "capture",
-                  modifierId: "phantom-rook",
-                  label: "Phantom Rook (through allies)",
-                });
-              }
-            }
+            // Phasing is repositioning only. Ordinary clear-path captures remain legal.
             break; // Can't go past enemies
           }
         } else if (passedFriendly) {
@@ -2167,25 +2156,7 @@ export function getChaosAttackedSquares(
     }
   }
 
-  /* Phantom Rook: rooks slide through friendly pieces */
-  if (modIds.has("phantom-rook")) {
-    for (const rs of allSquaresOf(game, "r", attackerColor)) {
-      const [f, r] = sqToCoords(rs);
-      for (const [df, dr] of cardinals) {
-        let cf = f + df;
-        let cr = r + dr;
-        while (cf >= 0 && cf <= 7 && cr >= 0 && cr <= 7) {
-          const t = sq(cf, cr)!;
-          attacked.add(t);
-          const p = game.get(t);
-          if (p && p.color !== attackerColor) break; // blocked by enemy
-          // friendly pieces are transparent
-          cf += df;
-          cr += dr;
-        }
-      }
-    }
-  }
+  // Phantom phasing cannot capture, so it adds no attacked squares.
 
   /* Pawn Capture Forward (Bayonet): pawns attack 1 sq straight ahead */
   if (modIds.has("pawn-capture-forward")) {

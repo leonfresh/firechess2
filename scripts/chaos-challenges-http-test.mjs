@@ -17,7 +17,7 @@ try {
  const [room]=await sql`select status from chaos_room where id=${made.data.roomId}`;assert.equal(room.status,'playing','Late cancel must not cancel a started match');
  assert.ok(!(await request('/api/chaos/matchmake?list=1',a)).data.rooms.some(r=>r.roomCode===row.roomCode));
  const stale=await request('/api/chaos/matchmake',host,'POST',{draftProtocol:2,timeControlSeconds:-1});rooms.push(stale.data.roomId);
- await sql`update chaos_room set "createdAt"=now()-interval '2 minutes' where id=${stale.data.roomId}`;
+ await sql`update chaos_room set "createdAt"=now()-interval '6 minutes' where id=${stale.data.roomId}`;
  assert.equal((await request('/api/chaos/join',a,'POST',{roomCode:stale.data.roomCode})).status,410);
  assert.ok(!(await request('/api/chaos/matchmake?list=1',a)).data.rooms.some(r=>r.roomCode===stale.data.roomCode));
  console.log('PASS: public names/ratings, own challenge, one winner in concurrent join, late cancellation safe, started/stale challenges excluded, expired join rejected.');

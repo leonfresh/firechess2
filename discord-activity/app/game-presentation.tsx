@@ -1,4 +1,5 @@
 'use client';
+import {ChaosAchievements} from '@/components/chaos-achievements';
 import {ActivityCareer} from './career';
 import {ChaosWatchButton} from '@/components/chaos-watch';
 import { chaosIdentityHeaders } from '@/lib/chaos-client-identity';
@@ -80,15 +81,8 @@ export function ActivityLobby(props: ChaosLobbyViewProps) {
       <h1>Small pieces.<br /><em>Big trouble.</em></h1>
       <p>Draft ridiculous powers. Surprise your friends.<br className="wide-only" /> Make the board your playground.</p>
     <ActivityCollection shopEntry />
-    <section className="lobby-destinations" aria-label="Explore Chaos Chess">
-      <div className="destination-heading"><span className="eyebrow">AROUND THE ARENA</span><span>More ways to play along</span></div>
-      <ChaosWeekStrip className="mt-3 mb-3" />
+      <div className="lobby-shortcuts"><div className="destination-heading"><span className="eyebrow">EXPLORE THE ARENA</span></div>
       <nav className="destination-grid" aria-label="Community and games"><ActivityCareer card/><ActivityCollection card/><ChaosWatchButton card label="Watch live" initialTab="live"/><ActivityReplays card/></nav>
-    </section>
-      <div className="hero-toys" aria-label="Rocket pawn and nuclear queen power previews">
-        <div className="hero-card pawn-card"><PowerArt id="pawn-charge" /><span>TORPEDO PAWNS <b>↗</b></span></div>
-        <div className="hero-card queen-card"><PowerArt id="nuclear-queen" /><span>NUCLEAR QUEEN <b>✦</b></span></div>
-        <span className="hero-sticker">YOUR MOVE.<br />THEIR PROBLEM.</span>
       </div>
       <button type="button" className="community-link" onClick={()=>window.open('https://discord.gg/YS8fc4FtEk','_blank','noopener,noreferrer')} aria-label="Join our Discord community (opens in a new tab)"><span><strong>Join our Discord community</strong><small>Find rivals, share feedback, and talk Chaos Chess.</small></span><span aria-hidden="true">↗</span></button>
       <div className="how-it-works"><span><b>01</b> Play chess</span><span><b>02</b> Pick a power</span><span><b>03</b> Cause trouble</span></div>
@@ -116,8 +110,8 @@ export function ActivityLobby(props: ChaosLobbyViewProps) {
       {mode !== 'practice' && <fieldset className="clock-picker"><legend>Match clock</legend><div>
         {CHAOS_TIME_CONTROLS.map(c => <button key={c.label} aria-pressed={!props.unlimited && props.clockLabel === c.label} onClick={() => props.setClockLabel(c.label)}>{c.label}<small>{c.base / 60} min + {c.inc}s / move</small></button>)}
         <button aria-pressed={props.unlimited} onClick={() => props.setUnlimited(true)}>No rush<small>Casual · no rating</small></button>
-      </div><p>Both clocks pause while picking powers. Timed games count for rating when both players are signed in.</p></fieldset>}
-      <ChaosRatedStatus mode={mode} unlimited={props.unlimited} />
+      </div><p>Both clocks pause while picking powers.</p></fieldset>}
+      <ChaosRatedStatus mode={mode} unlimited={props.unlimited} compact />
       {server && (server.games > 0 || server.top.length > 0) && <section className="server-standing" aria-label="This server">
         <span className="eyebrow">THIS SERVER · LAST 7 DAYS</span>
         <strong>{server.games} game{server.games === 1 ? '' : 's'} · {server.players} player{server.players === 1 ? '' : 's'}{server.rated ? ` · ${server.rated} rated` : ''}</strong>
@@ -125,7 +119,7 @@ export function ActivityLobby(props: ChaosLobbyViewProps) {
         {youHere && <p>You’re #{youHere.rank} here · {youHere.rating}</p>}
       </section>}
       {mode === 'online' ? <div className="activity-matchmaking">
-        <p className="panel-copy">Play for rating here: choose a timed clock and find an opponent. The result counts when both players are signed in and both make a move. Guests use the same queue, but their games are casual.</p>
+
         <div className="challenge-filters" aria-label="Find an opponent"><button aria-pressed={seekTab==='quick'} onClick={()=>setSeekTab('quick')}>Quick pairing</button><button aria-pressed={seekTab==='lobby'} onClick={()=>setSeekTab('lobby')}>Lobby · {rooms.length}</button></div>
         <div hidden={seekTab!=='quick'}>{props.matchmaking}</div>
         <section hidden={seekTab!=='lobby'} className="challenge-board" aria-labelledby="challenge-title">
@@ -171,6 +165,16 @@ export function ActivityLobby(props: ChaosLobbyViewProps) {
       </>}
       {(props.error || localError) && <p className="connection-error" role="alert">{localError || props.error?.replace(/^❌\s*/, '')}</p>}
       <div className="panel-footer"><span aria-hidden="true">✦</span> New powers every 5 turns. Every match plays differently.</div>
+    </section>
+    <section className="lobby-destinations" aria-label="Explore Chaos Chess">
+      <div className="destination-heading"><span className="eyebrow">AROUND THE ARENA</span><span>More ways to play along</span></div>
+      <div className="arena-highlights"><ChaosWeekStrip
+        className="mt-3 mb-3"
+        replayBase="/watch?match="
+        weekHref="/watch?tab=archive"
+        weekLabel="All replays →"
+      />
+      <div id="achievements" tabIndex={-1}><ChaosAchievements /></div></div>
     </section>
   </main>;
 }

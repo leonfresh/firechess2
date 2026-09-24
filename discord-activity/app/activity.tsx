@@ -3,8 +3,7 @@ import { DiscordLaunch } from './discord-launch';
 import { WebsiteAccount } from './website-account';
 import { ActivityResult } from './match-result';
 import { connectDiscord } from './activity-connection';
-import {ChaosWatchButton} from '@/components/chaos-watch';
-import { ActivityCareer } from './career';
+import { ExploreNav } from './explore-nav';
 
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
@@ -54,7 +53,7 @@ export function Activity() {
     <header className="activity-nav">
       <div className="activity-brand"><img src="/activity/logo.svg" width="38" height="38" alt="" /><strong>CHAOS<span>CHESS</span></strong><small>PLAY A LITTLE DIFFERENT.</small></div>
       <div className="nav-tools">{status === 'connected' && <span className="connection-pill"><i />IN DISCORD</span>}
-        <div className="nav-destinations"><ActivityCareer /><ChaosWatchButton/></div>
+        <ExploreNav />
         <button className="sound-button" aria-expanded={soundOpen} onClick={() => setSoundOpen(!soundOpen)}>Sound {volume === 0 ? 'off' : 'on'}</button>
         {status === 'preview' && <WebsiteAccount />}
         <DiscordLaunch />

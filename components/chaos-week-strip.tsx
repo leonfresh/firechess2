@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import styles from './chaos-week-strip.module.css';
 
 /**
  * Game of the Week strip for entry points that are not /chaos/week itself: the
@@ -11,15 +12,12 @@ import Link from 'next/link';
  * module would pull the whole modifier/anomaly catalogue into the client bundle
  * of the marketing page.
  */
-const TIER_COLOR: Record<string, string> = {
-  MYTHIC: '#d7fa64',
-  LEGENDARY: '#f0b354',
-  WILD: '#7dd3fc',
-  SOLID: '#a3e635',
-  QUIET: '#94a3b8',
-};
-
 type Winner = {
+  id?: string;
+  plies?: number;
+  timeControl?: string;
+  watchReasons?: string[];
+  moment?: {fen: string; label: string} | null;
   roomId: string;
   white: string;
   black: string;
@@ -60,6 +58,7 @@ export function ChaosWeekStrip({
   initialGames?: number | null;
 }) {
   const [winner, setWinner] = useState<Winner | null>(initial);
+  const [loaded, setLoaded] = useState(!!initial);
   const [games, setGames] = useState<number | null>(initialGames);
   /** The Discord Activity serves this component from chaos.firechess.com (or in an iframe with
    *  ?frame_id=) and has no /chaos/* routes: replays are /watch?match=<id> there. */
@@ -81,8 +80,9 @@ export function ChaosWeekStrip({
     fetch('/api/chaos/week', { cache: 'no-store' })
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => {
-        if (!alive || !data?.winner) return;
-        setWinner(data.winner as Winner);
+        if (!alive || !data) return;
+        setLoaded(true);
+        setWinner(data.winner as Winner | null);
         setGames(typeof data.gamesScored === 'number' ? data.gamesScored : null);
       })
       .catch(() => {});
@@ -91,71 +91,41 @@ export function ChaosWeekStrip({
     };
   }, [initial]);
 
-  if (!winner) return null;
+  if (!winner) return loaded ? <section className={`${styles.card} ${styles.empty} ${className}`} aria-label={label}>
+    <span className={styles.fallback} aria-hidden="true">♛</span><div className={styles.content}>
+      <div className={styles.kicker}>✦ {label}</div><h3>Your game could be next.</h3>
+      <p className={styles.reason}>Sign in and finish a match against another signed-in player. The most exciting eligible replay takes the spotlight.</p>
+      <p className={styles.meta}>No eligible replay this week yet. Guest games don’t enter the weekly selection.</p>
+    </div>
+  </section> : null;
 
-  const replayHref = `${replayBase ?? (activityHost ? '/watch?match=' : '/chaos/replay/')}${encodeURIComponent(winner.roomId)}`;
+  const replayHref = `${replayBase ?? (activityHost ? '/watch?match=' : '/chaos/replay/')}${encodeURIComponent(winner.id ?? winner.roomId)}`;
   const fullWeekHref = weekHref ?? (activityHost ? '/watch?tab=archive' : '/chaos/week');
   const fullWeekLabel = weekLabel ?? (activityHost ? 'All replays →' : 'The week →');
   const site = tone === 'site';
-  const accent = TIER_COLOR[winner.tier] ?? TIER_COLOR.QUIET;
-  const won = winner.winner === 'draw' ? null : winner.winner === 'white' ? winner.white : winner.black;
-  const lost = winner.winner === 'draw' ? null : winner.winner === 'white' ? winner.black : winner.white;
-  const line = won && lost ? `${won} beat ${lost} — ${clause(winner.headline)}` : clause(winner.headline);
-
+  const ranks = winner.moment?.fen.split(' ')[0].split('/') ?? [];
+  const squares = ranks.length === 8 ? ranks.flatMap(rank => [...rank].flatMap(c => /[1-8]/.test(c) ? Array(Number(c)).fill('') : [c])) : [];
+  const board = winner.winner === 'black' ? [...squares].reverse() : squares;
   return (
-    <div
-      className={`flex flex-wrap items-center gap-3 rounded-xl px-4 py-3 ${className}`}
-      style={
-        site
-          ? { border: '1px solid #ff793845', background: 'linear-gradient(110deg,#ff793814,#a879ff0b)', color: 'var(--text)' }
-          : { border: '1px solid rgba(198,154,84,.35)', background: '#131f30', color: '#fff0c7' }
-      }
-    >
-      {thumbnail && (
-        <Link href={replayHref} className="hidden shrink-0 sm:block" aria-hidden="true" tabIndex={-1}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/api/chaos/week/image"
-            alt=""
-            width={150}
-            height={79}
-            className="rounded-md border border-white/10"
-          />
-        </Link>
-      )}
-      <span aria-hidden="true" className="text-lg leading-none">🏆</span>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>
-          <span>{label}</span>
-          <span
-            className="rounded-md px-1.5 py-0.5 text-[10px] font-black"
-            style={{ background: `${accent}22`, border: `1px solid ${accent}55`, color: accent }}
-          >
-            {winner.score} {winner.tier}
-          </span>
-          {games !== null && <span style={{ color: 'var(--muted, #9fb6c6)' }}>{games} games scored</span>}
-        </div>
-        <p className="mt-1 truncate text-sm font-semibold">{line}</p>
-        <p className="truncate text-xs" style={{ color: 'var(--muted, #9fb6c6)' }}>
-          {winner.blurb}
-        </p>
+    <section className={`${styles.card} ${site ? styles.site : ''} ${className}`} aria-label={label}>
+      <Link href={replayHref} className={styles.preview} aria-label={`Watch ${winner.white} versus ${winner.black}`}>
+        {board.length === 64 ? <div className={styles.board} aria-hidden="true">{board.map((piece, i) =>
+          <span key={i} className={(Math.floor(i / 8) + i % 8) % 2 ? styles.dark : styles.light}>
+            {piece && <img src={`/activity/pieces/${piece === piece.toUpperCase() ? 'w' : 'b'}${piece.toUpperCase()}.svg`} alt="" width={40} height={40} loading="lazy" />}
+          </span>)}
+        </div> : <span className={styles.fallback} aria-hidden="true">♛</span>}
+        <span className={styles.play} aria-hidden="true">▶</span>
+        <span className={styles.previewCaption}>REPLAY THE CHAOS</span>
+      </Link>
+      <div className={styles.content}>
+        <div className={styles.kicker}><span>✦ {label}</span><span>THIS WEEK</span></div>
+        <h3>{winner.watchReasons?.[0]?.replace(/Winner recovered a (\d+)-point material deficit/, '$1 points down. Still won.') ?? clause(winner.headline).replace(/^[^\p{L}]+/u, '')}</h3>
+        <p className={styles.players}><span>{winner.white}</span><small>vs</small><span>{winner.black}</span></p>
+        <p className={styles.reason}>{winner.watchReasons?.slice(1).join(' · ') || 'A match worth watching. See how it unfolded.'}</p>
+        <div className={styles.meta}>{winner.plies ? <span>{Math.ceil(winner.plies / 2)} moves</span> : null}{winner.timeControl && <span>{winner.timeControl}</span>}{games !== null && <span>Picked from {games} eligible games</span>}</div>
+        <p className={styles.eligibility}>Want the spotlight? Both players must be signed in to qualify.</p>
+        <div className={styles.actions}><Link href={replayHref} className={styles.watch}>Watch replay <span aria-hidden="true">↗</span></Link><Link href={fullWeekHref} className={styles.archive}>{fullWeekLabel}</Link></div>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <Link
-          href={replayHref}
-          className="chaos-week-link rounded-lg px-3 py-1.5 text-xs font-bold transition-all"
-          style={{ border: `1px solid ${accent}55`, background: `${accent}18`, color: accent }}
-        >
-          Watch the replay
-        </Link>
-        <Link
-          href={fullWeekHref}
-          className="chaos-week-link text-xs font-semibold underline underline-offset-2"
-          style={{ color: 'var(--muted, #9fb6c6)' }}
-        >
-          {fullWeekLabel}
-        </Link>
-      </div>
-    </div>
+    </section>
   );
 }

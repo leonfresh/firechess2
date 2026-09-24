@@ -1,6 +1,6 @@
 "use client";
 import { useActivityDialog } from "./use-activity-dialog";
-import { useEffect, useState } from "react";
+import { type RefObject, useEffect, useState } from "react";
 import { ChaosWatchButton } from "@/components/chaos-watch";
 import { ChaosHubIcon } from "@/components/chaos-hub-icon";
 import { chaosIdentityHeaders } from "@/lib/chaos-client-identity";
@@ -38,7 +38,7 @@ type Standings = {
   gold: GoldRow[];
   goldTotals: { players: number; earned: number };
 };
-export function ActivityCareer({ card = false }: { card?: boolean }) {
+export function ActivityCareer({ card = false, triggerRef }: { card?: boolean; triggerRef?: RefObject<HTMLButtonElement | null> }) {
   const [open, setOpen] = useState(false),
     [tab, setTab] = useState<"community" | "ranked" | "gold" | "history">(
       "community",
@@ -105,7 +105,7 @@ export function ActivityCareer({ card = false }: { card?: boolean }) {
   const error = history ? personalError : publicError;
   return (
     <>
-      <button
+      <button ref={triggerRef} hidden={!!triggerRef}
         className={card ? "lobby-destination" : "sound-button"}
         data-tone="gold"
         onClick={() => setOpen(true)}

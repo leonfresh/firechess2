@@ -3,9 +3,10 @@ import { useChaosAccount } from "@/lib/use-chaos-account";
 import { chaosIdentityHeaders } from "@/lib/chaos-client-identity";
 import styles from "./chaos-rated-status.module.css";
 
-export function ChaosRatedStatus({ mode = "online", unlimited = false }: {
+export function ChaosRatedStatus({ mode = "online", unlimited = false, compact = false }: {
   mode?: "online" | "friends" | "practice";
   unlimited?: boolean;
+  compact?: boolean;
 }) {
   const { data, error, isLoading, mutate } = useChaosAccount();
   const player = data?.player;
@@ -27,11 +28,11 @@ export function ChaosRatedStatus({ mode = "online", unlimited = false }: {
         {eligible ? "Rated eligible" : casual ? "Casual" : error ? "Eligibility unavailable" : "Checking eligibility"}
       </span>
     </div>
-    <p>{reason}</p>
+    {compact ? <details className={styles.details}><summary>Rating details</summary><p>{reason}</p><p>Rated games need a timed clock and a move from each player. Up to three games between the same two players count per day.</p></details> : <p>{reason}</p>}
     {!isLoading && !error && !player && !chaosIdentityHeaders()["X-Chaos-Identity"] && (
       <a className={styles.signIn} href="https://www.firechess.com/api/chaos/website-login">Sign in to unlock rated play <span aria-hidden="true">↗</span></a>
     )}
     {error && <button type="button" className={styles.signIn} onClick={() => void mutate()}>Retry account check</button>}
-    {eligible && <small>Rated results update your ladder rating. A displayed username alone does not make every match rated.</small>}
+    {eligible && !compact && <small>Rated results update your ladder rating. A displayed username alone does not make every match rated.</small>}
   </section>;
 }

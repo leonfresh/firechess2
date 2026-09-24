@@ -1,3 +1,4 @@
+import { ownsAnomaly } from "./chaos-anomaly-unlocks";
 import {visualState, type WatchFrame} from "./chaos-watch";
 import { Chess } from "chess.js";
 import { ALL_MODIFIERS, createChaosState, updateTrackedPieces, NUCLEAR_QUEEN_COOLDOWN_TURNS, type ChaosState } from "./chaos-chess";
@@ -27,11 +28,11 @@ export function cleanState(value: unknown): ChaosState {
 export function createSyncState(serverDrafts = false) {
   return {...createChaosState(), ...(serverDrafts ? {_sync: {revision: 0, stateRevision: 0, events: [], receipts: [], picks: {}, rematch: [], draftProtocol: 2, openingMoveRule: true, firstMoves: []}} : {})};
 }
-export function startServerOpening(room: SyncRoom, now = Date.now()) {
-  const meta = metadata(room);
+export function startServerOpening(room: SyncRoom, now = Date.now(), owned = metadata(room).shopOwned ?? {host:[],guest:[]}) {
+  const meta = {...metadata(room), shopOwned:owned};
   if (meta.draftProtocol !== 2) return room.chaosState;
   return {...cleanState(room.chaosState), _sync: {...meta, ratedQueue: room.isMatchmaking === true, opening: {deadline: now + DRAFT_DURATION_MS,
-    offers: {host: rollAnomalyChoices(3).map(a => a.id), guest: rollAnomalyChoices(3).map(a => a.id)}}}};
+    offers: {host: rollAnomalyChoices(3, undefined, owned.host).map(a => a.id), guest: rollAnomalyChoices(3, undefined, owned.guest).map(a => a.id)}}}};
 }
 export function nextDeadline(room: SyncRoom) {
   if (room.status !== "playing") return null;
@@ -86,7 +87,7 @@ export function snapshot(room: SyncRoom, now = Date.now()) {
     draftProtocol: metadata(room).draftProtocol, draft: metadata(room).draft ?? null, serverNow: now, nextDeadline: nextDeadline(room),
     lastMoveFrom: room.lastMoveFrom, lastMoveTo: room.lastMoveTo,
     history: metadata(room).draftProtocol === 2 && Array.isArray(room.moveHistory) ? room.moveHistory.map((m: any, i: number) => ({
-      from: m.from, to: m.to, color: m.color ?? (i % 2 ? "b" : "w"), moveNumber: m.moveNumber ?? Math.floor(i / 2) + 1,
+      from: m.from, to: m.to, kingCapture:!!m.kingCapture, pieceStays:!!m.pieceStays, color: m.color ?? (i % 2 ? "b" : "w"), moveNumber: m.moveNumber ?? Math.floor(i / 2) + 1,
     })) : undefined,
     clock: clock ? projectClock(clock, now) : null, timeControlSeconds: room.timeControlSeconds, incrementSeconds: room.incrementSeconds };
 }
@@ -393,14 +394,14 @@ export function reduceCommand(room: SyncRoom, userId: string, command: any, now 
     // Keep the last loadable board; the result and final capture are persisted
     // separately because chess.js rejects a board with a missing king.
     patch.moveHistory = [...(Array.isArray(room.moveHistory) ? room.moveHistory : []), {
-      from:capture.from,to:capture.to,color:side,fen:room.fen,kingCapture:true,
+      from:capture.from,to:capture.to,color:side,fen:room.fen,kingCapture:true,pieceStays:!!capture.pieceStays,
       // The winning capture is a move like any other: give it its turn number so the in-game move
       // log files it under the right row instead of an unnumbered one.
       moveNumber:game.moveNumber(),
       powers:{white:state.playerModifiers.map(m=>m.id),black:state.aiModifiers.map(m=>m.id)},
     }];
     meta.result = {winner: color, reason: "King captured"};
-    outgoing = {type:"game_over",winner:color,reason:"King Captured"};
+    outgoing = {type:"game_over",winner:color,reason:"King Captured",capture:{from:capture.from,to:capture.to,pieceStays:!!capture.pieceStays}};
   } else if (type === "kamikaze_king") {
     // A king that captures the Kamikaze Bishop is destroyed by the blast. The
     // king stays on the board (chess.js rejects kingless FENs) — the game just ends.
@@ -432,6 +433,7 @@ export function reduceCommand(room: SyncRoom, userId: string, command: any, now 
     if (message.anomalyId !== null && !ALL_ANOMALIES.some(a => a.id === message.anomalyId)) throw new SyncError(400, "Unknown anomaly");
     if (actor in meta.picks && meta.picks[actor] !== message.anomalyId) throw new SyncError(409, "Opening choice already saved");
     if (actor in meta.picks) return null;
+    if (message.anomalyId !== null && !ownsAnomaly(message.anomalyId, meta.shopOwned?.[actor] ?? []) && !meta.opening?.offers[actor].includes(message.anomalyId)) throw new SyncError(403, "Unlock this anomaly in the shop first");
     meta.picks[actor] = message.anomalyId;
     if (message.anomalyId === "empress") {
       const board = new Chess(room.fen);
@@ -530,6 +532,7 @@ export function reduceCommand(room: SyncRoom, userId: string, command: any, now 
       : type === 'anomaly_pick' ? `${color} chose ${ALL_ANOMALIES.find(a => a.id === message.anomalyId)?.name ?? 'no anomaly'}`
       : replayFrom && replayTo ? `${color}: ${replayFrom} → ${replayTo}` : type.replaceAll('_',' ');
     meta.replayFrames = [...frames,{fen:patch.fen ?? room.fen,state:visualState(nextState),label,
+      ...(type === "king_capture" ? {kingCapture:true,pieceStays:!!(patch.moveHistory as any[])?.at(-1)?.pieceStays} : {}),
       ...(replayFrom && replayTo ? {from:replayFrom,to:replayTo} : {})}];
   }
   meta.revision++;

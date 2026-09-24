@@ -61,8 +61,8 @@ import { ChaosLobby } from "@/components/chaos-lobby";
 import { OpeningMoveNotice, AbortedMatch } from "@/components/chaos-opening-move";
 import { ChaosChat, type ChatLine } from "@/components/chaos-chat";
 import { useChaosPresentation } from "@/components/chaos-presentation";
-import {ChaosAchievements} from "@/components/chaos-achievements";
 import { ChaosShareButton } from "@/components/chaos-share-button";
+import {ChaosAchievements} from "@/components/chaos-achievements";
 import { ChaosWeekStrip } from "@/components/chaos-week-strip";
 import { pendingDraftKey, recoverPendingDraft } from "@/lib/chaos-pending-draft";
 import { useSession } from "@/components/session-provider";
@@ -2441,7 +2441,7 @@ function BoardEffectsOverlay({
 
             let inner: React.ReactNode = null;
             if (type === "kamikaze" || type === "checkmate" || type === "sniper") {
-              inner = <ChaosImpact mate={type === "checkmate"} kind={type === "sniper" ? "sniper" : undefined} pieces={pieces}/>;
+              inner = <ChaosImpact mate={type === "checkmate"} kind={type === "sniper" ? "sniper" : undefined} pieces={pieces} column={x / sq} row={y / sq}/>;
             } else if (type === "explosion") {
               inner = (
                 <div
@@ -3471,6 +3471,8 @@ export default function ChaosChessPage() {
    * Shop cards this player owns, from the collection API. Every base card is free, so this is the
    * only thing that gates a draft pool: a shop card is offered once it has been bought.
    */
+  const anomalyOwnedRef = useRef<string[]>([]);
+  const rollOwnedAnomalyChoices = useCallback((count: number, seed?: number) => rollAnomalyChoices(count, seed, anomalyOwnedRef.current), []);
   const [shopOwned, setShopOwned] = useState<Set<string>>(new Set());
   useEffect(() => {
     let active = true;
@@ -3481,6 +3483,7 @@ export default function ChaosChessPage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!active || !Array.isArray(d?.shop)) return;
+        anomalyOwnedRef.current = d.shop.filter((c: {id: string;owned?: boolean}) => c.owned && c.id.startsWith("anomaly:")).map((c: {id: string}) => c.id);
         setShopOwned(
           new Set(
             (d.shop as { id: string; owned?: boolean }[])
@@ -3865,6 +3868,15 @@ export default function ChaosChessPage() {
   const [kingCaptureAnim, setKingCaptureAnim] =
     useState<KingCaptureAnimState | null>(null);
   const kingCaptureAnimIdRef = useRef(0);
+  const [royalResultReady,setRoyalResultReady] = useState(false);
+  useEffect(()=>{
+    setRoyalResultReady(false);
+    if(gameStatus !== "game-over" || !/king captured/i.test(endReason))return;
+    const timer=setTimeout(()=>setRoyalResultReady(true),2500);
+    return()=>clearTimeout(timer);
+  },[gameStatus,endReason]);
+  const [terminalCapture, setTerminalCapture] = useState<{from:string;to:string;pieceStays?:boolean}|null>(null);
+  useEffect(()=>{if(gameStatus === "setup" || gameStatus === "picking-anomaly" || gameStatus === "playing")setTerminalCapture(null);},[gameStatus]);
 
   const triggerEffect = useCallback(
     (type: string, squares: string[], durationOverride?: number) => {
@@ -4328,21 +4340,7 @@ export default function ChaosChessPage() {
         const winner = !whiteKingFound ? "black" : "white";
         const youWin = winner === playerColor;
 
-        // Animate: slide the capturing piece to the king's square, then explode
-        const slideDelay = captureAt && captureFrom ? 400 : 0;
-        if (captureAt && captureFrom) {
-          const capPiece = g.get(captureAt as any);
-          if (capPiece) {
-            const capCode = `${capPiece.color}${capPiece.type.toUpperCase()}`;
-            startKingCaptureAnim(captureFrom, captureAt, capCode);
-          }
-        }
-        if (captureAt) {
-          setTimeout(
-            () => triggerEffect("king-death", [captureAt]),
-            slideDelay,
-          );
-        }
+        if(captureAt && captureFrom)setTerminalCapture(previous => previous?.from===captureFrom && previous?.to===captureAt ? previous : {from:captureFrom,to:captureAt});
         isAnimatingEndRef.current = true;
         if (youWin) {
           playSound("airhorn");
@@ -4387,7 +4385,7 @@ export default function ChaosChessPage() {
             ]);
             if (youWin) spawnPepe(PEPE.clap);
           },
-          captureAt ? KING_DEATH_POPUP_DELAY + slideDelay : 0,
+          captureAt ? KING_DEATH_POPUP_DELAY : 0,
         );
         return true;
       }
@@ -5083,6 +5081,7 @@ export default function ChaosChessPage() {
             if (!piece || piece.color !== aiSide) continue;
             const capture = getKingCaptureMove(g, serverState, aiSide, piece.square, royalTarget);
             if (!capture) continue;
+            setTerminalCapture({from:capture.from,to:capture.to,pieceStays:capture.pieceStays});
             const terminal = new Chess(g.fen());
             if (!capture.pieceStays) terminal.remove(capture.from);
             terminal.remove(capture.to);
@@ -5288,7 +5287,7 @@ export default function ChaosChessPage() {
                   const capPiece = g.get(best.move.from as any);
                   if (capPiece) {
                     const capCode = `${capPiece.color}${capPiece.type.toUpperCase()}`;
-                    startKingCaptureAnim(best.move.from, captured, capCode);
+                    setTerminalCapture({from:best.move.from,to:captured,pieceStays:best.move.pieceStays});
                   }
                   setTimeout(
                     () => triggerEffect("king-death", [captured]),
@@ -6433,7 +6432,7 @@ export default function ChaosChessPage() {
       setGameMode(mode);
       // Show anomaly picker before game starts
       const seed = Math.floor(Math.random() * 1_000_000);
-      setAnomalyPickerChoices(rollAnomalyChoices(3, seed));
+      setAnomalyPickerChoices(rollOwnedAnomalyChoices(3, seed));
       setGameStatus("picking-anomaly");
     },
     [],
@@ -6639,7 +6638,7 @@ export default function ChaosChessPage() {
         clearTimeout(matchedTransitionTimeoutRef.current);
       matchedTransitionTimeoutRef.current = setTimeout(() => {
         setAnomalyPickerChoices(
-          rollAnomalyChoices(3, Math.floor(Math.random() * 1_000_000)),
+          rollOwnedAnomalyChoices(3, Math.floor(Math.random() * 1_000_000)),
         );
         setGameStatus("picking-anomaly");
       }, 2500);
@@ -6681,7 +6680,7 @@ export default function ChaosChessPage() {
                 clearTimeout(matchedTransitionTimeoutRef.current);
               matchedTransitionTimeoutRef.current = setTimeout(() => {
                 setAnomalyPickerChoices(
-                  rollAnomalyChoices(3, Math.floor(Math.random() * 1_000_000)),
+                  rollOwnedAnomalyChoices(3, Math.floor(Math.random() * 1_000_000)),
                 );
                 setGameStatus("picking-anomaly");
               }, 2500);
@@ -6752,7 +6751,7 @@ export default function ChaosChessPage() {
               clearTimeout(matchedTransitionTimeoutRef.current);
             matchedTransitionTimeoutRef.current = setTimeout(() => {
               setAnomalyPickerChoices(
-                rollAnomalyChoices(3, Math.floor(Math.random() * 1_000_000)),
+                rollOwnedAnomalyChoices(3, Math.floor(Math.random() * 1_000_000)),
               );
               setGameStatus("picking-anomaly");
             }, 2500);
@@ -6864,6 +6863,7 @@ export default function ChaosChessPage() {
         return;
       }
       if (msg.type === "game_over") {
+        if(msg.capture && /king captured/i.test(msg.reason))setTerminalCapture(msg.capture);
         setGameResult(msg.winner);
         setGameStatus("game-over");
         setEndReason(msg.reason);
@@ -6896,6 +6896,10 @@ export default function ChaosChessPage() {
           setLegalMoveSquares({});
           setWaitingForOpponentDraft(false);
           setGameStatus(saved.status === "playing" ? "playing" : "game-over");
+          if (saved.result && /king captured/i.test(saved.result.reason)) {
+            const last = saved.history?.at(-1);
+            if(last?.from && last?.to)setTerminalCapture({from:last.from,to:last.to,pieceStays:last.pieceStays});
+          }
           if (saved.result) { setGameResult(saved.result.winner); setEndReason(saved.result.reason); }
           setCapturedPawns({ w: saved.capturedPawnsWhite, b: saved.capturedPawnsBlack });
           if (saved.draftProtocol === 2) {
@@ -7374,7 +7378,7 @@ export default function ChaosChessPage() {
         if (data.myPick !== undefined && data.opponentPick !== undefined) {
           setGameStatus(saved.status === "playing" ? "playing" : "game-over");
         } else {
-          setAnomalyPickerChoices(rollAnomalyChoices(3, Math.floor(Math.random()*1_000_000)));
+          setAnomalyPickerChoices(rollOwnedAnomalyChoices(3, Math.floor(Math.random()*1_000_000)));
           pendingMpAnomalyRef.current = data.myPick ? getAnomalyById(data.myPick) ?? null : null;
           myAnomalyPickSentRef.current = data.myPick !== undefined;
           setMyPickSent(data.myPick !== undefined); setOpponentAnomalyPickedId(data.opponentPick);
@@ -7559,7 +7563,7 @@ export default function ChaosChessPage() {
           [from]: { backgroundColor: "rgba(220,38,38,0.4)" },
           [to]: { backgroundColor: "rgba(255,215,0,0.55)" },
         });
-        triggerEffect("king-death", [to]);
+        setTerminalCapture({from,to,pieceStays:getKingCaptureMove(game,toServerChaosState(chaosState,playerColor),game.turn(),from,to)?.pieceStays});
         playSound("airhorn");
         spawnPepe(PEPE.gigachad);
         setTimeout(() => {
@@ -8502,9 +8506,17 @@ export default function ChaosChessPage() {
         return highlights;
       }, [game, playerColor, activeChaosMoves, chaosState, isKingMoveChaosUnsafe]);
 
+  useEffect(() => {
+    if (!waitingForOpponentDraft) return;
+    setSelectedSquare(null);
+    setLegalMoveSquares({});
+    setHoverMoveSquares({});
+    setAnomalyActivationMode(null);
+  }, [waitingForOpponentDraft]);
+
   const handleSquareClick = useCallback(
     (square: CbSquare) => {
-      if (gameStatus !== "playing") return;
+      if (gameStatus !== "playing" || waitingForOpponentDraft) return;
 
       if (selectedSquare === square && !anomalyActivationMode) {
         setSelectedSquare(null);
@@ -8790,6 +8802,7 @@ export default function ChaosChessPage() {
     [
       game,
       gameStatus,
+      waitingForOpponentDraft,
       playerColor,
       isThinking,
       selectedSquare,
@@ -9887,8 +9900,8 @@ export default function ChaosChessPage() {
                     clearTimeout(matchedTransitionTimeoutRef.current);
                   matchedTransitionTimeoutRef.current = setTimeout(() => {
                     setAnomalyPickerChoices(
-                      rollAnomalyChoices(
-                        4,
+                      rollOwnedAnomalyChoices(
+                        3,
                         Math.floor(Math.random() * 1_000_000),
                       ),
                     );
@@ -9951,7 +9964,6 @@ export default function ChaosChessPage() {
           </div>
 
           <ChaosAchievements replayBase={presentation.activity ? "/watch?match=" : "/chaos/replay/"} />
-
           {/* ── Game of the Week: the best archived Chaos game of the last 7 days.
                  This page is shared with the Discord Activity (it has no /chaos routes), so the
                  links follow the presentation the Activity installs. ── */}
@@ -10848,7 +10860,7 @@ export default function ChaosChessPage() {
           <AnomalyPickerScreen
             choices={gameMode !== "ai" && serverOpening ? serverOpening.choices : anomalyPickerChoices}
             serverDeadline={gameMode !== "ai" ? serverOpening?.deadline : undefined}
-            isPro={!!presentation.activity || plan === "pro" || plan === "lifetime"}
+            isPro={true}
             onPick={(anomaly) => {
               if (gameMode === "ai") {
                 // Solo AI game — launch immediately
@@ -11125,14 +11137,15 @@ export default function ChaosChessPage() {
                       : false
                   }
                   onSquareClick={(square) => {
+                    if(terminalCapture)return;
                     setHoverMoveSquares({});
                     handleSquareClick(square as CbSquare);
                   }}
                   onMouseOverSquare={(square) => {
-                    handleMouseOverSquare(square as CbSquare);
+                    if (!waitingForOpponentDraft && !terminalCapture) handleMouseOverSquare(square as CbSquare);
                   }}
                   onMouseOutSquare={() => handleMouseOutSquare()}
-                  customSquareStyles={mergedSquareStyles}
+                  customSquareStyles={waitingForOpponentDraft ? {} : mergedSquareStyles}
                   customBoardStyle={{
                     borderRadius: "8px",
                     boxShadow: "0 4px 30px rgba(0,0,0,0.4)",
@@ -11145,13 +11158,24 @@ export default function ChaosChessPage() {
                   }}
                   showBoardNotation={showCoordinates}
                   customPieces={chaosCustomPieces || undefined}
-                  animationDuration={ricochetAnim ? 0 : 200}
+                  kingCapture={terminalCapture}
+                  pieceJuice={!ricochetAnim && !kingCaptureAnim && !terminalCapture}
+                  animationDuration={0}
                   arePiecesDraggable={
                     gameStatus === "playing" &&
                     !isThinking &&
-                    !waitingForOpponentDraft
+                    !waitingForOpponentDraft && !terminalCapture
                   }
                 />
+                {waitingForOpponentDraft && <div data-draft-pause role="status" aria-live="polite" style={{position:"absolute",inset:0,zIndex:30,display:"grid",placeItems:"center",background:"rgba(12,21,37,.48)",borderRadius:8,cursor:"wait",touchAction:"none"}}>
+                  <div style={{width:"min(86%, 340px)",padding:"22px 18px",border:"2px solid #aa92e8",borderRadius:22,background:"#202d45",boxShadow:"0 12px 40px #0006",textAlign:"center",color:"#fff3d5"}}>
+                    <span aria-hidden="true" style={{display:"block",fontSize:30,color:"#d9c0ff",marginBottom:8}}>✦</span>
+                    <strong style={{display:"block",fontSize:"clamp(17px,3vw,23px)",lineHeight:1.2}}>Opponent is picking a power</strong>
+                    <span style={{display:"block",marginTop:10,fontSize:13,color:"#c2ccdd"}}>Board paused · both clocks stopped</span>
+                    {serverDraft && <span aria-live="off" style={{display:"inline-block",marginTop:14,padding:"6px 14px",borderRadius:12,background:"#3c385c",fontWeight:900,fontSize:24,color:"#e2cbff",fontVariantNumeric:"tabular-nums"}}>{serverPickSeconds}s</span>}
+                    <small style={{display:"block",marginTop:10,color:"#b7c3d7"}}>Play resumes when their choice is locked in.</small>
+                  </div>
+                </div>}
                 <BoardEffectsOverlay
                   effects={boardEffects}
                   boardSize={boardSize}
@@ -11324,9 +11348,15 @@ export default function ChaosChessPage() {
 
             {selectedSquare && (() => {
               const piece = game.get(selectedSquare as Square);
-              if (!piece || piece.color === (playerColor === "white" ? "w" : "b")) return null;
-              const rules = chaosState.aiModifiers.filter(m => (m.piece === piece.type || m.piece === null) &&
+              if (!piece) return null;
+              const friendly = piece.color === (playerColor === "white" ? "w" : "b");
+              const pieceMods = friendly ? chaosState.playerModifiers : chaosState.aiModifiers;
+              const rules = pieceMods.filter(m => (m.piece === piece.type || m.piece === null) &&
                 (!SINGLE_PIECE_MODIFIERS[m.id] || chaosState.assignedSquares?.[`${piece.color}_${m.id}`] === undefined || chaosState.assignedSquares?.[`${piece.color}_${m.id}`] === selectedSquare));
+              if (friendly) return rules.length ? <details key={selectedSquare} className="enemy-piece-inspect w-full max-w-[640px] rounded-xl border border-lime-300/30 bg-slate-900 p-3 text-sm text-slate-200">
+                <summary className="cursor-pointer font-bold">{getPieceDisplayName(piece.type, pieceMods, selectedSquare, chaosState.assignedSquares, piece.color)} · {selectedSquare.toUpperCase()} · {rules.length} power{rules.length === 1 ? '' : 's'}</summary>
+                {rules.map(m => <p key={m.id}><strong>{m.name}:</strong> {m.description}</p>)}
+              </details> : null;
               const basics = {p: "Advances forward; captures diagonally.", n: "Jumps in an L: 2 squares, then 1 sideways.", b: "Moves and captures diagonally.", r: "Moves and captures along ranks and files.", q: "Moves and captures in any straight line.", k: "Moves and captures 1 square. Must stay out of check."};
               return <aside className="enemy-piece-inspect w-full max-w-[640px] rounded-xl border border-orange-300/30 bg-slate-900 p-3 text-sm text-slate-200" aria-label="Enemy piece details">
                 <div className="flex items-center justify-between gap-3"><strong>{getPieceDisplayName(piece.type, chaosState.aiModifiers, selectedSquare, chaosState.assignedSquares, piece.color)} · {selectedSquare.toUpperCase()}</strong><button type="button" aria-label="Close piece details" onClick={() => {setSelectedSquare(null);setLegalMoveSquares({});}}>×</button></div>
@@ -11389,7 +11419,7 @@ export default function ChaosChessPage() {
                     )
                       return null;
                     const anomId = selectedAnomaly.id;
-                    const unavailableReason = chaosState.playerAnomalyUsed
+                    const unavailableReason = waitingForOpponentDraft ? "Opponent is picking a power" : chaosState.playerAnomalyUsed
                       ? "Used this match"
                       : partySyncing ? "Saving your move…"
                       : !isPlayerTurn_ ? "Available on your turn"
@@ -11583,7 +11613,7 @@ export default function ChaosChessPage() {
             )}
 
             {/* ── Game Over Overlay ── */}
-            {gameStatus === "game-over" && (gameResult === "aborted" && !presentation.Result ? <AbortedMatch reason={endReason} onLobby={() => {setGameStatus("setup"); setGameResult(null); setRoomId(null); setRoomCode(""); setMatchmakeState("idle");}} /> : presentation.Result ? <presentation.Result
+            {gameStatus === "game-over" && (presentation.Result || !/king captured/i.test(endReason) || royalResultReady) && (gameResult === "aborted" && !presentation.Result ? <AbortedMatch reason={endReason} onLobby={() => {setGameStatus("setup"); setGameResult(null); setRoomId(null); setRoomCode(""); setMatchmakeState("idle");}} /> : presentation.Result ? <presentation.Result
               outcome={gameResult === 'aborted' ? 'aborted' : gameResult === playerColor ? 'win' : gameResult === 'draw' ? 'draw' : 'loss'}
               reason={endReason} practice={gameMode === 'ai'} turns={moveLog.length}
               powers={chaosState.playerModifiers} rematchRequested={rematchRequested} rematchReceived={rematchReceived}

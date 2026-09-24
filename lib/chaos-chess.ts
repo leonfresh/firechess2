@@ -250,7 +250,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     id: "phantom-rook",
     name: "Phantom Rook",
     description:
-      "Rooks can move through friendly pieces (but not enemy pieces).",
+      "Rooks can pass through allies to empty squares. Captures need a clear path.",
     tier: "rare",
     icon: "👻",
     piece: "r",

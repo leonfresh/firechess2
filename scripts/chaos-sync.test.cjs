@@ -146,7 +146,7 @@ test('both players can bundle their move followed by their power pick',()=>{
  r=apply(r,'guest',m);assert.equal(cleanState(r.chaosState).currentPhase,1);assert.equal(metadata(r).stateRevision,10);assert.equal(new Chess(r.fen).turn(),'w');
 });
 test('anomaly-injected powers agree for both players',()=>{
- let r=fresh();r=apply(r,'host',{type:'anomaly_pick',anomalyId:null});r=apply(r,'guest',{type:'anomaly_pick',anomalyId:'chariot'});
+ let r=fresh();r.chaosState._sync={...metadata(r),shopOwned:{host:[],guest:['anomaly:chariot']}};r=apply(r,'host',{type:'anomaly_pick',anomalyId:null});r=apply(r,'guest',{type:'anomaly_pick',anomalyId:'chariot'});
  assert.ok(cleanState(r.chaosState).aiModifiers.length);assert.doesNotThrow(()=>apply(r,'host',move(r)));
 });
 test('empty draft messages cannot replace the board',()=>{
@@ -246,4 +246,25 @@ test('chat preserves clock elapsed time and draft pause, and a pre-chat move rem
  const remaining=metadata(r).clock.b;
  r={...r,...reduceCommand(r,'host',command(r,{type:'chat',text:'Nice power'}),now+4000)};
  assert.equal(metadata(r).clock.active,null);assert.equal(metadata(r).clock.b,remaining);
+});
+test('king capture keeps valid FEN and includes the exact final action in snapshots and replay',()=>{
+ let r=ready();r.fen='7k/5B2/8/8/8/8/8/K7 w - - 0 1';
+ r.chaosState.playerModifiers=[ALL_MODIFIERS.find(m=>m.id==='archbishop')];r.chaosState.assignedSquares={w_archbishop:'f7'};
+ r.chaosState._sync={...metadata(r),draftProtocol:2};
+ r=apply(r,'host',{type:'king_capture',from:'f7',to:'h8'});
+ assert.equal(r.status,'finished');assert.equal(new Chess(r.fen).get('h8').type,'k');
+ const snap=require('../lib/chaos-room-sync.ts').snapshot(r);
+ assert.equal(snap.history.at(-1).kingCapture,true);assert.equal(snap.history.at(-1).to,'h8');
+ assert.equal(metadata(r).replayFrames.at(-1).kingCapture,true);
+ assert.deepEqual(metadata(r).events.at(-1).message.capture,{from:'f7',to:'h8',pieceStays:false});
+});
+test('stationary sniper king capture preserves its ranged presentation in archive and snapshot',()=>{
+ let r=ready();r.fen='8/8/8/8/4k3/8/8/KB6 w - - 0 1';
+ r.chaosState.playerModifiers=[ALL_MODIFIERS.find(m=>m.id==='sniper-bishop')];
+ r.chaosState._sync={...metadata(r),draftProtocol:2};
+ r=apply(r,'host',{type:'king_capture',from:'b1',to:'e4'});
+ assert.equal(r.moveHistory.at(-1).pieceStays,true);
+ assert.equal(metadata(r).replayFrames.at(-1).pieceStays,true);
+ assert.equal(require('../lib/chaos-room-sync.ts').snapshot(r).history.at(-1).pieceStays,true);
+ assert.equal(metadata(r).events.at(-1).message.capture.pieceStays,true);
 });

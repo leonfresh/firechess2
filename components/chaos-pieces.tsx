@@ -1,4 +1,5 @@
 "use client";
+import { FAIRY_PIECE_CODES } from "@/lib/chaos-piece-art";
 import React from "react";
 import {Chess} from "chess.js";
 import {getPieceImageUrl} from "@/lib/board-themes";
@@ -405,46 +406,9 @@ export const SINGLE_PIECE_MODIFIERS: Record<string, true> = {
 };
 
 /** Fairy piece SVG replacements — full piece image swap for transformative modifiers */
-const FAIRY_PIECE_SVGS: Record<string, Record<string, string>> = {
-  "vaulting-knight": { w: "/pieces/fairy/wVK.svg", b: "/pieces/fairy/bVK.svg" },
-  "bank-shot": { w: "/pieces/fairy/wBS.svg", b: "/pieces/fairy/bBS.svg" },
-  conscription: { w: "/pieces/fairy/wCS.svg", b: "/pieces/fairy/bCS.svg" },
-  "hostile-takeover": { w: "/pieces/fairy/wHT.svg", b: "/pieces/fairy/bHT.svg" },
-  knook: { w: "/pieces/fairy/wC.svg", b: "/pieces/fairy/bC.svg" },
-  archbishop: { w: "/pieces/fairy/wA.svg", b: "/pieces/fairy/bA.svg" },
-  amazon: { w: "/pieces/fairy/wAm.svg", b: "/pieces/fairy/bAm.svg" },
-  "night-rider": { w: "/pieces/fairy/wNR.svg", b: "/pieces/fairy/bNR.svg" },
-  camel: { w: "/pieces/fairy/wCa.svg", b: "/pieces/fairy/bCa.svg" },
-  "dragon-bishop": { w: "/pieces/fairy/wDb.svg", b: "/pieces/fairy/bDb.svg" },
-  "dragon-rook": { w: "/pieces/fairy/wDr.svg", b: "/pieces/fairy/bDr.svg" },
-  "rook-cannon": { w: "/pieces/fairy/wRC.svg", b: "/pieces/fairy/bRC.svg" },
-  "pawn-charge": { w: "/pieces/fairy/wPC.svg", b: "/pieces/fairy/bPC.svg" },
-  "pawn-capture-forward": {
-    w: "/pieces/fairy/wPB.svg",
-    b: "/pieces/fairy/bPB.svg",
-  },
-  /** Emperor king — standard king body with gold reach-ring and corner triangles */
-  "fools-king": { w: "/pieces/fairy/wFK.svg", b: "/pieces/fairy/bFK.svg" },
-  "inversion-pawn": { w: "/pieces/fairy/wIP.svg", b: "/pieces/fairy/bIP.svg" },
-  "moon-queen": { w: "/pieces/fairy/wMQ.svg", b: "/pieces/fairy/bMQ.svg" },
-  "emperor-king": { w: "/pieces/fairy/wEK.svg", b: "/pieces/fairy/bEK.svg" },
-  /** Hierophant (Sacred Passage) bishop — ghostly violet phase-bishop */
-  "hierophant-bishop": {
-    w: "/pieces/fairy/wHb.svg",
-    b: "/pieces/fairy/bHb.svg",
-  },
-  /** Usurper — king with swap arrows */
-  usurper: { w: "/pieces/fairy/wUsp.svg", b: "/pieces/fairy/bUsp.svg" },
-  /** Kamikaze Bishop — bishop with explosion flames */
-  "kamikaze-bishop": { w: "/pieces/fairy/wKB.svg", b: "/pieces/fairy/bKB.svg" },
-  /** Queen Cannon — queen with cannon barrel */
-  "queen-cannon": { w: "/pieces/fairy/wQC.svg", b: "/pieces/fairy/bQC.svg" },
-  /** Railgun — rook with electric bolt */
-  railgun: { w: "/pieces/fairy/wRG.svg", b: "/pieces/fairy/bRG.svg" },
-  "sniper-bishop": { w: "/pieces/fairy/wSB.svg", b: "/pieces/fairy/bSB.svg" },
-  "bishop-cannon": { w: "/pieces/fairy/wBC.svg", b: "/pieces/fairy/bBC.svg" },
-  "bishop-bounce": { w: "/pieces/fairy/wBB.svg", b: "/pieces/fairy/bBB.svg" },
-};
+const FAIRY_PIECE_SVGS: Record<string, Record<string, string>> = Object.fromEntries(
+  Object.entries(FAIRY_PIECE_CODES).map(([id, code]) => [id, { w: `/pieces/fairy/w${code}.svg`, b: `/pieces/fairy/b${code}.svg` }]),
+);
 
 /** War Pawn SVG — shown when both pawn-charge AND pawn-capture-forward are active */
 const WAR_PAWN_SVGS: Record<string, string> = {
@@ -600,9 +564,10 @@ export function buildChaosCustomPieces(
         "queen-cannon",
         "railgun",
       ];
-      const MOVEMENT_MOD_IDS = ["dragon-bishop", "dragon-rook", "rook-cannon", "pawn-charge", "pawn-capture-forward", "sniper-bishop", "bishop-cannon", "bishop-bounce"];
-      const fairyTiers = [IDENTITY_MOD_IDS, MOVEMENT_MOD_IDS, ["vaulting-knight", "bank-shot"]];
+      const MOVEMENT_MOD_IDS = ["dragon-bishop", "dragon-rook", "rook-cannon", "pawn-charge", "pawn-capture-forward", "sniper-bishop", "bishop-cannon", "bishop-bounce", "phantom-rook"];
+      const fairyTiers = [IDENTITY_MOD_IDS, MOVEMENT_MOD_IDS, ["vaulting-knight", "bank-shot"], ["nuclear-queen", "queen-teleport", "kings-chains", "king-wrath", "collateral-rook", "pawn-fortress", "enpassant-everywhere", "pawn-promotion-early", "toll-gate"]];
       for (const tier of fairyTiers) {
+        if (pawnCombo) break; // War Pawn already depicts both core movement powers.
         // newest-first within the tier
         const found = [...activeForPiece].reverse().find((m) => {
           if (!tier.includes(m.id)) return false;
@@ -939,8 +904,20 @@ export function buildChaosCustomPieces(
         ? (isPlayerPiece ? (playerNukeCdTurns ?? 0) : (aiNukeCdTurns ?? 0))
         : 0;
 
+      // Match the final sculpt, after anomaly overrides, rather than the first drafted card.
+      const badgePowers = visiblePowers.filter(m => {
+        if (m.id === 'nuclear-queen' && nukeTurnsLeft > 0) return false;
+        if (FAIRY_PIECE_SVGS[m.id]?.[pieceColor] === pieceUrl) return false;
+        if (pieceUrl === WAR_PAWN_SVGS[pieceColor] && ['pawn-charge','pawn-capture-forward'].includes(m.id)) return false;
+        return true;
+      });
+      const powerDescription = visiblePowers.map(m => m.name).join(', ');
+
       return (
         <div
+          title={powerDescription ? `Active powers: ${powerDescription}` : undefined}
+          aria-label={powerDescription ? `Active powers: ${powerDescription}` : undefined}
+          data-power-count={actualSet === 'chaos-toy' && visiblePowers.length > 1 ? visiblePowers.length : undefined}
           style={{
             width: squareWidth,
             height: squareWidth,
@@ -975,26 +952,29 @@ export function buildChaosCustomPieces(
             }}
           />
           {/* Modifier overlays */}
-          {actualSet === 'chaos-toy' && visiblePowers.length > 0 && (
+          {actualSet === 'chaos-toy' && badgePowers.length > 0 && (
             <div title={visiblePowers.map(m => m.name).join(' + ')}
               aria-label={`Active powers: ${visiblePowers.map(m => m.name).join(', ')}`}
-              data-power-count={visiblePowers.length > 1 ? visiblePowers.length : undefined}
               style={{ position: 'absolute', right: '1%', bottom: '1%', zIndex: 4, pointerEvents: 'none',
                 display: 'flex', gap: 1, borderRadius: 5, padding: 2, background: '#17263bea',
                 border: '1px solid #a8bfd377', color: '#e0f998', alignItems: 'center',
                 fontSize: Math.max(9, squareWidth * .17), fontWeight: 900, lineHeight: 1 }}>
-              {visiblePowers.slice(0, 2).map(m => {
-                const cooling = m.id === 'nuclear-queen' ? nukeTurnsLeft : 0;
-                return <span key={m.id} data-power-badge={m.id} data-nuke-cd={cooling || undefined}
-                  title={cooling ? `Nuclear Queen cooling down: ${cooling} turn${cooling === 1 ? '' : 's'}` : undefined}
-                  style={{ width: squareWidth * .23, height: squareWidth * .23, display: 'grid', placeItems: 'center',
-                    ...(cooling ? { background: '#0b1220', borderRadius: 3, color: '#93a1b5', boxShadow: 'inset 0 0 0 1px #64748b88' } : {}) }}>
-                  {cooling || (m.id === 'vaulting-knight' ? '↟' : m.id === 'bank-shot' ? '↱' : m.icon)}
-                </span>;
-              })}
-              {visiblePowers.length > 2 && <span data-power-overflow={visiblePowers.length - 2}>+{visiblePowers.length - 2}</span>}
+              {badgePowers.slice(0, 2).map(m => <span key={m.id} data-power-badge={m.id}
+                style={{width:squareWidth*.23,height:squareWidth*.23,display:'grid',placeItems:'center'}}>
+                {m.id === 'vaulting-knight' ? '↟' : m.id === 'bank-shot' ? '↱' : m.icon}
+              </span>)}
+              {badgePowers.length > 2 && <span data-power-overflow={badgePowers.length - 2}>+{badgePowers.length - 2}</span>}
             </div>
           )}
+          {actualSet === 'chaos-toy' && nukeTurnsLeft > 0 && <span
+            data-power-status="nuclear-queen" data-nuke-cd={nukeTurnsLeft}
+            title={`Nuclear Queen cooling down: ${nukeTurnsLeft} turn${nukeTurnsLeft === 1 ? '' : 's'}`}
+            aria-label={`Nuclear Queen cooldown: ${nukeTurnsLeft} turns`}
+            style={{position:'absolute',right:'2%',top:'2%',zIndex:5,pointerEvents:'none',display:'grid',placeItems:'center',
+              minWidth:squareWidth*.27,height:squareWidth*.27,padding:'0 2px',borderRadius:4,background:'#102238',
+              border:'1px solid #9cb5cc',color:'#e7edf5',fontSize:Math.max(9,squareWidth*.17),fontWeight:900,lineHeight:1}}>
+            {nukeTurnsLeft}
+          </span>}
           {overlays.length > 0 && (
             <div
               style={{

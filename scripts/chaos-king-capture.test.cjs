@@ -25,11 +25,11 @@ function runClientBlock(mode,side) {
   const end=source.indexOf('      // First check if this is a chaos move',start);
   assert.ok(start>0&&end>start);
   const block=ts.transpile(source.slice(start,end),{target:ts.ScriptTarget.ES2022});
-  const {room,from,to}=fixture(side),sent=[],logged=[],stub=()=>{};
+  const {room,from,to}=fixture(side),sent=[],logged=[],captures=[],stub=()=>{};
   const game=new Chess(room.fen);
-  const run=new Function('game','chaosState','playerColor','toServerChaosState','getKingCaptureMove','gameMode','partySendRef','isAnimatingEndRef','addMoveToLog','setLastMoveHighlight','triggerEffect','playSound','spawnPepe','PEPE','setTimeout','setGameResult','setGameStatus','setEndReason','setEventLog','KING_DEATH_POPUP_DELAY','from','to',block);
-  const result=run(game,room.chaosState,side==='w'?'white':'black',s=>s,getKingCaptureMove,mode,{current:m=>sent.push(m)},{current:false},(g,san,color)=>logged.push({san,color,turn:g.moveNumber()}),stub,stub,stub,stub,{gigachad:'g',clap:'c'},stub,stub,stub,stub,stub,900,from,to);
-  return {result,game,room,from,to,sent,logged};
+  const run=new Function('game','chaosState','playerColor','toServerChaosState','getKingCaptureMove','gameMode','partySendRef','isAnimatingEndRef','addMoveToLog','setLastMoveHighlight','triggerEffect','playSound','spawnPepe','PEPE','setTimeout','setGameResult','setGameStatus','setEndReason','setEventLog','KING_DEATH_POPUP_DELAY','from','to','setTerminalCapture',block);
+  const result=run(game,room.chaosState,side==='w'?'white':'black',s=>s,getKingCaptureMove,mode,{current:m=>sent.push(m)},{current:false},(g,san,color)=>logged.push({san,color,turn:g.moveNumber()}),stub,stub,stub,stub,{gigachad:'g',clap:'c'},stub,stub,stub,stub,stub,900,from,to,c=>captures.push(c));
+  return {result,game,room,from,to,sent,logged,captures};
 }
 for(const side of ['w','b'])for(const hostColor of ['white','black'])for(const power of ['standard','king-ascension','strength','fools-king'])test(`${side}/${hostColor}: ${power} king capture ends the game`,()=>{
   const {room,actor,command,from,to}=fixture(side,hostColor,power);
@@ -80,8 +80,9 @@ test('client intercepts a normal king capture and waits for the server result',(
 });
 test('against the AI the winning capture is logged as the move that ended the game',()=>{
   for(const side of ['w','b']){
-    const {result,game,room,from,to,logged}=runClientBlock('ai',side);
+    const {result,game,room,from,to,logged,captures}=runClientBlock('ai',side);
     assert.equal(result,true);
+    assert.equal(captures[0].from,from);assert.equal(captures[0].to,to);
     assert.deepEqual(logged,[{san:`${from}–${to}`,color:side,turn:10}]);
     assert.equal(game.fen(),room.fen,'Log against the pre-capture position so the row number is right');
   }

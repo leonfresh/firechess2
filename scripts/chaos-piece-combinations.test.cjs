@@ -88,7 +88,7 @@ for (const side of ['w', 'b']) {
   });
   test(`${side}: bishop and rook movement upgrades remain available in either draft order`, () => {
     for (const [type, ids] of [['b',['archbishop','dragon-bishop','bishop-bounce','bishop-cannon','sniper-bishop']], ['r',['dragon-rook','phantom-rook','rook-cannon','railgun']]]) {
-      const g = setup(side, [['d4',type],['e5','p'],['f6','p',enemy],['e4','p'],['f4','p',enemy],['b6','p',enemy],['b4','p',enemy]]);
+      const g = setup(side, [['d4',type],['e5','p'],['f6','p',enemy],['e4','p'],['g4','p',enemy],['b6','p',enemy],['b4','p',enemy]]);
       const assigned = { [`${side}_archbishop`]: 'd4' };
       for (const order of [ids, [...ids].reverse()]) {
         const all = getChaosMoves(g, powers(...order), side, assigned);
