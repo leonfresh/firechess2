@@ -1,7 +1,7 @@
 ---
 title: "Guess the Elo: How to Estimate Chess Rating from Positions"
-description: "Guess anyone's chess Elo from their moves. Spot blunders, plan depth, and endgame tells with real positions from 800 to 2400+ on FireChess."
-date: "2026-09-20"
+description: "Guess anyone's chess Elo from their moves. Spot blunders, plan depth, and endgame tells with real positions from 800 to 2400+."
+date: "2026-09-25"
 author: "FireChess Team"
 tags: ["guess the elo", "chess rating estimator", "guess elo from position", "chess improvement", "chess training", "PGN analysis", "chess playing style"]
 ---
