@@ -1,6 +1,6 @@
 "use client";
 import {ChaosImpact} from "@/components/chaos-impact";
-import {kamikazeImpact,sniperImpact} from "@/lib/chaos-impact";
+import {kamikazeImpact,sniperImpact,spawnImpacts} from "@/lib/chaos-impact";
 import {buildChaosCustomPieces, SINGLE_PIECE_MODIFIERS} from "@/components/chaos-pieces";
 import { getKingCaptureMove } from "@/lib/chaos-outcome";
 import { moveLogRows } from "@/lib/chaos-move-log";
@@ -2436,7 +2436,7 @@ function BoardEffectsOverlay({
       <style>{EFFECT_KEYFRAMES}</style>
       <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[8px]">
         {effects.flatMap(({ id, type, squares, pieces }) =>
-          squares.map((square) => {
+          squares.map((square, squareIndex) => {
             const file = square.charCodeAt(0) - 97;
             const rank = parseInt(square[1], 10) - 1;
             const x = orientation === "white" ? file * sq : (7 - file) * sq;
@@ -2445,6 +2445,9 @@ function BoardEffectsOverlay({
             let inner: React.ReactNode = null;
             if (type === "kamikaze" || type === "checkmate" || type === "sniper") {
               inner = <ChaosImpact mate={type === "checkmate"} kind={type === "sniper" ? "sniper" : undefined} pieces={pieces} column={x / sq} row={y / sq}/>;
+            } else if (type === "revive" || type === "summon") {
+              // One label per group (two Knight Horde knights read as one "SUMMONED!").
+              inner = <ChaosImpact kind={type} showLabel={squareIndex === 0} pieces={pieces?.[squareIndex] ? [pieces[squareIndex]] : undefined} column={x / sq} row={y / sq}/>;
             } else if (type === "explosion") {
               inner = (
                 <div
@@ -3235,6 +3238,8 @@ function PieceInfoPanel({
 const EFFECT_DURATIONS: Record<string, number> = {
   kamikaze: 1500,
   sniper: 1500,
+  revive: 1700,
+  summon: 1700,
   checkmate: 2400,
   explosion: 750,
   nuke: 1000,
@@ -3942,6 +3947,36 @@ export default function ChaosChessPage() {
       playSound("chaos-mate");
     }
   }, [impactFen, gameStatus, endReason, gameResult, playerColor, chaosState.playerModifiers, chaosState.aiModifiers, presentation.activity, triggerEffect]);
+
+  /* Revived and summoned pieces (Pawn Fortress, Regicide, Undead Army, Knight Horde, Phalanx, The
+     Wake) get a REVIVED! / SUMMONED! burst. Only boards one ply apart (a move) or on the same ply
+     (a draft pick) are compared, and spawnImpacts ignores a move that doesn't match the boards. */
+  const spawnPrevious = useRef<{ fen: string } | null>(null);
+  useEffect(() => {
+    const previous = spawnPrevious.current;
+    spawnPrevious.current = { fen: impactFen };
+    if (!previous || !["playing", "drafting"].includes(gameStatus)) return;
+    const plyOf = (fen: string) => { const f = fen.split(" "); return (Number(f[5]) - 1) * 2 + (f[1] === "b" ? 1 : 0); };
+    const step = plyOf(impactFen) - plyOf(previous.fen);
+    if (step !== 0 && step !== 1) return;
+    const own = playerColor === "white" ? "w" : "b";
+    const powers = { w: [] as string[], b: [] as string[] };
+    powers[own] = chaosState.playerModifiers.map((m) => m.id);
+    powers[own === "w" ? "b" : "w"] = chaosState.aiModifiers.map((m) => m.id);
+    const move = step === 1 ? lastMoveRef.current : null;
+    if (step === 1 && !move) return;
+    const spawns = spawnImpacts(previous.fen, impactFen, move, powers, powers);
+    if (!spawns.length) return;
+    for (const kind of ["revive", "summon"] as const) {
+      const group = spawns.filter((s) => s.kind === kind);
+      if (!group.length) continue;
+      const id = ++effectIdRef.current;
+      setBoardEffects((e) => [...e, { id, type: kind, squares: group.map((s) => s.square), pieces: presentation.activity ? group.map((s) => s.piece) : undefined }]);
+      setTimeout(() => setBoardEffects((e) => e.filter((x) => x.id !== id)), EFFECT_DURATIONS[kind]);
+    }
+    playSound("correct");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [impactFen]);
 
   const startRicochetAnim = useCallback(
     (
@@ -6992,6 +7027,7 @@ export default function ChaosChessPage() {
             setWaitingForOpponentDraft(!!draft && !mine);
             const status = saved.status === "playing" ? mine ? "drafting" : "playing" : "game-over";
             gameStatusRef.current = status; setGameStatus(status);
+            if (saved.lastMoveFrom && saved.lastMoveTo) lastMoveRef.current = { from: saved.lastMoveFrom, to: saved.lastMoveTo };
             if (saved.lastMoveFrom && saved.lastMoveTo) setLastMoveHighlight({[saved.lastMoveFrom]: {backgroundColor: "rgba(255,210,90,.25)"}, [saved.lastMoveTo]: {backgroundColor: "rgba(255,210,90,.4)"}});
           } else if (cs.draftStep === 1 && playerColor === "black") {
             const phase = cs.currentPhase + 1;
@@ -7253,6 +7289,7 @@ export default function ChaosChessPage() {
 
         // Move highlight + tracked piece update
         if (data.lastMoveFrom && data.lastMoveTo) {
+          lastMoveRef.current = { from: data.lastMoveFrom, to: data.lastMoveTo };
           setLastMoveHighlight({
             [data.lastMoveFrom]: { backgroundColor: "rgba(255, 170, 0, 0.3)" },
             [data.lastMoveTo]: { backgroundColor: "rgba(255, 170, 0, 0.3)" },
