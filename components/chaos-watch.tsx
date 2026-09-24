@@ -341,11 +341,14 @@ export function ChaosWatch({
       setError("Copy is unavailable in this browser.");
     }
   };
-  /** Server anchor plus the elapsed time since this payload arrived. */
+  /** Server anchor plus the elapsed time since this payload arrived, minus any pick reading grace
+   *  still to run (the anchor can sit in the future; see PICK_READING_GRACE_MS). */
   const liveClock = (clock: MatchClock | null | undefined, side: "w" | "b") =>
     clock
       ? clock[side] -
-        (clock.active === side ? Math.max(0, now - received) : 0)
+        (clock.active === side
+          ? Math.max(0, now - received - Math.max(0, clock.since - (detail?.serverNow ?? clock.since)))
+          : 0)
       : 0;
   /** The Discord Activity serves this component without /chaos routes, so the link to the
    *  full week page only makes sense on the website (the Activity has the tabs inline). */

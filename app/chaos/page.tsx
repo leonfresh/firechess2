@@ -3437,6 +3437,8 @@ export default function ChaosChessPage() {
 
   const serverClockRef = useRef<MatchClock | null>(null);
   const serverClockReceivedRef = useRef(0);
+  /** Server time the clock was sent at; the anchor itself may be in the future (pick reading grace). */
+  const serverClockNowRef = useRef(0);
 
   /* ── Unlimited time mode (no per-move or draft countdown) ── */
   const [unlimitedTime, setUnlimitedTime] = useState(() => {
@@ -4020,13 +4022,33 @@ export default function ChaosChessPage() {
     const tick = () => {
       const saved = serverClockRef.current;
       if (!saved) return;
-      const clock = projectClock(saved, saved.since + Math.max(0, performance.now() - serverClockReceivedRef.current));
+      const clock = projectClock(saved, (serverClockNowRef.current || saved.since) + Math.max(0, performance.now() - serverClockReceivedRef.current));
       setTimers(previous => Math.ceil(previous.w / 1000) === Math.ceil(clock.w / 1000) && Math.ceil(previous.b / 1000) === Math.ceil(clock.b / 1000) ? previous : {w: clock.w, b: clock.b});
     };
     tick(); const timer = setInterval(tick, 100);
     document.addEventListener("visibilitychange", tick);
     return () => { clearInterval(timer); document.removeEventListener("visibilitychange", tick); };
   }, [gameMode]);
+
+  /* Low-time warning on your own turn: one chime under 30s, a double under 10s. Most 5+3 time
+     losses flagged seconds after the opponent moved, so a cue matters. Each cue re-arms only once
+     the clock is well clear again, so hovering around 30s with increment doesn't chime every move. */
+  const lowTimeCues = useRef({ at30: false, at10: false });
+  const myClockMs = playerColor === "white" ? timers.w : timers.b;
+  const myTurnToMove = game.turn() === (playerColor === "white" ? "w" : "b");
+  useEffect(() => {
+    if (gameMode === "ai" || unlimitedTime || !timeControl || gameStatus !== "playing") return;
+    if (myClockMs > 45_000) lowTimeCues.current.at30 = false;
+    if (myClockMs > 15_000) lowTimeCues.current.at10 = false;
+    if (!myTurnToMove || myClockMs <= 0) return;
+    if (myClockMs <= 10_000 && !lowTimeCues.current.at10) {
+      lowTimeCues.current.at10 = lowTimeCues.current.at30 = true;
+      playSound("bell-double");
+    } else if (myClockMs <= 30_000 && !lowTimeCues.current.at30) {
+      lowTimeCues.current.at30 = true;
+      playSound("bell");
+    }
+  }, [myClockMs, myTurnToMove, gameMode, unlimitedTime, timeControl, gameStatus]);
 
   /* ── Fetch ELO ratings when multiplayer game starts ── */
   useEffect(() => {
@@ -6884,6 +6906,7 @@ export default function ChaosChessPage() {
         setOpeningMove(msg.openingMove ? {...msg.openingMove, deadline: Date.now() + msg.openingMove.deadline - (msg.serverNow ?? Date.now())} : null);
         serverClockRef.current = msg.clock ?? null;
         serverClockReceivedRef.current = performance.now();
+        serverClockNowRef.current = msg.serverNow ?? msg.clock?.since ?? 0;
         if (msg.base !== undefined && msg.base !== null) {
           setUnlimitedTime(msg.base <= 0);
           setTimeControl(msg.base > 0 ? resolveTimeControl(msg.base, msg.inc) : null);
@@ -9948,7 +9971,7 @@ export default function ChaosChessPage() {
               <ChaosLobby showChat={!presentation.activity}
                 isSignedIn={true}
                 unlimitedTime={unlimitedTime}
-                timeControlSeconds={timeControl?.base ?? 300} incrementSeconds={timeControl?.inc ?? 3}
+                timeControlSeconds={timeControl?.base ?? 300} incrementSeconds={timeControl?.inc ?? 5}
                 onMatchFound={enterMatchmakingGame}
                 onPlayWhileWaiting={(seek) => {
                   setBackgroundSeek(seek);
@@ -9967,7 +9990,7 @@ export default function ChaosChessPage() {
     return <Lobby startPractice={(side) => startGame(side, 'ai')}
       createRoom={createRoom} joinRoom={() => joinRoom()} joinOpenRoom={joinRoom} matchmaking={matchmakingLobby} joinCode={joinCode} setJoinCode={setJoinCode}
       difficulty={aiLevel} setDifficulty={setAiLevel} unlimited={unlimitedTime} setUnlimited={setUnlimitedTime}
-      clockLabel={timeControl?.label ?? "5+3"} setClockLabel={label => {setTimeControl(CHAOS_TIME_CONTROLS.find(c => c.label === label) ?? CHAOS_TIME_CONTROLS[1]); setUnlimitedTime(false);}}
+      clockLabel={timeControl?.label ?? "5+5"} setClockLabel={label => {setTimeControl(CHAOS_TIME_CONTROLS.find(c => c.label === label) ?? CHAOS_TIME_CONTROLS[1]); setUnlimitedTime(false);}}
       error={eventLog.filter(entry => entry.message.startsWith('❌')).at(-1)?.message} />;
   }
   if (gameStatus === "setup") {
@@ -10172,7 +10195,7 @@ export default function ChaosChessPage() {
           </div>
 
           {gameMode !== "ai" && <label className="mb-4 flex items-center gap-3 text-sm text-slate-300">Match clock
-            <select className="rounded-lg bg-slate-800 p-2" value={unlimitedTime ? "untimed" : timeControl?.label ?? "5+3"} onChange={e => {
+            <select className="rounded-lg bg-slate-800 p-2" value={unlimitedTime ? "untimed" : timeControl?.label ?? "5+5"} onChange={e => {
               setUnlimitedTime(e.target.value === "untimed");
               if (e.target.value !== "untimed") setTimeControl(CHAOS_TIME_CONTROLS.find(c => c.label === e.target.value) ?? CHAOS_TIME_CONTROLS[1]);
             }}>{CHAOS_TIME_CONTROLS.map(c => <option key={c.label}>{c.label}</option>)}<option value="untimed">No rush (casual)</option></select>
@@ -10292,7 +10315,7 @@ export default function ChaosChessPage() {
                     onClick={() => setUnlimitedTime(false)}
                     className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2 text-sm font-medium transition-all ${!unlimitedTime ? "border-purple-500/40 bg-purple-500/15 text-purple-300" : "border-white/[0.08] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08]"}`}
                   >
-                    ⏱ {timeControl?.label ?? "5+3"} match clock
+                    ⏱ {timeControl?.label ?? "5+5"} match clock
                   </button>
                   <button
                     type="button"
@@ -10423,7 +10446,7 @@ export default function ChaosChessPage() {
                     onClick={() => setUnlimitedTime(false)}
                     className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2 text-sm font-medium transition-all ${!unlimitedTime ? "border-purple-500/40 bg-purple-500/15 text-purple-300" : "border-white/[0.08] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08]"}`}
                   >
-                    ⏱ 5+3 match clock
+                    ⏱ 5+5 match clock
                   </button>
                   <button
                     type="button"
@@ -10806,7 +10829,7 @@ export default function ChaosChessPage() {
     <>
       {backgroundSeek && gameMode === "ai" && (
         <ChaosSeekWatcher seek={backgroundSeek} unlimitedTime={unlimitedTime}
-          timeControlSeconds={timeControl?.base ?? 300} incrementSeconds={timeControl?.inc ?? 3}
+          timeControlSeconds={timeControl?.base ?? 300} incrementSeconds={timeControl?.inc ?? 5}
           onFound={switchToFoundMatch} onStop={() => setBackgroundSeek(null)} />
       )}
       <div data-chaos-arena className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-gradient-to-b from-[#030712] via-[#0a0f1a] to-[#030712]">
@@ -11386,13 +11409,17 @@ export default function ChaosChessPage() {
               )}
               {timeControl && gameMode !== "ai" && !unlimitedTime && (
                 <span
+                  data-low-time={myClockMs < 10000 ? "critical" : myClockMs < 30000 ? "low" : undefined}
                   className={`ml-auto font-mono text-sm font-bold tabular-nums ${
-                    (playerColor === "white" ? timers.w : timers.b) < 10000
+                    myClockMs < 10000
                       ? "text-red-400 animate-pulse"
-                      : "text-slate-300"
+                      : myClockMs < 30000
+                        ? "rounded bg-amber-400/15 px-1.5 text-amber-300"
+                        : "text-slate-300"
                   }`}
                 >
-                  {formatTimer(playerColor === "white" ? timers.w : timers.b)}
+                  {myClockMs < 30000 && <span className="sr-only">Low time: </span>}
+                  {formatTimer(myClockMs)}
                 </span>
               )}
             </div>

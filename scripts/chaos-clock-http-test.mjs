@@ -6,7 +6,7 @@ async function request(user,path,body){
   const response=await fetch(origin+path,{method:body?'POST':'GET',headers:{'X-Guest-Id':user,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
   const data=await response.json();assert.equal(response.status,200,JSON.stringify(data));return data;
 }
-for(const [base,inc] of [[120,1],[300,3],[600,5]]) {
+for(const [base,inc] of [[120,1],[300,5],[600,5]]) {
   const host=`guest_${randomUUID()}`,guest=`guest_${randomUUID()}`;
   const room=await request(host,'/api/chaos/create',{hostColor:'white',timeControlSeconds:base,incrementSeconds:inc});
   const joined=await request(guest,'/api/chaos/join',{roomCode:room.roomCode});

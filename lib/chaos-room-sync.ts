@@ -5,7 +5,7 @@ import { ALL_MODIFIERS, createChaosState, updateTrackedPieces, NUCLEAR_QUEEN_COO
 import { getChaosMoves, executeChaosMove, applyPostMoveEffects } from "./chaos-moves";
 import { ALL_ANOMALIES, rollAnomalyChoices } from "./chaos-anomalies";
 import { blockedMove, chaosOutcome, getKingCaptureMove } from "./chaos-outcome";
-import { projectClock, type MatchClock } from "./chaos-clock";
+import { PICK_READING_GRACE_MS, projectClock, type MatchClock } from "./chaos-clock";
 import { DRAFT_DURATION_MS, draftChoices, applyServerDraft, type ServerDraft } from "./chaos-server-draft";
 
 export type SyncEvent = { revision: number; actor: "host" | "guest" | "system"; message: Record<string, any> };
@@ -510,7 +510,15 @@ export function reduceCommand(room: SyncRoom, userId: string, command: any, now 
     meta.clock = { w: room.timeControlSeconds * 1000, b: room.timeControlSeconds * 1000, active: null, since: now };
   }
   if (meta.clock) {
-    meta.clock.active = nextStatus === "playing" && !meta.frozenBy && !meta.draft ? new Chess(patch.fen ?? room.fen).turn() : null;
+    const active = nextStatus === "playing" && !meta.frozenBy && !meta.draft ? new Chess(patch.fen ?? room.fen).turn() : null;
+    // Resuming after a power draft, or starting once both opening anomalies are picked: the player
+    // to move gets reading time. Otherwise a new side to move starts now, so a reading grace left
+    // unused is never inherited by the opponent; the same side keeps its anchor (chat, reconnects).
+    // A server draft (protocol 2) or a legacy draft freeze both pause the clock during the pick.
+    const resumedAfterPick = !!active && ((!!old.draft && !meta.draft) || (!!old.frozenBy && !meta.frozenBy) || !old.clock);
+    if (resumedAfterPick) meta.clock.since = now + PICK_READING_GRACE_MS;
+    else if (active !== (old.clock?.active ?? null)) meta.clock.since = now;
+    meta.clock.active = active;
     patch.timerWhiteMs = meta.clock.w; patch.timerBlackMs = meta.clock.b;
   }
   if (meta.openingMoveRule) {

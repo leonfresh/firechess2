@@ -11,23 +11,39 @@ function command(room,message){return {id:`clock-action-${++sequence}`.padEnd(20
 function apply(room,actor,message,now){return {...room,...reduceCommand(room,actor,command(room,message),now)}}
 function ready(){let r=apply(fresh(),'h',{type:'anomaly_pick',anomalyId:null},1000);assert.equal(metadata(r).clock,undefined);return apply(r,'g',{type:'anomaly_pick',anomalyId:null},2000)}
 function move(r,from='e2',to='e4'){let g=new Chess(r.fen);g.move({from,to});return {type:'move',fen:g.fen(),lastMoveFrom:from,lastMoveTo:to,chaosState:cleanState(r.chaosState),timerWhiteMs:86400000,timerBlackMs:0}}
+// PICK_READING_GRACE_MS: the side to move gets 8s of free reading time when the clock starts after
+// the opening picks and whenever it resumes after a power draft.
 test('clock starts after both openings; accepted move charges elapsed time, ignores forged clocks and adds one increment',()=>{
- let r=ready();assert.deepEqual(metadata(r).clock,{w:120000,b:120000,active:'w',since:2000});
- const c=command(r,move(r));r={...r,...reduceCommand(r,'h',c,7000)};
- assert.deepEqual(metadata(r).clock,{w:116000,b:120000,active:'b',since:7000});
- assert.equal(reduceCommand(r,'h',c,9000),null);assert.equal(snapshot(r,10000).clock.b,117000);
+ let r=ready();assert.deepEqual(metadata(r).clock,{w:120000,b:120000,active:'w',since:10000});
+ const c=command(r,move(r));r={...r,...reduceCommand(r,'h',c,15000)};
+ assert.deepEqual(metadata(r).clock,{w:116000,b:120000,active:'b',since:15000});
+ assert.equal(reduceCommand(r,'h',c,17000),null);assert.equal(snapshot(r,18000).clock.b,117000);
 });
 test('a read settles an absent player timeout and rejects their late move',()=>{
- let r=ready();const patch=expireClock(r,122001);assert.equal(patch.status,'finished');assert.equal(metadata({...r,...patch}).result.winner,'black');
- const late=reduceCommand(r,'h',command(r,move(r)),122001);assert.equal(late.status,'finished');assert.equal(late.fen,undefined);
+ let r=ready();const patch=expireClock(r,130001);assert.equal(patch.status,'finished');assert.equal(metadata({...r,...patch}).result.winner,'black');
+ const late=reduceCommand(r,'h',command(r,move(r)),130001);assert.equal(late.status,'finished');assert.equal(late.fen,undefined);
  assert.equal(metadata({...r,...patch}).events.at(-1).actor,'system');assert.equal(expireClock({...r,...patch},130000),null);
 });
-test('opening and draft wait do not charge either clock; picking resumes the next side',()=>{
+function drafted(){
  let r=ready();r.fen=new Chess().fen().replace('0 1','0 5');
- r=apply(r,'h',{type:'draft_freeze'},7000);assert.equal(metadata(r).clock.active,null);
+ r=apply(r,'h',{type:'draft_freeze'},15000);assert.equal(metadata(r).clock.active,null);
  assert.deepEqual(snapshot(r,27000).clock,{w:115000,b:120000,active:null,since:27000});
  const m=move(r);m.type='draft';m.chaosState={...m.chaosState,playerModifiers:[ALL_MODIFIERS.find(m=>m.id==='pawn-charge')],draftStep:1};
- r=apply(r,'h',m,27000);assert.equal(metadata(r).clock.w,116000);assert.equal(metadata(r).clock.active,'b');
+ return apply(r,'h',m,27000);
+}
+test('opening and draft wait do not charge either clock; picking resumes the next side after reading time',()=>{
+ const r=drafted();assert.equal(metadata(r).clock.w,116000);assert.equal(metadata(r).clock.active,'b');
+ assert.equal(metadata(r).clock.since,35000,'Black gets 8s to read the new power');
+ assert.equal(snapshot(r,33000).clock.b,120000,'no time charged during the grace');
+ assert.equal(snapshot(r,36000).clock.b,119000,'then the clock runs');
+});
+test('an unused reading grace is not inherited by the opponent',()=>{
+ let r=drafted();const reply=move(r,'e7','e5');
+ r=apply(r,'g',reply,30000);
+ assert.deepEqual(metadata(r).clock,{w:116000,b:121000,active:'w',since:30000});
+});
+test('the timeout deadline includes the reading grace',()=>{
+ let r=ready();assert.equal(expireClock(r,129999),null);assert.equal(expireClock(r,130001).status,'finished');
 });
 test('cannot pause the opponent or invent an early draft',()=>{
  const r=ready();assert.throws(()=>apply(r,'g',{type:'draft_freeze'},3000),/unavailable/);assert.throws(()=>apply(r,'h',{type:'draft_freeze'},3000),/unavailable/);
@@ -40,6 +56,7 @@ test('rematch restores full clocks and starts White after swapping seats',()=>{
 test('untimed games have no clock and invalid presets normalize safely',()=>{
  let r={...fresh(),timeControlSeconds:-1};r=apply(r,'h',{type:'anomaly_pick',anomalyId:null},1000);r=apply(r,'g',{type:'anomaly_pick',anomalyId:null},2000);
  assert.equal(metadata(r).clock,undefined);assert.equal(expireClock(r,9999999),null);
- assert.equal(timeControl(600,5).label,'10+5');assert.equal(timeControl(1e9,-5).label,'5+3');
+ assert.equal(timeControl(600,5).label,'10+5');assert.equal(timeControl(1e9,-5).label,'5+5');
  assert.equal(projectClock({w:120000,b:120000,active:'w',since:5000},4000).w,120000);
+ assert.equal(projectClock({w:120000,b:120000,active:'w',since:5000},4000).since,5000,'a future anchor survives projection');
 });

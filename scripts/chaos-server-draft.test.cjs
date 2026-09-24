@@ -39,8 +39,8 @@ test('disconnected draft auto-picks at its original deadline and late reconnect 
  const r=draft(),d=metadata(r).draft;
  assert.equal(settleRoom(r,24999),null);
  const next={...r,...settleRoom(r,35000)};
- assert.equal(metadata(next).draft,undefined);assert.equal(metadata(next).clock.since,25000);
- assert.equal(snapshot(next,35000).clock.b,110000);assert.equal(metadata(next).events.at(-1).actor,'system');
+ assert.equal(metadata(next).draft,undefined);assert.equal(metadata(next).clock.since,33000,'auto-pick resumes after the 8s reading grace');
+ assert.equal(snapshot(next,35000).clock.b,118000);assert.equal(metadata(next).events.at(-1).actor,'system');
  assert.equal(cleanState(next.chaosState).playerModifiers[0].id,d.choices[0]);assert.equal(settleRoom(next,35000),null);
  const late={...r,...settleRoom(r,200000)};assert.equal(late.status,'finished');assert.equal(metadata(late).result.winner,'white');
 });
@@ -55,7 +55,7 @@ test('opening offers survive reads; both idle players receive one offered anomal
  assert.equal(snapshot(r,5000).opening.deadline,21000);assert.equal(settleRoom(r,20999),null);
  const next={...r,...settleRoom(r,22000)};
  assert.equal(metadata(next).picks.host,opening.offers.host[0]);assert.equal(metadata(next).picks.guest,opening.offers.guest[0]);
- assert.equal(metadata(next).clock.since,21000);assert.equal(snapshot(next,22000).clock.w,119000);
+ assert.equal(metadata(next).clock.since,29000,'reading grace after the opening picks');assert.equal(snapshot(next,22000).clock.w,120000);assert.equal(snapshot(next,30000).clock.w,119000);
  assert.throws(()=>apply(r,'host',{type:'anomaly_pick',anomalyId:'not-offered'},2000),/offered/);
 });
 test('reroll preserves deadline and can only be used once',()=>{

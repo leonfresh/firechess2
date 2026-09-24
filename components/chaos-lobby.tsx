@@ -109,7 +109,7 @@ export function ChaosLobby({
   showChat = true,
   unlimitedTime = false,
   timeControlSeconds = 300,
-  incrementSeconds = 3,
+  incrementSeconds = 5,
 }: LobbyProps) {
   const account = useChaosAccount();
   const generation = useRef(0);
