@@ -498,7 +498,7 @@ r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4
 
 **Rareté :** Épique · **Verdict : Terrifiant en positions groupées — draftez pour un chaos maximum.**
 
-Collateral Damage fait que les captures de tour **détruisent aussi la pièce immédiatement derrière la cible** sur la même rangée ou colonne. Une capture, deux morts.
+Collateral Damage fait que les captures de tour **détruisent aussi la pièce immédiatement derrière la cible** sur la même rangée ou colonne. Une capture, deux morts. Seule exception : un roi placé derrière la cible n'est jamais détruit, donc Collateral Damage ne peut pas finir la partie à lui seul.
 
 **Pourquoi c'est terrifiant :**
 - Double la valeur de chaque capture de tour

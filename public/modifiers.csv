@@ -14,7 +14,7 @@ king-wrath,Regicide,rare,k,"2,3",👑,"When your King captures an enemy piece, r
 knook,The Knook,rare,n,"2,3,4",🏇,"One of your Knights transforms into the legendary Knook — it moves as both a Knight AND a Rook."
 archbishop,The Archbishop,rare,b,"2,3,4",🏛️,"One of your Bishops transforms into an Archbishop — it moves as both a Bishop AND a Knight."
 queen-teleport,Warp Queen,epic,q,"3,4",🌀,"Once per game, the Queen can teleport to any empty square on the board."
-collateral-rook,Collateral Damage,epic,r,"3,4",💥,"When a Rook captures, it also destroys any piece immediately behind the captured target."
+collateral-rook,Collateral Damage,epic,r,"3,4",💥,"When a Rook captures, it also destroys any piece immediately behind the captured target. Kings are never destroyed this way."
 bishop-bounce,Ricochet Bishop,epic,b,"3,4",🪃,Bishops can bounce their movement off the edge of the board once per turn.
 pawn-promotion-early,Battlefield Promotion,epic,p,"3,4",⭐,"Pawns on the 4th rank or below can promote early on the 5th rank (4th for black)."
 bishop-cannon,Bishop Cannon,epic,b,"3,4,5",🔮,"Bishops can jump over exactly one piece on a diagonal to capture the piece behind it — Xiangqi cannon, but diagonal."

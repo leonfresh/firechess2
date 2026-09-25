@@ -497,7 +497,7 @@ r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4
 
 **Rarity:** Epic · **Verdict: Terrifying in clustered positions — draft for maximum chaos.**
 
-Collateral Damage causes rook captures to **also destroy the piece immediately behind the target** along the same rank or file. One capture, two kills.
+Collateral Damage causes rook captures to **also destroy the piece immediately behind the target** along the same rank or file. One capture, two kills. The one exception: a king behind the target is never destroyed, so Collateral Damage can't end the game on its own.
 
 **Why it's terrifying:**
 - Doubles the value of every rook capture
