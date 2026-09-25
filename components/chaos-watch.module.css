@@ -376,7 +376,7 @@
 @media(max-width:1100px){.topWeek .cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.cards,.topWeek .cards{grid-template-columns:1fr}.card{grid-template-columns:88px minmax(0,1fr);gap:14px;padding:14px!important}.thumb{width:88px}}
 @media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
-.powerNote{display:block;margin-top:4px;font-size:12px;font-weight:700;color:#ffd08f;text-transform:none}
+.powerNote{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:2.8em;line-height:1.4;margin-top:4px;font-size:12px;font-weight:700;color:#ffd08f;text-transform:none}
 
 /* ── Game view: board and sidebar share the width 50/50; the board column stays in view while
    the sidebar (powers, power moments, picks) scrolls beside it. ── */
@@ -400,3 +400,4 @@
 .liveOff{background:#2b3d52!important;color:#ffd08f!important;border-color:#ffb45c88!important}
 @media(max-width:900px){.game{grid-template-columns:minmax(0,1fr) minmax(240px,.8fr)}}
 @media(max-width:650px){.game{grid-template-columns:1fr}.game>div:first-child{position:static}}
+.status>span:first-child{flex:1 1 0;min-width:0}.status>b{flex-shrink:0}

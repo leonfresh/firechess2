@@ -651,12 +651,12 @@ function AnomalyPickerScreen({
 
         <div className="relative">
           {/* Header */}
-          <div className="mb-6 text-center">
+          <div className="mb-3 text-center sm:mb-6">
             <p className="mb-1 text-xs font-bold uppercase tracking-widest text-purple-400/70">
               Before the game begins
             </p>
             <h2
-              className="bg-gradient-to-r from-purple-300 via-fuchsia-300 to-amber-300 bg-clip-text text-2xl font-black tracking-wide text-transparent sm:text-3xl"
+              className="bg-gradient-to-r from-purple-300 via-fuchsia-300 to-amber-300 bg-clip-text text-xl font-black tracking-wide text-transparent sm:text-3xl"
               style={{
                 animation:
                   "draft-title-enter 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.1s both",
@@ -664,7 +664,7 @@ function AnomalyPickerScreen({
             >
               ✦ Choose Your Anomaly ✦
             </h2>
-            <p className="mt-1.5 text-xs text-slate-500">
+            <p className="mt-1.5 hidden text-xs text-slate-500 sm:block">
               A permanent power that shapes your game — yours alone, all match
               long.
             </p>
@@ -697,7 +697,8 @@ function AnomalyPickerScreen({
           </div>
 
           {/* Cards grid */}
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4">
+          {/* Phones: one full-width row per anomaly (icon left) so every choice fits on screen. */}
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:gap-4">
             {choices.map((anomaly, i) => {
               const locked = isLocked(i);
               const isSelected = selected?.id === anomaly.id;
@@ -732,7 +733,7 @@ function AnomalyPickerScreen({
                           ? { boxShadow: `0 0 20px ${anomaly.glowColor}` }
                           : {}),
                       }}
-                      className={`group relative w-full rounded-xl border p-2.5 text-left transition-all duration-200 disabled:cursor-not-allowed sm:p-3
+                      className={`group relative grid w-full grid-cols-[2.25rem_minmax(0,1fr)] gap-x-3 rounded-xl border p-2.5 text-left transition-all duration-200 disabled:cursor-not-allowed sm:block sm:p-3
                         ${
                           isSelected
                             ? `${anomaly.borderClass} bg-gradient-to-b ${anomaly.bgGradient} scale-[1.03] ring-2 ring-purple-500/50`
@@ -772,7 +773,7 @@ function AnomalyPickerScreen({
                         </div>
                       )}
                       {/* Tarot number */}
-                      <div className="mb-2 flex items-center justify-between">
+                      <div className="col-span-2 mb-1 flex items-center justify-between sm:mb-2">
                         <span
                           className={`text-[9px] font-bold uppercase tracking-widest opacity-50 ${anomaly.accentColor}`}
                         >
@@ -785,12 +786,12 @@ function AnomalyPickerScreen({
                         )}
                       </div>
                       {/* Icon */}
-                      <div className="mb-1.5 text-2xl sm:mb-2 sm:text-3xl">
+                      <div className="row-span-4 self-center text-3xl sm:mb-2">
                         {anomaly.icon}
                       </div>
                       {/* Tarot name */}
                       <p
-                        className={`text-[8px] font-bold uppercase tracking-wider opacity-60 sm:text-[9px] ${anomaly.accentColor}`}
+                        className={`text-[9px] font-bold uppercase tracking-wider opacity-60 ${anomaly.accentColor}`}
                       >
                         {anomaly.tarotName}
                       </p>
@@ -799,11 +800,11 @@ function AnomalyPickerScreen({
                         {anomaly.name}
                       </p>
                       {/* Description */}
-                      <p className="mt-1 text-[9px] leading-snug text-slate-400 sm:mt-1.5 sm:text-[10px]">
+                      <p className={`mt-1 text-[11px] leading-snug text-slate-400 sm:mt-1.5 sm:text-[10px] sm:line-clamp-none ${isSelected ? "line-clamp-4" : "line-clamp-2"}`}>
                         {anomaly.description}
                       </p>
                       {/* Trigger badge */}
-                      <div className="mt-2">
+                      <div className="mt-2 hidden sm:block">
                         <span
                           className={`inline-block rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider ${anomaly.accentColor} bg-white/[0.07]`}
                         >
@@ -820,7 +821,7 @@ function AnomalyPickerScreen({
 
                     {/* ── BACK FACE (shown initially while face-down) ── */}
                     <div
-                      className="absolute inset-0 flex min-h-[158px] flex-col items-center justify-center overflow-hidden rounded-xl border sm:min-h-[220px]"
+                      className="absolute inset-0 flex min-h-[96px] flex-col items-center justify-center overflow-hidden rounded-xl border sm:min-h-[220px]"
                       style={{
                         backfaceVisibility: "hidden",
                         WebkitBackfaceVisibility: "hidden",
@@ -1684,9 +1685,9 @@ function DraftModal({
         </div>
 
         {/* Header */}
-        <div className="relative mb-4 text-center sm:mb-6">
-          {/* Pepe reacts to hovered tier */}
-          <div className="mb-1.5 flex items-center justify-center gap-3 sm:mb-2">
+        <div className="relative mb-3 text-center sm:mb-6">
+          {/* Pepe reacts to hovered tier (hidden on phones so all three cards fit on screen) */}
+          <div className="mb-1.5 hidden items-center justify-center gap-3 sm:mb-2 sm:flex">
             <img
               src={hoveredMod ? tierPepe(hoveredMod.tier) : PEPE.bigeyes}
               alt=""
@@ -1708,7 +1709,7 @@ function DraftModal({
           <p className="mt-0.5 text-xs text-purple-400 sm:mt-1 sm:text-sm">
             Phase {phase} — {getPhaseLabel(phase)}
           </p>
-          <p className="mt-1 text-[10px] text-slate-500 sm:mt-2 sm:text-xs">
+          <p className="mt-1 hidden text-[10px] text-slate-500 sm:mt-2 sm:block sm:text-xs">
             Choose a modifier to permanently buff your pieces
           </p>
           {timeLimit && countdown !== null && (
@@ -1735,7 +1736,7 @@ function DraftModal({
 
         {/* Cards */}
         <div
-          className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-5"
+          className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-5"
           style={{ perspective: "1200px" }}
         >
           {choices.map((mod, idx) => {
@@ -1747,13 +1748,11 @@ function DraftModal({
             const glowColor = TIER_GLOW_COLORS[mod.tier];
             const isLocked =
               unlockedIds !== undefined && !unlockedIds.has(mod.id);
-            const shouldCenterLastMobileCard =
-              choices.length % 2 === 1 && idx === choices.length - 1;
 
             return (
               <div
                 key={mod.id}
-                className={`relative ${shouldCenterLastMobileCard ? "col-span-2 w-full max-w-[14rem] justify-self-center sm:col-span-1 sm:max-w-none" : ""}`}
+                className="relative"
                 style={{
                   animation: `card-deal 0.5s cubic-bezier(0.34,1.56,0.64,1) ${idx * 0.15}s both`,
                   transformStyle: "preserve-3d",
@@ -1769,7 +1768,7 @@ function DraftModal({
                 >
                   {/* ─── Card Back (face-down) ─── */}
                   <div
-                    className="absolute inset-0 flex min-h-[140px] flex-col items-center justify-center rounded-xl border border-purple-500/30 bg-gradient-to-br from-[#1a1040] via-[#0f0a2a] to-[#1a0a30] p-3 sm:min-h-[180px] sm:p-5"
+                    className="absolute inset-0 flex min-h-[76px] flex-col items-center justify-center rounded-xl border border-purple-500/30 bg-gradient-to-br from-[#1a1040] via-[#0f0a2a] to-[#1a0a30] p-3 sm:min-h-[180px] sm:p-5"
                     style={{
                       backfaceVisibility: "hidden",
                     }}
@@ -1806,7 +1805,7 @@ function DraftModal({
                     onMouseEnter={() => allRevealed && setHoveredId(mod.id)}
                     onMouseLeave={() => setHoveredId(null)}
                     disabled={!allRevealed || !!pickedId}
-                    className={`relative flex min-h-[140px] w-full flex-col items-center gap-1.5 rounded-xl border p-2.5 text-center sm:min-h-[180px] sm:gap-0 sm:p-5 ${tier.bg} ${tier.border} ${
+                    className={`relative flex min-h-[76px] w-full flex-row items-center gap-3 rounded-xl border p-3 text-left sm:min-h-[180px] sm:flex-col sm:gap-0 sm:p-5 sm:text-center ${tier.bg} ${tier.border} ${
                       allRevealed && !pickedId
                         ? "cursor-pointer transition-all duration-200"
                         : ""
@@ -1871,19 +1870,19 @@ function DraftModal({
                     <div className="relative z-10 min-w-0 flex-1">
                       {/* Tier badge */}
                       <span
-                        className={`mb-1 inline-block rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider sm:mb-2 sm:text-[10px] ${tier.text} ${tier.bg}`}
+                        className={`mb-1 inline-block rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider sm:mb-2 sm:text-[10px] ${tier.text} ${tier.bg}`}
                       >
                         {TIER_LABELS[mod.tier]}
                       </span>
 
                       {/* Name */}
-                      <h3 className="text-[11px] font-bold text-white sm:mb-1 sm:text-sm">
+                      <h3 className="text-sm font-bold text-white sm:mb-1">
                         {mod.name}
                       </h3>
 
                       {/* Piece target */}
                       {mod.piece && (
-                        <span className="block text-[8px] uppercase tracking-wider text-slate-500 sm:mb-2 sm:text-[10px]">
+                        <span className="block text-[9px] uppercase tracking-wider text-slate-500 sm:mb-2 sm:text-[10px]">
                           {
                             {
                               p: "Pawns",
@@ -1905,7 +1904,7 @@ function DraftModal({
                       )}
 
                       {/* Description */}
-                      <p className="text-[9px] leading-snug text-slate-400 sm:text-xs">
+                      <p className="text-[11px] leading-snug text-slate-400 sm:text-xs">
                         {mod.description}
                       </p>
                     </div>
@@ -3398,6 +3397,9 @@ export default function ChaosChessPage() {
 
   /* ── Piece info floating panel ── */
   const [pieceInfoOpen, setPieceInfoOpen] = useState(!presentation.activity);
+  // On a phone the floating panel sits on top of the board and blocks taps: start closed there
+  // (the "Show Piece Info" button still opens it).
+  useEffect(() => { if (window.innerWidth < 768) setPieceInfoOpen(false); }, []);
   const [pieceInfoPos, setPieceInfoPos] = useState({ x: -1, y: -1 }); // -1 = use default (bottom-right)
   const pieceInfoDragRef = useRef<{
     sx: number;

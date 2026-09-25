@@ -123,12 +123,28 @@ export function ChaosSeekWatcher({ seek, unlimitedTime, timeControlSeconds, incr
     return () => clearTimeout(timer);
   }, [found, countdown, onFound]);
 
+  // The bar floats over the bottom of the page: pad the page by its height so the game's own
+  // bottom buttons (resign, draw, draft actions) are never hidden underneath it.
+  const bar = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = bar.current;
+    if (!element) return;
+    const previous = document.body.style.paddingBottom;
+    const fit = () => { document.body.style.paddingBottom = `${element.offsetHeight + 28}px`; };
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(element);
+    return () => { observer.disconnect(); document.body.style.paddingBottom = previous; };
+  }, []);
+
   const stop = () => { done.current = true; cancelRoom(room.current.roomId); onStop(); };
   const waited = Math.floor((now - startedAt.current) / 1000);
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 z-[10001] flex justify-center px-4" style={{ bottom: "calc(16px + env(safe-area-inset-bottom, 0px))" }}>
-      <div role="status" aria-live="polite"
+    // While searching, the bar sits below the game's own overlays (anomaly picker, power draft),
+    // whose confirm buttons live at the bottom of the screen; an opponent found jumps above them.
+    <div className={`pointer-events-none fixed inset-x-0 flex justify-center px-4 ${found ? "z-[10001]" : "z-40"}`} style={{ bottom: "calc(16px + env(safe-area-inset-bottom, 0px))" }}>
+      <div ref={bar} role="status" aria-live="polite"
         className={`pointer-events-auto flex max-w-md flex-wrap items-center gap-3 rounded-2xl border px-4 py-3 text-sm shadow-2xl backdrop-blur ${
           found ? "border-emerald-400/60 bg-emerald-950/90 text-emerald-100" : "border-slate-500/40 bg-slate-900/90 text-slate-200"}`}>
         {found ? (

@@ -744,7 +744,11 @@ export function ChaosWatch({
                     ? `${detail.result.winner === "draw" ? "Draw" : detail.result.winner === "aborted" ? "No contest" : detail.result.winner + " wins"} · ${detail.result.reason}`
                     : detail.phase
                   : frame && describeWatchFrame(frame)}
-                {!(selected.live && following) && powerNotes[index] && <small className={styles.powerNote}>{powerNotes[index]}</small>}
+                {/* Always present and two lines tall, so stepping through moves never changes the
+                    height above the board (iOS Safari has no scroll anchoring: the page would jump). */}
+                <small className={styles.powerNote} title={!(selected.live && following) ? powerNotes[index] ?? undefined : undefined}>
+                  {!(selected.live && following) && powerNotes[index] ? powerNotes[index] : " "}
+                </small>
               </span>
               {typeof detail.base === "number" && (
                 <b className={styles.chip} title="Time control">

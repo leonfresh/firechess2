@@ -120,3 +120,24 @@
 .matchmaking-busy{margin:-6px 0 2px;text-align:center;font-size:11px;color:#b4bdd2}
 .matchmaking-wait{width:100%;padding:14px;border:1px dashed #d4f77a55;border-radius:14px;background:#d4f77a0d;text-align:center;font-size:12px;color:#dfe6f2}.matchmaking-wait>p:first-child{font-weight:800;color:#f8f6ef;margin-bottom:10px}.matchmaking-wait p{line-height:1.5}.matchmaking-wait-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}.matchmaking-wait-actions .secondary-action{margin:0;border-color:#d4f77a66;color:#e8f9bf}
 .presence-toggle{margin:12px 0}.presence-toggle>button{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border:1px solid #ffffff20;border-radius:14px;background:#ffffff08;color:#e1e4f0;text-align:left}.presence-toggle strong{display:block;font-size:12px}.presence-toggle small{display:block;font-size:10.5px;color:#aeb6cc;margin-top:2px}.presence-switch{flex-shrink:0;position:relative;width:36px;height:20px;border-radius:999px;background:#3a4262;transition:background .15s}.presence-switch::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#e1e4f0;transition:transform .15s}.presence-toggle button[aria-checked=true] .presence-switch{background:#d4f77a}.presence-toggle button[aria-checked=true] .presence-switch::after{transform:translateX(16px);background:#233023}.presence-toggle p{font-size:11px;color:#ffc978;margin-top:6px}@media(prefers-reduced-motion:reduce){.presence-switch,.presence-switch::after{transition:none}}
+/* Phone anomaly picker: three compact rows (art tile, name, clamped description) so every choice and
+   the buttons fit without scrolling. The selected card shows its full description. */
+@media(max-width:650px){
+.activity-draft.anomaly-draft{padding:16px 14px}
+.activity-draft.anomaly-draft .draft-title h2{font-size:22px;margin:6px 0}
+.activity-draft.anomaly-draft .draft-title p{display:none}
+.activity-draft.anomaly-draft .power-choices{grid-template-columns:1fr;gap:8px;margin:12px 0}
+.activity-draft.anomaly-draft .power-front{flex-direction:row;align-items:stretch}
+.activity-draft.anomaly-draft .anomaly-art{width:64px;flex:0 0 64px;aspect-ratio:auto;min-height:74px;border-radius:14px 0 0 14px}
+.activity-draft.anomaly-draft .anomaly-art span{left:6px;top:6px;min-width:24px;height:22px;padding:0 5px;font-size:10px}
+.activity-draft.anomaly-draft .power-copy{padding:8px 34px 8px 11px;min-height:0}
+.activity-draft.anomaly-draft .power-tier{font-size:8px}
+.activity-draft.anomaly-draft .power-copy h3{font-size:15px;margin:2px 0 3px}
+.activity-draft.anomaly-draft .power-copy p{font-size:11.5px;line-height:1.4;margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.activity-draft.anomaly-draft .power-choice[aria-pressed=true] .power-copy p{-webkit-line-clamp:4}
+.activity-draft.anomaly-draft .selection-dot{top:8px;right:8px;width:24px;height:24px}
+.activity-draft.anomaly-draft .draft-footer{flex-direction:row;align-items:stretch;gap:8px;padding-top:10px}
+.activity-draft.anomaly-draft .draft-footer>*{flex:1 1 0;width:auto;min-width:0}
+.activity-draft.anomaly-draft .draft-footer .primary-action{min-height:0;padding:12px 14px;font-size:12px!important}
+.activity-draft.anomaly-draft .draft-footer .secondary-action{margin:0;padding:10px;line-height:1.25}
+}

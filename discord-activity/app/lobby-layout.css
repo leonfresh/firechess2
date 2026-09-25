@@ -65,3 +65,13 @@
 .activity-lobby .lobby-shortcuts .destination-icon{width:52px;height:52px;border-radius:15px}
 .activity-lobby .lobby-shortcuts .destination-icon svg{width:34px!important;height:34px!important}
 @media(min-width:701px) and (max-width:1100px){.activity-lobby .lobby-shortcuts .destination-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Phone header, lobby and in-game alike (this file loads last): row 1 is the logo with Explore
+   pinned top right, row 2 the tools at full width. The bar grows with its content instead of a
+   fixed height (arena.css pins 54px in game), so it never spills over the page below. */
+@media(max-width:700px){
+ .chaos-activity .activity-nav,.chaos-activity:has([data-chaos-arena]) .activity-nav{height:auto;min-height:0;flex-wrap:wrap;row-gap:10px;padding:12px 16px}
+ .chaos-activity .activity-nav .nav-tools{flex:1 0 100%;width:100%;flex-wrap:nowrap;justify-content:space-between;gap:6px}
+ .chaos-activity .activity-nav .explore-nav{position:absolute;right:16px;top:12px}
+}
+@media(max-width:400px){.chaos-activity .activity-nav .discord-launch-link>span{display:none}}
