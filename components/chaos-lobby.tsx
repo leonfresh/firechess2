@@ -20,6 +20,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useChaosAccount } from "@/lib/use-chaos-account";
 import { getGuestId } from "@/lib/guest-id";
 import { busiestLocalHour, hourLabel } from "@/lib/chaos-busy-hours";
+import { trackChaos } from "@/lib/chaos-events";
 
 /** Build headers for chaos API calls — includes guest ID for unauthenticated players */
 export function chaosHeaders(json = false): Record<string, string> {
@@ -62,6 +63,9 @@ type LobbyProps = {
   onMatchFound: (data: ChaosMatchFound) => void;
   /** Offered after WAIT_HINT_SECONDS: the page starts an AI game and keeps watching this seek. */
   onPlayWhileWaiting?: (seek: ChaosOpenSeek) => void;
+  /** Start searching as soon as the lobby mounts (requeue after an opponent never moved). */
+  autoStart?: boolean;
+  onAutoStarted?: () => void;
   onCancel: () => void;
   /** Whether the user is currently signed in */
   isSignedIn: boolean;
@@ -103,6 +107,8 @@ const PEPE_GIFS = [
 export function ChaosLobby({
   onMatchFound,
   onPlayWhileWaiting,
+  autoStart,
+  onAutoStarted,
   onCancel,
   isSignedIn,
   chatOnly,
@@ -136,6 +142,7 @@ export function ChaosLobby({
   const matchPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const lastMsgCountRef = useRef(0);
+  const searchStartedAt = useRef(0);
   /** Room we created while host-waiting (so we can cancel it) */
   const ownRoomRef = useRef<{
     roomId: string;
@@ -276,6 +283,8 @@ export function ChaosLobby({
     setElapsed(0);
     setInviteState("idle");
     handedOffRef.current = false;
+    searchStartedAt.current = Date.now();
+    trackChaos("queue_start", { base: unlimitedTime ? -1 : timeControlSeconds, inc: unlimitedTime ? 0 : incrementSeconds });
 
     await cleanupRequest.current;
     if (!current()) return;
@@ -445,6 +454,7 @@ export function ChaosLobby({
 
   /* ── Cancel search ── */
   const cancelSearch = useCallback(() => {
+    trackChaos("queue_cancel", { waited: Math.round((Date.now() - searchStartedAt.current) / 1000) });
     ++generation.current;
     if (searchTimerRef.current) clearInterval(searchTimerRef.current);
     if (matchPollRef.current) clearInterval(matchPollRef.current);
@@ -491,6 +501,14 @@ export function ChaosLobby({
     };
   }, [chatOnly, account.data?.player?.id]);
 
+  /* ── Requeue: search immediately (declared after the cleanup effect, whose request it awaits) ── */
+  useEffect(() => {
+    if (!autoStart || chatOnly) return;
+    onAutoStarted?.();
+    void startSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart]);
+
   /* ── Keep the seek open and let the page start an AI game meanwhile ── */
   const playWhileWaiting = useCallback(() => {
     const seek = ownRoomRef.current;
@@ -502,6 +520,7 @@ export function ChaosLobby({
     searchTimerRef.current = null;
     matchPollRef.current = null;
     ownRoomRef.current = null;
+    trackChaos("wait_ai", { waited: Math.round((Date.now() - searchStartedAt.current) / 1000) });
     onPlayWhileWaiting(seek);
   }, [onPlayWhileWaiting]);
 
@@ -509,6 +528,7 @@ export function ChaosLobby({
   const inviteFriend = useCallback(async () => {
     const code = ownRoomRef.current?.roomCode;
     if (!code) return;
+    trackChaos("invite", { via: invite ? "discord" : "link" });
     if (invite && (await invite(code))) { setInviteState("shared"); return; }
     try { await navigator.clipboard.writeText(inviteLink(code)); setInviteState("copied"); }
     catch { setInviteState("manual"); }

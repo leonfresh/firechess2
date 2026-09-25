@@ -11,7 +11,9 @@ import { DRAFT_DURATION_MS, draftChoices, applyServerDraft, type ServerDraft } f
 export type SyncEvent = { revision: number; actor: "host" | "guest" | "system"; message: Record<string, any> };
 export type RoomChat = { id: string; actor: "host" | "guest"; text: string; ts: number };
 export type OpeningMove = {side: "w" | "b"; deadline: number};
-export const OPENING_MOVE_MS = 30_000;
+// 30s aborted about a third of matched games in Sept 2026 (players tabbed away while waiting):
+// the window is longer and the client now calls for attention (lib/use-attention.ts).
+export const OPENING_MOVE_MS = 60_000;
 /** How long a posted challenge stays listed in the lobby and joinable by code or quick pairing.
  *  Must exceed the client's search timer (MAX_SEARCH_TIME in components/chaos-lobby.tsx). */
 export const MATCHMAKING_WINDOW_MS = 300_000;
@@ -71,7 +73,7 @@ export function expireOpeningMove(room: SyncRoom, now = Date.now()) {
   const meta = structuredClone(old);
   delete meta.openingMove;
   if (meta.clock) meta.clock = {...projectClock(meta.clock, opening.deadline), active: null};
-  meta.result = {winner: "aborted", reason: `${opening.side === "w" ? "White" : "Black"} did not make their first move within 30 seconds.`};
+  meta.result = {winner: "aborted", reason: `${opening.side === "w" ? "White" : "Black"} did not make their first move within ${OPENING_MOVE_MS / 1000} seconds.`};
   meta.revision++; meta.stateRevision++;
   meta.events = [...meta.events, {revision: meta.revision, actor: "system" as const, message: {type: "game_over", ...meta.result}}].slice(-64);
   return {status: "aborted", chaosState: {...cleanState(room.chaosState), _sync: meta},

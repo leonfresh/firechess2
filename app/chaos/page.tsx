@@ -61,8 +61,10 @@ import { ChaosLobby, type ChaosMatchFound, type ChaosOpenSeek } from "@/componen
 import { ChaosSeekWatcher } from "@/components/chaos-seek-watcher";
 import { SpectatorCount } from "@/components/chaos-spectator-count";
 import { installChaosSounds } from "@/lib/chaos-sound-pack";
+import { useAttention } from "@/lib/use-attention";
 import { inviteJoinCode } from "@/lib/chaos-launch";
 import { recordChaosFirstTouch } from "@/lib/chaos-first-touch";
+import { trackChaos } from "@/lib/chaos-events";
 import { OpeningMoveNotice, AbortedMatch } from "@/components/chaos-opening-move";
 import { ChaosChat, type ChatLine } from "@/components/chaos-chat";
 import { useChaosPresentation } from "@/components/chaos-presentation";
@@ -6755,6 +6757,22 @@ export default function ChaosChessPage() {
     if (code) void joinRoom(code);
   }, [joinRoom, presentation]);
 
+  /* ── Call the player back when the match needs them and they are looking elsewhere. ── */
+  const myFirstMoveDue = gameStatus === "playing" && !!openingMove && openingMove.side === (playerColor === "white" ? "w" : "b");
+  useAttention(gameMode === "ai" ? null : gameStatus === "matched" ? "⚔️ Opponent found!" : myFirstMoveDue ? "♟ Your move!" : null);
+
+  /* ── Requeue after an abort that was the opponent's fault (they never made their first move). ── */
+  const [autoQueue, setAutoQueue] = useState(false);
+  const opponentNeverMoved = gameResult === "aborted" && gameMode === "matchmake"
+    && endReason.startsWith(`${playerColor === "white" ? "Black" : "White"} did not make their first move`);
+  const requeue = () => {
+    setGameStatus("setup"); setGameResult(null); setEndReason(""); setRoomId(null); setRoomCode("");
+    setMatchmakeState("idle"); setRematchRequested(false); setRematchReceived(false);
+    if (pollRef.current) clearInterval(pollRef.current);
+    setGameMode("matchmake");
+    setAutoQueue(true);
+  };
+
   /* ── Chaos sounds on the website too (the Activity installs them itself); leaving restores the site's. ── */
   useEffect(() => (presentation.activity ? undefined : installChaosSounds()), [presentation.activity]);
 
@@ -6781,6 +6799,15 @@ export default function ChaosChessPage() {
   useEffect(() => {
     recordChaosFirstTouch(presentation.activity ? "activity" : "website");
   }, [presentation.activity, authenticated]);
+
+  /* ── Journey events: the lobby, and each practice game started from it ── */
+  const journeyStatus = useRef(gameStatus);
+  useEffect(() => {
+    const was = journeyStatus.current;
+    journeyStatus.current = gameStatus;
+    if (gameStatus === "setup") trackChaos("lobby_view");
+    else if (was === "setup" && gameMode === "ai") trackChaos("practice_start");
+  }, [gameStatus, gameMode]);
 
   /* ── PartyKit WebSocket: real-time sync ── */
   const onPartyMessage = useCallback(
@@ -9954,6 +9981,7 @@ export default function ChaosChessPage() {
 
   /** Enter a matchmaking game: from the lobby, or from a seek that stayed open during practice. */
   const enterMatchmakingGame = (data: ChaosMatchFound) => {
+    trackChaos("match_found", { joined: !!data.joined });
     setRoomId(data.roomId);
     setRoomCode(data.roomCode);
     setGameMode("matchmake");
@@ -10056,6 +10084,8 @@ export default function ChaosChessPage() {
                 unlimitedTime={unlimitedTime}
                 timeControlSeconds={timeControl?.base ?? 300} incrementSeconds={timeControl?.inc ?? 5}
                 onMatchFound={enterMatchmakingGame}
+                autoStart={autoQueue}
+                onAutoStarted={() => setAutoQueue(false)}
                 onPlayWhileWaiting={(seek) => {
                   setBackgroundSeek(seek);
                   startGame(Math.random() < 0.5 ? "white" : "black", "ai");
@@ -11775,12 +11805,13 @@ export default function ChaosChessPage() {
             )}
 
             {/* ── Game Over Overlay ── */}
-            {gameStatus === "game-over" && (presentation.Result || !/king captured/i.test(endReason) || royalResultReady) && (gameResult === "aborted" && !presentation.Result ? <AbortedMatch reason={endReason} onLobby={() => {setGameStatus("setup"); setGameResult(null); setRoomId(null); setRoomCode(""); setMatchmakeState("idle");}} /> : presentation.Result ? <presentation.Result
+            {gameStatus === "game-over" && (presentation.Result || !/king captured/i.test(endReason) || royalResultReady) && (gameResult === "aborted" && !presentation.Result ? <AbortedMatch reason={endReason} onRequeue={opponentNeverMoved ? requeue : undefined} onLobby={() => {setGameStatus("setup"); setGameResult(null); setRoomId(null); setRoomCode(""); setMatchmakeState("idle");}} /> : presentation.Result ? <presentation.Result
               outcome={gameResult === 'aborted' ? 'aborted' : gameResult === playerColor ? 'win' : gameResult === 'draw' ? 'draw' : 'loss'}
               reason={endReason} practice={gameMode === 'ai'} turns={moveLog.length}
               powers={chaosState.playerModifiers} rematchRequested={rematchRequested} rematchReceived={rematchReceived}
               onRematch={() => gameMode === 'ai' ? startGame(playerColor, 'ai') : rematchReceived ? handleAcceptRematch() : handleRematch()}
               onCancelRematch={rematchRequested && !rematchReceived ? handleCancelRematch : undefined}
+              onRequeue={opponentNeverMoved ? requeue : undefined}
               onLobby={() => {
                 setGameStatus('setup'); setGameResult(null); setEndReason(''); setRoomId(null); setRoomCode('');
                 setMatchmakeState('idle'); setDrawOfferSent(false); setDrawOfferReceived(false);

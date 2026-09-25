@@ -15,6 +15,11 @@ import type { ChaosAdminStats } from "@/lib/chaos-admin-stats";
 const RANGES = [7, 14, 30, 90];
 /** Minimum games before a power's score is worth reading. */
 const MIN_SAMPLE = 20;
+const JOURNEY: [string, string][] = [
+  ["lobby_view", "Saw the lobby"], ["practice_start", "Started a practice game"], ["queue_start", "Joined the queue"],
+  ["wait_ai", "Played AI while waiting"], ["invite", "Invited a friend"], ["queue_cancel", "Cancelled the queue"],
+  ["match_found", "Found a match"],
+];
 
 const pct = (a: number, b: number) => (b ? `${Math.round((100 * a) / b)}%` : "—");
 const fmt = (n: number) => n.toLocaleString("en-US");
@@ -135,6 +140,23 @@ export default function AdminChaosPage() {
                 <Stat label="Launches · servers" value={`${fmt(s.launches.launches)} · ${fmt(s.launches.guilds)}`} />
               </dl>
               <p className="mt-3 text-[11px] text-slate-500">Launch tracking began 20 Sep 2026.</p>
+            </Card>
+
+            <Card title="Player journey" note="Distinct players reaching each step after opening Chaos. Practice includes AI games started while waiting in the queue.">
+              <Table
+                head={["Step", "Activity", "Website", "Events"]}
+                rows={JOURNEY.map(([event, label]) => {
+                  const r = s.journey.steps.find((x) => x.event === event);
+                  return [label, fmt(r?.activity ?? 0), fmt(r?.website ?? 0), fmt(r?.events ?? 0)];
+                })}
+              />
+              <dl className="mt-4 grid grid-cols-2 gap-3 text-xs">
+                <Stat label="Saw the lobby, did nothing" value={`${fmt(s.journey.lobbyOnly)} of ${fmt(s.journey.players)} (${pct(s.journey.lobbyOnly, s.journey.players)})`} />
+                <Stat label="Practised, never queued" value={`${fmt(s.journey.practiceOnly)} (${pct(s.journey.practiceOnly, s.journey.players)})`} />
+                <Stat label="Queued, never matched" value={`${fmt(s.journey.queuedUnmatched)} (${pct(s.journey.queuedUnmatched, s.journey.players)})`} />
+                <Stat label="Median wait before cancelling" value={`${Math.round(s.journey.medianCancelWait)}s`} />
+              </dl>
+              <p className="mt-3 text-[11px] text-slate-500">{s.journey.trackingSince ? `Tracking since ${s.journey.trackingSince}.` : "No events yet: tracking starts with this deploy."}</p>
             </Card>
 
             <Card title="Retention" note="Weekly cohorts by first game. Recent cohorts have had less time to return.">

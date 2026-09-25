@@ -38,7 +38,7 @@ export async function loadChaosAdminStats(query: QueryRunner, rawDays: unknown =
   const played = (col: string) => `EXISTS (SELECT 1 FROM chaos_match m WHERE (m.host_id = ${col} OR m.guest_id = ${col}) AND m.ended_at > ${since})`;
 
   const [summary, daily, launchesDaily, funnel, launches, buckets, cohorts, streaks, endings, economy, purchases, powers, anomalies,
-    launchSources, inviters, firstTouch, broughtFriend, broughtAny] =
+    launchSources, inviters, firstTouch, broughtFriend, broughtAny, journey, journeyExtra] =
     await Promise.all([
       query(`WITH g AS (SELECT * FROM chaos_match WHERE ended_at > ${since}),
         pl AS (SELECT host_id pid FROM g UNION ALL SELECT guest_id FROM g),
@@ -129,6 +129,20 @@ export async function loadChaosAdminStats(query: QueryRunner, rawDays: unknown =
       // Viral ratio: new players (first game in range) who arrived through another player.
       query(`${broughtIn(seats, since, false)}`),
       optional(`${broughtIn(seats, since, true)}`),
+      // Player journey (migrations/chaos-events.sql): distinct players reaching each step, per surface.
+      optional(`SELECT event, count(DISTINCT player_id) FILTER (WHERE surface = 'activity')::int activity,
+          count(DISTINCT player_id) FILTER (WHERE surface = 'website')::int website, count(*)::int events
+        FROM chaos_event WHERE created_at > ${since} GROUP BY 1`),
+      optional(`WITH e AS (SELECT * FROM chaos_event WHERE created_at > ${since}),
+          p AS (SELECT player_id, bool_or(event = 'practice_start') practiced, bool_or(event = 'queue_start') queued,
+            bool_or(event = 'match_found') matched FROM e GROUP BY 1)
+        SELECT (SELECT count(*) FROM p)::int players,
+          (SELECT count(*) FROM p WHERE NOT practiced AND NOT queued)::int lobby_only,
+          (SELECT count(*) FROM p WHERE practiced AND NOT queued)::int practice_only,
+          (SELECT count(*) FROM p WHERE queued AND NOT matched)::int queued_unmatched,
+          (SELECT count(*) FROM p WHERE ${played("p.player_id")})::int played_online,
+          (SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY (detail->>'waited')::int) FROM e WHERE event = 'queue_cancel') median_cancel_wait,
+          (SELECT min(created_at)::date::text FROM chaos_event) tracking_since`),
     ]);
 
   const launchByDay = new Map(launchesDaily.map((r) => [String(r.day), num(r.launches)]));
@@ -184,6 +198,13 @@ export async function loadChaosAdminStats(query: QueryRunner, rawDays: unknown =
       launches: launchSources.map((r) => ({ source: String(r.source), launches: num(r.launches), players: num(r.players), played: num(r.played) })),
       inviters: inviters.map((r) => ({ name: String(r.name), invited: num(r.invited), played: num(r.played), lobbyInvites: num(r.lobby_invites) })),
       firstTouch: firstTouch.map((r) => ({ surface: String(r.surface), source: String(r.source), players: num(r.players), played: num(r.played) })),
+    },
+    journey: {
+      steps: journey.map((r) => ({ event: String(r.event), activity: num(r.activity), website: num(r.website), events: num(r.events) })),
+      players: num(journeyExtra[0]?.players), lobbyOnly: num(journeyExtra[0]?.lobby_only),
+      practiceOnly: num(journeyExtra[0]?.practice_only), queuedUnmatched: num(journeyExtra[0]?.queued_unmatched),
+      playedOnline: num(journeyExtra[0]?.played_online), medianCancelWait: num(journeyExtra[0]?.median_cancel_wait),
+      trackingSince: journeyExtra[0]?.tracking_since ? String(journeyExtra[0].tracking_since) : null,
     },
     balance: {
       powers: powers.map((r) => ({ id: String(r.id), name: String(r.name ?? r.id), games: num(r.games), wins: num(r.wins), draws: num(r.draws), score: score(r) })),

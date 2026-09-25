@@ -57,6 +57,8 @@ export type ChaosResultProps = {
   /** Present only while our own rematch request is outstanding: retracts it (auto-rematch cancel). */
   onCancelRematch?: () => void;
   onLobby: () => void;
+  /** Aborted because the opponent never made their first move: straight back into the queue. */
+  onRequeue?: () => void;
 };
 export const ChaosPresentation = createContext<{
   activity?: boolean;
