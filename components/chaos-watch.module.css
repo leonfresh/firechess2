@@ -378,9 +378,9 @@
 @media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
 .powerNote{display:block;margin-top:4px;font-size:12px;font-weight:700;color:#ffd08f;text-transform:none}
 
-/* ── Game view: board first. At least 60/40 board to sidebar; the board column stays in view while
+/* ── Game view: board and sidebar share the width 50/50; the board column stays in view while
    the sidebar (powers, power moments, picks) scrolls beside it. ── */
-.game{grid-template-columns:minmax(0,3fr) minmax(280px,2fr);gap:28px}
+.game{grid-template-columns:minmax(0,1fr) minmax(280px,1fr);gap:28px}
 .game>div:first-child{position:sticky;top:12px}
 .board{max-width:860px;width:fit-content;margin-inline:auto}
 .game>div:first-child>.player,.game>div:first-child>.controls,.game>div:first-child>.tabs{max-width:var(--board-w,874px);margin-inline:auto}
