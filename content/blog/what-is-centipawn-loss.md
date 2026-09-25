@@ -1,7 +1,7 @@
 ---
-title: "Average Centipawn Loss Explained: ACPL Benchmarks by Rating"
+title: "Centipawn Loss (ACPL) by Rating: Benchmarks to Improve"
 description: "Average centipawn loss (ACPL) explained with real benchmarks by rating. Board examples show how to find your biggest chess leaks on FireChess."
-date: "2026-09-22"
+date: "2026-09-25"
 author: "FireChess Team"
 tags: ["analysis", "fundamentals", "improvement", "centipawn-loss"]
 canonical: https://www.firechess.com/blog/what-is-centipawn-loss
