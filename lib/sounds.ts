@@ -4,6 +4,9 @@
  */
 
 type SoundName =
+  | "clock-tick"
+  | "revive"
+  | "whoosh"
   | "chaos-blast"
   | "chaos-mate"
   | "chaos-pew"
@@ -44,12 +47,17 @@ type SoundName =
   | "bro-serious";
 
 const SOUND_PATHS: Record<SoundName, string> = {
+  // Synthesized cues shared with the Discord Activity (scripts/make-chaos-audio.mjs).
+  "clock-tick": "/activity/audio/tick.wav",
+  revive: "/activity/audio/revive.wav",
+  whoosh: "/activity/audio/whoosh.wav",
   "chaos-blast": "/sounds/chaos-blast.wav",
   "chaos-mate": "/sounds/chaos-mate.wav",
   "chaos-pew": "/sounds/chaos-pew.wav",
   move: "/sounds/Move.mp3",
   capture: "/sounds/Capture.mp3",
-  check: "/sounds/Check.mp3",
+  // Check.mp3 was a broken link to a silent file; the synthesized check cue replaces it everywhere.
+  check: "/activity/audio/check.wav",
   select: "/sounds/Select.mp3",
   correct: "/sounds/Correct.mp3",
   wrong: "/sounds/Wrong.mp3",
@@ -86,6 +94,7 @@ const SOUND_PATHS: Record<SoundName, string> = {
 
 /** Volume overrides for different sound categories */
 const SOUND_VOLUMES: Partial<Record<SoundName, number>> = {
+  revive: 0.8,
   "chaos-blast": 0.45,
   "chaos-mate": 0.45,
   applause: 0.4,
@@ -115,6 +124,9 @@ const SOUND_VOLUMES: Partial<Record<SoundName, number>> = {
   "baka": 0.45,
   "bro-serious": 0.45,
 };
+
+/** The site-wide defaults, so a host that installs its own pack can put them back. */
+const DEFAULT_PATHS: Record<SoundName, string> = { ...SOUND_PATHS };
 
 const audioCache = new Map<SoundName, HTMLAudioElement>();
 let packOptions = { reactionCooldownMs: 0, maxReactionMs: 0 };
@@ -180,6 +192,11 @@ export function configureSoundPack(paths: Partial<Record<SoundName, string>>, op
   for (const audio of audioCache.values()) audio.pause();
   audioCache.clear();
   Object.assign(SOUND_PATHS, paths);
+}
+
+/** Undo configureSoundPack: the site's default sounds and no reaction limits. */
+export function resetSoundPack() {
+  configureSoundPack({ ...DEFAULT_PATHS });
 }
 
 /** Play a sound effect. Fails silently if audio is blocked. */

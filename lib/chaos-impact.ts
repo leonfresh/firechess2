@@ -38,7 +38,7 @@ export function sniperImpact(before: string, after: string, armed: {w:boolean;b:
 
 export type WatchImpact = {kind:"kamikaze"|"sniper"|"checkmate"|"nuclear"|"promotion"|"castle"|"capture"|"check"|"power"|"revive"|"summon";square:string;pieces?:string[]};
 type Frame = {fen:string;from?:string;to?:string;state:{white:string[];black:string[];assignedSquares?:Record<string,string|null>;playerNuclearCooldownUntil?:number;aiNuclearCooldownUntil?:number}};
-export function watchTransition(before:Frame, after:Frame, result?:{winner:string;reason:string}|null): {effects:WatchImpact[];sound:"chaos-mate"|"chaos-blast"|"chaos-pew"|"capture"|"check"|"move"|"correct"|"select"|null} {
+export function watchTransition(before:Frame, after:Frame, result?:{winner:string;reason:string}|null): {effects:WatchImpact[];sound:"chaos-mate"|"chaos-blast"|"chaos-pew"|"capture"|"check"|"move"|"correct"|"select"|"revive"|null} {
  const effects:WatchImpact[]=[];
  let old:Chess,next:Chess;
  try {old=new Chess(before.fen);next=new Chess(after.fen);} catch{return {effects,sound:null};}
@@ -74,9 +74,9 @@ export function watchTransition(before:Frame, after:Frame, result?:{winner:strin
    }
    // A spawned piece shows its revive/summon burst instead of a second power sparkle.
    effects.push(...[...squares].filter(square=>!spawns.some(s=>s.square===square)).map(square=>({kind:'power' as const,square})));
-   if(!oneMove)return {effects:[...effects,...spawnEffects],sound:spawnEffects.length?'correct':'select'};
+   if(!oneMove)return {effects:[...effects,...spawnEffects],sound:spawnEffects.length?'revive':'select'};
   }
- if(!oneMove)return spawnEffects.length?{effects:[...effects,...spawnEffects],sound:'correct'}:{effects,sound:null};
+ if(!oneMove)return spawnEffects.length?{effects:[...effects,...spawnEffects],sound:'revive'}:{effects,sound:null};
  const impact=kamikazeImpact(before.fen,after.fen,{w:before.state.white.includes('kamikaze-bishop'),b:before.state.black.includes('kamikaze-bishop')});
  const shot=sniperImpact(before.fen,after.fen,{w:before.state.white.includes('sniper-bishop'),b:before.state.black.includes('sniper-bishop')});
  let sound:ReturnType<typeof watchTransition>['sound']=effects.some(e=>e.kind==='power')?'select':'move';
@@ -97,7 +97,7 @@ export function watchTransition(before:Frame, after:Frame, result?:{winner:strin
    if(!effects.some(e=>e.kind!=='power') && (victim || next.board().flat().filter(Boolean).length<old.board().flat().filter(Boolean).length)){effects.push({kind:'capture',square:to});sound='capture';}
   }
  }
- if(spawnEffects.length){effects.push(...spawnEffects);if(sound==='move'||sound==='select'||sound==='capture')sound='correct';}
+ if(spawnEffects.length){effects.push(...spawnEffects);if(sound==='move'||sound==='select'||sound==='capture')sound='revive';}
  if(!mate && next.isCheck()){const king=next.board().flat().find(p=>p?.type==='k'&&p.color===next.turn());if(king)effects.push({kind:'check',square:king.square});if(sound==='move')sound='check';}
  return {effects,sound:mate?'chaos-mate':sound};
 }

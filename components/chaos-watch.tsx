@@ -5,6 +5,7 @@ import {WatchEffects} from "./chaos-watch-effects";
 import {watchTransition, type WatchImpact} from "@/lib/chaos-impact";
 import { ChaosNavLink, chaosHref } from "./chaos-nav-link";
 import { SpectatorCount } from "./chaos-spectator-count";
+import { installChaosSounds } from "@/lib/chaos-sound-pack";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "./chessboard-compat";
@@ -175,6 +176,8 @@ export function ChaosWatch({
   const [following, setFollowing] = useState(true);
   const forwardEffect = useRef(false);
   const liveFrames = useRef<{ game: number; frames: WatchFrame[] }>({ game: -1, frames: [] });
+  // Same sounds as the game (the Activity's own pack stays in place there).
+  useEffect(() => installChaosSounds(), []);
   useEffect(() => {
     setError("");
     setDetail(null);
@@ -314,6 +317,7 @@ export function ChaosWatch({
     const last = frames.length - 1;
     const next = Math.max(0, Math.min(i, last));
     if (forward) forwardEffect.current = true;
+    if (selected?.live && !following && next >= last) playSound("whoosh");
     if (selected?.live) setFollowing(next >= last);
     setIndex(next);
   };

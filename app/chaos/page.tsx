@@ -60,6 +60,7 @@ import { stockfishPool } from "@/lib/stockfish-client";
 import { ChaosLobby, type ChaosMatchFound, type ChaosOpenSeek } from "@/components/chaos-lobby";
 import { ChaosSeekWatcher } from "@/components/chaos-seek-watcher";
 import { SpectatorCount } from "@/components/chaos-spectator-count";
+import { installChaosSounds } from "@/lib/chaos-sound-pack";
 import { inviteJoinCode } from "@/lib/chaos-launch";
 import { recordChaosFirstTouch } from "@/lib/chaos-first-touch";
 import { OpeningMoveNotice, AbortedMatch } from "@/components/chaos-opening-move";
@@ -3996,7 +3997,7 @@ export default function ChaosChessPage() {
       setBoardEffects((e) => [...e, { id, type: kind, squares: group.map((s) => s.square), pieces: presentation.activity ? group.map((s) => s.piece) : undefined }]);
       setTimeout(() => setBoardEffects((e) => e.filter((x) => x.id !== id)), EFFECT_DURATIONS[kind]);
     }
-    playSound("correct");
+    playSound("revive");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [impactFen]);
 
@@ -4100,10 +4101,11 @@ export default function ChaosChessPage() {
     if (!myTurnToMove || myClockMs <= 0) return;
     if (myClockMs <= 10_000 && !lowTimeCues.current.at10) {
       lowTimeCues.current.at10 = lowTimeCues.current.at30 = true;
-      playSound("bell-double");
+      playSound("clock-tick");
+      setTimeout(() => playSound("clock-tick"), 260);
     } else if (myClockMs <= 30_000 && !lowTimeCues.current.at30) {
       lowTimeCues.current.at30 = true;
-      playSound("bell");
+      playSound("clock-tick");
     }
   }, [myClockMs, myTurnToMove, gameMode, unlimitedTime, timeControl, gameStatus]);
 
@@ -6752,6 +6754,9 @@ export default function ChaosChessPage() {
     }
     if (code) void joinRoom(code);
   }, [joinRoom, presentation]);
+
+  /* ── Chaos sounds on the website too (the Activity installs them itself); leaving restores the site's. ── */
+  useEffect(() => (presentation.activity ? undefined : installChaosSounds()), [presentation.activity]);
 
   /* ── Rich presence (Discord, opt-in): what friends see on this player's profile. ── */
   const presenceStartRef = useRef<number | undefined>(undefined);
