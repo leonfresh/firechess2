@@ -92,7 +92,7 @@ The key metric to watch on FireChess is your ACPL (average centipawn loss) in th
 
 The Queen's Gambit is the most respected pawn sacrifice in chess. After 1.d4 d5 2.c4, White offers the c-pawn in exchange for control of the centre. It's been the primary weapon of world champions from Capablanca to Carlsen, and it's the cornerstone of [d4 opening strategy](/blog/queens-gambit-guide).
 
-<chess-position fen="rnbqkbnr/ppp1pppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq - 0 2" caption="The Queen's Gambit after 1.d4 d5 2.c4. White offers the c-pawn — if Black takes, White gets a strong centre with e4 next." orientation="black" arrows="e7e6:green,c7c6:orange"></chess-position>
+<chess-position fen="rnbqkbnr/ppp1pppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq - 0 2" caption="The Queen's Gambit after 1.d4 d5 2.c4. White offers the c-pawn — if Black takes, White gets a strong centre with e4 next." orientation="black" arrows="e7e6:green,c7c6:orange" badge="book"></chess-position>
 
 **The moves:** 1.d4 d5 2.c4
 
@@ -110,13 +110,13 @@ The Queen's Gambit is the most respected pawn sacrifice in chess. After 1.d4 d5 
 
 If the Queen's Gambit is a positional sacrifice, the Evans Gambit is a full-blooded attacking gambit. After 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.b4, White sacrifices the b-pawn to gain time for a rapid d4 push and open lines against the Black king.
 
-<chess-position fen="r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4" caption="The Evans Gambit after 4.b4. White offers the b-pawn — if Black takes, d4 follows and White gets a powerful centre with open lines." orientation="white" arrows="c5b4:green"></chess-position>
+<chess-position fen="r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4" caption="The Evans Gambit after 4.b4. White offers the b-pawn — if Black takes, d4 follows and White gets a powerful centre with open lines." orientation="white" arrows="c5b4:green" badge="book"></chess-position>
 
 **The moves:** 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.b4
 
 **What White gets:** After 4...Bxb4 5.c3 Ba5 6.d4, White has a massive centre and rapid development. The key position arises after Black captures and White plays d4:
 
-<chess-position fen="r1bqk1nr/pppp1ppp/2n5/b3p3/2BPP3/2P2N2/P4PPP/RNBQK2R b KQkq - 0 6" caption="Evans Gambit Accepted after 6.d4. White's centre is dominant — the e4-d4 duo controls the board while Black's bishop is misplaced on a5." orientation="white" arrows="e4e4:d4d4"></chess-position>
+<chess-position fen="r1bqk1nr/pppp1ppp/2n5/b3p3/2BPP3/2P2N2/P4PPP/RNBQK2R b KQkq - 0 6" caption="Evans Gambit Accepted after 6.d4. White's centre is dominant — the e4-d4 duo controls the board while Black's bishop is misplaced on a5." orientation="white" arrows="d7d6:green" badge="book"></chess-position>
 
 After 6...exd4 7.0-0 dxc3 8.Nxc3, White has completed development while Black is still trying to untangle. The position after 8.Nxc3 shows White's compensation clearly — two central pawns, open lines for the rooks, and the bishop pair ready to swing to attacking squares.
 
@@ -128,7 +128,7 @@ In FireChess analysis of Evans Gambit games at the 1200-1600 level, White averag
 
 **The Leonhardt Trap:** One of the Evans Gambit's most beautiful ideas. After 8...d6 9.Ng5, threatening Nxf7 and Qh5. Black's position looks solid, but the knight on g5 creates devastating threats against f7.
 
-<chess-position fen="r1bqk1nr/ppp2ppp/2np4/b5N1/2B1P3/2N5/P4PPP/R1BQ1RK1 b kq - 1 9" caption="The Leonhardt Trap setup — Ng5 threatens Nxf7, and if Black plays Nh6, Qh5 creates mating threats. Club players fall for this constantly." orientation="white" arrows="g5f7:green,c4f7:red"></chess-position>
+<chess-position fen="r1bqk1nr/ppp2ppp/2np4/b5N1/2B1P3/2N5/P4PPP/R1BQ1RK1 b kq - 1 9" caption="The Leonhardt Trap setup — Ng5 threatens Nxf7, and if Black plays Nh6, Qh5 creates mating threats. Club players fall for this constantly." orientation="white" arrows="g5f7:green,c4f7:red" badge="best"></chess-position>
 
 **Common club-level mistake:** Black plays 4...Bxb4 and then retreats with ...Be7 instead of ...Ba5. This passive approach gives White a comfortable advantage with no risk. If your opponent retreats, simply play c3, d4, and enjoy your superior centre — you've essentially played a normal Italian Game with an extra tempo.
 
@@ -138,17 +138,17 @@ In FireChess analysis of Evans Gambit games at the 1200-1600 level, White averag
 
 The Sicilian Defense is the most popular opening at club level — and one of the hardest to face as White. The main lines require deep theoretical knowledge, and most club players don't have time to study the Najdorf, Dragon, and Sveshnikov. The Smith-Morra Gambit solves this problem completely.
 
-<chess-position fen="rnbqkbnr/pp1ppppp/8/8/3pP3/2P5/PP3PPP/RNBQKBNR b KQkq - 0 3" caption="The Smith-Morra Gambit after 3.c3. White offers a pawn to open the c-file and d-file for rapid development — a direct refutation of Black's Sicilian setup." orientation="black" arrows="d4c3:green"></chess-position>
+<chess-position fen="rnbqkbnr/pp1ppppp/8/8/3pP3/2P5/PP3PPP/RNBQKBNR b KQkq - 0 3" caption="The Smith-Morra Gambit after 3.c3. White offers a pawn to open the c-file and d-file for rapid development — a direct refutation of Black's Sicilian setup." orientation="black" arrows="d4c3:green" badge="book"></chess-position>
 
 **The moves:** 1.e4 c5 2.d4 cxd4 3.c3
 
 **What White gets:** After 3...dxc3 4.Nxc3, White has two central pawns versus one, open lines for the rooks, and a natural development plan with Nf3, Bc4, and 0-0. Black has an extra pawn but faces immediate pressure on the d-file and along the a2-g8 diagonal.
 
-<chess-position fen="rnbqkbnr/pp1ppppp/8/8/4P3/2N5/PP3PPP/R1BQKBNR b KQkq - 0 4" caption="Smith-Morra Accepted after 4.Nxc3. White's development lead is clear — Nf3, Bc4, and 0-0 come with tempo, while Black's extra pawn is a long-term liability." orientation="black" arrows="e7e6:green"></chess-position>
+<chess-position fen="rnbqkbnr/pp1ppppp/8/8/4P3/2N5/PP3PPP/R1BQKBNR b KQkq - 0 4" caption="Smith-Morra Accepted after 4.Nxc3. White's development lead is clear — Nf3, Bc4, and 0-0 come with tempo, while Black's extra pawn is a long-term liability." orientation="black" arrows="e7e6:green" badge="book"></chess-position>
 
 **Why it works at club level:** The Smith-Morra is the ultimate "anti-theory" weapon against the Sicilian. While your opponent has memorized Najdorf lines, you've sidestepped everything and reached a position where natural development leads to a strong attack. The typical game goes: Nf3, Bc4, 0-0, Qe2, and Rd1 — every move comes with a threat.
 
-<chess-position fen="r1bqkb1r/pp3ppp/2nppn2/8/2B1P3/2N2N2/PP2QPPP/R1B2RK1 b kq - 3 8" caption="Smith-Morra middlegame — White's pieces are perfectly coordinated. The rook on d1 pins the d-pawn, the bishop targets f7, and Qe2 prepares Rd1 with overwhelming pressure." orientation="white" arrows="d1d8:green,c4f7:red"></chess-position>
+<chess-position fen="r1bqkb1r/pp3ppp/2nppn2/8/2B1P3/2N2N2/PP2QPPP/R1B2RK1 b kq - 3 8" caption="Smith-Morra middlegame — White's pieces are perfectly coordinated. The rook on d1 pins the d-pawn, the bishop targets f7, and Qe2 prepares Rd1 with overwhelming pressure." orientation="white" arrows="d1d8:green,c4f7:red" badge="best"></chess-position>
 
 In FireChess scans of Sicilian games at the 1100-1500 level, players who face the Smith-Morra average 112 ACPL in the first 15 moves — significantly worse than their performance in main-line Sicilians (78 ACPL). The unfamiliar positions punish players who rely on pattern recognition rather than understanding.
 
@@ -162,13 +162,13 @@ In FireChess scans of Sicilian games at the 1100-1500 level, players who face th
 
 The Budapest Gambit is Black's most aggressive response to 1.d4. After 1.d4 Nf6 2.c4 e5, Black immediately challenges White's centre and creates tactical complications. It's a favourite of club players who want to take the initiative from the start.
 
-<chess-position fen="rnbqkb1r/pppp1ppp/5n2/4p3/2PP4/8/PP2PPPP/RNBQKBNR w KQkq - 0 3" caption="The Budapest Gambit after 2...e5. Black strikes at the centre immediately — if White captures, Ng4 creates immediate tactical threats against e5 and f2." orientation="white" arrows="d4e5:green"></chess-position>
+<chess-position fen="rnbqkb1r/pppp1ppp/5n2/4p3/2PP4/8/PP2PPPP/RNBQKBNR w KQkq - 0 3" caption="The Budapest Gambit after 2...e5. Black strikes at the centre immediately — if White captures, Ng4 creates immediate tactical threats against e5 and f2." orientation="white" arrows="d4e5:green" badge="book"></chess-position>
 
 **The moves:** 1.d4 Nf6 2.c4 e5
 
 **What Black gets:** If White captures with 3.dxe5, Black plays 3...Ng4, attacking the e5 pawn and creating threats against f2. The critical line runs 4.e3 Nxe5, where Black has recovered the pawn and has active pieces. But the real venom is in the trap line: 4.Bf4 Nc6 5.Nf3 Bb4+ 6.Nbd2?? (a common club mistake) and Black wins with 6...Qe7, trapping the bishop.
 
-<chess-position fen="rnbqkb1r/pppp1ppp/8/4P3/2P3n1/8/PP2PPPP/RNBQKBNR w KQkq - 1 4" caption="Budapest Gambit after 3...Ng4. Black threatens ...Nxe5 and ...Bb4+. White must decide how to defend e5 — the wrong choice leads to immediate tactical problems." orientation="black" arrows="g4e5:green,f2f3:red"></chess-position>
+<chess-position fen="rnbqkb1r/pppp1ppp/8/4P3/2P3n1/8/PP2PPPP/RNBQKBNR w KQkq - 1 4" caption="Budapest Gambit after 3...Ng4. Black threatens ...Nxe5 and ...Bb4+. White must decide how to defend e5 — the wrong choice leads to immediate tactical problems." orientation="black" arrows="g4e5:green,f2f3:red" badge="best"></chess-position>
 
 **Why it works at club level:** The Budapest Gambit creates positions where Black has immediate tactical targets. White's natural instinct is to hold the extra pawn, but this leads to passive positions where Black's pieces become very active. At club level, most White players don't know the correct defensive setup, and they end up losing the pawn back in worse circumstances.
 
@@ -184,13 +184,13 @@ The Budapest Gambit is Black's most aggressive response to 1.d4. After 1.d4 Nf6 
 
 The Scotch Gambit is one of the cleanest gambits in chess. After 1.e4 e5 2.Nf3 Nc6 3.d4 exd4 4.Bc4, White sacrifices the d-pawn for rapid development and central control. It's the weapon of choice for players who want active piece play without the complexity of the Evans Gambit.
 
-<chess-position fen="r1bqkbnr/pppp1ppp/2n5/8/2BpP3/5N2/PPP2PPP/RNBQK2R b KQkq - 1 4" caption="The Scotch Gambit after 4.Bc4. White offers the d-pawn — if Black takes, e5 follows with a powerful central wedge and open lines for White's pieces." orientation="black" arrows="g8f6:green"></chess-position>
+<chess-position fen="r1bqkbnr/pppp1ppp/2n5/8/2BpP3/5N2/PPP2PPP/RNBQK2R b KQkq - 1 4" caption="The Scotch Gambit after 4.Bc4. White offers the d-pawn — if Black takes, e5 follows with a powerful central wedge and open lines for White's pieces." orientation="black" arrows="g8f6:green" badge="book"></chess-position>
 
 **The moves:** 1.e4 e5 2.Nf3 Nc6 3.d4 exd4 4.Bc4
 
 **What White gets:** After 4...Nf6 5.e5, White has a powerful central pawn on e5 that cramps Black's position. The knight on f6 is pushed to d5 or e4, and White's pieces develop naturally with threats. The key position after 5.e5:
 
-<chess-position fen="r1bqkb1r/pppp1ppp/2n2n2/4P3/2Bp4/5N2/PPP2PPP/RNBQK2R b KQkq - 0 5" caption="Scotch Gambit after 5.e5. The pawn on e5 is a monster — it cramps Black's knight on f6 and opens lines for White's bishop on c4 targeting f7." orientation="white" arrows="c4f7:green,e5e6:red"></chess-position>
+<chess-position fen="r1bqkb1r/pppp1ppp/2n2n2/4P3/2Bp4/5N2/PPP2PPP/RNBQK2R b KQkq - 0 5" caption="Scotch Gambit after 5.e5. The pawn on e5 is a monster — it cramps Black's knight on f6 and opens lines for White's bishop on c4 targeting f7." orientation="white" arrows="f6d5:green,c4f7:orange" badge="best"></chess-position>
 
 **Why it works at club level:** The Scotch Gambit is the most "practical" gambit on this list. Unlike the Evans Gambit, which requires knowing specific tactical patterns, the Scotch Gambit is about understanding a simple principle: central pawns plus active pieces beat material. After 5.e5, White's plan is obvious — develop, castle, attack f7. Black's plan is less clear, and that asymmetry is what makes the gambit so effective.
 
