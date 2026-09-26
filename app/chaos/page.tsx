@@ -6789,9 +6789,11 @@ export default function ChaosChessPage() {
     setTutorial(true);
     startGame("white", "ai");
   };
-  // Back in the lobby: the tutorial is over, and the player's own AI level comes back.
+  // The tutorial is one game: when it ends (or the player leaves it), later practice games get the
+  // normal draft schedule and the player's own AI level again. "Play again" skips the lobby, so
+  // waiting for "setup" alone let the fast schedule leak into every game after the tutorial.
   useEffect(() => {
-    if (gameStatus !== "setup" || !tutorialRef.current) return;
+    if ((gameStatus !== "setup" && gameStatus !== "game-over") || !tutorialRef.current) return;
     tutorialRef.current = false;
     setTutorial(false);
     if (levelBeforeTutorial.current) setAiLevel(levelBeforeTutorial.current);
@@ -9488,6 +9490,28 @@ export default function ChaosChessPage() {
   /* Keep resign ref current so the per-move timer interval can call it without stale closure */
   handleResignRef.current = handleResign;
 
+  /* ── Home: the Activity's header logo sends "chaos:home". From a game in progress it asks first:
+        leaving an online game resigns it, leaving a practice game just ends it. ── */
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  const gameInProgress = ["matched", "picking-anomaly", "playing", "drafting"].includes(gameStatus);
+  const goToLobby = () => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    if (gameStatus === "waiting" && roomId) {
+      fetch("/api/chaos/matchmake", { method: "DELETE", headers: chaosHeaders(true), body: JSON.stringify({ roomId }) }).catch(() => {});
+    }
+    setConfirmLeave(false);
+    setGameStatus("setup"); setGameResult(null); setEndReason(""); setRoomId(null); setRoomCode("");
+    setMatchmakeState("idle"); setDrawOfferSent(false); setDrawOfferReceived(false);
+    setRematchRequested(false); setRematchReceived(false);
+    window.scrollTo({ top: 0 });
+  };
+  useEffect(() => {
+    const onHome = () => { if (gameInProgress) setConfirmLeave(true); else if (gameStatus !== "setup") goToLobby(); else window.scrollTo({ top: 0, behavior: "smooth" }); };
+    window.addEventListener("chaos:home", onHome);
+    return () => window.removeEventListener("chaos:home", onHome);
+  });
+  useEffect(() => { if (!gameInProgress) setConfirmLeave(false); }, [gameInProgress]);
+
   /* ── Anomaly activation callbacks ── */
 
   /** Sun — First Light: surge all eligible pawns forward 1 square (free, no turn change) */
@@ -10984,6 +11008,19 @@ export default function ChaosChessPage() {
             onDone={() => removePepe(p.id)}
           />
         ))}
+
+        {confirmLeave && (
+          <div role="dialog" aria-modal="true" aria-labelledby="leave-title" className="fixed inset-0 z-[10060] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={() => setConfirmLeave(false)}>
+            <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-slate-900 p-5 text-left shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <h2 id="leave-title" className="text-lg font-bold text-white">{gameMode === "ai" ? "Leave this practice game?" : "Leave this match?"}</h2>
+              <p className="mt-1 text-sm text-slate-400">{gameMode === "ai" ? "The game ends and you go back to the lobby." : "Leaving counts as resigning: your opponent wins."}</p>
+              <div className="mt-4 flex gap-2">
+                <button type="button" autoFocus onClick={() => setConfirmLeave(false)} className="flex-1 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/5">Keep playing</button>
+                <button type="button" onClick={() => { if (gameMode !== "ai") handleResign(); goToLobby(); }} className="flex-1 rounded-lg border border-red-500/40 bg-red-500/15 px-4 py-2.5 text-sm font-bold text-red-300 hover:bg-red-500/25">{gameMode === "ai" ? "Leave" : "Resign and leave"}</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <ChaosCoach
           tutorial={tutorial}

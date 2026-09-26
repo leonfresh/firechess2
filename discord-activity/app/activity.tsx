@@ -52,7 +52,9 @@ export function Activity() {
   }
   return <div className="chaos-activity">
     <header className="activity-nav">
-      <div className="activity-brand"><img src="/activity/logo.svg" width="38" height="38" alt="" /><strong>CHAOS<span>CHESS</span></strong><small>PLAY A LITTLE DIFFERENT.</small></div>
+      {/* Back to the lobby (the page asks first during a game); a real link would drop Discord's frame params. */}
+      <button type="button" className="activity-brand" aria-label="Chaos Chess: back to the lobby" onClick={() => window.dispatchEvent(new Event('chaos:home'))}
+        style={{background:'none',border:0,padding:0,color:'inherit',font:'inherit',cursor:'pointer',textAlign:'left'}}><img src="/activity/logo.svg" width="38" height="38" alt="" /><strong>CHAOS<span>CHESS</span></strong><small>PLAY A LITTLE DIFFERENT.</small></button>
       <div className="nav-tools">{status === 'connected' && <span className="connection-pill"><i />IN DISCORD</span>}
         <ExploreNav />
         <button className="sound-button" aria-expanded={soundOpen} onClick={() => setSoundOpen(!soundOpen)}>Sound {volume === 0 ? 'off' : 'on'}</button>
