@@ -8,12 +8,16 @@ import { ANOMALY_PRICES, anomalyKey } from "./chaos-anomaly-unlocks";
  */
 import { ALL_MODIFIERS, SHOP_CARD_IDS, type ChaosModifier } from "./chaos-chess";
 
-/** Price by tier: roughly 6, 16 and 36 games at the gold rates in archive_chaos_match(). */
+/**
+ * Price by tier. Halved on 2026-09-26: regulars really earn 12-20 gold a game (archive_chaos_match()
+ * pays 10, +15 a win, +5 timed, +25 first win of the day), and at 150 for a rare only 4 of 121
+ * players could buy anything. Now a first card is about 3 games away. Chaos Hour pays match gold twice.
+ */
 export const SHOP_PRICES: Readonly<Record<string, number>> = {
-  common: 100,
-  rare: 150,
-  epic: 400,
-  legendary: 900,
+  common: 50,
+  rare: 75,
+  epic: 200,
+  legendary: 450,
 };
 
 export type ShopEntry = {

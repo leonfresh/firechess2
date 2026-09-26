@@ -42,9 +42,10 @@ test('priceOf sells shop cards and refuses everything else', () => {
 });
 
 test('prices stay within reach of the gold the archive pays out', () => {
-  // archive_chaos_match pays 10 a game, +15 a win, +25 for the first win of the day.
+  // archive_chaos_match pays 10 a game, +15 a win, +25 for the first win of the day. Regulars
+  // average 12-20 a game, so a common card stays about three games away and a legendary under 30.
   for (const [tier, price] of Object.entries(SHOP_PRICES)) {
-    assert.ok(price >= 100 && price <= 1200, `${tier} at ${price} gold is off the pace of the gold rates`);
+    assert.ok(price >= 50 && price <= 600, `${tier} at ${price} gold is off the pace of the gold rates`);
   }
 });
 

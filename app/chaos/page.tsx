@@ -65,6 +65,7 @@ import { useAttention } from "@/lib/use-attention";
 import { inviteJoinCode } from "@/lib/chaos-launch";
 import { recordChaosFirstTouch } from "@/lib/chaos-first-touch";
 import { trackChaos } from "@/lib/chaos-events";
+import { ChaosHourBanner } from "@/components/chaos-hour-banner";
 import { ChaosCoach, TutorialInvite, TUTORIAL_PHASE_TRIGGERS, countFinishedGame } from "@/components/chaos-coach";
 import { OpeningMoveNotice, AbortedMatch } from "@/components/chaos-opening-move";
 import { ChaosChat, type ChatLine } from "@/components/chaos-chat";
@@ -10170,6 +10171,7 @@ export default function ChaosChessPage() {
             </a>
           </div>
 
+          <ChaosHourBanner className="mb-3 max-w-md" />
           <TutorialInvite onStart={startTutorial} className="mb-6 max-w-md" />
           <ChaosAchievements replayBase={presentation.activity ? "/watch?match=" : "/chaos/replay/"} />
           {/* ── Game of the Week: the best archived Chaos game of the last 7 days.

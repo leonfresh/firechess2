@@ -1,7 +1,8 @@
 /** Anomaly unlocks expand your own opening pool; they never increase ability strength. */
 export const ANOMALY_PRICES: Readonly<Record<string, number>> = {
-  magician:250, "high-priestess":150, lovers:150, chariot:150, hermit:150,
-  "hanged-man":150, death:250, tower:250, moon:250, judgement:300, world:300,
+  // Halved with the card prices on 2026-09-26 (see SHOP_PRICES in lib/chaos-shop.ts).
+  magician:125, "high-priestess":75, lovers:75, chariot:75, hermit:75,
+  "hanged-man":75, death:125, tower:125, moon:125, judgement:150, world:150,
 };
 export const anomalyKey = (id: string) => `anomaly:${id}`;
 export function ownsAnomaly(id: string, owned: readonly string[] = []) {
