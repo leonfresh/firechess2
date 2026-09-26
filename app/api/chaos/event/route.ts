@@ -10,7 +10,7 @@ import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { getChaosUserId } from "@/lib/chaos-auth";
 
-const EVENTS = new Set(["lobby_view", "practice_start", "queue_start", "queue_cancel", "wait_ai", "invite", "match_found"]);
+const EVENTS = new Set(["lobby_view", "practice_start", "queue_start", "queue_cancel", "wait_ai", "invite", "match_found", "tutorial_start", "tutorial_done"]);
 
 export async function POST(req: NextRequest) {
   const done = new NextResponse(null, { status: 204 });

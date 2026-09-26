@@ -1,6 +1,6 @@
 "use client";
 
-import { getProviders, signIn } from "next-auth/react";
+import { getProviders, getSession, signIn, signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 
 function returnAfterSignIn() {
@@ -9,12 +9,22 @@ function returnAfterSignIn() {
   return target && ["/newdashboard", "/newpricing", "/newtraining", "/api/chaos/website-login"].includes(target) ? target : "/";
 }
 
+/** Auth.js error codes (?error=) in words a player can act on. */
+function errorMessage(code: string | null): string {
+  if (!code) return "";
+  if (code === "OAuthAccountNotLinked") return "That account belongs to a different FireChess login. Pick it again and we'll switch you over.";
+  if (code === "AccessDenied") return "Sign-in was cancelled.";
+  if (code === "Verification") return "That email link has expired or was already used. Send a new one.";
+  return "Sign-in didn't finish. Please try again.";
+}
+
 export default function SignInPage() {
   const [loading, setLoading] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [emailSent, setEmailSent] = useState(false);
   const [providers, setProviders] = useState<string[] | null>(null);
   const [error, setError] = useState("");
+  useEffect(() => { setError(errorMessage(new URLSearchParams(window.location.search).get("error"))); }, []);
   useEffect(() => {
     let active = true;
     getProviders().then(value => { if (active) { if (value === null) setError("Could not load sign-in methods. Please reload to retry."); setProviders(Object.keys(value ?? {})); } }).catch(() => { if (active) { setProviders([]); setError("Could not load sign-in methods. Please reload to retry."); } });
@@ -24,7 +34,12 @@ export default function SignInPage() {
   const handleSignIn = async (provider: string) => {
     if (!providers?.includes(provider)) return;
     setLoading(provider); setError("");
-    try { await signIn(provider, { callbackUrl: returnAfterSignIn() }); }
+    try {
+      // Google and Lichess are separate FireChess accounts. Signing in with one while the other is
+      // active fails with OAuthAccountNotLinked, so leave the current session first: this is a switch.
+      if (await getSession()) await signOut({ redirect: false });
+      await signIn(provider, { callbackUrl: returnAfterSignIn() });
+    }
     catch { setError("Could not start sign-in. Please try again."); }
     finally { setLoading(null); }
   };
@@ -35,6 +50,7 @@ export default function SignInPage() {
     setError("");
     setLoading("resend");
     try {
+      if (await getSession()) await signOut({ redirect: false });
       const result = await signIn("resend", { email: email.trim(), callbackUrl: returnAfterSignIn(), redirect: false });
       if (!result?.ok || result.error) throw new Error("Email sign-in failed");
       setEmailSent(true);

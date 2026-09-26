@@ -65,6 +65,7 @@ import { useAttention } from "@/lib/use-attention";
 import { inviteJoinCode } from "@/lib/chaos-launch";
 import { recordChaosFirstTouch } from "@/lib/chaos-first-touch";
 import { trackChaos } from "@/lib/chaos-events";
+import { ChaosCoach, TutorialInvite, TUTORIAL_PHASE_TRIGGERS, countFinishedGame } from "@/components/chaos-coach";
 import { OpeningMoveNotice, AbortedMatch } from "@/components/chaos-opening-move";
 import { ChaosChat, type ChatLine } from "@/components/chaos-chat";
 import { useChaosPresentation } from "@/components/chaos-presentation";
@@ -3838,6 +3839,10 @@ export default function ChaosChessPage() {
   useEffect(() => {
     localStorage.setItem("chaos_ai_level", aiLevel);
   }, [aiLevel]);
+  /* ── Tutorial: a guided practice game vs the Beginner AI (components/chaos-coach.tsx) ── */
+  const [tutorial, setTutorial] = useState(false);
+  const tutorialRef = useRef(false);
+  const levelBeforeTutorial = useRef<typeof aiLevel | null>(null);
   const aiDepth =
     aiLevel === "beginner"
       ? 1
@@ -6446,6 +6451,8 @@ export default function ChaosChessPage() {
       const g = new Chess(startFen);
       let cs = createChaosState();
       cs = { ...cs, playerAnomaly: pickedAnomaly?.id ?? null };
+      // The tutorial's first power comes after move 2, so a newcomer sees a draft within a minute.
+      if (tutorialRef.current && mode === "ai") cs = { ...cs, phaseTriggers: [...TUTORIAL_PHASE_TRIGGERS] };
 
       // Inject modifiers for anomalies that have built-in modifiers
       // Note: "amazon" from Magician is delayed to turn 10 — skip it here
@@ -6477,7 +6484,7 @@ export default function ChaosChessPage() {
       setEventLog([
         {
           type: "info",
-          message: `⚡ Chaos Chess begins! ${mode === "ai" ? "vs Stockfish" : "vs Player"}. Modifiers appear at turns 5, 10, 15, 20, 25.${pickedAnomaly ? ` Your anomaly: ${pickedAnomaly.icon} ${pickedAnomaly.name}` : ""}`,
+          message: `⚡ Chaos Chess begins! ${mode === "ai" ? "vs Stockfish" : "vs Player"}. Modifiers appear at turns ${cs.phaseTriggers.join(", ")}.${pickedAnomaly ? ` Your anomaly: ${pickedAnomaly.icon} ${pickedAnomaly.name}` : ""}`,
           icon: "⚡",
           pepe: PEPE.hyped,
         },
@@ -6773,6 +6780,23 @@ export default function ChaosChessPage() {
     setAutoQueue(true);
   };
 
+  const startTutorial = () => {
+    trackChaos("tutorial_start");
+    levelBeforeTutorial.current = aiLevel;
+    setAiLevel("beginner");
+    tutorialRef.current = true;
+    setTutorial(true);
+    startGame("white", "ai");
+  };
+  // Back in the lobby: the tutorial is over, and the player's own AI level comes back.
+  useEffect(() => {
+    if (gameStatus !== "setup" || !tutorialRef.current) return;
+    tutorialRef.current = false;
+    setTutorial(false);
+    if (levelBeforeTutorial.current) setAiLevel(levelBeforeTutorial.current);
+    levelBeforeTutorial.current = null;
+  }, [gameStatus]);
+
   /* ── Chaos sounds on the website too (the Activity installs them itself); leaving restores the site's. ── */
   useEffect(() => (presentation.activity ? undefined : installChaosSounds()), [presentation.activity]);
 
@@ -6807,6 +6831,7 @@ export default function ChaosChessPage() {
     journeyStatus.current = gameStatus;
     if (gameStatus === "setup") trackChaos("lobby_view");
     else if (was === "setup" && gameMode === "ai") trackChaos("practice_start");
+    if (gameStatus === "game-over" && was !== "game-over") countFinishedGame();
   }, [gameStatus, gameMode]);
 
   /* ── PartyKit WebSocket: real-time sync ── */
@@ -10100,7 +10125,7 @@ export default function ChaosChessPage() {
   // Setup screen
   if (gameStatus === 'setup' && presentation.Lobby) {
     const Lobby = presentation.Lobby;
-    return <Lobby startPractice={(side) => startGame(side, 'ai')}
+    return <Lobby startPractice={(side) => startGame(side, 'ai')} startTutorial={startTutorial}
       createRoom={createRoom} joinRoom={() => joinRoom()} joinOpenRoom={joinRoom} matchmaking={matchmakingLobby} joinCode={joinCode} setJoinCode={setJoinCode}
       difficulty={aiLevel} setDifficulty={setAiLevel} unlimited={unlimitedTime} setUnlimited={setUnlimitedTime}
       clockLabel={timeControl?.label ?? "5+5"} setClockLabel={label => {setTimeControl(CHAOS_TIME_CONTROLS.find(c => c.label === label) ?? CHAOS_TIME_CONTROLS[1]); setUnlimitedTime(false);}}
@@ -10145,6 +10170,7 @@ export default function ChaosChessPage() {
             </a>
           </div>
 
+          <TutorialInvite onStart={startTutorial} className="mb-6 max-w-md" />
           <ChaosAchievements replayBase={presentation.activity ? "/watch?match=" : "/chaos/replay/"} />
           {/* ── Game of the Week: the best archived Chaos game of the last 7 days.
                  This page is shared with the Discord Activity (it has no /chaos routes), so the
@@ -10956,6 +10982,21 @@ export default function ChaosChessPage() {
             onDone={() => removePepe(p.id)}
           />
         ))}
+
+        <ChaosCoach
+          tutorial={tutorial}
+          status={gameStatus}
+          drafts={chaosState.currentPhase}
+          moveNumber={game.moveNumber()}
+          playerColor={playerColor}
+          firstMoveDue={myFirstMoveDue}
+          onComplete={() => trackChaos("tutorial_done")}
+          onPlayOnline={() => {
+            setGameStatus("setup"); setGameResult(null); setEndReason("");
+            setGameMode("matchmake");
+            setAutoQueue(true);
+          }}
+        />
 
         {/* Draft modal — only show when it's our turn to draft */}
         {gameStatus === "drafting" && chaosState.draftChoices.length > 0 && (

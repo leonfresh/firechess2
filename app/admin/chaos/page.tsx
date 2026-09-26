@@ -16,7 +16,7 @@ const RANGES = [7, 14, 30, 90];
 /** Minimum games before a power's score is worth reading. */
 const MIN_SAMPLE = 20;
 const JOURNEY: [string, string][] = [
-  ["lobby_view", "Saw the lobby"], ["practice_start", "Started a practice game"], ["queue_start", "Joined the queue"],
+  ["lobby_view", "Saw the lobby"], ["tutorial_start", "Started the tutorial"], ["tutorial_done", "Finished the tutorial"], ["practice_start", "Started a practice game"], ["queue_start", "Joined the queue"],
   ["wait_ai", "Played AI while waiting"], ["invite", "Invited a friend"], ["queue_cancel", "Cancelled the queue"],
   ["match_found", "Found a match"],
 ];

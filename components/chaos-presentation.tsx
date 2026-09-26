@@ -5,6 +5,8 @@ import type { ChaosModifier } from '@/lib/chaos-chess';
 
 export type ChaosLobbyViewProps = {
   startPractice: (side: 'white' | 'black') => void;
+  /** Guided first game (components/chaos-coach.tsx). */
+  startTutorial?: () => void;
   createRoom: (side: 'white' | 'black') => Promise<void>;
   joinRoom: () => Promise<void>;
   joinOpenRoom: (code: string) => Promise<void>;

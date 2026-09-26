@@ -15,6 +15,8 @@ export const CHAOS_EVENTS = [
   "wait_ai",
   "invite",
   "match_found",
+  "tutorial_start",
+  "tutorial_done",
 ] as const;
 export type ChaosEvent = (typeof CHAOS_EVENTS)[number];
 

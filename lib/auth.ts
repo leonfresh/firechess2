@@ -84,6 +84,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   pages: {
     signIn: "/auth/signin",
+    // Errors (a cancelled Lichess prompt, an expired check cookie) come back to the sign-in page.
+    error: "/auth/signin",
   },
   session: { strategy: "jwt" },
   callbacks: {
