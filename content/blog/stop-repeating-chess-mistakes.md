@@ -70,7 +70,7 @@ This pattern costs club players 0.5-1.0 points of ACPL per game. You capture a p
 
 The recapture reflex is deeply ingrained. "They took my bishop, I take back with the queen." It feels natural. But in chess, the best response to a capture is often *not* a recapture.
 
-<chess-position fen="r1bq1rk1/2p1bppp/p1n2n2/1p1pp3/4P3/1BP2N2/PP1P1PPP/RNBQR1K1 w - - 0 9" caption="Ruy Lopez, Marshall Attack: Black just played 8...d5, striking in the center. The automatic response is 9.exd5, but this leads to the Marshall Gambit where Black gets dangerous compensation. The move 9.d3 — declining the pawn — is often safer and avoids Black's preparation. Not every capture demands a recapture." orientation="white" arrows="e4d5:green,d2d3:orange"></chess-position>
+<chess-position fen="r1bq1rk1/2p1bppp/p1n2n2/1p1pp3/4P3/1BP2N2/PP1P1PPP/RNBQR1K1 w - - 0 9" caption="Ruy Lopez, Marshall Attack: Black just played 8...d5, striking in the center. The automatic response is 9.exd5, but this leads to the Marshall Gambit where Black gets dangerous compensation. The move 9.d3 — declining the pawn — is often safer and avoids Black's preparation. Not every capture demands a recapture." orientation="white" arrows="e4d5:green,d2d3:orange" badge="best"></chess-position>
 
 This is the Ruy Lopez after 1.e4 e5 2.Nf3 Nc6 3.Bb5 a6 4.Ba4 Nf6 5.O-O Be7 6.Re1 b5 7.Bb3 O-O 8.c3 d5. Black strikes in the center with ...d5, and the automatic 9.exd5 leads into the Marshall Attack — one of the most deeply analyzed gambit lines in chess. Black gets a powerful attack for the pawn, and most club players are unprepared for the complications.
 

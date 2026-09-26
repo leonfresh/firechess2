@@ -201,7 +201,7 @@ This is why [uploading your games to FireChess's scanner](/analyze) and looking 
 
 At 1200, most games are decided in the first 15 moves. The accuracy loss isn't from complex middlegame decisions — it's from not knowing the right moves in the opening. Here's a typical position from the Queen's Gambit Declined:
 
-<chess-position fen="rnbq1rk1/ppp2pp1/5b1p/3p4/3P4/2N1PN2/PP3PPP/R2QKB1R w KQ - 0 9" caption="After 1.d4 d5 2.c4 e6 3.Nc3 Nf6 4.Bg5 Be7 5.e3 O-O 6.Nf3 h6 7.Bxf6 Bxf6 — Black has voluntarily given up the bishop pair. At the 1200 level, this happens because players fear the pin on f6 more than they value the bishop pair. The engine rates ...h6 as an inaccuracy, costing about 30 centipawns." orientation="white" arrows="f1d3:green"></chess-position>
+<chess-position fen="rnbq1rk1/ppp2pp1/5b1p/3p4/3P4/2N1PN2/PP3PPP/R2QKB1R w KQ - 0 9" caption="After 1.d4 d5 2.c4 e6 3.Nc3 Nf6 4.Bg5 Be7 5.e3 O-O 6.Nf3 h6 7.Bxf6 Bxf6 — Black has voluntarily given up the bishop pair. At the 1200 level, this happens because players fear the pin on f6 more than they value the bishop pair. The engine rates ...h6 as an inaccuracy, costing about 30 centipawns." orientation="white" arrows="f1d3:green" badge="best"></chess-position>
 
 This is the kind of move that shows up as a yellow ?! badge in [FireChess analysis](/analyze). Black didn't blunder — they didn't hang a piece or walk into a tactic. But they made a strategic concession (giving up the dark-squared bishop) that a stronger player would avoid. At 1200, these inaccuracies accumulate: ...h6 costs 30cp, an early ...a6 costs 15cp, a premature ...b5 costs 20cp. None of them are catastrophic individually, but together they produce an ACPL of 75+.
 

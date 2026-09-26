@@ -93,7 +93,7 @@ The jump from 1400 to 1600 is less about tactics and more about **positional jud
 
 Here's a position from the Ruy Lopez that separates 1400s from 1600s:
 
-<chess-position fen="r1b2rk1/2q1bppp/p2p1n2/npp1p3/3PP3/2P2N1P/PPB2PP1/RNBQR1K1 w - - 1 12" caption="Ruy Lopez Chigorin Defense — White to move. A 1400 sees a normal position. A 1600 recognizes the plan: Nbd2-f1-g3, aiming for a kingside attack while Black is tangled up on the queenside. Positional understanding, not tactics, is the difference." orientation="white" moves="Nbd2,Nf1,Ng3" arrows="d4d5:green,b1d2:orange"></chess-position>
+<chess-position fen="r1b2rk1/2q1bppp/p2p1n2/npp1p3/3PP3/2P2N1P/PPB2PP1/RNBQR1K1 w - - 1 12" caption="Ruy Lopez Chigorin Defense — White to move. A 1400 sees a normal position. A 1600 recognizes the plan: Nbd2-f1-g3, aiming for a kingside attack while Black is tangled up on the queenside. Positional understanding, not tactics, is the difference." orientation="white" moves="Nbd2,Nf1,Ng3" arrows="d4d5:green,b1d2:orange" badge="best"></chess-position>
 
 This is the Ruy Lopez Chigorin Defense after 11...Qc7. White's plan is Nbd2-f1-g3, rerouting the knight to attack Black's kingside. A 1400 might play aimlessly here — maybe d5 to open the position, or h4 for a direct attack. A 1600 understands that the knight maneuver is the key idea, that d5 should be timed carefully, and that the bishop pair + better pawn structure gives White a lasting edge. This kind of positional understanding doesn't come from puzzles — it comes from studying master games and understanding pawn structures.
 

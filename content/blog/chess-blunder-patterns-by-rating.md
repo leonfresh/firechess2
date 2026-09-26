@@ -88,7 +88,7 @@ Between 1000 and 1200, players stop hanging pieces in one move — but they stil
 
 This is the rating range where [Italian Game](/openings/italian-game) middlegames become instructive. The opening is popular at this level, and the typical mistakes reveal the one-move blindspot perfectly:
 
-<chess-position fen="r1bqk2r/b1p2ppp/p1np1n2/1p2p3/PPB1P3/2PP1N2/3N1PPP/R1BQK2R w KQkq - 0 9" caption="Italian Game middlegame after 8...b5 — White has expanded on the queenside with a4 and b4, and the bishop sits on c4 aiming at f7. At the 1000-1200 level, the typical mistake here is Black playing moves like ...Bg4 without considering that after Bxf7+ Kxf7, Ng5+ forks the king and queen. One-move deeper calculation is what separates 1000 from 1200." orientation="white" arrows="a4b5:green"></chess-position>
+<chess-position fen="r1bqk2r/b1p2ppp/p1np1n2/1p2p3/PPB1P3/2PP1N2/3N1PPP/R1BQK2R w KQkq - 0 9" caption="Italian Game middlegame after 8...b5 — White has expanded on the queenside with a4 and b4, and the bishop sits on c4 aiming at f7. At the 1000-1200 level, the typical mistake here is Black playing moves like ...Bg4 without considering that after Bxf7+ Kxf7, Ng5+ forks the king and queen. One-move deeper calculation is what separates 1000 from 1200." orientation="white" arrows="a4b5:green" badge="best"></chess-position>
 
 **The critical skill gap:** A 1000-rated player sees Bg4 as "I'm pinning the knight" and stops there. A 1200-rated player calculates one move further: "After Bg4, can my opponent create a threat?" This one-ply lookahead is the bridge between the two rating levels.
 

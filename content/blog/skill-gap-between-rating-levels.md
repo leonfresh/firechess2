@@ -83,7 +83,7 @@ The classic 1200 mistake is moving a piece without asking "what does my opponent
 
 Look at this position from an Italian Game, one of the [most common openings at this level](/blog/chess-opening-principles):
 
-<chess-position fen="r1bqk2r/pppp1ppp/2n2n2/8/1bBPP3/2N2N2/PP3PPP/R1BQK2R b KQkq - 2 7" caption="Black to move in the Italian Game, Two Knights Defense. A 1200 might play 7...Nxe4??, grabbing the e4 pawn — but this loses to 8.Bxf7+ Ke7 9.Qd5, trapping the knight. The correct move is 7...d5 or 7...d6, developing sensibly." orientation="black" arrows="f6e4:green"></chess-position>
+<chess-position fen="r1bqk2r/pppp1ppp/2n2n2/8/1bBPP3/2N2N2/PP3PPP/R1BQK2R b KQkq - 2 7" caption="Black to move in the Italian Game, Two Knights Defense. A 1200 might play 7...Nxe4??, grabbing the e4 pawn — but this loses to 8.Bxf7+ Ke7 9.Qd5, trapping the knight. The correct move is 7...d5 or 7...d6, developing sensibly." orientation="black" arrows="f6e4:green" badge="best"></chess-position>
 
 This is the kind of position where the rating gap shows up immediately. A 1200 sees a free pawn on e4 and grabs it. A 1400 has learned to ask "can my opponent capture with check?" before taking anything. That single habit — checking for captures and checks before moving — cuts blunder count in half.
 
@@ -108,7 +108,7 @@ The ACPL data tells the story clearly: blunders drop from 2-3 to 1-2 per game, b
 
 This position from the French Defense Winawer illustrates the gap:
 
-<chess-position fen="rnbqk1nr/pp3ppp/4p3/2ppP3/3P4/P1P5/2P2PPP/R1BQKBNR b KQkq - 0 6" caption="Black to move in the French Winawer after 6.bxc3. A 1400 might play 6...Nc6, developing naturally. A 1600 knows that 6...Qc7 (preparing ...Nc6 and ...f6 to challenge White's center) or 6...Ne7 (heading for f5) are the key moves — the position demands active counterplay against White's pawn chain, not passive development." orientation="black" arrows="g8e7:green"></chess-position>
+<chess-position fen="rnbqk1nr/pp3ppp/4p3/2ppP3/3P4/P1P5/2P2PPP/R1BQKBNR b KQkq - 0 6" caption="Black to move in the French Winawer after 6.bxc3. A 1400 might play 6...Nc6, developing naturally. A 1600 knows that 6...Qc7 (preparing ...Nc6 and ...f6 to challenge White's center) or 6...Ne7 (heading for f5) are the key moves — the position demands active counterplay against White's pawn chain, not passive development." orientation="black" arrows="g8e7:green" badge="best"></chess-position>
 
 This is the kind of position where rating shows up in *quality of plans*, not just avoiding mistakes. White has a strong pawn center with e5 and d4. Black needs a plan to undermine it — and the choice between ...Nc6 (developing), ...Qc7 (preparing ...f6), and ...Ne7 (rerouting to f5) determines the entire character of the game. A 1400 plays the move that looks most natural. A 1600 plays the move that fits the position's demands.
 
@@ -133,7 +133,7 @@ The ACPL numbers tell the story: a 1600 averages 52 ACPL while an 1800 averages 
 
 Consider this position from the Sicilian Najdorf, one of the most theoretically demanding openings in chess:
 
-<chess-position fen="rnbqkb1r/1p3ppp/p2p1n2/4p3/4P3/1NN5/PPP1BPPP/R1BQK2R b KQkq - 1 7" caption="Black to move in the Sicilian Najdorf after 7.Nb3. The 1600 plays 7...Be7 (safe, solid, developing). The 1800 plays 7...b5 — the sharper choice that fights for queenside space and prepares ...Bb7. Both are playable, but b5 scores significantly better in practice because it creates immediate counterplay." orientation="black" arrows="f8e7:green,b7b5:orange"></chess-position>
+<chess-position fen="rnbqkb1r/1p3ppp/p2p1n2/4p3/4P3/1NN5/PPP1BPPP/R1BQK2R b KQkq - 1 7" caption="Black to move in the Sicilian Najdorf after 7.Nb3. The 1600 plays 7...Be7 (safe, solid, developing). The 1800 plays 7...b5 — the sharper choice that fights for queenside space and prepares ...Bb7. Both are playable, but b5 scores significantly better in practice because it creates immediate counterplay." orientation="black" arrows="f8e7:green,b7b5:orange" badge="best"></chess-position>
 
 This is where the data gets interesting. Both moves are "correct" — the engine evaluates them within 10-20 centipawns of each other. But the *practical* difference is enormous. After 7...Be7, White gets a comfortable position with a small edge. After 7...b5, the game becomes sharp and double-edged — exactly the kind of position where the better-prepared player wins.
 

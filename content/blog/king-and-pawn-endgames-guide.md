@@ -63,7 +63,7 @@ If you learn only one thing from this guide, learn this: **the player who doesn'
 
 Two kings are in opposition when they stand on the same file, rank, or diagonal with exactly one square between them. The player whose turn it is to move is at a disadvantage because they must step aside and let the opponent's king advance.
 
-<chess-position fen="3k4/8/8/3K4/3P4/8/8/8 b - - 0 1" caption="Direct Opposition: Black to move is in trouble. After 1...Kc8 2.Kc6! White's king invades. After 1...Ke8 2.Ke6! White reaches the key squares of the d4 pawn. With correct play, White wins." orientation="white" arrows="d8c8:red"></chess-position>
+<chess-position fen="3k4/8/8/3K4/3P4/8/8/8 b - - 0 1" caption="Direct Opposition: Black to move is in trouble. After 1...Kc8 2.Kc6! White's king invades. After 1...Ke8 2.Ke6! White reaches the key squares of the d4 pawn. With correct play, White wins." orientation="white" arrows="d8c8:red" badge="blunder"></chess-position>
 
 In this position, White's king on d5 and Black's king on d8 face each other with d6 and d7 between them. It's Black to move — and that's the problem. Black must give way:
 
@@ -149,7 +149,7 @@ This is one of the most practical endgame calculations you can make. In a game w
 
 An outside passed pawn is a passed pawn on the opposite side of the board from the remaining pawns. Its power isn't that it promotes — it's that it **forces the opponent's king to chase it**, leaving the rest of the board undefended.
 
-<chess-position fen="8/8/8/k1K5/P1P5/8/8/8 w - - 0 1" caption="Outside Passed Pawn: White's a4 pawn is far from Black's c5 pawn. White plays 1.a5!, and Black faces a dilemma — chase the a-pawn and let White's king capture on c5, or stay and watch the a-pawn promote." orientation="white" arrows="c5d6:green"></chess-position>
+<chess-position fen="8/8/8/k1K5/P1P5/8/8/8 w - - 0 1" caption="Outside Passed Pawn: White's a4 pawn is far from Black's c5 pawn. White plays 1.a5!, and Black faces a dilemma — chase the a-pawn and let White's king capture on c5, or stay and watch the a-pawn promote." orientation="white" arrows="c5d6:green" badge="best"></chess-position>
 
 White plays **1.a5!** and the a-pawn becomes a diversion:
 

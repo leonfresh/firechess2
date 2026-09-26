@@ -196,7 +196,7 @@ This has a direct implication for training. If you're under 1400, **you don't ne
 
 Here's a position from the Italian Game that shows how tactical blunders work for intermediate players. White has just played 7.Bh4 (retreating the bishop after ...h6), and now Black plays 7...g5?? — a move that looks aggressive (attacking the bishop) but completely misses that 8.Nxg5! wins a pawn for nothing. If Black captures back with 8...hxg5??, then 9.Bxg5 pins the queen to the king.
 
-<chess-position fen="r1bqk2r/ppp2p2/2np1n1p/2b1p1p1/2B1P2B/2PP1N2/PP3PPP/RN1QK2R w KQkq - 0 8" caption="White to move. Black just played 7...g5?? attacking the bishop. But 8.Nxg5! wins a pawn — if 8...hxg5 9.Bxg5 pins the queen. This is a tactical oversight: Black saw the attack but missed the counter-tactic." orientation="white" arrows="h4g3:green,h4g5:orange"></chess-position>
+<chess-position fen="r1bqk2r/ppp2p2/2np1n1p/2b1p1p1/2B1P2B/2PP1N2/PP3PPP/RN1QK2R w KQkq - 0 8" caption="White to move. Black just played 7...g5?? attacking the bishop. But 8.Nxg5! wins a pawn — if 8...hxg5 9.Bxg5 pins the queen. This is a tactical oversight: Black saw the attack but missed the counter-tactic." orientation="white" arrows="h4g3:green,h4g5:orange" badge="best"></chess-position>
 
 This is the blunder type that shifts as you improve. Black didn't leave a piece undefended — they missed a two-move combination (Nxg5 followed by Bxg5 pin). That's the difference between beginner and intermediate blunders: one is a one-move failure, the other requires calculating a sequence. The Italian Game is full of these traps, which is why [knowing the common Italian Game mistakes](/blog/italian-game-mistakes-club-players-make) directly cuts your blunder rate in the opening.
 

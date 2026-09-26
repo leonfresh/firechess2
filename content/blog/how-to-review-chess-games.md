@@ -59,7 +59,7 @@ What you're looking for:
 
 Here's a real example. In an Italian Game, White plays the natural-looking 8.Bg5:
 
-<chess-position fen="r1bqk2r/ppppbppp/2n2n2/4p1B1/2B1P3/3P1N2/PPP2PPP/RN1QK2R b KQkq - 2 5" caption="After 8.Bg5 — looks natural, but Black can equalise easily with ...h6 followed by ...d6. The pin on the knight is temporary, and White has committed the bishop prematurely." orientation="black" arrows="h7h6:green"></chess-position>
+<chess-position fen="r1bqk2r/ppppbppp/2n2n2/4p1B1/2B1P3/3P1N2/PPP2PPP/RN1QK2R b KQkq - 2 5" caption="After 8.Bg5 — looks natural, but Black can equalise easily with ...h6 followed by ...d6. The pin on the knight is temporary, and White has committed the bishop prematurely." orientation="black" arrows="h7h6:green" badge="best"></chess-position>
 
 The move Bg5 isn't a blunder — it's an inaccuracy. On the surface it looks fine: you pin the knight, develop a piece, put pressure on f6. But the engine shows that after 8...h6 9.Bh4 d6, Black has a comfortable position because the bishop on h4 is passive and White hasn't achieved anything concrete.
 
@@ -81,7 +81,7 @@ Ask yourself three questions:
 
 Here's an example from a Sicilian Najdorf. White launches a kingside attack with g4, and Black must decide how to respond:
 
-<chess-position fen="r2q1rk1/1p1nbppp/p2pbn2/4p3/4P1P1/1NN1BP2/PPPQ3P/2KR1B1R b - - 0 11" caption="Black to move in a sharp Sicilian Najdorf. White has just played g4, threatening g5 to kick the knight. Black's response here determines whether the kingside attack succeeds or fizzles." orientation="black" arrows="b7b5:green"></chess-position>
+<chess-position fen="r2q1rk1/1p1nbppp/p2pbn2/4p3/4P1P1/1NN1BP2/PPPQ3P/2KR1B1R b - - 0 11" caption="Black to move in a sharp Sicilian Najdorf. White has just played g4, threatening g5 to kick the knight. Black's response here determines whether the kingside attack succeeds or fizzles." orientation="black" arrows="b7b5:green" badge="best"></chess-position>
 
 The critical decision: should Black play 11...h6 (preventing g5 and keeping the knight on f6), 11...d5 (striking at the centre before White's attack develops), or 11...a5 (preparing queenside counterplay)?
 
@@ -290,7 +290,7 @@ If you play the Italian Game as White in 30% of your games, scan all of them and
 
 For example, in a typical Italian middlegame where Black has traded on e6:
 
-<chess-position fen="r2q1rk1/ppp1b1pp/2nppn2/4p3/4P3/3P1N1P/PPP2PP1/RNBQR1K1 w - - 0 9" caption="White to move after Black played ...Be6 and ...fxe6. The open f-file gives Black counterplay. White must decide between Nbd2-f1-g3 (slow but solid) and Ng5 (aggressive but committal)." orientation="white" arrows="c2c3:green"></chess-position>
+<chess-position fen="r2q1rk1/ppp1b1pp/2nppn2/4p3/4P3/3P1N1P/PPP2PP1/RNBQR1K1 w - - 0 9" caption="White to move after Black played ...Be6 and ...fxe6. The open f-file gives Black counterplay. White must decide between Nbd2-f1-g3 (slow but solid) and Ng5 (aggressive but committal)." orientation="white" arrows="c2c3:green" badge="best"></chess-position>
 
 If you find that you consistently choose the wrong plan in this type of position, that's a targeted study topic. You don't need to study the entire Italian Game — just this specific structure with the open f-file.
 

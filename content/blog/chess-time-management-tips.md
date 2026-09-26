@@ -389,7 +389,7 @@ Sometimes "time trouble" isn't really about time management — it's about slow 
 
 Take this QGD position where Black just played 10...Nd5, challenging White's bishop:
 
-<chess-position fen="r1bqr1k1/pp1nbppp/2p1p3/3n2B1/2BP4/2N1PN2/PPQ2PPP/2R1K2R w K - 1 11" caption="QGD, move 11 — White must calculate the consequences of Bxe7, Bxd5, or retreat. Fast pattern recognition spots that Bxe7 Qxe7 and Bxd5 exd5 are both playable, but slow calculators will burn 3+ minutes here." orientation="white" arrows="g5e7:green,d4d5:rgba(245,158,11,0.5)"></chess-position>
+<chess-position fen="r1bqr1k1/pp1nbppp/2p1p3/3n2B1/2BP4/2N1PN2/PPQ2PPP/2R1K2R w K - 1 11" caption="QGD, move 11 — White must calculate the consequences of Bxe7, Bxd5, or retreat. Fast pattern recognition spots that Bxe7 Qxe7 and Bxd5 exd5 are both playable, but slow calculators will burn 3+ minutes here." orientation="white" arrows="g5e7:green,d4d5:rgba(245,158,11,0.5)" badge="best"></chess-position>
 
 The solution here is different: **tactical training**. Solve puzzles daily on Lichess or FireChess's Puzzle Dungeon mode. Over time, your pattern recognition improves and you'll spot tactics in seconds instead of minutes. This naturally frees up clock time for genuinely complex positions.
 

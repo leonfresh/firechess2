@@ -55,7 +55,7 @@ This is called **identifying the critical moment** — the point where the game 
 
 Now turn on the engine. Compare your assessment with Stockfish's evaluation. The gap between what you thought and what the engine says is where the learning happens.
 
-<chess-position fen="r1bqk2r/pppp1ppp/2n5/8/1bBPn3/2N2N2/PP3PPP/R1BQ1RK1 b kq - 1 8" caption="Italian Game after 8.O-O. Black just played Nxe4, grabbing a pawn. This is a critical moment — the engine shows Black is already worse despite being up material. Can you figure out why before looking at the engine?" orientation="black" arrows="c4f7:green"></chess-position>
+<chess-position fen="r1bqk2r/pppp1ppp/2n5/8/1bBPn3/2N2N2/PP3PPP/R1BQ1RK1 b kq - 1 8" caption="Italian Game after 8.O-O. Black just played Nxe4, grabbing a pawn. This is a critical moment — the engine shows Black is already worse despite being up material. Can you figure out why before looking at the engine?" orientation="black" arrows="c4f7:green" badge="best"></chess-position>
 
 In this position, many club players would think "I'm up a pawn, I'm fine." But Black's position is actually critical. White has development, central control, and will generate a powerful attack against Black's exposed king. The pawn grab on e4 was the mistake — not immediately, but because of what it allows White to do next.
 
@@ -102,7 +102,7 @@ If your middlegame analysis consists of "I should have played Nf3 instead of Nd2
 | Ignoring opponent's plan | Building an attack on the queenside while opponent mates on the kingside | Defensive awareness, prophylaxis |
 | No plan at all | Shuffling pieces back and forth | Study classic middlegame themes |
 
-<chess-position fen="r2q1rk1/pb1n1ppp/1p2pn2/2p5/1bBP4/2N1BN2/PPP1BPPP/R2Q1RK1 w - - 2 11" caption="Queen's Gambit Declined, White to move. This is a classic 'what's my plan?' position. White needs to decide between several reasonable-looking moves. The right choice depends on understanding the pawn structure, not calculating variations." orientation="white" arrows="a2a3:green"></chess-position>
+<chess-position fen="r2q1rk1/pb1n1ppp/1p2pn2/2p5/1bBP4/2N1BN2/PPP1BPPP/R2Q1RK1 w - - 2 11" caption="Queen's Gambit Declined, White to move. This is a classic 'what's my plan?' position. White needs to decide between several reasonable-looking moves. The right choice depends on understanding the pawn structure, not calculating variations." orientation="white" arrows="a2a3:green" badge="best"></chess-position>
 
 When you study [middlegame strategy and planning](/blog/chess-middlegame-strategy-finding-a-plan), you learn to evaluate positions by pawn structure and piece activity — not just by calculating variations. In the QGD position above, White has multiple reasonable moves: Bb5 (pinning the knight), Qc2 (preparing e4 or connecting rooks), or a4 (attacking the queenside). The correct choice depends on understanding the pawn structure — White should aim for e4 when possible, and every move should serve that goal.
 

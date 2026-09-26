@@ -103,7 +103,7 @@ There are two types:
 - **Absolute pin:** The piece cannot move because it would expose the king (e.g., a knight pinned to the king)
 - **Relative pin:** The piece can legally move but doing so would lose a more valuable piece (e.g., a knight pinned to the queen)
 
-<chess-position fen="r1bqkb1r/pppp1pp1/2n2n1p/4p1B1/2B1P3/3P1N2/PPP2PPP/RN1QK2R b KQkq - 1 5" caption="Bg5 pins the knight on f6 to the queen on d8. The knight cannot move without losing the queen. This pin pattern from the Italian Game appears in thousands of opening systems." orientation="white" arrows="g5f6:green" analysis="true"></chess-position>
+<chess-position fen="r1bqkb1r/pppp1pp1/2n2n1p/4p1B1/2B1P3/3P1N2/PPP2PPP/RN1QK2R b KQkq - 1 5" caption="Bg5 pins the knight on f6 to the queen on d8. The knight cannot move without losing the queen. This pin pattern from the Italian Game appears in thousands of opening systems." orientation="white" arrows="g5f6:green" analysis="true" badge="best"></chess-position>
 
 White's bishop on g5 creates a relative pin on the f6 knight. The knight *can* legally move (it's not pinned to the king), but doing so would allow Bxd8, losing the queen. This pin immobilizes a key defender and gives White a lasting positional advantage.
 

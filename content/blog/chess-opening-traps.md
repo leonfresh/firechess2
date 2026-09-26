@@ -39,7 +39,7 @@ Légal's Mate is the oldest named trap in chess, dating back to the 1750s — an
 
 But White has a devastating tactical shot available.
 
-<chess-position fen="rn1qkbnr/ppp2p1p/3p2p1/4p3/2B1P1b1/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 5" caption="White to move. The knight on f3 is pinned by the bishop on g4 — or is it? This is the key moment in Légal's Mate." orientation="white" arrows="f3e5:green"></chess-position>
+<chess-position fen="rn1qkbnr/ppp2p1p/3p2p1/4p3/2B1P1b1/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 5" caption="White to move. The knight on f3 is pinned by the bishop on g4 — or is it? This is the key moment in Légal's Mate." orientation="white" arrows="f3e5:green" badge="best"></chess-position>
 
 **5.Nxe5!** The sacrifice. White gives up the queen for a mating attack. It looks absurd — the knight on f3 is pinned to the queen by the bishop on g4. But the pin is an illusion.
 
@@ -67,7 +67,7 @@ You can practice spotting these queen-sacrifice patterns by scanning your games 
 
 This is one of the most common traps at the club level because it looks so natural. Black plays the Italian Game, then plays the "wrong" knight to d4 instead of the standard Nf6. The move looks like a mistake — it blocks the d-pawn, doesn't develop a piece, and seems to give White a free attack on the e5 pawn.
 
-<chess-position fen="r1bqkbnr/pppp1ppp/8/4p3/2BnP3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4" caption="Black has just played 3...Nd4?! It looks like a blunder — the e5 pawn seems free. But this is the Blackburne Shilling Gambit, and capturing on e5 is exactly what Black wants." orientation="white" arrows="f3e5:red"></chess-position>
+<chess-position fen="r1bqkbnr/pppp1ppp/8/4p3/2BnP3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4" caption="Black has just played 3...Nd4?! It looks like a blunder — the e5 pawn seems free. But this is the Blackburne Shilling Gambit, and capturing on e5 is exactly what Black wants." orientation="white" arrows="f3e5:red" badge="blunder"></chess-position>
 
 The temptation is irresistible: **4.Nxe5??** wins a pawn, attacks the queen on d8, and looks completely free. But Black has prepared a devastating reply.
 
@@ -95,7 +95,7 @@ The Englund Gambit is Black's way of steering the game into sharp, tactical terr
 
 Then comes the trap.
 
-<chess-position fen="r1b1kbnr/pppp1ppp/2n5/4P3/1q3B2/5N2/PPP1PPPP/RN1QKB1R w KQkq - 5 5" caption="Black has just played 4...Qb4+! White played the natural 4.Bf4?? and now faces a devastating check. The queen attacks both the bishop on f4 and the pawn on e5." orientation="white" arrows="e7b4:orange,f4f4:red"></chess-position>
+<chess-position fen="r1b1kbnr/pppp1ppp/2n5/4P3/1q3B2/5N2/PPP1PPPP/RN1QKB1R w KQkq - 5 5" caption="Black has just played 4...Qb4+! White played the natural 4.Bf4?? and now faces a devastating check. The queen attacks both the bishop on f4 and the pawn on e5." orientation="white" arrows="e7b4:orange,f4f4:red" badge="inaccuracy"></chess-position>
 
 The critical moment: after 3...Qe7, the natural move **4.Bf4??** looks solid — develop a piece, protect the e5 pawn, control the center. But Black has **4...Qb4+!** — a check that forks the king and the e5 pawn.
 
@@ -123,7 +123,7 @@ The Fishing Pole is one of the most visually dramatic traps in chess. In the Ruy
 
 The natural response is to "punish" the provocative knight move: **5.h3?** kicks the knight, and after **5...h5!**, White faces a critical decision.
 
-<chess-position fen="r1bqkb1r/pppp1pp1/2n5/1B2p2p/4P1n1/5N1P/PPPP1PP1/RNBQ1RK1 w kq - 0 6" caption="Black has just played 5...h5! — the Fishing Pole is baited. If White captures 6.hxg4?? hxg4+ wins the knight and opens a devastating attack on the king." orientation="white" arrows="h3g4:red,h5h4:orange"></chess-position>
+<chess-position fen="r1bqkb1r/pppp1pp1/2n5/1B2p2p/4P1n1/5N1P/PPPP1PP1/RNBQ1RK1 w kq - 0 6" caption="Black has just played 5...h5! — the Fishing Pole is baited. If White captures 6.hxg4?? hxg4+ wins the knight and opens a devastating attack on the king." orientation="white" arrows="h3g4:red,h5h4:orange" badge="blunder"></chess-position>
 
 If White takes the bait with **6.hxg4?? hxg4**, the knight on f3 is attacked by the pawn. After **7.Nh2** (the only retreat), **7...Qh4** threatens mate on h2. White's king is exposed, the h-file is open for Black's rook, and there's no good defense.
 
@@ -147,7 +147,7 @@ This is exactly the kind of position where [calculating 3 moves ahead](/blog/che
 
 The Two Knights Defense is one of the most combative responses to 3.Bc4. After 4.Ng5, Black enters razor-sharp territory. The main line continues 5...Nxd5, and now White has a legendary sacrifice available.
 
-<chess-position fen="r1bqkb1r/ppp2ppp/2n5/3np1N1/2B5/8/PPPP1PPP/RNBQK2R w KQkq - 0 6" caption="After 5...Nxd5, White has the famous Fried Liver sacrifice available: 6.Nxf7!? Kxf7 7.Qf3+ Ke6 — the king walks into the center, but is it safe?" orientation="white" arrows="g5f7:green,d1f3:green"></chess-position>
+<chess-position fen="r1bqkb1r/ppp2ppp/2n5/3np1N1/2B5/8/PPPP1PPP/RNBQK2R w KQkq - 0 6" caption="After 5...Nxd5, White has the famous Fried Liver sacrifice available: 6.Nxf7!? Kxf7 7.Qf3+ Ke6 — the king walks into the center, but is it safe?" orientation="white" arrows="g5f7:green,d1f3:green" badge="best"></chess-position>
 
 **6.Nxf7!?** — The Fried Liver Attack. White sacrifices a knight to drag Black's king into the open. After **6...Kxf7 7.Qf3+ Ke6**, the Black king is on e6 — in the center of the board, surrounded by pieces.
 
