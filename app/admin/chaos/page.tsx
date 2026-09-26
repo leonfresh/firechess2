@@ -18,7 +18,7 @@ const MIN_SAMPLE = 20;
 const JOURNEY: [string, string][] = [
   ["lobby_view", "Saw the lobby"], ["tutorial_start", "Started the tutorial"], ["tutorial_done", "Finished the tutorial"], ["practice_start", "Started a practice game"], ["queue_start", "Joined the queue"],
   ["wait_ai", "Played AI while waiting"], ["invite", "Invited a friend"], ["queue_cancel", "Cancelled the queue"],
-  ["match_found", "Found a match"],
+  ["match_found", "Found a match"], ["shop_offer_seen", "Saw a gold offer"], ["shop_offer_bought", "Bought from an offer"],
 ];
 
 const pct = (a: number, b: number) => (b ? `${Math.round((100 * a) / b)}%` : "—");

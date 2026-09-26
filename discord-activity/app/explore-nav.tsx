@@ -6,6 +6,7 @@ import {ActivityCareer} from './career';
 import {ActivityCollection} from './collection';
 import {ChaosAchievements} from '@/components/chaos-achievements';
 import {useActivityDialog} from './use-activity-dialog';
+import {GoldDot} from '@/components/chaos-gold';
 
 export function ExploreNav(){
   const [open,setOpen]=useState(false);
@@ -23,10 +24,10 @@ export function ExploreNav(){
   },[open]);
   return <>
     <div className="explore-nav" ref={root} onBlur={e=>{if(!e.currentTarget.contains(e.relatedTarget as Node))setOpen(false);}}>
-      <button ref={trigger} className="sound-button explore-trigger" aria-expanded={open} aria-controls="explore-links" onClick={()=>setOpen(v=>!v)}>Explore <span aria-hidden="true">{open?'▴':'▾'}</span></button>
+      <button ref={trigger} className="sound-button explore-trigger" aria-expanded={open} aria-controls="explore-links" onClick={()=>setOpen(v=>!v)}>Explore<GoldDot /> <span aria-hidden="true">{open?'▴':'▾'}</span></button>
       {open && <nav id="explore-links" className="explore-menu" aria-label="Explore Chaos Chess">
         <span className="eyebrow">AROUND THE ARENA</span>
-        <ChaosNavLink href="/shop" onClick={()=>setOpen(false)}>Power shop <small>Find your next trick</small></ChaosNavLink>
+        <ChaosNavLink href="/shop" onClick={()=>setOpen(false)}>Power shop<GoldDot /> <small>Find your next trick</small></ChaosNavLink>
         <button onClick={()=>{setOpen(false);trigger.current?.focus();collection.current?.click();}}>Collection <small>Every power and piece</small></button>
         <button onClick={()=>{setOpen(false);trigger.current?.focus();career.current?.click();}}>Leaderboard <small>See who’s on top</small></button>
         <ChaosNavLink href="/watch" onClick={()=>setOpen(false)}>Watch live <small>Drop into a match</small></ChaosNavLink>

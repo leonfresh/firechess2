@@ -20,6 +20,7 @@ import { useChaosAccount } from '@/lib/use-chaos-account';
 import { ChaosRatedStatus } from '@/components/chaos-rated-status';
 import { TutorialInvite } from '@/components/chaos-coach';
 import { ChaosHourBanner } from '@/components/chaos-hour-banner';
+import { ChaosGoldNudge } from '@/components/chaos-gold';
 import { connectedParticipants, discordGuildId, discordInstanceId, inviteToInstance, participantLabel, type DiscordParticipant } from './discord-sdk';
 
 export function ActivityLobby(props: ChaosLobbyViewProps) {
@@ -101,6 +102,7 @@ export function ActivityLobby(props: ChaosLobbyViewProps) {
       <div className="panel-heading"><span className="eyebrow">THE NEXT MATCH</span><span className="pill">2 PLAYERS</span></div>
       <h2>Who’s playing?</h2>
       <div style={{margin:'12px 0'}}><ChaosHourBanner /></div>
+      <ChaosGoldNudge className="activity-gold-nudge" />
       {props.startTutorial && <div style={{margin:'12px 0'}}><TutorialInvite onStart={props.startTutorial} /></div>}
       {(inCall.length > 0 || discordInstanceId()) && <div className="call-strip" data-alone={othersInCall.length === 0 ? 'true' : 'false'}>
         <span className="call-copy">

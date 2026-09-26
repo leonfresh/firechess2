@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { chaosIdentityHeaders } from '@/lib/chaos-client-identity';
 import { getGuestId } from '@/lib/guest-id';
 import type { ChaosResultProps } from '@/components/chaos-presentation';
+import { ChaosGoldReward } from '@/components/chaos-gold';
 
 export function ActivityResult(props: ChaosResultProps) {
   const [shareId,setShareId]=useState<string|null>(null);
@@ -15,6 +16,8 @@ export function ActivityResult(props: ChaosResultProps) {
     return()=>{active=false;};
   },[props.practice,props.outcome]);
   const aborted = props.outcome === 'aborted';
+  const [goldRoom,setGoldRoom]=useState<string|null>(null);
+  useEffect(()=>{ if(!props.practice&&!aborted)setGoldRoom(sessionStorage.getItem('chaos-active-room')); },[props.practice,aborted]);
   const [revealed,setRevealed]=useState(false);
   useEffect(()=>{
     const timer=setTimeout(()=>setRevealed(true),2500);
@@ -74,6 +77,7 @@ export function ActivityResult(props: ChaosResultProps) {
       <p className="result-encouragement">{aborted ? 'No winner. No rating change. Find a new opponent.' : props.outcome === 'win' ? 'Keep the crown. Run it back.' : props.outcome === 'draw' ? 'One board. Two worthy rivals.' : 'New powers. A fresh chance at the crown.'}</p>
       <div className="result-stats"><div><strong>{props.turns}</strong><span>Moves played</span></div><div><strong>{props.powers.length}</strong><span>Powers drafted</span></div></div>
       {props.powers.length > 0 && <div className="result-loadout" aria-label="Your drafted powers">{props.powers.map(power => <span key={power.id} data-tier={power.tier}>{power.name}</span>)}</div>}
+      {goldRoom && <div style={{margin:'14px 0'}}><ChaosGoldReward room={goldRoom} /></div>}
       <div className="result-actions"><p role="status">{autoIn !== null ? <>Next game starts in {autoIn}s · <button type="button" className="link-action" onClick={() => setAutoIn(null)}>not now</button></> : waiting ? 'Rematch requested. Waiting for your opponent…' : props.rematchReceived ? 'Your opponent wants another round!' : 'Ready for another round?'}</p>
         {aborted && props.onRequeue
           ? <button type="button" className="primary-action" onClick={props.onRequeue}>Find a new opponent<span aria-hidden="true">↗</span></button>

@@ -75,3 +75,5 @@
  .chaos-activity .activity-nav .explore-nav{position:absolute;right:16px;top:12px}
 }
 @media(max-width:400px){.chaos-activity .activity-nav .discord-launch-link>span{display:none}}
+/* Gold links (components/chaos-gold.tsx) are exempt from the rule hiding website-only links. */
+.chaos-activity a.chaos-gold-link{display:inline}

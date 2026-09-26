@@ -17,6 +17,8 @@ export const CHAOS_EVENTS = [
   "match_found",
   "tutorial_start",
   "tutorial_done",
+  "shop_offer_seen",
+  "shop_offer_bought",
 ] as const;
 export type ChaosEvent = (typeof CHAOS_EVENTS)[number];
 

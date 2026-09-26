@@ -66,6 +66,7 @@ import { inviteJoinCode } from "@/lib/chaos-launch";
 import { recordChaosFirstTouch } from "@/lib/chaos-first-touch";
 import { trackChaos } from "@/lib/chaos-events";
 import { ChaosHourBanner } from "@/components/chaos-hour-banner";
+import { ChaosGoldNudge, ChaosGoldReward } from "@/components/chaos-gold";
 import { ChaosCoach, TutorialInvite, TUTORIAL_PHASE_TRIGGERS, countFinishedGame } from "@/components/chaos-coach";
 import { OpeningMoveNotice, AbortedMatch } from "@/components/chaos-opening-move";
 import { ChaosChat, type ChatLine } from "@/components/chaos-chat";
@@ -10196,6 +10197,7 @@ export default function ChaosChessPage() {
           </div>
 
           <ChaosHourBanner className="mb-3 max-w-md" />
+          <ChaosGoldNudge className="mb-3 w-full max-w-md" />
           <TutorialInvite onStart={startTutorial} className="mb-6 max-w-md" />
           <ChaosAchievements replayBase={presentation.activity ? "/watch?match=" : "/chaos/replay/"} />
           {/* ── Game of the Week: the best archived Chaos game of the last 7 days.
@@ -11950,6 +11952,8 @@ export default function ChaosChessPage() {
                               : "Skill issue. Maybe draft better next time."}
                         </p>
                       </div>
+
+                      {gameMode !== "ai" && <div className="w-full"><ChaosGoldReward room={roomId} /></div>}
 
                       {/* ── ELO section (multiplayer only) ── */}
                       {gameMode !== "ai" && (
