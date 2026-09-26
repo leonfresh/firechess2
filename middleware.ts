@@ -17,8 +17,13 @@ import { NextResponse } from "next/server";
 export const middleware = auth((request) => {
   // Keep existing game/deep links intact; the clean URL is the public introduction.
   if (request.nextUrl.pathname === "/chaos" && !request.nextUrl.search) {
-    const destination = request.nextUrl.clone();
-    destination.pathname = "/chaos/about";
+    // Build the target from the host that was asked, not request.nextUrl: next-auth rewrites that to
+    // AUTH_URL (https://firechess.com, no www), which made this "rewrite" a proxy to the apex, whose
+    // 308 to www reached visitors. Since 2026-09-10 /chaos answered 308 -> /chaos/about while every
+    // page named /chaos canonical: a loop on the one non-brand query that ranks ("chaos chess").
+    const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+    const proto = request.headers.get("x-forwarded-proto") ?? request.nextUrl.protocol.replace(":", "");
+    const destination = new URL("/chaos/about", host ? `${proto}://${host}` : request.nextUrl);
     return NextResponse.rewrite(destination);
   }
   return NextResponse.next();
