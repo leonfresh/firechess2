@@ -448,4 +448,6 @@ export type AnalyzeResponse = {
     coachNote: string;
     sectionNotes: Record<string, string>;
   };
+  /** Coach's note for the report's first focus, cached after first generation (see lib/coach-letter.ts) */
+  coachLetter?: { theme: string; note: string; rule: string; generatedAt: string } | { failedAt: string };
 };

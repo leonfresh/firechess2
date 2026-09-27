@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { coachingPriority, coachingTheme, themeHabit } from "@/lib/report-coaching";
 import { compareMission, readMission, type MissionSnapshot } from "@/lib/coaching-progress";
+import type { CoachLetter } from "@/lib/coach-letter";
 import type { PreviewPattern } from "./sample-data";
 import { CATEGORIES, findingsByCategory, type PreviewScan } from "./report-data";
 import s from "./modern.module.css";
@@ -30,6 +31,17 @@ export function CoachingPriority({ scan, patterns, onTrain, onReview }: { scan: 
   const [mission, setMission] = useState<MissionSnapshot | null>(null);
   const [saveStatus, setSaveStatus] = useState("");
   useEffect(() => { setSaveStatus(""); try { setMission(readMission(JSON.parse(localStorage.getItem(storageKey) ?? "null"))); } catch {setMission(null);} }, [storageKey]);
+  const cachedLetter = scan.result?.coachLetter;
+  const [letter, setLetter] = useState<CoachLetter | null>(cachedLetter && "note" in cachedLetter ? cachedLetter : null);
+  useEffect(() => {
+    if (letter || cachedLetter || !priority || scan.result!.gamesAnalyzed < 5) return;
+    let cancelled = false;
+    fetch("/api/report/coach-letter", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scanId: scan.id }) })
+      .then(r => r.ok ? r.json() : null).then(data => { if (!cancelled && data?.letter) setLetter(data.letter); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [scan.id, scan.result, letter, cachedLetter, priority]);
+  // The note is written from the Free-plan positions; Pro can see a different first focus.
+  const note = letter && letter.theme === priority?.theme ? letter : null;
   const comparison = useMemo(() => mission ? compareMission(mission, snapshot(scan, mission.theme)) : null, [mission, scan]);
   if (!priority) return null;
   function saveMission() {
@@ -39,8 +51,9 @@ export function CoachingPriority({ scan, patterns, onTrain, onReview }: { scan: 
     catch { setSaveStatus("Mission is available for this visit, but browser storage is unavailable."); }
   }
   return <section className={s.habitRoadmap} aria-label="Your first focus">
-    <span className={s.eyebrow}>YOUR FIRST FOCUS</span><h2>{priority.theme}</h2><p>{priority.mission}</p>
-    <p>This theme appears in {priority.positions.length} distinct available position{priority.positions.length === 1 ? "" : "s"}. It is the most frequent theme in your accessible examples, not a diagnosis of all your games.</p>
+    <span className={s.eyebrow}>YOUR FIRST FOCUS</span><h2>{priority.theme}</h2>
+    {note ? <div className={s.coachText}><span>A note from your coach</span><p>{note.note}</p><p><strong>Before every move:</strong> {note.rule}</p></div> : <p>{priority.mission}</p>}
+    <p>This came up in {priority.positions.length} of the positions in this report, more than any other theme.</p>
     <div className={s.priorityExamples}>{priority.positions.slice(0, 3).map(p => <button className={s.secondaryButton} key={p.id} onClick={() => onReview(p)}><span>{p.played} → review this moment</span><small>{p.context}</small></button>)}</div>
     <button className={s.primaryButton} onClick={() => onTrain(priority.positions)}>Practice my first focus →</button>
     <div className={s.habitMission}><strong>Your next three games</strong><p>{priority.mission}</p><button className={s.secondaryButton} onClick={saveMission}>{mission ? "Use this report as my mission baseline" : "Save my next-game mission"}</button></div>

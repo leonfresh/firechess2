@@ -1,5 +1,6 @@
 import { Chess, type Color, type Square } from "chess.js";
 import { getPatternQuote, POSITIONAL_PATTERNS } from "./positional-quotes";
+import { analyzeMoveWhy } from "./move-why";
 import type { PreviewPattern } from "../components/modern-preview/sample-data";
 
 const PIECES = { p: "pawn", n: "knight", b: "bishop", r: "rook", q: "queen", k: "king" };
@@ -115,18 +116,27 @@ export function themeHabit(theme: string) {
   return "Ask what your opponent can do next: checks, captures and threats. Count attackers and defenders before choosing your move.";
 }
 
+/** The verified "why" for a stored finding (see move-why.ts: every claim is checked on the board). */
+export function patternWhy(pattern: Pick<PreviewPattern, "fen" | "played" | "best" | "cpLoss">) {
+  try {
+    const board = new Chess(pattern.fen);
+    const played = board.move(pattern.played);
+    const best = new Chess(pattern.fen).move(pattern.best);
+    const cpLoss = Math.min(pattern.cpLoss ?? 0, 1000);
+    const why = analyzeMoveWhy({ fenBefore: pattern.fen, playedUci: played.lan, playedSan: played.san, fenAfterPlayed: board.fen(), bestUci: best.lan, bestSan: best.san, cpLoss, classification: cpLoss >= 300 ? "blunder" : cpLoss >= 100 ? "mistake" : "inaccuracy" });
+    // Reasons about the played move open with "It …"; name the move, since the report shows no move list.
+    return why && { ...why, reason: why.reason.replace(/^It /, `${played.san} `) };
+  } catch { return null; }
+}
+
 export function humanExplanation(pattern: PreviewPattern) {
-  const theme = coachingTheme(pattern);
   if (pattern.category === "Brilliants") return pattern.explanation;
-  const board = new Chess(pattern.fen);
-  const player = board.turn();
-  board.move(pattern.played);
-  const danger = getPieceDanger(board.fen(), player).filter(p => p.level === "red");
-  if (danger.length) {
-    const piece = danger.find(p => p.piece === "king") ?? danger[0];
-    return `After ${pattern.played}, your ${piece.piece} on ${piece.square} has ${piece.attackers.length} enemy attacker${piece.attackers.length === 1 ? "" : "s"} and ${piece.defenders.length} defender${piece.defenders.length === 1 ? "" : "s"}. Check that threat before following your own plan. Compare with ${pattern.best} and calculate the reply; the counts alone do not prove a piece is lost.`;
-  }
-  return `${themeHabit(theme)} In this position, compare ${pattern.played} with ${pattern.best}. The engine prefers ${pattern.best}; replay the continuation to see why. An evaluation drop alone does not tell us that you missed a threat.`;
+  const why = patternWhy(pattern);
+  if (why && why.label !== "Precision") return why.detail ? `${why.reason} ${why.detail}` : why.reason;
+  // The generic fallback is only worth saying when it names something concrete (material, check, castling, development).
+  const effect = why?.reason.match(/^The engine prefers \S+ — (.*?)\./)?.[1];
+  const concrete = effect && /wins|captures|check|safety|develops/.test(effect) ? `: ${effect}` : "";
+  return `${pattern.best} was the better move here, not ${pattern.played}${concrete}. ${themeHabit(coachingTheme(pattern))}`;
 }
 
 /** Balanced, deterministic session: one position per theme before repeats. */

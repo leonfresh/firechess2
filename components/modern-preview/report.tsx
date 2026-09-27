@@ -84,7 +84,7 @@ function StudyPosition({ onOutcome, initialPractice = false, onFinish, pattern, 
       if (attempt.from === pattern.from && attempt.to === pattern.to && attempt.promotion === pattern.promotion) {
         setSolved(true); setMoveShown("best"); setFeedback(`That’s it — ${pattern.best}. ${themeHabit(theme)}`); setSelectedSquare(null); onComplete(pattern.id); onOutcome?.(pattern, "solved"); return true;
       }
-      onOutcome?.(pattern, "missed"); setAttemptedMove(attempt.san); setFeedback(`${attempt.san} is legal, but differs from the report’s recommended move. Check their reply and compare your options.`);
+      onOutcome?.(pattern, "missed"); setAttemptedMove(attempt.san); setFeedback(`Not quite. ${attempt.san} isn’t the move here. Check what they can do in reply, then try again.`);
     } catch { setFeedback("That move isn’t legal in this position. Try again."); }
     setSelectedSquare(null); return false;
   }

@@ -5,10 +5,8 @@
  * Falls back: OpenRouter → Groq → DeepSeek V4 (paid).
  */
 import { NextRequest, NextResponse } from "next/server";
+import { chatWithFallback } from "@/lib/llm-chat";
 
-const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY ?? "";
-const GROQ_KEY = process.env.GROQ_API_KEY ?? "";
-const DEEPSEEK_KEY = process.env.DEEPSEEK_API_KEY ?? "";
 
 type ScanSummary = {
   gamesAnalyzed: number;
@@ -53,63 +51,6 @@ Respond with valid JSON (no markdown, no backticks):
 
 type SectionKey = "openings" | "tactics" | "endgames" | "positional";
 
-async function callOpenRouter(prompt: string): Promise<string | null> {
-  if (!OPENROUTER_KEY || OPENROUTER_KEY.startsWith("sk-or-...")) return null;
-  try {
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${OPENROUTER_KEY}` },
-      body: JSON.stringify({
-        model: "openai/gpt-4o-mini",
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: prompt }],
-        temperature: 0.7,
-        max_tokens: 2000,
-      }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data?.choices?.[0]?.message?.content ?? null;
-  } catch { return null; }
-}
-
-async function callGroq(prompt: string): Promise<string | null> {
-  if (!GROQ_KEY || GROQ_KEY.startsWith("gsk_Wy...")) return null;
-  try {
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${GROQ_KEY}` },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: prompt }],
-        temperature: 0.7,
-        max_tokens: 2000,
-      }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data?.choices?.[0]?.message?.content ?? null;
-  } catch { return null; }
-}
-
-async function callDeepSeek(prompt: string): Promise<string | null> {
-  if (!DEEPSEEK_KEY || DEEPSEEK_KEY.startsWith("sk-f0c...")) return null;
-  try {
-    const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${DEEPSEEK_KEY}` },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: prompt }],
-        temperature: 0.7,
-        max_tokens: 2000,
-      }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data?.choices?.[0]?.message?.content ?? null;
-  } catch { return null; }
-}
-
 export async function POST(req: NextRequest) {
   try {
     const summary: ScanSummary = await req.json();
@@ -131,9 +72,7 @@ export async function POST(req: NextRequest) {
       `ENDGAME WEAKEST TYPE: ${summary.endgameWeakestType ?? "N/A"}`,
     ].join("\n");
 
-    let raw = await callOpenRouter(userPrompt);
-    if (!raw) raw = await callGroq(userPrompt);
-    if (!raw) raw = await callDeepSeek(userPrompt);
+    const raw = await chatWithFallback(SYSTEM_PROMPT, userPrompt);
 
     if (!raw) {
       return NextResponse.json({ error: "No LLM provider available" }, { status: 503 });

@@ -178,12 +178,10 @@ function isRealFork(
   forked: { type: PieceSymbol; color: Color; square: Square }[],
 ): boolean {
   const opp = landed.color === "w" ? "b" : "w";
-  const defender = cheapestDefender(chess, landedSq, opp);
-  if (defender) {
-    const defenderIsForked = forked.some((p) => p.square === defender.square);
-    if (defender.type !== "k" && !defenderIsForked) {
-      return false; // they just capture the forking piece
-    }
+  // They just capture the forking piece — a forked piece can do it too. Legal moves
+  // account for pins, check, and a king that cannot take on a defended square.
+  if (chess.moves({ verbose: true }).some((m) => m.to === landedSq && m.captured)) {
+    return false;
   }
   return forked.some((p) => {
     if (p.type === "k") return true;
@@ -598,7 +596,7 @@ function gaveUpInitiative(c: Ctx): MaybeWhy {
   const sharp = speed.speedBefore.score >= 55;
   if (!sharp) return null;
   const moverName = sideName(c.mover);
-  const checkClause = c.afterBest.isCheck() ? "+" : "";
+  const checkClause = c.afterBest.isCheck() && !/[+#]$/.test(c.bestSan) ? "+" : "";
   return {
     label: "Too slow here",
     reason: `This is a sharp position — it demands concrete action, not a quiet move. ${c.bestSan}${checkClause} keeps ${moverName}'s initiative rolling.`,
