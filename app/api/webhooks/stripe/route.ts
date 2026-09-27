@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { subscriptions, affiliates, affiliateReferrals } from "@/lib/schema";
+import { subscriptions, affiliates, affiliateReferrals, reportUnlocks, scanSessions } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 import Stripe from "stripe";
 import { Resend } from "resend";
@@ -99,28 +99,29 @@ export async function POST(req: NextRequest) {
       if (!userId) break;
 
       const isLifetime = session.metadata?.plan === "lifetime";
+      const planType = session.metadata?.plan === "report" ? "report" : isLifetime ? "lifetime" : "pro";
 
-      const subscriptionId = isLifetime
-        ? null
-        : typeof session.subscription === "string"
-          ? session.subscription
-          : session.subscription?.id;
+      if (planType === "report") {
+        // One-off unlock of one report — never touches the subscription row.
+        const scanId = session.metadata?.scanId;
+        if (!scanId || session.payment_status !== "paid") break;
+        await db
+          .insert(reportUnlocks)
+          .values({ userId, scanId, stripeSessionId: session.id, amountCents: session.amount_total ?? 0 })
+          .onConflictDoNothing({ target: reportUnlocks.stripeSessionId });
+        // A paid report is kept: unsaved scans otherwise expire.
+        await db.update(scanSessions).set({ expiresAt: null }).where(eq(scanSessions.id, scanId));
+      } else {
+        const subscriptionId = isLifetime
+          ? null
+          : typeof session.subscription === "string"
+            ? session.subscription
+            : session.subscription?.id;
 
-      await db
-        .insert(subscriptions)
-        .values({
-          userId,
-          stripeCustomerId:
-            typeof session.customer === "string"
-              ? session.customer
-              : (session.customer?.id ?? null),
-          stripeSubscriptionId: subscriptionId ?? null,
-          plan: isLifetime ? "lifetime" : "pro",
-          status: "active",
-        })
-        .onConflictDoUpdate({
-          target: subscriptions.userId,
-          set: {
+        await db
+          .insert(subscriptions)
+          .values({
+            userId,
             stripeCustomerId:
               typeof session.customer === "string"
                 ? session.customer
@@ -128,9 +129,21 @@ export async function POST(req: NextRequest) {
             stripeSubscriptionId: subscriptionId ?? null,
             plan: isLifetime ? "lifetime" : "pro",
             status: "active",
-            updatedAt: new Date(),
-          },
-        });
+          })
+          .onConflictDoUpdate({
+            target: subscriptions.userId,
+            set: {
+              stripeCustomerId:
+                typeof session.customer === "string"
+                  ? session.customer
+                  : (session.customer?.id ?? null),
+              stripeSubscriptionId: subscriptionId ?? null,
+              plan: isLifetime ? "lifetime" : "pro",
+              status: "active",
+              updatedAt: new Date(),
+            },
+          });
+      }
 
       // ── Affiliate referral tracking ──
       // session.discounts is already present in the webhook event (no expand needed).
@@ -173,14 +186,14 @@ export async function POST(req: NextRequest) {
               affiliateId: affiliate.id,
               userId,
               stripeSessionId: session.id,
-              planType: isLifetime ? "lifetime" : "pro",
+              planType,
               amountCents,
               commissionCents,
             });
             await notifyAffiliateSale({
               affiliateName: affiliate.name,
               affiliateEmail: affiliate.email ?? null,
-              planType: isLifetime ? "lifetime" : "pro",
+              planType,
               amountCents,
               commissionCents,
               isRenewal: false,
@@ -206,14 +219,14 @@ export async function POST(req: NextRequest) {
                 affiliateId: refAffiliate.id,
                 userId,
                 stripeSessionId: session.id,
-                planType: isLifetime ? "lifetime" : "pro",
+                planType,
                 amountCents,
                 commissionCents,
               });
               await notifyAffiliateSale({
                 affiliateName: refAffiliate.name,
                 affiliateEmail: refAffiliate.email ?? null,
-                planType: isLifetime ? "lifetime" : "pro",
+                planType,
                 amountCents,
                 commissionCents,
                 isRenewal: false,

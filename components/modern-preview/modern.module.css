@@ -257,3 +257,10 @@
 .sectionPagerActions { display: flex; align-items: center; gap: 10px; }
 .sectionPager .primaryButton, .sectionPager .secondaryButton { margin-top: 0; }
 @media (max-width: 600px) { .sectionPager { flex-direction: column; align-items: stretch; } .sectionPager .primaryButton, .sectionPager .secondaryButton { width: 100%; } }
+
+/* Report unlock: $9 button beside the Pro link in the Free-plan access note. */
+.accessNote { flex-wrap: wrap; }
+.accessNote > p { flex: 1; min-width: 240px; }
+.accessNote > button { margin-left: auto; white-space: nowrap; }
+.accessNote > button + a { margin-left: 0; }
+.accessNote > .formError { flex-basis: 100%; margin: 0; }

@@ -522,6 +522,25 @@ export const affiliates = pgTable("affiliate", {
 });
 
 /**
+ * One-off report unlocks: the buyer sees every finding in one scan (migrations/report-unlocks.sql).
+ */
+export const reportUnlocks = pgTable("report_unlock", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  scanId: text("scanId")
+    .notNull()
+    .references(() => scanSessions.id, { onDelete: "cascade" }),
+  /** Unique: a redelivered webhook records the unlock once */
+  stripeSessionId: text("stripeSessionId").notNull().unique(),
+  amountCents: integer("amountCents").notNull(),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+});
+
+/**
  * One row per successful sale that used an affiliate code.
  */
 export const affiliateReferrals = pgTable("affiliate_referral", {
@@ -535,9 +554,9 @@ export const affiliateReferrals = pgTable("affiliate_referral", {
   userId: text("userId").references(() => users.id, { onDelete: "set null" }),
   /** Stripe Checkout Session ID for audit trail */
   stripeSessionId: text("stripeSessionId"),
-  /** "pro" (monthly) or "lifetime" */
+  /** "pro" (monthly), "lifetime" or "report" (one-off report unlock) */
   planType: text("planType")
-    .$type<"pro" | "lifetime">()
+    .$type<"pro" | "lifetime" | "report">()
     .notNull()
     .default("pro"),
   /** Amount paid in cents after discount, e.g. 900 = $9.00 */

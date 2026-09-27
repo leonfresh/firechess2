@@ -45,6 +45,7 @@ export default function TermsPage() {
           <ul className="list-inside list-disc space-y-1 text-slate-400">
             <li>Pro subscriptions are billed monthly through Stripe.</li>
             <li>You may cancel at any time — access continues until the end of the billing period.</li>
+            <li>A report unlock is a one-time payment that shows every finding in one report to your account, permanently. Unlocks from the previous 30 days count toward Lifetime access.</li>
             <li>Refunds are handled on a case-by-case basis.{" "}
               <Link href="/feedback" className="text-emerald-400 hover:underline">Contact support</Link>.</li>
             <li>Prices may change with 30 days&apos; notice to existing subscribers.</li>

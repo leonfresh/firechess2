@@ -143,8 +143,39 @@ function StudyPosition({ onOutcome, initialPractice = false, onFinish, pattern, 
 }
 
 export function ModernReport({ scan }: { scan: PreviewScan }) {
-  const { plan } = useSession();
-  const hasProAccess = plan === "pro" || plan === "lifetime";
+  const { plan, authenticated } = useSession();
+  const [unlocked, setUnlocked] = useState(false);
+  const [unlockPending, setUnlockPending] = useState(false);
+  const [unlockError, setUnlockError] = useState("");
+  useEffect(() => {
+    if (!authenticated || plan !== "free") return;
+    // Returning from Stripe, the webhook can land a moment after the redirect: check a few times.
+    let attempts = new URLSearchParams(window.location.search).get("unlocked") ? 8 : 1;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let cancelled = false;
+    async function check() {
+      const data = await fetch(`/api/report/unlock?scanId=${encodeURIComponent(scan.id)}`).then(r => r.ok ? r.json() : null).catch(() => null);
+      if (cancelled) return;
+      if (data?.unlocked) { setUnlocked(true); return; }
+      if (--attempts > 0) timer = setTimeout(check, 1500);
+    }
+    check();
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [authenticated, plan, scan.id]);
+  async function unlockReport() {
+    if (unlockPending) return;
+    if (!authenticated) { window.location.href = `/auth/signin?callbackUrl=${encodeURIComponent(`/report/${scan.id}`)}`; return; }
+    setUnlockPending(true); setUnlockError("");
+    try {
+      const response = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: "report", scanId: scan.id }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Could not start checkout. Please try again.");
+      const url = new URL(data.url);
+      if (url.protocol !== "https:" || url.hostname !== "checkout.stripe.com") throw new Error("Checkout returned an unexpected payment link.");
+      window.location.assign(url.href);
+    } catch (issue) { setUnlockError(issue instanceof Error ? issue.message : "Could not connect to checkout."); setUnlockPending(false); }
+  }
+  const hasProAccess = plan === "pro" || plan === "lifetime" || unlocked;
   const patterns = useMemo(() => buildReportPositions(scan.result!, hasProAccess), [scan.result, hasProAccess]);
   const groups = useMemo(() => findingsByCategory(scan.result!), [scan.result]);
   const [themeFilter, setThemeFilter] = useState("");
@@ -249,7 +280,8 @@ export function ModernReport({ scan }: { scan: PreviewScan }) {
       <div className={s.reportSectionTitle} id="position-workspace"><div><h2>{filter === "All findings" ? "Turn findings into progress" : `${filter} · position review`}</h2><p>Choose a theme or position. Spot the threat. Practice the idea.</p></div><span className={s.sampleLabel}>{total(filter)} stored findings</span></div>
       {themeFilter && <button className={s.secondaryButton} onClick={() => {setThemeFilter("");setPage(0);}}>Theme: {themeFilter} · Clear filter</button>}
       <div className={s.findingTools}><label>Search available positions<input type="search" placeholder="Opening, theme, move or game…" value={query} onChange={e => {setQuery(e.target.value);setPage(0);setSelectedId("");}} /></label><span>{visible.length} playable positions{!hasProAccess ? " on your Free plan" : " available"}</span></div>
-      {!hasProAccess && <div className={s.accessNote}><ShieldCheck size={18} /><p>{lockedCount > 0 ? `${lockedCount} more ${filter === "All findings" ? "findings" : filter.toLowerCase() + " findings"} found. ` : ""}Free includes up to six positions in each category per report: openings, tactics, endgames, positional, brilliant moves and time management. Theme coaching, threat maps and training are included for those positions. Pro unlocks the full report.</p><Link href="/newpricing">Unlock full report <ArrowUpRight size={14} /></Link></div>}
+      {!hasProAccess && <div className={s.accessNote}><ShieldCheck size={18} /><p>{lockedCount > 0 ? `${lockedCount} more ${filter === "All findings" ? "findings" : filter.toLowerCase() + " findings"} found. ` : ""}Free includes up to six positions in each category per report: openings, tactics, endgames, positional, brilliant moves and time management. Theme coaching, threat maps and training are included for those positions. Unlock this report for $9 to see every finding, or go Pro for every report.</p><button className={s.primaryButton} onClick={unlockReport} disabled={unlockPending}>{unlockPending ? "Opening checkout…" : "Unlock this report — $9"}</button><Link href="/newpricing">See Pro and Lifetime <ArrowUpRight size={14} /></Link>{unlockError && <p role="alert" className={s.formError}>{unlockError}</p>}</div>}
+      {unlocked && <div className={s.accessNote}><ShieldCheck size={18} /><p>You unlocked this report: every finding is yours to keep. It counts toward Lifetime for 30 days.</p></div>}
       <div className={s.patternList} aria-label="Select a position">{visible.slice(currentPage*8,currentPage*8+8).map((pattern,i) => <button key={pattern.id} data-category={pattern.category} className={selected?.id === pattern.id ? s.patternSelected : ""} onClick={() => setSelectedId(pattern.id)} aria-pressed={selected?.id === pattern.id}><span className={s.patternNumber}>{completed.includes(pattern.id) ? <Check size={17} /> : String(currentPage*8+i+1).padStart(2,"0")}</span><span><strong>{pattern.title}</strong><small>{pattern.category} · {pattern.severity}</small></span><ChevronRight size={16} /></button>)}</div>
       {pageCount > 1 && <div className={s.pagination}><button className={s.secondaryButton} disabled={currentPage === 0} onClick={() => {setPage(currentPage-1);setSelectedId(visible[(currentPage-1)*8].id);}}><ChevronLeft size={16} />Previous</button><span>Page {currentPage+1} of {pageCount}</span><button className={s.secondaryButton} disabled={currentPage+1 >= pageCount} onClick={() => {setPage(currentPage+1);setSelectedId(visible[(currentPage+1)*8].id);}}>Next<ChevronRight size={16} /></button></div>}
       {selected ? <StudyPosition onOutcome={recordOutcome} key={selected.id} pattern={selected} reportUrl={reportUrl} positionIndex={currentIndex} positionCount={visible.length} onPrevious={() => {setSelectedId(visible[currentIndex-1].id);setPage(Math.floor((currentIndex-1)/8));}} onComplete={completePosition} hasNext={currentIndex < visible.length-1} onNext={() => {setSelectedId(visible[currentIndex+1].id);setPage(Math.floor((currentIndex+1)/8));}} /> : <div className={s.scanDetails}><h3>No playable positions match this selection.</h3><p>Try another search or section. Some older findings do not include a legal engine continuation.</p><Link href={reportUrl}>View the original findings</Link></div>}
