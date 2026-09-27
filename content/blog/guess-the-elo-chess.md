@@ -1,9 +1,10 @@
 ---
 title: "Guess the Elo: How to Estimate Chess Rating from Positions"
 description: "Guess anyone's chess Elo from their moves. Spot blunders, plan depth, and endgame tells with real positions from 800 to 2400+."
-date: "2026-09-25"
+date: "2026-09-28"
 author: "FireChess Team"
 tags: ["guess the elo", "chess rating estimator", "guess elo from position", "chess improvement", "chess training", "PGN analysis", "chess playing style"]
+canonical: https://www.firechess.com/blog/guess-the-elo-chess
 ---
 
 You're watching a chess video and the creator pauses the game. "What rating do you think these players are?" The comments fill with guesses — 1400, 1800, 2200. It's become one of the most popular formats in chess content, and for good reason: being able to **guess the Elo** from a position means you understand what rating actually looks like on the board.
@@ -326,11 +327,13 @@ Significantly. Blitz games (3–5 minutes per player) introduce a much higher no
 Absolutely, and it's one of the most motivating ways to measure progress. Every month, export your last 20 rated rapid games and run them through the FireChess [PGN analyser](/analyze). Track your estimated rating bucket alongside your actual rating. If your PGN-estimated bucket starts climbing before your actual rating changes, you're developing the underlying skills — the rating will catch up. This leading-indicator effect is incredibly useful: it tells you your improvement is real months before your rating graph confirms it.
 
 ### Q: Can a computer guess Elo better than a human?
+In raw accuracy, yes — a neural network trained on game data can predict rating within about 100–150 points, which beats the human 200–300 point range. But the computer can't tell you *why* a game looks like a certain rating. The value of human guess-the-elo is that it develops your intuition for quality of play. When you correctly identify that a move is 1800-level rather than 1400-level, you're training the same pattern recognition that helps you find better moves in your own games. The computer gives you the answer; the human exercise builds the skill. Use the [FireChess analyser](/analyze) to get the machine verdict, but don't skip the mental exercise of guessing first.
 
 ### Q: What is a chess elo guesser and how accurate are they?
 Chess elo guessers use metrics like centipawn loss, blunder frequency, and opening depth to estimate a player's rating from their moves. Modern tools like FireChess's scanner achieve 85-90% accuracy within a 200-point range by comparing your game statistics against benchmarks from over 50,000 analyzed games. The strongest signals are blunder density (how many ?? per game) and average centipawn loss — both correlate tightly with rating. You can [try it yourself with FireChess's analyzer](/analyze) by uploading any PGN file.
 
-In raw accuracy, yes — a neural network trained on game data can predict rating within about 100–150 points, which beats the human 200–300 point range. But the computer can't tell you *why* a game looks like a certain rating. The value of human guess-the-elo is that it develops your intuition for quality of play. When you correctly identify that a move is 1800-level rather than 1400-level, you're training the same pattern recognition that helps you find better moves in your own games. The computer gives you the answer; the human exercise builds the skill. Use the [FireChess analyser](/analyze) to get the machine verdict, but don't skip the mental exercise of guessing first.
+### Q: How does guess the elo chess work in practice?
+You look at a game's moves without seeing the players' ratings and estimate the skill level based on pattern recognition: how often do blunders occur, how deep are the plans, and how well does the player handle endgames? Beginners blunder pieces every few moves, while 2000+ players make inaccuracies that only an engine can spot. The [Guess the Elo dungeon mode on FireChess](/dungeon) lets you practise this skill with real games — you guess, the site reveals the answer, and your accuracy improves over time. Most players who practise regularly can place games within a 200-point range after a few weeks.
 
 ## The Bottom Line
 
