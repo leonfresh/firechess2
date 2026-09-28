@@ -117,6 +117,10 @@ function wouldLeaveKingInCheck(
   // Build a temporary position
   const piece = game.get(from);
   if (!piece) return true;
+  // Capturing the enemy king ends the game immediately. The attacker has no
+  // reply, so ordinary king-safety checks do not apply to the landing square.
+  const target = game.get(to);
+  if (target?.type === "k" && target.color !== color) return false;
 
   const fen = game.fen();
   const tmp = new Chess(fen);
@@ -153,6 +157,9 @@ function wouldLeaveKingToChaosAttack(
 ): boolean {
   const piece = game.get(move.from);
   if (!piece) return false;
+  // A terminal king capture wins before the opponent's powers can retaliate.
+  const target = game.get(move.to);
+  if (target?.type === "k" && target.color !== color) return false;
 
   const tmp = new Chess(game.fen());
   if (!move.pieceStays) tmp.remove(move.from);

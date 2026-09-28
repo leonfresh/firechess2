@@ -2407,6 +2407,9 @@ const EFFECT_KEYFRAMES = `
 @keyframes ce-spawn      { 0%{transform:scale(0) rotate(-20deg);opacity:1} 60%{transform:scale(1.1);opacity:.9} 100%{transform:scale(1.8);opacity:0} }
 @keyframes ce-king-death { 0%{transform:scale(.2);opacity:1} 30%{transform:scale(1.8);opacity:1} 65%{transform:scale(1.4);opacity:.85} 100%{transform:scale(2.8);opacity:0} }
 @keyframes ce-king-ring  { 0%{transform:scale(.1);opacity:.9;border-width:6px} 100%{transform:scale(2.6);opacity:0;border-width:1px} }
+@keyframes ce-gate-slam  { 0%{transform:translateY(-140%) rotate(-42deg);opacity:0} 42%{transform:translateY(8%) rotate(-42deg);opacity:1} 58%{transform:translateY(-5%) rotate(-42deg)} 72%{transform:translateY(0) rotate(-42deg)} 100%{transform:translateY(0) rotate(-42deg);opacity:0} }
+@keyframes ce-gate-ring  { 0%{transform:scale(.35);opacity:.9} 65%{transform:scale(1.2);opacity:.65} 100%{transform:scale(1.5);opacity:0} }
+@keyframes ce-feedback   { 0%{opacity:0} 10%{opacity:1} 82%{opacity:1} 100%{opacity:0} }
 `;
 
 type BoardEffect = { id: number; type: string; squares: string[]; pieces?: string[] };
@@ -2618,6 +2621,51 @@ function BoardEffectsOverlay({
                   />
                 </>
               );
+            } else if (type === "toll-gate") {
+              inner = (
+                <>
+                  <div
+                    style={{
+                      position: "absolute",
+                      width: "92%",
+                      height: "92%",
+                      borderRadius: "50%",
+                      border: "3px solid #fb923c",
+                      boxShadow: "0 0 16px rgba(249,115,22,.9)",
+                      animation: "ce-gate-ring 1100ms ease-out forwards",
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      width: "125%",
+                      height: "15%",
+                      border: "2px solid #7c2d12",
+                      borderRadius: 5,
+                      background: "repeating-linear-gradient(135deg, #fff7ed 0 7px, #f97316 7px 14px)",
+                      boxShadow: "0 2px 8px #431407, 0 0 12px #fb923c",
+                      animation: "ce-gate-slam 1150ms cubic-bezier(.2,.8,.2,1) forwards",
+                    }}
+                  />
+                  <span
+                    style={{
+                      position: "absolute",
+                      bottom: "5%",
+                      padding: "1px 4px",
+                      borderRadius: 4,
+                      background: "rgba(67,20,7,.94)",
+                      color: "#ffedd5",
+                      fontSize: "clamp(6px, 1.6vw, 10px)",
+                      fontWeight: 900,
+                      letterSpacing: ".08em",
+                      whiteSpace: "nowrap",
+                      textShadow: "0 1px 2px #431407",
+                    }}
+                  >
+                    TOLL GATE
+                  </span>
+                </>
+              );
             }
 
             if (!inner) return null;
@@ -2639,6 +2687,33 @@ function BoardEffectsOverlay({
               </div>
             );
           }),
+        )}
+        {effects.some((effect) => effect.type === "toll-gate") && (
+          <div
+            data-toll-gate-feedback
+            role="status"
+            aria-live="polite"
+            style={{
+              position: "absolute",
+              top: 10,
+              left: "50%",
+              transform: "translateX(-50%)",
+              maxWidth: "calc(100% - 20px)",
+              padding: "7px 12px",
+              border: "1px solid rgba(251,146,60,.9)",
+              borderRadius: 999,
+              background: "rgba(67,20,7,.94)",
+              color: "#ffedd5",
+              boxShadow: "0 4px 18px rgba(0,0,0,.45)",
+              fontSize: "clamp(11px, 2.8vw, 14px)",
+              fontWeight: 800,
+              textAlign: "center",
+              lineHeight: 1.2,
+              animation: "ce-feedback 1400ms ease-out forwards",
+            }}
+          >
+            🚧 Toll Gate: pawns can’t advance two squares
+          </div>
         )}
       </div>
     </>
@@ -3258,6 +3333,7 @@ const EFFECT_DURATIONS: Record<string, number> = {
   "night-rider": 750,
   flash: 550,
   "king-death": 1300,
+  "toll-gate": 1400,
 };
 
 /** How long to wait after king-death effect before showing game-over popup */
@@ -7732,6 +7808,7 @@ export default function ChaosChessPage() {
       if (chaosState.aiModifiers.some((m) => m.id === "toll-gate")) {
         const moving = game.get(from as any);
         if (moving?.type === "p" && Math.abs(Number(to[1]) - Number(from[1])) === 2) {
+          triggerEffect("toll-gate", [to]);
           return false; // Toll Gate blocks the two-square advance
         }
       }
@@ -8674,15 +8751,27 @@ export default function ChaosChessPage() {
         const highlights: Record<string, React.CSSProperties> = {
           [sq]: { backgroundColor: "rgba(255, 255, 0, 0.3)" },
         };
+        const tollGateBlocksPawn =
+          yours &&
+          p.type === "p" &&
+          chaosState.aiModifiers.some((modifier) => modifier.id === "toll-gate");
         const moves = preview.moves({ square: sq as Square, verbose: true });
         for (const m of moves) {
           if (m.piece === "k" && isKingMoveChaosUnsafe(preview, m.from, m.to))
             continue;
-          highlights[m.to] = {
-            background: m.captured
-              ? "radial-gradient(circle, transparent 68%, rgba(255,0,0,0.55) 69%)"
-              : "radial-gradient(circle, rgba(0,180,0,0.75) 14%, transparent 15%)",
-          };
+          const tollBlocked =
+            tollGateBlocksPawn &&
+            Math.abs(Number(m.to[1]) - Number(m.from[1])) === 2;
+          highlights[m.to] = tollBlocked
+            ? {
+                background: "radial-gradient(circle, rgba(249,115,22,0.9) 14%, transparent 15%)",
+                boxShadow: "inset 0 0 0 4px rgba(249,115,22,0.65)",
+              }
+            : {
+                background: m.captured
+                  ? "radial-gradient(circle, transparent 68%, rgba(255,0,0,0.55) 69%)"
+                  : "radial-gradient(circle, rgba(0,180,0,0.75) 14%, transparent 15%)",
+              };
         }
         for (const cm of extraMoves.filter((m) => m.from === sq)) {
           if (p?.type === "k" && isKingMoveChaosUnsafe(preview, cm.from, cm.to))

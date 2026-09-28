@@ -2,6 +2,42 @@ import { Chess, type Color, type Square } from 'chess.js';
 import type { ChaosState } from './chaos-chess';
 import { getChaosMoves, getChaosAttackedSquares, computeChainedSquare, type ChaosMove } from './chaos-moves';
 
+/** Test ordinary piece geometry without rejecting a terminal capture for check. */
+function standardKingCaptureGeometry(game: Chess, from: string, to: string, side: Color): boolean {
+  const piece = game.get(from as Square);
+  const target = game.get(to as Square);
+  if (!piece || piece.color !== side || target?.type !== 'k' || target.color === side) return false;
+
+  const fromFile = from.charCodeAt(0) - 97;
+  const fromRank = Number(from[1]);
+  const toFile = to.charCodeAt(0) - 97;
+  const toRank = Number(to[1]);
+  const df = toFile - fromFile;
+  const dr = toRank - fromRank;
+  const adf = Math.abs(df);
+  const adr = Math.abs(dr);
+
+  if (piece.type === 'n') return (adf === 1 && adr === 2) || (adf === 2 && adr === 1);
+  if (piece.type === 'k') return Math.max(adf, adr) === 1;
+  if (piece.type === 'p') return adf === 1 && dr === (side === 'w' ? 1 : -1);
+
+  const diagonal = adf === adr && adf > 0;
+  const straight = (df === 0) !== (dr === 0);
+  if (piece.type === 'b' && !diagonal) return false;
+  if (piece.type === 'r' && !straight) return false;
+  if (piece.type === 'q' && !diagonal && !straight) return false;
+  if (piece.type !== 'b' && piece.type !== 'r' && piece.type !== 'q') return false;
+
+  const stepFile = Math.sign(df);
+  const stepRank = Math.sign(dr);
+  for (let file = fromFile + stepFile, rank = fromRank + stepRank;
+    file !== toFile || rank !== toRank;
+    file += stepFile, rank += stepRank) {
+    if (game.get(`${String.fromCharCode(97 + file)}${rank}` as Square)) return false;
+  }
+  return true;
+}
+
 /** Validate a terminal capture before chess.js is asked to reload a kingless FEN. */
 export function getKingCaptureMove(game: Chess, state: ChaosState, side: Color, from: string, to: string): ChaosMove | null {
   if (!/^[a-h][1-8]$/.test(from) || !/^[a-h][1-8]$/.test(to) || game.turn() !== side) return null;
@@ -16,11 +52,7 @@ export function getKingCaptureMove(game: Chess, state: ChaosState, side: Color, 
   }).find(m => m.from === from && m.to === to && m.type === 'capture');
   if (special) return special;
   const move = normal.find(m => m.from === from && m.to === to && m.captured === 'k');
-  if (!move) return null;
-  const after = new Chess(game.fen());
-  after.move(move);
-  const king = after.board().flat().find(p => p?.type === 'k' && p.color === side)?.square;
-  if (!king || getChaosAttackedSquares(after,other,side === 'w' ? 'b' : 'w',state.assignedSquares).has(king)) return null;
+  if (!move && !standardKingCaptureGeometry(game, from, to, side)) return null;
   return {from:from as Square,to:to as Square,type:'capture',modifierId:'standard',label:'King captured'};
 }
 
