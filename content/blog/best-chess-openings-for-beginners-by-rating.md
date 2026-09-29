@@ -106,7 +106,7 @@ Against 1.d4, you have two rock-solid options:
 - **The King's Gambit (1.e4 e5 2.f4).** It's romantic and exciting, but it requires precise tactical knowledge. You'll win some games quickly and lose most of them when your attack fizzles.
 - **The Pirc Defense (1.e4 d6 2.d4 Nf6 3.Nc3 g6).** Strong players can handle the space disadvantage; at this level, White's bigger center will be a constant problem.
 
-## 1200–1400 — Build a Mini-Repertoire
+## 1200–1400 — [Build a Mini-Repertoire](/blog/chess-opening-repertoire-builder)
 
 At 1200, you're not a beginner anymore. You understand the basic principles and you win against players who don't. Now you need a *coherent repertoire* — openings that connect to each other thematically so learning one helps you learn the others.
 

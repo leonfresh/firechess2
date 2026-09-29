@@ -141,7 +141,7 @@ Now you are not just learning theory. You are learning *your version* of the ope
 
 ## How to Build a Personal Opening Repertoire File
 
-A repertoire file does not have to be complicated. A simple markdown document or spreadsheet with the following columns is enough:
+A repertoire file does not have to be complicated. For a complete guide on choosing which openings to include, see our [opening repertoire builder](/blog/chess-opening-repertoire-builder). A simple markdown document or spreadsheet with the following columns is enough:
 
 - **Opening name** and the first few moves
 - **The main idea** in one sentence (e.g., "White wants a space advantage and kingside attack")

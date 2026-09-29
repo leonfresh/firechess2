@@ -6,7 +6,7 @@ author: "FireChess Team"
 tags: ["openings", "improvement", "feature"]
 ---
 
-Every chess player has a repertoire — a set of openings they play over and over. But most players don't actually *know* their repertoire. They know their first few moves, they have a vague sense of what lines they prefer, but they've never seen the full picture of where their games go right and where they collapse.
+Every chess player has a repertoire — a set of openings they play over and over. But most players don't actually *know* [how to build one systematically](/blog/chess-opening-repertoire-builder). their repertoire. They know their first few moves, they have a vague sense of what lines they prefer, but they've never seen the full picture of where their games go right and where they collapse.
 
 **My Opening Tree** changes that.
 
