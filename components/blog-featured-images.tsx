@@ -142,6 +142,8 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <BishopVsKnightArt />;
     case "chess-when-to-trade-pieces":
       return <TradePiecesArt />;
+    case "chess-opening-repertoire-builder":
+      return <RepertoireBuilderArt />;
     default:
       return <DefaultArt />;
   }
@@ -3848,6 +3850,61 @@ function TradePiecesArt() {
       {/* sparkles */}
       {[[60,30],[340,40],[80,160],[320,150],[200,25]].map(([x,y],i) => (
         <circle key={`tp${i}`} cx={x} cy={y} r={1.2} fill={i%2===0?"#f59e0b":"#e13c48"} fillOpacity={0.2+i*0.04}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2+i*0.3}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+function RepertoireBuilderArt() {
+  return (
+    <svg viewBox="0 0 400 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="rpb-bg" x1="0" y1="0" x2="400" y2="220" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0c1220" />
+          <stop offset="1" stopColor="#14102a" />
+        </linearGradient>
+        <radialGradient id="rpb-glow" cx="200" cy="160" r="180" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#10b981" stopOpacity="0.12" />
+          <stop offset="1" stopColor="#10b981" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="400" height="220" rx="18" fill="url(#rpb-bg)" />
+      <rect x="1" y="1" width="398" height="218" rx="17" stroke="white" strokeOpacity="0.05" />
+      <rect width="400" height="220" rx="18" fill="url(#rpb-glow)" />
+      {/* watermark pieces */}
+      <text x="20" y="200" fill="white" fillOpacity="0.015" fontSize="80" fontFamily="serif">&#9814;</text>
+      <text x="310" y="80" fill="white" fillOpacity="0.015" fontSize="80" fontFamily="serif">&#9816;</text>
+      {/* tree branches */}
+      <line x1="200" y1="45" x2="120" y2="90" stroke="#10b981" strokeWidth="1.5" strokeOpacity="0.4" />
+      <line x1="200" y1="45" x2="280" y2="90" stroke="#10b981" strokeWidth="1.5" strokeOpacity="0.4" />
+      <line x1="120" y1="90" x2="80" y2="130" stroke="#10b981" strokeWidth="1" strokeOpacity="0.25" />
+      <line x1="120" y1="90" x2="160" y2="130" stroke="#10b981" strokeWidth="1" strokeOpacity="0.25" />
+      <line x1="280" y1="90" x2="240" y2="130" stroke="#10b981" strokeWidth="1" strokeOpacity="0.25" />
+      <line x1="280" y1="90" x2="320" y2="130" stroke="#10b981" strokeWidth="1" strokeOpacity="0.25" />
+      {/* nodes */}
+      <circle cx="200" cy="42" r="6" fill="#10b981" fillOpacity="0.6" />
+      <circle cx="120" cy="90" r="4" fill="#10b981" fillOpacity="0.4" />
+      <circle cx="280" cy="90" r="4" fill="#10b981" fillOpacity="0.4" />
+      <circle cx="80" cy="130" r="3" fill="#f59e0b" fillOpacity="0.35" />
+      <circle cx="160" cy="130" r="3" fill="#e13c48" fillOpacity="0.35" />
+      <circle cx="240" cy="130" r="3" fill="#10b981" fillOpacity="0.35" />
+      <circle cx="320" cy="130" r="3" fill="#f59e0b" fillOpacity="0.35" />
+      {/* labels */}
+      <text x="200" y="35" textAnchor="middle" fill="#f1f5f9" fontSize="9" fontWeight="700" fontFamily="system-ui, sans-serif">YOUR REPERTOIRE</text>
+      <text x="120" y="82" textAnchor="middle" fill="#f1f5f9" fontSize="8" fontFamily="system-ui, sans-serif">1.e4</text>
+      <text x="280" y="82" textAnchor="middle" fill="#f1f5f9" fontSize="8" fontFamily="system-ui, sans-serif">1.d4</text>
+      <text x="80" y="125" textAnchor="middle" fill="#f1f5f9" fontSize="7" fontFamily="system-ui, sans-serif">Italian</text>
+      <text x="160" y="125" textAnchor="middle" fill="#f1f5f9" fontSize="7" fontFamily="system-ui, sans-serif">Sicilian</text>
+      <text x="240" y="125" textAnchor="middle" fill="#f1f5f9" fontSize="7" fontFamily="system-ui, sans-serif">QGD</text>
+      <text x="320" y="125" textAnchor="middle" fill="#f1f5f9" fontSize="7" fontFamily="system-ui, sans-serif">KID</text>
+      {/* title */}
+      <text x="200" y="170" textAnchor="middle" fill="#f1f5f9" fontSize="12" fontWeight="700" fontFamily="system-ui, sans-serif">OPENING REPERTOIRE BUILDER</text>
+      <text x="200" y="186" textAnchor="middle" fill="#64748b" fontSize="9" fontFamily="system-ui, sans-serif">Choose your openings. Build your tree.</text>
+      {/* sparkles */}
+      {[[50,25],[350,20],[70,170],[330,160],[200,195]].map(([x,y],i) => (
+        <circle key={`rpb${i}`} cx={x} cy={y} r={1.2} fill={i%2===0?"#10b981":"#f59e0b"} fillOpacity={0.2+i*0.04}>
           <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2+i*0.3}s`} repeatCount="indefinite" />
         </circle>
       ))}
