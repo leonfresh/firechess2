@@ -1,6 +1,6 @@
 ---
-title: "Shirov's Bh3!! Explained: The Greatest Endgame Move in Chess"
-description: "Why is Shirov's 47...Bh3!! called the greatest endgame move ever? Interactive boards show the sacrifice, zugzwang, and forced win that stunned chess."
+title: "Shirov vs Topalov 1998: Bh3!! The Greatest Endgame Sacrifice"
+description: "Shirov's 47...Bh3!! stunned chess — explore the sacrifice interactively. See why engines missed it, the zugzwang that followed, and lessons for your game."
 date: 2026-09-30
 author: "FireChess Team"
 tags: ["shirov topalov bh3", "greatest chess moves", "famous chess games", "endgame sacrifice", "chess brilliancy", "zugzwang"]
