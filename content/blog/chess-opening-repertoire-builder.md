@@ -191,7 +191,7 @@ Maintain a simple document (a text file, a notebook, or a [chess study plan](/bl
 
 This file should fit on one page per opening. If it grows beyond that, you are studying too many variations. The goal is a practical reference, not an encyclopedia.
 
-### When to Update Your Repertoire
+### Q: When to Update Your Repertoire
 
 Update your repertoire when:
 - You consistently face a line you have no answer for (add a response)
