@@ -10,7 +10,7 @@ import type { MissedTactic } from "@/lib/types";
 import { DashboardProgress } from "./dashboard-progress";
 import type { ProgressReport } from "./progress-data";
 import { PreviewHeader } from "./shared";
-import { OnboardingTour } from "@/components/onboarding-tour";
+import { MODERN_DASHBOARD_TOUR, OnboardingTour } from "@/components/onboarding-tour";
 import s from "./modern.module.css";
 
 export type Report = ProgressReport & { id: string; missedTactics?: MissedTactic[]; estimatedRating?: number | null; scanSessionId?: string | null; chessUsername: string; source: string; gamesAnalyzed: number; estimatedAccuracy: number | null; leakCount: number | null; tacticsCount: number | null; createdAt: string; reportMeta?: { vibeTitle?: string } | null };
@@ -80,7 +80,7 @@ export function ModernDashboard({ demo = false }: { demo?: boolean }) {
       </section>
     </>}
     {recent && <div className={s.accessNote}><Clock3 size={18} /><p>Started a scan on this device?</p><Link href={`/report/${recent}`}>Continue last scan →</Link></div>}
-    <div className={s.dashboardTools}>{[{title:"Focused practice",text:"Build recognition with positions and drills.",href:"/newtraining",icon:Target},{title:"Your repertoire",text:"Manage saved opening ideas and study tools.",href:"/newdashboard#repertoire",icon:BookOpen},{title:"Explore a report",text:"See how findings turn into practical ideas.",href:"/report/8c8d499e-1f04-4121-aabc-71a818b98ce6",icon:Crosshair}].map(item=><Link key={item.title} href={item.href}><item.icon size={24} /><h3>{item.title}</h3><p>{item.text}</p><ArrowRight size={17} /></Link>)}</div>
-    {!demo && authenticated && <OnboardingTour />}
+    <div data-tour="tools" className={s.dashboardTools}>{[{title:"Focused practice",text:"Build recognition with positions and drills.",href:"/newtraining",icon:Target},{title:"Your repertoire",text:"Manage saved opening ideas and study tools.",href:"/newdashboard#repertoire",icon:BookOpen},{title:"Explore a report",text:"See how findings turn into practical ideas.",href:"/report/8c8d499e-1f04-4121-aabc-71a818b98ce6",icon:Crosshair}].map(item=><Link key={item.title} href={item.href}><item.icon size={24} /><h3>{item.title}</h3><p>{item.text}</p><ArrowRight size={17} /></Link>)}</div>
+    {!demo && authenticated && <OnboardingTour steps={MODERN_DASHBOARD_TOUR} />}
   </div></div>;
 }

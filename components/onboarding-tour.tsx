@@ -33,12 +33,6 @@ export type TourStep = {
 
 const STEPS: TourStep[] = [
   {
-    target: "[data-tour='stats']",
-    title: "Your Stats at a Glance",
-    body: "Track how many reports you've run, total games scanned, leaks found, and tactics missed — all in one place.",
-    placement: "bottom",
-  },
-  {
     target: "[data-tour='study-plan']",
     title: "Personalized Study Plan",
     body: "Every scan creates a custom study plan based on your weaknesses. Check off tasks to earn coins and build a streak.",
@@ -76,6 +70,37 @@ const STEPS: TourStep[] = [
   },
 ];
 
+/**
+ * Tour for /newdashboard. Every target below is rendered by
+ * components/modern-preview/dashboard.tsx, so no step silently skips there.
+ */
+export const MODERN_DASHBOARD_TOUR: TourStep[] = [
+  {
+    target: "[data-tour='stats']",
+    title: "Your Stats at a Glance",
+    body: "Track how many reports you've run, total games scanned, leaks found, and tactics missed — all in one place.",
+    placement: "bottom",
+  },
+  {
+    target: "[data-tour='progress']",
+    title: "Progress Over Time",
+    body: "After 2+ scans you'll see accuracy and CP loss charts — the best way to track improvement.",
+    placement: "top",
+  },
+  {
+    target: "[data-tour='reports']",
+    title: "Report History",
+    body: "Every saved scan appears here. Open any report to review the full analysis and practise its positions.",
+    placement: "top",
+  },
+  {
+    target: "[data-tour='tools']",
+    title: "Keep improving",
+    body: "Jump to focused practice, your repertoire, or a sample report to see how findings become ideas.",
+    placement: "top",
+  },
+];
+
 /* ------------------------------------------------------------------ */
 /*  Storage helpers                                                     */
 /* ------------------------------------------------------------------ */
@@ -109,7 +134,9 @@ export function clearDeferral(): void {
 /*  Component                                                           */
 /* ------------------------------------------------------------------ */
 
-export function OnboardingTour() {
+export function OnboardingTour({
+  steps = STEPS,
+}: { steps?: TourStep[] } = {}) {
   const [showPrompt, setShowPrompt] = useState(false);
   const [active, setActive] = useState(false);
   const [step, setStep] = useState(0);
@@ -135,7 +162,7 @@ export function OnboardingTour() {
   /* ── Position the spotlight on the current step's target ── */
   const updateRect = useCallback(() => {
     if (!active) return;
-    const el = document.querySelector(STEPS[step].target);
+    const el = document.querySelector(steps[step].target);
     if (el) {
       const r = el.getBoundingClientRect();
       setRect(r);
@@ -143,13 +170,13 @@ export function OnboardingTour() {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
     } else {
       // Element doesn't exist — skip this step
-      if (step < STEPS.length - 1) {
+      if (step < steps.length - 1) {
         setStep((s) => s + 1);
       } else {
         finish();
       }
     }
-  }, [active, step]);
+  }, [active, step, steps]);
 
   useEffect(() => {
     updateRect();
@@ -168,7 +195,7 @@ export function OnboardingTour() {
   };
 
   const next = () => {
-    if (step < STEPS.length - 1) setStep((s) => s + 1);
+    if (step < steps.length - 1) setStep((s) => s + 1);
     else finish();
   };
 
@@ -226,7 +253,7 @@ export function OnboardingTour() {
 
   if (!active || !rect) return null;
 
-  const current = STEPS[step];
+  const current = steps[step];
   const pad = 8; // padding around the spotlight
 
   // Arrow direction: does the spotlight sit above or below the bottom toolbar?
@@ -292,11 +319,11 @@ export function OnboardingTour() {
             {isAboveCenter ? "↑" : "↓"}
           </span>
           <p className="text-[11px] text-[#565061]">
-            {isAboveCenter ? "Highlighted above" : "Highlighted below"} · step {step + 1} of {STEPS.length}
+            {isAboveCenter ? "Highlighted above" : "Highlighted below"} · step {step + 1} of {steps.length}
           </p>
           {/* Progress dots */}
           <div className="ml-auto flex items-center gap-1">
-            {STEPS.map((_, i) => (
+            {steps.map((_, i) => (
               <div
                 key={i}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
@@ -337,7 +364,7 @@ export function OnboardingTour() {
               onClick={next}
               className="rounded-lg bg-violet-600 px-4 py-1.5 text-xs font-bold text-white shadow-lg shadow-violet-500/20 transition-all hover:bg-violet-500 active:scale-95"
             >
-              {step < STEPS.length - 1 ? "Next →" : "Finish ✓"}
+              {step < steps.length - 1 ? "Next →" : "Finish ✓"}
             </button>
           </div>
         </div>
