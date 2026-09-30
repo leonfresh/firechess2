@@ -1,7 +1,7 @@
 ---
 title: "Guess Elo from PGN: Estimate Chess Rating from Any Game"
 description: "Guess elo from any PGN file using centipawn loss, blunder count, and opening depth. Real examples and benchmarks from 50,000+ analyzed games."
-date: "2026-09-28"
+date: "2026-09-29"
 author: "FireChess Team"
 tags: ["guess elo from pgn", "chess PGN analysis", "estimate chess rating", "centipawn loss by rating", "chess improvement", "chess time management", "chess endgame technique"]
 canonical: https://www.firechess.com/blog/guess-elo-from-pgn

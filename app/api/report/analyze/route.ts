@@ -5,7 +5,14 @@
  * Falls back: OpenRouter → Groq → DeepSeek V4 (paid).
  */
 import { NextRequest, NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
+import { auth } from "@/lib/auth";
+import { isAdmin } from "@/lib/admin";
+import { db } from "@/lib/db";
+import { scanSessions } from "@/lib/schema";
+import { isExpiredScanSession, type ComputedScanReport } from "@/lib/scan-session";
 import { chatWithFallback } from "@/lib/llm-chat";
+import type { AnalyzeResponse } from "@/lib/types";
 
 
 type ScanSummary = {
@@ -51,9 +58,123 @@ Respond with valid JSON (no markdown, no backticks):
 
 type SectionKey = "openings" | "tactics" | "endgames" | "positional";
 
+/* Per-caller guard on paid LLM calls. In-memory and cold-start ephemeral, like
+ * the feedback route's limiter — enough to stop a script from burning credits
+ * while a report is generated. A durable limiter is a follow-up. */
+const LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const LIMIT_MAX = 6;
+const genRate = new Map<string, { count: number; resetAt: number }>();
+
+function allowGeneration(key: string): boolean {
+  const now = Date.now();
+  const entry = genRate.get(key);
+  if (!entry || now > entry.resetAt) {
+    genRate.set(key, { count: 1, resetAt: now + LIMIT_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= LIMIT_MAX) return false;
+  entry.count++;
+  return true;
+}
+
+function buildSummary(
+  result: AnalyzeResponse,
+  reportMeta: ComputedScanReport | null,
+  username: string,
+  scanMode: string,
+): ScanSummary {
+  const leaks = result.leaks ?? [];
+  const byReach = [...leaks].sort(
+    (a, b) => (b.reachCount || 0) - (a.reachCount || 0),
+  );
+  return {
+    gamesAnalyzed: result.gamesAnalyzed || 0,
+    openingLeaks: leaks.length,
+    missedTactics: (result.missedTactics || []).length,
+    endgameMistakes: (result.endgameMistakes || []).length,
+    repeatedPositions: result.repeatedPositions || 0,
+    timeManagementScore: result.timeManagementScore ?? null,
+    estimatedRating: reportMeta?.estimatedRating ?? null,
+    consistencyScore: reportMeta?.consistencyScore ?? null,
+    topMotif: reportMeta?.topTag || "General",
+    topLeakOpenings: byReach
+      .slice(0, 5)
+      .map((leak) => leak.openingName)
+      .filter((name): name is string => Boolean(name)),
+    playerUsername: username || "Player",
+    scanMode: scanMode || "both",
+    endgameConversionRate: result.endgameStats?.conversionRate ?? null,
+    endgameAvgCpLoss: result.endgameStats?.avgCpLoss ?? null,
+    endgameWeakestType: result.endgameStats?.weakestType ?? null,
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const summary: ScanSummary = await req.json();
+    const { scanId } = (await req.json().catch(() => ({}))) as {
+      scanId?: unknown;
+    };
+    if (typeof scanId !== "string" || !scanId) {
+      return NextResponse.json({ error: "scanId required" }, { status: 400 });
+    }
+
+    const [scan] = await db
+      .select()
+      .from(scanSessions)
+      .where(eq(scanSessions.id, scanId))
+      .limit(1);
+    if (
+      !scan ||
+      scan.status !== "ready" ||
+      !scan.result ||
+      isExpiredScanSession(scan)
+    ) {
+      return NextResponse.json({ error: "Report not found" }, { status: 404 });
+    }
+
+    // Only the scan's owner (signed in or guest owner token) or an admin may
+    // spend a paid LLM call here. This route used to be an open LLM proxy that
+    // trusted a client-built summary in the request body.
+    const session = await auth();
+    const ownerToken = req.headers.get("x-scan-owner-token");
+    const ownsScan =
+      (session?.user?.id && scan.userId === session.user.id) ||
+      (ownerToken && scan.guestToken && ownerToken === scan.guestToken);
+    const admin = session?.user?.id ? await isAdmin(session.user.id) : false;
+    if (!ownsScan && !admin) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // A stored analysis is free to serve; never pay for a second one.
+    if (scan.result.aiAnalysis) {
+      return NextResponse.json(scan.result.aiAnalysis);
+    }
+
+    const summary = buildSummary(
+      scan.result,
+      scan.reportMeta,
+      scan.chessUsername,
+      scan.scanMode,
+    );
+    if (summary.gamesAnalyzed < 5) {
+      return NextResponse.json(
+        { error: "Not enough games for a coach analysis" },
+        { status: 422 },
+      );
+    }
+
+    const callerKey =
+      session?.user?.id ??
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      req.headers.get("x-real-ip") ??
+      "unknown";
+    if (!allowGeneration(callerKey)) {
+      return NextResponse.json(
+        { error: "Too many analyses. Please try again later." },
+        { status: 429 },
+      );
+    }
+
     const userPrompt = [
       `PLAYER: ${summary.playerUsername}`,
       `GAMES ANALYZED: ${summary.gamesAnalyzed}`,

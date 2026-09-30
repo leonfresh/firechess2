@@ -127,6 +127,7 @@ export function ScanSessionPage({
   const [scan, setScan] = useState(initialScan);
   const showOpponentCard = isOpponentMode && !opponentDismissed && scan.status === "ready" && scan.result;
   const [ownerToken, setOwnerToken] = useState<string | null>(null);
+  const [unlocked, setUnlocked] = useState(false);
   const [copyLabel, setCopyLabel] = useState("Copy Link");
   const [saveState, setSaveState] = useState<
     "idle" | "saving" | "saved" | "duplicate" | "error"
@@ -177,6 +178,35 @@ export function ScanSessionPage({
     }
   }, [initialScan.id]);
 
+  // A $9 one-off unlock counts here too, not just Pro/Lifetime — otherwise a
+  // buyer following "Open the original full report" lands on this classic view
+  // and sees only the Free sample. Mirrors modern-preview/report.tsx.
+  useEffect(() => {
+    if (!authenticated || plan !== "free") return;
+    // Returning from Stripe, the webhook can land a moment after the redirect.
+    let attempts = new URLSearchParams(window.location.search).get("unlocked") ? 8 : 1;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let cancelled = false;
+    async function check() {
+      const data = await fetch(
+        `/api/report/unlock?scanId=${encodeURIComponent(scan.id)}`,
+      )
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+      if (cancelled) return;
+      if (data?.unlocked) {
+        setUnlocked(true);
+        return;
+      }
+      if (--attempts > 0) timer = setTimeout(check, 1500);
+    }
+    check();
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [authenticated, plan, scan.id]);
+
   const isOwner = Boolean(
     ownerToken || (authenticated && scan.userId && user?.id === scan.userId),
   );
@@ -185,7 +215,7 @@ export function ScanSessionPage({
   const topTactic = scan.result?.missedTactics[0] ?? null;
   const topEndgame = scan.result?.endgameMistakes[0] ?? null;
   const topTimeMoment = scan.result?.timeManagement?.moments?.[0] ?? null;
-  const hasProAccess = plan === "pro" || plan === "lifetime";
+  const hasProAccess = plan === "pro" || plan === "lifetime" || unlocked;
   const needsBrilliantBackfill = Boolean(
     scan.scanMode !== "time-management" &&
     scan.status === "ready" &&

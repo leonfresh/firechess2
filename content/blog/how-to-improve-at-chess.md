@@ -147,7 +147,7 @@ Don't rush this. Positional play comes from experience. At 1200, you won't benef
 
 ## Deliberate Practice vs Casual Play
 
-This distinction is arguably the single biggest determinant of chess improvement, and it's the one most players get wrong.
+This distinction is arguably the single biggest determinant of chess improvement, and it's the one most players get wrong. Before you invest study time, it helps to know where you actually stand — our [Guess the Elo guide](/blog/guess-the-elo-chess) shows you how to read the telltale signs of each rating level.
 
 ### What Casual Play Looks Like
 

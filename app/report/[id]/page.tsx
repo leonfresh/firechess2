@@ -2,7 +2,9 @@ import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { ScanSessionPage } from "@/components/scan-session-page";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { redactScanResultForFree, resolveFullAccess } from "@/lib/scan-access";
 import { scanSessions } from "@/lib/schema";
 import { isExpiredScanSession } from "@/lib/scan-session";
 import { SAMPLE_REPORTS } from "@/lib/sample-reports";
@@ -108,6 +110,15 @@ export default async function ReportPage({
     notFound();
   }
 
+  // Enforce the paywall on the server: the RSC payload must not carry the paid
+  // findings to an unentitled client, only the Free allowance.
+  const session = await auth();
+  const full = await resolveFullAccess({
+    scanId: id,
+    scanUserId: scan.userId,
+    userId: session?.user?.id,
+  });
+
   return (
     <ScanSessionPage
       initialScan={{
@@ -118,7 +129,7 @@ export default async function ReportPage({
         scanMode: scan.scanMode,
         status: scan.status,
         config: scan.config,
-        result: scan.result,
+        result: full ? scan.result : redactScanResultForFree(scan.result),
         reportMeta: scan.reportMeta,
         error: scan.error,
         savedReportId: scan.savedReportId,

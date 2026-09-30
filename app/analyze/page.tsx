@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chess, type PieceSymbol } from "chess.js";
 import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { EvalBar } from "@/components/eval-bar";
+import { classifyCpLoss, evalForMover } from "@/lib/move-quality";
 import { stockfishClient } from "@/lib/stockfish-client";
 import { useBoardTheme, useCustomPieces, useShowCoordinates } from "@/lib/use-coins";
 import { useBoardSize } from "@/lib/use-board-size";
@@ -58,32 +59,55 @@ export default function AnalyzePage() {
     setCurrentIdx(-1);
     const replay = new Chess();
     const result: AnalyzedMove[] = [];
-    for (let i = 0; i < Math.min(history.length, 80); i++) {
+    const bestByIndex: (string | null)[] = [];
+    const total = Math.min(history.length, 80);
+    for (let i = 0; i < total; i++) {
       const h = history[i];
       const fenBefore = replay.fen();
       const uci = `${h.from}${h.to}${h.promotion ?? ""}`;
       replay.move(h.san);
       const fenAfter = replay.fen();
       let evalCp: number | null = null;
-      let classification: string | null = null;
       try {
         const e = await stockfishClient.evaluateFen(fenBefore, 12);
         if (e?.cp != null) {
-          const side = fenBefore.includes(" w ") ? "white" : "black";
-          evalCp = side === "white" ? e.cp : -e.cp;
-          const isBest = e.bestMove === uci || e.bestMove?.startsWith(uci.slice(0, 4));
-          if (isBest || (e.bestMove && Math.abs(e.cp) < 20)) classification = "best";
-          else if (Math.abs(e.cp) > 300) classification = "blunder";
-          else if (Math.abs(e.cp) > 150) classification = "mistake";
-          else if (Math.abs(e.cp) > 50) classification = "inaccuracy";
-          else classification = "good";
+          // Stockfish scores from the side to move; store every eval from White's view.
+          evalCp = fenBefore.includes(" w ") ? e.cp : -e.cp;
+          bestByIndex[i] = e.bestMove ?? null;
         }
       } catch { /* eval failed — skip */ }
-      result.push({ san: h.san, uci, fenBefore, fenAfter, color: h.color, moveNumber: Math.ceil((i + 1) / 2), evalCp, classification });
-      setProgress(Math.round(((i + 1) / Math.min(history.length, 80)) * 100));
+      result.push({ san: h.san, uci, fenBefore, fenAfter, color: h.color, moveNumber: Math.ceil((i + 1) / 2), evalCp, classification: null });
+      setProgress(Math.round(((i + 1) / total) * 100));
       setMoves([...result]);
       await new Promise((r) => setTimeout(r, 5));
     }
+
+    // Classify by centipawn loss from the mover's point of view. The eval after
+    // move i is the eval of the position before move i + 1; the final position is
+    // evaluated once more. Using the raw position eval here used to label any move
+    // in a >3-pawn position a blunder, whether it was the best move or not.
+    let finalWhite: number | null = null;
+    const lastFen = result.length ? result[result.length - 1].fenAfter : null;
+    if (lastFen) {
+      try {
+        const e = await stockfishClient.evaluateFen(lastFen, 12);
+        if (e?.cp != null) finalWhite = lastFen.includes(" w ") ? e.cp : -e.cp;
+      } catch { /* last move is left unclassified */ }
+    }
+    for (let i = 0; i < result.length; i++) {
+      const whiteBefore = result[i].evalCp;
+      const whiteAfter = i + 1 < result.length ? result[i + 1].evalCp : finalWhite;
+      if (whiteBefore == null || whiteAfter == null) continue;
+      const mover = result[i].color;
+      const evalBeforeMover = evalForMover(whiteBefore, mover);
+      const evalAfterMover = evalForMover(whiteAfter, mover);
+      const cpLoss = Math.max(0, evalBeforeMover - evalAfterMover);
+      const best = bestByIndex[i];
+      const uci = result[i].uci;
+      const isBest = !!best && (best === uci || best.startsWith(uci.slice(0, 4)));
+      result[i].classification = classifyCpLoss(cpLoss, isBest, evalBeforeMover, evalAfterMover);
+    }
+    setMoves([...result]);
     setAnalysing(false);
   }, [pgn]);
 

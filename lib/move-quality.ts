@@ -304,6 +304,37 @@ export function classifyMoveQuality(args: {
   return "blunder";
 }
 
+/** White-perspective evaluation for a mover: White cp is unchanged, Black flips sign. */
+export function evalForMover(evalCpWhite: number, mover: "w" | "b"): number {
+  return mover === "w" ? evalCpWhite : -evalCpWhite;
+}
+
+/** Classify a move by centipawn loss from the mover's point of view. Thresholds
+ *  match the game-review coach so every analysis surface agrees. Uses the eval
+ *  loss, not the raw position eval, so a sound move in a winning or lost
+ *  position is no longer reported as a blunder. */
+export function classifyCpLoss(
+  cpLoss: number,
+  isBestMove: boolean,
+  evalBeforeMover = 0,
+  evalAfterMover = 0,
+): MoveClassification {
+  if (!Number.isFinite(cpLoss) || cpLoss < 0) return "good";
+  if (isBestMove && cpLoss < 5) return "best";
+  const wasWinning = evalBeforeMover >= 400;
+  const stillWinning = evalAfterMover >= 400;
+  if (wasWinning && stillWinning) {
+    if (cpLoss <= 50) return "good";
+    if (cpLoss <= 200) return "inaccuracy";
+    return "mistake";
+  }
+  if (cpLoss <= 10) return "best";
+  if (cpLoss <= 25) return "good";
+  if (cpLoss <= 75) return "inaccuracy";
+  if (cpLoss <= 200) return "mistake";
+  return "blunder";
+}
+
 export function buildMoveQualityCommentary(args: {
   classification: MoveClassification;
   cpLoss: number;

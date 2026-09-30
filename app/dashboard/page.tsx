@@ -457,12 +457,12 @@ export default function DashboardPage() {
                 <h2 className="text-xl font-bold text-white">No reports yet</h2>
                 <p className="text-sm text-white/50">
                   Run your first analysis on the{" "}
-                  <Link href="/?scan=1" className="text-[#ff8c42] hover:underline">
+                  <Link href="/#scan" className="text-[#ff8c42] hover:underline">
                     scanner page
                   </Link>{" "}
                   and your report will appear here automatically.
                 </p>
-                <Link href="/?scan=1" className="mx-auto mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-8 py-3 text-sm font-bold text-[#070608] shadow-[0_0_24px_rgba(255,90,31,0.25)] transition-transform hover:scale-[1.02]">
+                <Link href="/#scan" className="mx-auto mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-8 py-3 text-sm font-bold text-[#070608] shadow-[0_0_24px_rgba(255,90,31,0.25)] transition-transform hover:scale-[1.02]">
                   Go to Scanner
                 </Link>
               </div>
@@ -847,7 +847,7 @@ export default function DashboardPage() {
                       <p className="text-xs font-bold text-[#f0edf2]">New scan ready</p>
                       <p className="text-[10px] text-[#565061]">{daysSinceLastScan} day{daysSinceLastScan !== 1 ? "s" : ""} ago</p>
                     </div>
-                    <Link href="/?scan=1" className="shrink-0 rounded-lg bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-3 py-1.5 text-[10px] font-bold text-[#070608] shadow-[0_0_18px_rgba(255,90,31,0.25)] transition-all hover:brightness-110">Scan</Link>
+                    <Link href="/#scan" className="shrink-0 rounded-lg bg-gradient-to-r from-[#ff5a1f] to-[#ff8c42] px-3 py-1.5 text-[10px] font-bold text-[#070608] shadow-[0_0_18px_rgba(255,90,31,0.25)] transition-all hover:brightness-110">Scan</Link>
                   </div>
                 </div>
               )}

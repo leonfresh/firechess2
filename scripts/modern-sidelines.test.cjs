@@ -1,5 +1,7 @@
 const fs = require('node:fs'), path = require('node:path'), Module = require('node:module');
 const ts = require('typescript'), assert = require('node:assert/strict');
+// Resolve real transitive TypeScript dependencies in the CommonJS harness.
+require.extensions['.ts'] = (mod, file) => mod._compile(ts.transpileModule(fs.readFileSync(file, 'utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText, file);
 let explorerMoves = [];
 function load(relative) {
   const file = path.resolve(relative), mod = new Module(file, module);

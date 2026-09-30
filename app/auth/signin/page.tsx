@@ -2,11 +2,13 @@
 
 import { getProviders, getSession, signIn, signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { isAllowedCallbackUrl } from "./signin-redirect";
 
 function returnAfterSignIn() {
-  // Allow the new dashboard handoff without accepting arbitrary redirect URLs.
+  // Allow the new dashboard handoff and a /report/<id> return without accepting
+  // arbitrary redirect URLs; the rules live in isAllowedCallbackUrl.
   const target = new URLSearchParams(window.location.search).get("callbackUrl");
-  return target && ["/newdashboard", "/newpricing", "/newtraining", "/api/chaos/website-login"].includes(target) ? target : "/";
+  return target && isAllowedCallbackUrl(target) ? target : "/";
 }
 
 /** Auth.js error codes (?error=) in words a player can act on. */

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import styles from './chaos-week-strip.module.css';
+import { chaosReplayHref, chaosWeekHref } from '@/lib/chaos-replay-link';
 
 /**
  * Game of the Week strip for entry points that are not /chaos/week itself: the
@@ -99,8 +100,8 @@ export function ChaosWeekStrip({
     </div>
   </section> : null;
 
-  const replayHref = `${replayBase ?? (activityHost ? '/watch?match=' : '/chaos/replay/')}${encodeURIComponent(winner.id ?? winner.roomId)}`;
-  const fullWeekHref = weekHref ?? (activityHost ? '/watch?tab=archive' : '/chaos/week');
+  const replayHref = chaosReplayHref(winner.roomId, { activityHost, replayBase });
+  const fullWeekHref = chaosWeekHref({ activityHost, weekHref });
   const fullWeekLabel = weekLabel ?? (activityHost ? 'All replays →' : 'The week →');
   const site = tone === 'site';
   const ranks = winner.moment?.fen.split(' ')[0].split('/') ?? [];

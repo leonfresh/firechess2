@@ -317,7 +317,7 @@ This illustrates a crucial truth about accuracy scoring: **the engine judges the
 
 ## Position Deep Dive: Accuracy in Action
 
-Theory is one thing — let's see how accuracy plays out in real positions. Below are three positions that show exactly how centipawn loss translates to accuracy, and why the engine's judgment often diverges from human intuition.
+Theory is one thing — let's see how accuracy plays out in real positions. If you want to test whether you can spot these differences yourself, try our [Guess the Elo challenge](/blog/guess-the-elo-chess) — it trains exactly this skill. Below are three positions that show exactly how centipawn loss translates to accuracy, and why the engine's judgment often diverges from human intuition.
 
 ### Position 1: The99% Move vs. the 70% Move
 

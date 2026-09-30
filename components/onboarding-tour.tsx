@@ -45,12 +45,6 @@ const STEPS: TourStep[] = [
     placement: "bottom",
   },
   {
-    target: "[data-tour='daily-login']",
-    title: "Daily Login Rewards",
-    body: "Come back each day to claim escalating coin rewards. Complete a full 7-day streak for a big bonus!",
-    placement: "bottom",
-  },
-  {
     target: "[data-tour='daily-challenge']",
     title: "Daily Challenge",
     body: "A missed tactic from your own games — try to find the best move each day. Correct answers earn 10 coins.",
@@ -72,12 +66,6 @@ const STEPS: TourStep[] = [
     target: "[data-tour='progress']",
     title: "Progress Over Time",
     body: "After 2+ scans you'll see accuracy and CP loss charts — the best way to track improvement.",
-    placement: "top",
-  },
-  {
-    target: "[data-tour='coin-shop']",
-    title: "Coin Shop",
-    body: "Spend your earned coins on board themes, eval bar skins, and profile titles. Buy once, swap freely.",
     placement: "top",
   },
   {

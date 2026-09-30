@@ -189,7 +189,7 @@ The pattern is unmistakable: **performance degrades as the game goes on**. This 
 
 ## How Your Mistake Profile Changes With Rating
 
-This chart shows how the most common centipawn-loss categories shift as you improve. At lower ratings, tactical blunders dominate. At higher ratings, positional errors and endgame mistakes become the primary leak.
+This chart shows how the most common centipawn-loss categories shift as you improve. At lower ratings, tactical blunders dominate. At higher ratings, positional errors and endgame mistakes become the primary leak. These patterns are so consistent that you can [guess a player's Elo](/blog/guess-the-elo-chess) just from their mistake profile — try it yourself and see how close you get.
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
 <svg width="720" height="420" viewBox="0 0 720 420" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
+import { redactScanResultForFree, resolveFullAccess } from "@/lib/scan-access";
 import { scanSessions } from "@/lib/schema";
 import {
   computeScanReportMeta,
@@ -67,7 +68,21 @@ export async function GET(
       return NextResponse.json({ error: "Scan not found." }, { status: 404 });
     }
 
-    return NextResponse.json({ scan: toPayload(row) });
+    // Enforce the paywall on the server, not only in the browser: the scan's
+    // owner, Pro/Lifetime, a $9 unlock, admins and samples get the full result;
+    // anyone else (including a plain curl of a shared link) gets the Free view.
+    const session = await auth();
+    const full = await resolveFullAccess({
+      scanId: id,
+      scanUserId: row.userId,
+      guestToken: row.guestToken,
+      userId: session?.user?.id,
+      ownerToken: req.headers.get("x-scan-owner-token"),
+    });
+    const payload = toPayload(row);
+    if (!full) payload.result = redactScanResultForFree(payload.result);
+
+    return NextResponse.json({ scan: payload });
   } catch (error) {
     console.error("[scans GET]", error);
     return NextResponse.json(

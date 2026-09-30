@@ -59,7 +59,7 @@ Now turn on the engine. Compare your assessment with Stockfish's evaluation. The
 
 In this position, many club players would think "I'm up a pawn, I'm fine." But Black's position is actually critical. White has development, central control, and will generate a powerful attack against Black's exposed king. The pawn grab on e4 was the mistake — not immediately, but because of what it allows White to do next.
 
-If you identified this as a critical moment during your analysis *without* the engine, you're building the right pattern recognition. If you thought Black was better because of the extra pawn, that's your analysis homework: study the [Italian Game opening principles](/blog/italian-game-mistakes-club-players-make) and understand why material isn't everything in open positions.
+If you identified this as a critical moment during your analysis *without* the engine, you're building the right pattern recognition — the same skill that lets you [guess a player's rating](/blog/guess-the-elo-chess) from a handful of moves. If you thought Black was better because of the extra pawn, that's your analysis homework: study the [Italian Game opening principles](/blog/italian-game-mistakes-club-players-make) and understand why material isn't everything in open positions.
 
 ## Step 2: Check Your Opening Against the Theory Tree
 

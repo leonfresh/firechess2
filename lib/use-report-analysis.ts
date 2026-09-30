@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { scanOwnerStorageKey } from "@/lib/scan-session";
 
 export type SectionKey = "openings" | "tactics" | "endgames" | "positional";
 
@@ -72,10 +73,27 @@ export function useReportAnalysis(scan: any): {
     setLoading(true);
     setError(null);
 
+    let ownerToken =
+      typeof scan.guestToken === "string" ? scan.guestToken : "";
+    if (!ownerToken) {
+      try {
+        ownerToken =
+          window.localStorage.getItem(scanOwnerStorageKey(scanId)) ?? "";
+      } catch {
+        /* owner token unavailable */
+      }
+    }
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (ownerToken) headers["x-scan-owner-token"] = ownerToken;
+
+    // The server rebuilds the summary from the stored scan and only serves the
+    // owner, so the request carries the scan id instead of trusting our numbers.
     fetch("/api/report/analyze", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(summary),
+      headers,
+      body: JSON.stringify({ scanId }),
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
@@ -104,7 +122,7 @@ export function useReportAnalysis(scan: any): {
             method: "PATCH",
             headers: {
               "Content-Type": "application/json",
-              "x-scan-owner-token": scan.guestToken || "",
+              "x-scan-owner-token": ownerToken,
             },
             body: JSON.stringify({
               result: { ...currentResult, aiAnalysis: data },
