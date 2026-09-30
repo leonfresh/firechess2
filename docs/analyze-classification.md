@@ -1,8 +1,8 @@
 # PGN analyzer move classification
 
 `app/analyze/page.tsx` classifies each played move by **centipawn loss** from the
-mover's point of view, using `classifyCpLoss` / `evalForMover` from
-`lib/move-quality.ts` (the same thresholds as the `/coach` review surface).
+mover's point of view via `classifyPlies` in `lib/move-quality.ts`, which uses
+`classifyCpLoss` / `evalForMover` (the same thresholds as the `/coach` surface).
 
 Before this, the analyzer used the raw position evaluation (`Math.abs(e.cp)` of
 the position *before* the move), so any move in a >3-pawn position was labelled
@@ -16,9 +16,12 @@ position costs one extra engine call.
 
 ## Regression check
 
-No test runner is configured and the change tool rejects new `.js`/`.cjs` files,
-so run this one-liner from the project root:
+Run the checked-in node test (Node 22.6+):
 
 ```sh
-node -e "const fs=require('fs'),ts=require('typescript'),M=require('module'),p=require('path');const f=p.resolve('lib/move-quality.ts'),m=new M(f);m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,f);const{classifyCpLoss,evalForMover}=m.exports,a=require('assert').strict;a.equal(evalForMover(120,'b'),-120);a.equal(classifyCpLoss(0,true,500,500),'best');a.equal(classifyCpLoss(10,false,500,490),'good');a.equal(classifyCpLoss(20,false,-300,-320),'good');a.equal(classifyCpLoss(40,false,20,-20),'inaccuracy');a.equal(classifyCpLoss(120,false,20,-100),'mistake');a.equal(classifyCpLoss(350,false,20,-330),'blunder');a.equal(classifyCpLoss(NaN,false,0,0),'good');console.log('pgn classification regressions passed');"
+node --experimental-strip-types --test scripts/analyze-classify.test.ts
 ```
+
+It imports `lib/move-quality.ts` directly, so `chess.js` resolves from the repo's
+`node_modules`. The old `Module._compile` one-liner failed with
+`Cannot find module 'chess.js'`.

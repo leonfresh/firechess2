@@ -335,6 +335,41 @@ export function classifyCpLoss(
   return "blunder";
 }
 
+export type AnalyzedPlyInput = {
+  /** Move played, as UCI (e.g. "e2e4"). */
+  uci: string;
+  color: "w" | "b";
+  /** Evaluation of the position BEFORE this ply, from White's point of view. */
+  evalCp: number | null;
+  /** Engine best move for the position before this ply. */
+  bestMove: string | null;
+};
+
+/**
+ * Classify a whole game by centipawn loss, from each mover's point of view.
+ * The evaluation after ply i is the evaluation of the position before ply i + 1,
+ * so the next ply's eval is reused; the last ply uses `finalEvalWhite` (the eval
+ * of the final position). A ply whose own eval, or the eval that follows it, is
+ * missing stays null. This is the wiring the PGN analyzer (app/analyze) uses.
+ */
+export function classifyPlies(
+  plies: AnalyzedPlyInput[],
+  finalEvalWhite: number | null,
+): (MoveClassification | null)[] {
+  return plies.map((ply, i) => {
+    const whiteAfter =
+      i + 1 < plies.length ? plies[i + 1].evalCp : finalEvalWhite;
+    if (ply.evalCp == null || whiteAfter == null) return null;
+    const evalBeforeMover = evalForMover(ply.evalCp, ply.color);
+    const evalAfterMover = evalForMover(whiteAfter, ply.color);
+    const cpLoss = Math.max(0, evalBeforeMover - evalAfterMover);
+    const isBest =
+      !!ply.bestMove &&
+      (ply.bestMove === ply.uci || ply.bestMove.startsWith(ply.uci.slice(0, 4)));
+    return classifyCpLoss(cpLoss, isBest, evalBeforeMover, evalAfterMover);
+  });
+}
+
 export function buildMoveQualityCommentary(args: {
   classification: MoveClassification;
   cpLoss: number;

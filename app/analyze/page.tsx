@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chess, type PieceSymbol } from "chess.js";
 import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { EvalBar } from "@/components/eval-bar";
-import { classifyCpLoss, evalForMover } from "@/lib/move-quality";
+import { classifyPlies } from "@/lib/move-quality";
 import { stockfishClient } from "@/lib/stockfish-client";
 import { useBoardTheme, useCustomPieces, useShowCoordinates } from "@/lib/use-coins";
 import { useBoardSize } from "@/lib/use-board-size";
@@ -94,19 +94,18 @@ export default function AnalyzePage() {
         if (e?.cp != null) finalWhite = lastFen.includes(" w ") ? e.cp : -e.cp;
       } catch { /* last move is left unclassified */ }
     }
-    for (let i = 0; i < result.length; i++) {
-      const whiteBefore = result[i].evalCp;
-      const whiteAfter = i + 1 < result.length ? result[i + 1].evalCp : finalWhite;
-      if (whiteBefore == null || whiteAfter == null) continue;
-      const mover = result[i].color;
-      const evalBeforeMover = evalForMover(whiteBefore, mover);
-      const evalAfterMover = evalForMover(whiteAfter, mover);
-      const cpLoss = Math.max(0, evalBeforeMover - evalAfterMover);
-      const best = bestByIndex[i];
-      const uci = result[i].uci;
-      const isBest = !!best && (best === uci || best.startsWith(uci.slice(0, 4)));
-      result[i].classification = classifyCpLoss(cpLoss, isBest, evalBeforeMover, evalAfterMover);
-    }
+    const classifications = classifyPlies(
+      result.map((move, i) => ({
+        uci: move.uci,
+        color: move.color,
+        evalCp: move.evalCp,
+        bestMove: bestByIndex[i] ?? null,
+      })),
+      finalWhite,
+    );
+    classifications.forEach((classification, i) => {
+      result[i].classification = classification;
+    });
     setMoves([...result]);
     setAnalysing(false);
   }, [pgn]);
