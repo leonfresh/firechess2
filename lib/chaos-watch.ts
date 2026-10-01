@@ -27,6 +27,9 @@ export type WatchFrame = {
   from?: string;
   to?: string;
   kingCapture?: boolean;
+  /** The mover's king captured a Kamikaze Bishop and died to it (authoritative marker, so the
+   *  replay no longer has to infer the blast from the before/after FEN diff). */
+  kamikazeKing?: boolean;
   pieceStays?: boolean;
 };
 /** Discord Activity requires a signed discord_ identity before play. Browser
@@ -59,10 +62,33 @@ export function expandVisual(s: VisualState) {
   };
 }
 export function archiveFrames(record: any): WatchFrame[] {
-  if (Array.isArray(record.frames) && record.frames.length)
-    return record.frames;
-  // Older records have authoritative FENs but no historical piece assignments.
   const moves = Array.isArray(record.moves) ? record.moves : [];
+  if (Array.isArray(record.frames) && record.frames.length) {
+    // Older saved frames predate the kamikazeKing marker. Re-attach it from move history
+    // without mutating the stored record, and only on the frame that produced the move
+    // (matched by from/to/fen) so no adjacent frame is mislabelled.
+    const flagged = moves.filter((m: any) => m?.kamikazeKing);
+    if (flagged.length) {
+      const aligned = record.frames.slice();
+      let changed = false;
+      for (const move of flagged) {
+        const at = aligned.findIndex(
+          (frame: WatchFrame) =>
+            !frame.kamikazeKing &&
+            frame.from === move.from &&
+            frame.to === move.to &&
+            (!move.fen || move.fen === frame.fen),
+        );
+        if (at >= 0) {
+          aligned[at] = { ...aligned[at], kamikazeKing: true };
+          changed = true;
+        }
+      }
+      if (changed) return aligned;
+    }
+    return record.frames;
+  }
+  // Older records have authoritative FENs but no historical piece assignments.
   const frames = moves
     .filter((m: any) => typeof m.fen === "string")
     .map((m: any, i: number) => ({
@@ -76,6 +102,7 @@ export function archiveFrames(record: any): WatchFrame[] {
       from: m.from,
       to: m.to,
       kingCapture:!!m.kingCapture,
+      kamikazeKing:!!m.kamikazeKing,
       pieceStays:!!m.pieceStays,
     }));
   if (record.fen && !moves.at(-1)?.kingCapture)

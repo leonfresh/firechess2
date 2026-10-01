@@ -82,7 +82,7 @@ export function shouldEmitWatchEffects(a: {
     (a.stepForward && a.index === a.previousIndex + 1)
   );
 }
-type Frame = {fen:string;from?:string;to?:string;state:{white:string[];black:string[];assignedSquares?:Record<string,string|null>;playerNuclearCooldownUntil?:number;aiNuclearCooldownUntil?:number}};
+type Frame = {fen:string;from?:string;to?:string;state:{white:string[];black:string[];assignedSquares?:Record<string,string|null>;playerNuclearCooldownUntil?:number;aiNuclearCooldownUntil?:number};kamikazeKing?:boolean};
 export function watchTransition(before:Frame, after:Frame, result?:{winner:string;reason:string}|null): {effects:WatchImpact[];sound:"chaos-mate"|"chaos-blast"|"chaos-pew"|"capture"|"check"|"move"|"correct"|"select"|"revive"|null} {
  const effects:WatchImpact[]=[];
  let old:Chess,next:Chess;
@@ -125,7 +125,14 @@ export function watchTransition(before:Frame, after:Frame, result?:{winner:strin
  const impact=kamikazeImpact(before.fen,after.fen,{w:before.state.white.includes('kamikaze-bishop'),b:before.state.black.includes('kamikaze-bishop')});
  const shot=sniperImpact(before.fen,after.fen,{w:before.state.white.includes('sniper-bishop'),b:before.state.black.includes('sniper-bishop')});
  let sound:ReturnType<typeof watchTransition>['sound']=effects.some(e=>e.kind==='power')?'select':'move';
- if(impact){effects.push({kind:'kamikaze',square:impact.square,pieces:impact.pieces,kingKamikaze:impact.king===true});sound='chaos-blast';}
+ // The archived frame carries the authoritative king-Kamikaze marker. Prefer it: the FEN diff
+ // alone can miss the transition (or lack powers in older frames). Keep the detector as fallback.
+ const kingSquare = after.kamikazeKing && after.to ? after.to : null;
+ const kingPiece = kingSquare ? next.get(kingSquare as Parameters<Chess['get']>[0]) : null;
+ if(kingSquare && kingPiece?.type==='k'){
+  effects.push({kind:'kamikaze',square:kingSquare,pieces:[`${kingPiece.color==='w'?'b':'w'}B`,`${kingPiece.color}K`],kingKamikaze:true});sound='chaos-blast';
+ }
+ else if(impact){effects.push({kind:'kamikaze',square:impact.square,pieces:impact.pieces,kingKamikaze:impact.king===true});sound='chaos-blast';}
  else if(shot){effects.push({kind:'sniper',square:shot.square,pieces:shot.pieces});sound='chaos-pew';}
  else if(after.from && after.to){
   const from=after.from as Parameters<Chess['get']>[0],to=after.to as Parameters<Chess['get']>[0];

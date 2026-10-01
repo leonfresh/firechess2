@@ -543,6 +543,7 @@ export function reduceCommand(room: SyncRoom, userId: string, command: any, now 
       : replayFrom && replayTo ? `${color}: ${replayFrom} → ${replayTo}` : type.replaceAll('_',' ');
     meta.replayFrames = [...frames,{fen:patch.fen ?? room.fen,state:visualState(nextState),label,
       ...(type === "king_capture" ? {kingCapture:true,pieceStays:!!(patch.moveHistory as any[])?.at(-1)?.pieceStays} : {}),
+      ...(type === "kamikaze_king" ? {kamikazeKing:true} : {}),
       ...(replayFrom && replayTo ? {from:replayFrom,to:replayTo} : {})}];
   }
   meta.revision++;
