@@ -148,7 +148,7 @@ A piece that defends another piece is a "defender." If you can capture or chase 
 </chess-position>
 In this position, the black knight on d6 is defended by the bishop on e7 (and potentially other pieces). White plays **1. Bxf7+!** The black king must recapture or move. If **1... Kxf7**, the bishop is gone, but more importantly, the knight on d6 has lost a key defender. If **2. Ne5+** (forking king and knight), black is in trouble.
 
-"Removing the defender" covers many tactical ideas — it could be a sacrifice to eliminate a key defender, or a simple exchange that leaves a piece hanging. Before every capture, ask yourself: "What else does that piece defend?"
+"Removing the defender" covers many tactical ideas — it could be a sacrifice to eliminate a key defender, or a simple exchange that leaves a piece hanging. The most spectacular example is [Shirov's 47...Bh3!! against Topalov](/blog/shirov-topalov-bh3-sacrifice) — the bishop removed itself from the defense of the kingside, but in doing so created a decisive zugzwang that won the game. Before every capture, ask yourself: "What else does that piece defend?"
 
 ---
 

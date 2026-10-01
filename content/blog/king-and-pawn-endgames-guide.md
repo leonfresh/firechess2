@@ -195,7 +195,7 @@ The most common mistake is **pushing the wrong pawn first.** In the position abo
 
 ## 6. Zugzwang: When Having to Move Is a Disadvantage
 
-Zugzwang is the nightmare of king and pawn endgames. It means being forced to move when every move makes your position worse. In most chess positions, having the move is an advantage. In zugzwang positions, it's a curse.
+Zugzwang is the nightmare of king and pawn endgames. It means being forced to move when every move makes your position worse. In most chess positions, having the move is an advantage. In zugzwang positions, it's a curse. The most famous zugzwang in chess history came from [Shirov vs Topalov 1998](/blog/shirov-topalov-bh3-sacrifice), where 47...Bh3!! created an unstoppable zugzwang that forced resignation — proving that zugzwang isn't just a theoretical curiosity but a practical weapon at the highest level.
 
 <chess-position fen="3k4/8/3KP3/8/8/8/8/8 b - - 0 1" caption="Zugzwang: Black to move loses. 1...Kc8 2.Ke7! and the pawn promotes. 1...Ke8 2.Kc7! and the pawn promotes. But if it were White to move, White would have to step back and the position would be drawn." orientation="white" arrows="d8c8:red,d6e7:green" badge="best"></chess-position>
 

@@ -129,7 +129,7 @@ Upload your games to [FireChess's analysis tool](/analyze) and look at the blund
 
 ## Step 5: Evaluate Your Endgame Technique
 
-Endgames are where club players leave the most rating points on the table — not because they misplay complex positions, but because they don't know the basic theoretical positions. A drawn rook endgame becomes a loss because you didn't know the Lucena position. A winning king-and-pawn endgame becomes a draw because you didn't know the opposition.
+Endgames are where club players leave the most rating points on the table — not because they misplay complex positions, but because they don't know the basic theoretical positions. A drawn rook endgame becomes a loss because you didn't know the Lucena position. A winning king-and-pawn endgame becomes a draw because you didn't know the opposition. And sometimes, endgames produce the most brilliant moves in chess history — [Shirov's 47...Bh3!! against Topalov](/blog/shirov-topalov-bh3-sacrifice) is a masterclass in endgame calculation that every improving player should study.
 
 **The endgame knowledge gap at club level:**
 

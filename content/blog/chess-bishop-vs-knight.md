@@ -86,7 +86,7 @@ The bishop pair advantage isn't automatic. It requires an open or semi-open posi
 
 ## Endgame Truths: The Piece That Survives to the Endgame Wins
 
-In endgames, the bishop vs knight question gets sharper. With fewer pieces on the board, every square matters more, and the fundamental difference between the two pieces — long-range vs short-range — becomes decisive.
+In endgames, the bishop vs knight question gets sharper. With fewer pieces on the board, every square matters more, and the fundamental difference between the two pieces — long-range vs short-range — becomes decisive. And sometimes a bishop can do things no knight ever could — [Shirov's 47...Bh3!! against Topalov](/blog/shirov-topalov-bh3-sacrifice) is the most famous bishop sacrifice in endgame history, proving that a bishop's diagonal reach can create unstoppable zugzwang.
 
 <chess-position fen="8/5k2/5p2/3N1Kp1/6P1/8/8/8 w - - 0 1" caption="Knight endgame. The knight on d5 dominates — it controls e7, c7, f6, and f4. With pawns fixed on dark squares (f6, g5), the knight's control of light squares is decisive." orientation="white" arrows="d5e7:green,d5f6:green,d5c7:orange" badge="best"></chess-position>
 

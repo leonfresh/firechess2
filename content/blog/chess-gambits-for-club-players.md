@@ -264,7 +264,7 @@ Most club players lose gambit games because they don't understand the resulting 
 
 ### Q: What's the difference between a gambit and a sacrifice?
 
-A gambit is a sacrifice in the opening — usually a pawn — in exchange for development or initiative. A sacrifice is a broader term that includes tactical sacrifices in the middlegame and endgame. Gambits are planned before the game; sacrifices are calculated during the game. Both rely on the principle that activity and piece coordination can outweigh material.
+A gambit is a sacrifice in the opening — usually a pawn — in exchange for development or initiative. A sacrifice is a broader term that includes tactical sacrifices in the middlegame and endgame. Gambits are planned before the game; sacrifices are calculated during the game. Both rely on the principle that activity and piece coordination can outweigh material. The most famous endgame sacrifice in chess history is [Shirov's 47...Bh3!! against Topalov](/blog/shirov-topalov-bh3-sacrifice) — a bishop sacrifice that created an unstoppable zugzwang, proving that material is secondary to activity even in the endgame.
 
 ---
 
