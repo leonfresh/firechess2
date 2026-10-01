@@ -2412,7 +2412,7 @@ const EFFECT_KEYFRAMES = `
 @keyframes ce-feedback   { 0%{opacity:0} 10%{opacity:1} 82%{opacity:1} 100%{opacity:0} }
 `;
 
-type BoardEffect = { id: number; type: string; squares: string[]; pieces?: string[] };
+type BoardEffect = { id: number; type: string; squares: string[]; pieces?: string[]; text?: string };
 type RicochetAnimState = {
   id: number;
   from: string;
@@ -2444,7 +2444,7 @@ function BoardEffectsOverlay({
     <>
       <style>{EFFECT_KEYFRAMES}</style>
       <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[8px]">
-        {effects.flatMap(({ id, type, squares, pieces }) =>
+        {effects.flatMap(({ id, type, squares, pieces, text }) =>
           squares.map((square, squareIndex) => {
             const file = square.charCodeAt(0) - 97;
             const rank = parseInt(square[1], 10) - 1;
@@ -2452,8 +2452,9 @@ function BoardEffectsOverlay({
             const y = orientation === "white" ? (7 - rank) * sq : rank * sq;
 
             let inner: React.ReactNode = null;
-            if (type === "kamikaze" || type === "checkmate" || type === "sniper") {
-              inner = <ChaosImpact mate={type === "checkmate"} kind={type === "sniper" ? "sniper" : undefined} pieces={pieces} column={x / sq} row={y / sq}/>;
+            if (type === "kamikaze" || type === "king-kamikaze" || type === "checkmate" || type === "sniper") {
+              const kingKamikaze = type === "king-kamikaze";
+              inner = <ChaosImpact mate={type === "checkmate"} kind={type === "sniper" ? "sniper" : kingKamikaze ? "kamikaze" : undefined} word={kingKamikaze ? "ROYAL KABOOM!" : undefined} sub={kingKamikaze ? text : undefined} pieces={pieces} column={x / sq} row={y / sq}/>;
             } else if (type === "revive" || type === "summon") {
               // One label per group (two Knight Horde knights read as one "SUMMONED!").
               inner = <ChaosImpact kind={type} showLabel={squareIndex === 0} pieces={pieces?.[squareIndex] ? [pieces[squareIndex]] : undefined} column={x / sq} row={y / sq}/>;
@@ -4010,7 +4011,17 @@ export default function ChaosChessPage() {
       const impact = kamikazeImpact(previous.fen, impactFen, armed);
       if (impact) {
         const id = ++effectIdRef.current;
-        setBoardEffects(e=>[...e,{id,type:"kamikaze",squares:[impact.square],pieces:presentation.activity?impact.pieces:undefined}]);
+        // A king that takes the Kamikaze Bishop loses the game but stays on the board,
+        // so give that transition its own punchy royal overlay (live path).
+        setBoardEffects(e=>[...e,{
+          id,
+          type: impact.king ? "king-kamikaze" : "kamikaze",
+          squares:[impact.square],
+          pieces:presentation.activity?impact.pieces:undefined,
+          text: impact.king
+            ? (impact.pieces?.[1]?.[0] === own ? "Your king triggered Kamikaze" : "Enemy king triggered Kamikaze")
+            : undefined,
+        }]);
         setTimeout(()=>setBoardEffects(e=>e.filter(x=>x.id!==id)),1500);
         playSound("chaos-blast");
       } else {
@@ -11476,7 +11487,7 @@ export default function ChaosChessPage() {
             <div
               ref={boardContainerRef}
               data-arena-board
-              data-impact={boardEffects.some(effect => ["explosion", "nuke", "kamikaze", "checkmate"].includes(effect.type)) ? "blast" : undefined}
+              data-impact={boardEffects.some(effect => ["explosion", "nuke", "kamikaze", "king-kamikaze", "checkmate"].includes(effect.type)) ? "blast" : undefined}
               style={{
                 width: `min(100%, min(${640 + boardSizeOffset * 40}px, max(200px, calc(100dvh - ${Math.max(200, (presentation.activity ? 330 : 380) - boardSizeOffset * 40)}px))))`,
                 maxWidth: `${640 + boardSizeOffset * 40}px`,

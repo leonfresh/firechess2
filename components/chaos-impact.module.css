@@ -26,3 +26,6 @@
 @keyframes impact-settle{0%{transform:scale(2.4);opacity:0}35%{opacity:.9}100%{transform:scale(.85);opacity:0}}
 @keyframes impact-portal{0%{transform:scale(.2) rotate(0);opacity:.95}100%{transform:scale(2.2) rotate(180deg);opacity:0}}
 @media(prefers-reduced-motion:reduce){.pillar,.riser{display:none}}
+/* Second line for the label (e.g. the king-triggered-Kamikaze note). Inherits the label's
+   fitted width/position and the reduced-motion static treatment because it is inside it. */
+.sub{display:block;font-size:.58em;line-height:1.15;font-weight:800;color:#ffe9b0;margin-top:.2em;letter-spacing:0}

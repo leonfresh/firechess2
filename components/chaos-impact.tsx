@@ -1,7 +1,7 @@
 "use client";
 import { useLayoutEffect, useRef, type CSSProperties } from "react";
 import styles from "./chaos-impact.module.css";
-export function ChaosImpact({mate=false,pieces=[],kind, column=3, row=3, showLabel=true}:{mate?:boolean;pieces?:string[];kind?:string;column?:number;row?:number;showLabel?:boolean}) {
+export function ChaosImpact({mate=false,pieces=[],kind,word,sub, column=3, row=3, showLabel=true}:{mate?:boolean;pieces?:string[];kind?:string;word?:string;sub?:string;column?:number;row?:number;showLabel?:boolean}) {
   const burst = useRef<HTMLDivElement>(null);
   const label = useRef<HTMLSpanElement>(null);
   useLayoutEffect(() => {
@@ -34,6 +34,6 @@ export function ChaosImpact({mate=false,pieces=[],kind, column=3, row=3, showLab
       const angle = rising ? -Math.PI/2 + ((i%8)-3.5)*0.22 : i*2.39996;
       const distance = mate ? 110+(i%4)*24 : rising ? 38+(i%5)*13 : 55+(i%4)*16;
       return <i key={i} className={styles.spark} style={{"--x":`${Math.round(Math.cos(angle)*distance)}px`,"--y":`${Math.round(Math.sin(angle)*distance)}px`,"--r":`${i*53}deg`,"--delay":`${rising?(i%6)*70:(i%4)*30}ms`,"--color":palette[i%4]} as CSSProperties}/>;})}
-    {showLabel && <span ref={label} className={styles.label}>{mate?'CHECKMATE':kind==='nuclear'?'NUCLEAR!':kind==='sniper'?'PEW!':kind==='promotion'?'PROMOTED!':kind==='power'?'POWER UP!':kind==='revive'?'REVIVED!':kind==='summon'?'SUMMONED!':'BOOM!'}</span>}
+    {showLabel && <span ref={label} className={styles.label}>{word ?? (mate?'CHECKMATE':kind==='nuclear'?'NUCLEAR!':kind==='sniper'?'PEW!':kind==='promotion'?'PROMOTED!':kind==='power'?'POWER UP!':kind==='revive'?'REVIVED!':kind==='summon'?'SUMMONED!':'BOOM!')}{sub && <small className={styles.sub}>{sub}</small>}</span>}
   </div>;
 }

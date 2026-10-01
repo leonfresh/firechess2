@@ -7,7 +7,7 @@ export function WatchEffects({effects,flipped}:{effects:WatchImpact[];flipped:bo
  const file=effect.square.charCodeAt(0)-97,rank=Number(effect.square[1])-1;
  const big=['kamikaze','sniper','checkmate','nuclear','promotion','power','revive','summon'].includes(effect.kind);
  return <div key={i} className={styles.anchor} data-kind={effect.kind} style={{left:`${(flipped?7-file:file)*12.5}%`,top:`${(flipped?rank:7-rank)*12.5}%`, '--label-y':(flipped?rank:7-rank)===0?'28px':'-28px'} as CSSProperties}>
- {big?<ChaosImpact mate={effect.kind==='checkmate'} kind={effect.kind} showLabel={!['power','revive','summon'].includes(effect.kind) || i===effects.findIndex(e=>e.kind===effect.kind)} pieces={effect.pieces} column={flipped?7-file:file} row={flipped?rank:7-rank}/>:<div className={styles.pulse}>{effect.kind==='power'?'✦':effect.kind==='check'?'!':effect.kind==='castle'?'♜':''}</div>}
+ {big?<ChaosImpact mate={effect.kind==='checkmate'} kind={effect.kind} word={effect.kingKamikaze?'ROYAL KABOOM!':undefined} sub={effect.kingKamikaze?'The king triggered Kamikaze':undefined} showLabel={!['power','revive','summon'].includes(effect.kind) || i===effects.findIndex(e=>e.kind===effect.kind)} pieces={effect.pieces} column={flipped?7-file:file} row={flipped?rank:7-rank}/>:<div className={styles.pulse}>{effect.kind==='power'?'✦':effect.kind==='check'?'!':effect.kind==='castle'?'♜':''}</div>}
  </div>;
  })}</div>;
 }

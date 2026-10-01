@@ -2,7 +2,7 @@
 import {getKingCaptureMove} from "@/lib/chaos-outcome";
 import {createChaosState} from "@/lib/chaos-chess";
 import {WatchEffects} from "./chaos-watch-effects";
-import {watchTransition, type WatchImpact} from "@/lib/chaos-impact";
+import {watchTransition, shouldEmitWatchEffects, type WatchImpact} from "@/lib/chaos-impact";
 import { ChaosNavLink, chaosHref } from "./chaos-nav-link";
 import { SpectatorCount } from "./chaos-spectator-count";
 import { installChaosSounds } from "@/lib/chaos-sound-pack";
@@ -539,9 +539,18 @@ export function ChaosWatch({
     effectPrevious.current={key:watchKey,frame,index,terminal};
     setWatchEffects([]);
     if(!previous || previous.key!==watchKey || document.visibilityState!=='visible')return;
-    const advance=(selected?.live && following) || (forward && index===previous.index+1);
-    if(!advance)return;
-    if(previous.frame.fen===frame.fen && JSON.stringify(previous.frame.state)===JSON.stringify(frame.state) && previous.terminal===terminal)return;
+    const changed=!(previous.frame.fen===frame.fen && JSON.stringify(previous.frame.state)===JSON.stringify(frame.state) && previous.terminal===terminal);
+    if(!shouldEmitWatchEffects({
+      hasPrevious:true,
+      sameScene:previous.key===watchKey,
+      visible:document.visibilityState==='visible',
+      live:!!selected?.live,
+      following,
+      stepForward:forward,
+      previousIndex:previous.index,
+      index,
+      changed,
+    }))return;
     const transition=watchTransition(previous.frame,frame,terminal&&!previous.terminal?detail?.result:null);
     setWatchEffects(transition.effects);
     setEffectSequence(n=>n+1);

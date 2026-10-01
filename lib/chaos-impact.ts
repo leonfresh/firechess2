@@ -1,21 +1,43 @@
 import { Chess } from "chess.js";
 import { ALL_MODIFIERS } from "./chaos-chess";
 /** A mutual kill removes exactly the victim and attacker, and adds no piece. */
-export function kamikazeImpact(before: string, after: string, armed: {w:boolean;b:boolean}) {
+export type KamikazeImpact = { square: string; pieces: string[]; king?: boolean };
+/** A mutual kill removes exactly the victim and attacker, and adds no piece. A king that
+ *  captures a Kamikaze Bishop is destroyed by the rules, but chess.js cannot hold a kingless
+ *  board: the king stays on the bishop's square and the caller ends the game. That transition
+ *  reads as one relocation (the king) plus one vanishing bishop, which the old two-removals / no-addition
+ *  signature missed — so it fell through to a plain capture and showed no Kamikaze feedback. */
+export function kamikazeImpact(
+  before: string,
+  after: string,
+  armed: { w: boolean; b: boolean },
+): KamikazeImpact | null {
   if (before === after || (!armed.w && !armed.b)) return null;
   let old: Chess, next: Chess;
   try { old = new Chess(before); next = new Chess(after); } catch { return null; }
-  const removed = old.board().flat().filter(p => p && (!next.get(p.square) || next.get(p.square)?.type !== p.type || next.get(p.square)?.color !== p.color));
-  const added = next.board().flat().some(p => p && (!old.get(p.square) || old.get(p.square)?.type !== p.type || old.get(p.square)?.color !== p.color));
-  if (added || removed.length !== 2) return null;
-  const victim = removed.find(p => p?.type === "b" && armed[p.color]);
-  const attacker = removed.find(p => p && p.color !== victim?.color);
-  if (!victim || !attacker) return null;
-  // Both bishops can be armed: the side whose turn just ended is the attacker.
-  const target = removed.find(p => p?.type === "b" && armed[p.color] && p.color !== old.turn());
-  const mover = removed.find(p => p?.color === old.turn());
-  if (!target || !mover) return null;
-  return {square:target.square, pieces:[`${target.color}B`, `${mover.color}${mover.type.toUpperCase()}`]};
+  const removed = old.board().flat().filter((p) => p && (!next.get(p.square) || next.get(p.square)?.type !== p.type || next.get(p.square)?.color !== p.color));
+  const added = next.board().flat().filter((p) => p && (!old.get(p.square) || old.get(p.square)?.type !== p.type || old.get(p.square)?.color !== p.color));
+  // Mutual kill: exactly the armed bishop and its attacker vanish, nothing is added.
+  if (added.length === 0) {
+    if (removed.length !== 2) return null;
+    // Both bishops can be armed: the side whose turn just ended is the attacker.
+    const victim = removed.find((p) => p?.type === "b" && armed[p.color] && p.color !== old.turn());
+    const mover = removed.find((p) => p?.color === old.turn());
+    if (!victim || !mover) return null;
+    return { square: victim.square, pieces: [`${victim.color}B`, `${mover.color}${mover.type.toUpperCase()}`] };
+  }
+  // King captures the bishop: the king relocates onto the bishop's square (the only addition),
+  // the armed bishop vanishes, and nothing else changes.
+  if (added.length === 1 && removed.length === 2) {
+    const king = added[0];
+    const victim = removed.find((p) => p?.type === "b" && armed[p.color]);
+    const gone = removed.find((p) => p !== victim);
+    if (!king || king.type !== "k" || !victim || !gone) return null;
+    if (gone.type !== "k" || gone.color !== king.color) return null;
+    if (king.square !== victim.square || victim.color === king.color) return null;
+    return { square: victim.square, pieces: [`${victim.color}B`, `${king.color}K`], king: true };
+  }
+  return null;
 }
 
 /** A sniper shot leaves the shooter where it stood and removes exactly one enemy piece,
@@ -36,7 +58,30 @@ export function sniperImpact(before: string, after: string, armed: {w:boolean;b:
   return {square:victim.square, pieces:[`${victim.color}${victim.type.toUpperCase()}`]};
 }
 
-export type WatchImpact = {kind:"kamikaze"|"sniper"|"checkmate"|"nuclear"|"promotion"|"castle"|"capture"|"check"|"power"|"revive"|"summon";square:string;pieces?:string[]};
+export type WatchImpact = {kind:"kamikaze"|"sniper"|"checkmate"|"nuclear"|"promotion"|"castle"|"capture"|"check"|"power"|"revive"|"summon";square:string;pieces?:string[];kingKamikaze?:boolean};
+
+/**
+ * Whether a replay/live transition should play its effects. A seek (the index jumps),
+ * a reset or scene change, a hidden tab, a backward step, or an unchanged frame emits
+ * nothing — so a king-Kamikaze burst can never come back stale or double on seek/reset.
+ */
+export function shouldEmitWatchEffects(a: {
+  hasPrevious: boolean;
+  sameScene: boolean;
+  visible: boolean;
+  live: boolean;
+  following: boolean;
+  stepForward: boolean;
+  previousIndex: number;
+  index: number;
+  changed: boolean;
+}): boolean {
+  if (!a.hasPrevious || !a.sameScene || !a.visible || !a.changed) return false;
+  return (
+    (a.live && a.following) ||
+    (a.stepForward && a.index === a.previousIndex + 1)
+  );
+}
 type Frame = {fen:string;from?:string;to?:string;state:{white:string[];black:string[];assignedSquares?:Record<string,string|null>;playerNuclearCooldownUntil?:number;aiNuclearCooldownUntil?:number}};
 export function watchTransition(before:Frame, after:Frame, result?:{winner:string;reason:string}|null): {effects:WatchImpact[];sound:"chaos-mate"|"chaos-blast"|"chaos-pew"|"capture"|"check"|"move"|"correct"|"select"|"revive"|null} {
  const effects:WatchImpact[]=[];
@@ -80,7 +125,7 @@ export function watchTransition(before:Frame, after:Frame, result?:{winner:strin
  const impact=kamikazeImpact(before.fen,after.fen,{w:before.state.white.includes('kamikaze-bishop'),b:before.state.black.includes('kamikaze-bishop')});
  const shot=sniperImpact(before.fen,after.fen,{w:before.state.white.includes('sniper-bishop'),b:before.state.black.includes('sniper-bishop')});
  let sound:ReturnType<typeof watchTransition>['sound']=effects.some(e=>e.kind==='power')?'select':'move';
- if(impact){effects.push({kind:'kamikaze',square:impact.square,pieces:impact.pieces});sound='chaos-blast';}
+ if(impact){effects.push({kind:'kamikaze',square:impact.square,pieces:impact.pieces,kingKamikaze:impact.king===true});sound='chaos-blast';}
  else if(shot){effects.push({kind:'sniper',square:shot.square,pieces:shot.pieces});sound='chaos-pew';}
  else if(after.from && after.to){
   const from=after.from as Parameters<Chess['get']>[0],to=after.to as Parameters<Chess['get']>[0];
