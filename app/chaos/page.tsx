@@ -2454,7 +2454,7 @@ function BoardEffectsOverlay({
             let inner: React.ReactNode = null;
             if (type === "kamikaze" || type === "king-kamikaze" || type === "checkmate" || type === "sniper") {
               const kingKamikaze = type === "king-kamikaze";
-              inner = <ChaosImpact mate={type === "checkmate"} kind={type === "sniper" ? "sniper" : kingKamikaze ? "kamikaze" : undefined} word={kingKamikaze ? "ROYAL KABOOM!" : undefined} sub={kingKamikaze ? text : undefined} pieces={pieces} column={x / sq} row={y / sq}/>;
+              inner = <ChaosImpact mate={type === "checkmate"} kind={type === "sniper" ? "sniper" : kingKamikaze ? "kamikaze" : undefined} word={kingKamikaze ? "ROYAL KABOOM!" : undefined} pieces={pieces} column={x / sq} row={y / sq}/>;
             } else if (type === "revive" || type === "summon") {
               // One label per group (two Knight Horde knights read as one "SUMMONED!").
               inner = <ChaosImpact kind={type} showLabel={squareIndex === 0} pieces={pieces?.[squareIndex] ? [pieces[squareIndex]] : undefined} column={x / sq} row={y / sq}/>;
