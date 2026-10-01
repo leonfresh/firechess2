@@ -8,7 +8,7 @@ tags: ["analysis", "tactics", "improvement", "stockfish"]
 
 If you've analyzed a game on Chess.com or uploaded a PGN to [FireChess Analyzer](/analyze), you've seen the electric blue diamond on certain moves — the **brilliant** classification. It's the rarest, most celebrated move badge. But what exactly makes a move brilliant, and how do engines decide to award it?
 
-This guide goes deeper than the surface. We'll look at the actual algorithm Stockfish uses under the hood, walk through a decision-tree diagram that shows you exactly when a move earns the brilliant tag, and examine famous positions from chess history where only one stunning move wins the game.
+This guide goes deeper than the surface. We'll look at the actual algorithm Stockfish uses under the hood, walk through a decision-tree diagram that shows you exactly when a move earns the brilliant tag, and examine famous positions from chess history where only one stunning move wins the game — like [Shirov's legendary 47...Bh3!!](/blog/shirov-topalov-bh3-sacrifice), a sacrifice so counter-intuitive that engines of the era called it a blunder.
 
 If you're new to engine evaluation metrics, consider reading our companion article [Chess Accuracy Score Explained](/blog/chess-accuracy-score-explained) first — it covers how centipawn loss and accuracy percentages work, which directly feeds into the brilliant-move criteria discussed below.
 

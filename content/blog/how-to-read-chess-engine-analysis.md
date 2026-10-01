@@ -297,7 +297,7 @@ The answer is almost always one of these:
 
 ### Q: The Engine Found a Deep Tactical Shot
 
-At lower depth, the engine couldn't see a combination that extends 8-10 moves deep. Once it calculated far enough, it discovered a forcing sequence that wins material or delivers checkmate. This is common in complex middlegame positions with many pieces on the board.
+At lower depth, the engine couldn't see a combination that extends 8-10 moves deep. Once it calculated far enough, it discovered a forcing sequence that wins material or delivers checkmate. This is common in complex middlegame positions with many pieces on the board. The most famous example is [Shirov's 47...Bh3!!](/blog/shirov-topalov-bh3-sacrifice) — a bishop sacrifice in a rook endgame that engines of the era evaluated as a blunder because they couldn't see the zugzwang sequence it unleashed 10+ moves later.
 
 ### Q: The Engine Found a Defensive Resource
 

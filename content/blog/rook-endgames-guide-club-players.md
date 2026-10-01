@@ -128,6 +128,7 @@ Here's the counterintuitive truth about rook endgames: **an active rook is often
 - Giving up a pawn to get your rook behind a passed pawn (Tarrasch rule)
 - Trading a flank pawn to get your rook to the seventh rank
 - Allowing a pawn to advance so your rook can check from behind
+- Even sacrificing a bishop for a pawn to create a passed pawn — as in [Shirov's legendary 47...Bh3!!](/blog/shirov-topalov-bh3-sacrifice), where a counter-intuitive bishop sacrifice in a rook endgame created unstoppable passed pawns
 
 This concept is closely related to the [middlegame principle of piece activity](/blog/chess-middlegame-strategy-finding-a-plan), but in endgames it's even more pronounced because there are fewer pieces to compensate for a passive rook.
 
