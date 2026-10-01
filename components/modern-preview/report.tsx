@@ -5,6 +5,7 @@ import { buildReviewSession, exerciseKey, readPracticeMemory, recordPractice, ty
 import { CoachingPriority } from "./coaching-priority";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useState, type FormEvent } from "react";
 import { Chess, type Square } from "chess.js";
 import { ArrowLeft, ArrowRight, ArrowUpRight, BookOpen, Check, ChevronLeft, ChevronRight, CircleHelp, Clock3, Copy, Crosshair, Flag, FlipVertical2, LayoutGrid, Lightbulb, RotateCcw, ShieldCheck, Sparkles, Target, Trophy } from "lucide-react";
@@ -14,6 +15,8 @@ import s from "./modern.module.css";
 
 import { useSession } from "@/components/session-provider";
 import { SAMPLE_REPORTS } from "@/lib/sample-reports";
+import { refreshReportData } from "@/lib/unlock-follow-up";
+import { pollUnlock } from "@/lib/unlock-poll";
 import { buildReportPositions, findingsByCategory, CATEGORIES, FREE_FINDING_LIMITS, type PreviewScan } from "./report-data";
 import { ExplainMove } from "./explain-move";
 import { ReportWorkspace } from "./report-workspace";
@@ -144,24 +147,34 @@ function StudyPosition({ onOutcome, initialPractice = false, onFinish, pattern, 
 
 export function ModernReport({ scan }: { scan: PreviewScan }) {
   const { plan, authenticated } = useSession();
+  const router = useRouter();
   const [unlocked, setUnlocked] = useState(false);
   const [unlockPending, setUnlockPending] = useState(false);
   const [unlockError, setUnlockError] = useState("");
   useEffect(() => {
-    if (!authenticated || plan !== "free") return;
+    if (!authenticated) { setUnlocked(false); return; }
+    if (plan !== "free") return;
     // Returning from Stripe, the webhook can land a moment after the redirect: check a few times.
-    let attempts = new URLSearchParams(window.location.search).get("unlocked") ? 8 : 1;
-    let timer: ReturnType<typeof setTimeout> | undefined;
     let cancelled = false;
-    async function check() {
-      const data = await fetch(`/api/report/unlock?scanId=${encodeURIComponent(scan.id)}`).then(r => r.ok ? r.json() : null).catch(() => null);
-      if (cancelled) return;
-      if (data?.unlocked) { setUnlocked(true); return; }
-      if (--attempts > 0) timer = setTimeout(check, 1500);
-    }
-    check();
-    return () => { cancelled = true; clearTimeout(timer); };
-  }, [authenticated, plan, scan.id]);
+    void pollUnlock({
+      attempts: new URLSearchParams(window.location.search).get("unlocked") ? 8 : 1,
+      delayMs: 1500,
+      sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+      isActive: () => !cancelled,
+      checkUnlock: () =>
+        fetch(`/api/report/unlock?scanId=${encodeURIComponent(scan.id)}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) => (typeof data?.unlocked === "boolean" ? data.unlocked : null))
+          .catch(() => null),
+      onFlag: setUnlocked,
+      onUnlocked: () => {
+        // If the webhook landed after this page rendered, the scan arrived redacted:
+        // refresh the server data so the entitled full result is fetched.
+        refreshReportData(router);
+      },
+    });
+    return () => { cancelled = true; };
+  }, [authenticated, plan, scan.id, router]);
   async function unlockReport() {
     if (unlockPending) return;
     if (!authenticated) { window.location.href = `/auth/signin?callbackUrl=${encodeURIComponent(`/report/${scan.id}`)}`; return; }

@@ -18,6 +18,8 @@ import {
   type AnalysisProgress,
 } from "@/lib/client-analysis";
 import { earnCoins } from "@/lib/coins";
+import { applyEntitledScan } from "@/lib/unlock-follow-up";
+import { pollUnlock } from "@/lib/unlock-poll";
 import {
   buildReportContentHash,
   computeScanReportMeta,
@@ -182,28 +184,36 @@ export function ScanSessionPage({
   // buyer following "Open the original full report" lands on this classic view
   // and sees only the Free sample. Mirrors modern-preview/report.tsx.
   useEffect(() => {
-    if (!authenticated || plan !== "free") return;
-    // Returning from Stripe, the webhook can land a moment after the redirect.
-    let attempts = new URLSearchParams(window.location.search).get("unlocked") ? 8 : 1;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let cancelled = false;
-    async function check() {
-      const data = await fetch(
-        `/api/report/unlock?scanId=${encodeURIComponent(scan.id)}`,
-      )
-        .then((r) => (r.ok ? r.json() : null))
-        .catch(() => null);
-      if (cancelled) return;
-      if (data?.unlocked) {
-        setUnlocked(true);
-        return;
-      }
-      if (--attempts > 0) timer = setTimeout(check, 1500);
+    if (!authenticated) {
+      setUnlocked(false);
+      return;
     }
-    check();
+    if (plan !== "free") return;
+    // Returning from Stripe, the webhook can land a moment after the redirect.
+    let cancelled = false;
+    void pollUnlock({
+      attempts: new URLSearchParams(window.location.search).get("unlocked") ? 8 : 1,
+      delayMs: 1500,
+      sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+      isActive: () => !cancelled,
+      checkUnlock: () =>
+        fetch(`/api/report/unlock?scanId=${encodeURIComponent(scan.id)}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) => (typeof data?.unlocked === "boolean" ? data.unlocked : null))
+          .catch(() => null),
+      onFlag: setUnlocked,
+      onUnlocked: async () => {
+        // If the Stripe webhook landed after this page was server-rendered, the
+        // scan shipped redacted; re-fetch it so the entitled full result arrives.
+        await applyEntitledScan(scan.id, {
+          fetch: (url, init) => fetch(url, init),
+          apply: setScan,
+          isActive: () => !cancelled,
+        });
+      },
+    });
     return () => {
       cancelled = true;
-      clearTimeout(timer);
     };
   }, [authenticated, plan, scan.id]);
 
