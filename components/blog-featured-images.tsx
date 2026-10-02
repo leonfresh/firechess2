@@ -144,6 +144,8 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <TradePiecesArt />;
     case "chess-opening-repertoire-builder":
       return <RepertoireBuilderArt />;
+    case "chess-pawn-breaks-when-how":
+      return <PawnBreaksArt />;
     default:
       return <DefaultArt />;
   }
@@ -3912,3 +3914,64 @@ function RepertoireBuilderArt() {
   );
 }
 
+function PawnBreaksArt() {
+  return (
+    <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pawn Breaks in Chess">
+      <defs>
+        <linearGradient id="pbw-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#0c1220" />
+          <stop offset="100%" stopColor="#14102a" />
+        </linearGradient>
+        <radialGradient id="pbw-glow" cx="50%" cy="45%" r="50%">
+          <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
+        </radialGradient>
+        <filter id="pbw-blur" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="8" />
+        </filter>
+      </defs>
+      <rect width="400" height="220" fill="url(#pbw-bg)" rx="8" />
+      <ellipse cx="200" cy="100" rx="160" ry="80" fill="url(#pbw-glow)" />
+      {/* pawn chain breaking - left side intact */}
+      <g opacity="0.9">
+        <rect x="100" y="140" width="22" height="22" rx="3" fill="#10b981" fillOpacity="0.5" />
+        <rect x="122" y="118" width="22" height="22" rx="3" fill="#10b981" fillOpacity="0.6" />
+        <rect x="144" y="96" width="22" height="22" rx="3" fill="#10b981" fillOpacity="0.7" />
+      </g>
+      {/* crack / break point */}
+      <line x1="175" y1="88" x2="185" y2="100" stroke="#f59e0b" strokeWidth="2" opacity="0.8" />
+      <line x1="185" y1="100" x2="175" y2="112" stroke="#f59e0b" strokeWidth="2" opacity="0.8" />
+      <line x1="175" y1="112" x2="188" y2="124" stroke="#f59e0b" strokeWidth="2" opacity="0.6" />
+      {/* right side - broken pieces scattering */}
+      <g opacity="0.7">
+        <rect x="210" y="88" width="22" height="22" rx="3" fill="#e13c48" fillOpacity="0.6" transform="rotate(12,221,99)" />
+        <rect x="232" y="100" width="22" height="22" rx="3" fill="#e13c48" fillOpacity="0.5" transform="rotate(-8,243,111)" />
+        <rect x="250" y="118" width="22" height="22" rx="3" fill="#e13c48" fillOpacity="0.4" transform="rotate(15,261,129)" />
+      </g>
+      {/* impact sparks */}
+      <circle cx="190" cy="95" r="4" fill="#f59e0b" opacity="0.6" filter="url(#pbw-blur)" />
+      <circle cx="185" cy="108" r="3" fill="#f59e0b" opacity="0.4" filter="url(#pbw-blur)" />
+      {/* arrow showing break direction */}
+      <line x1="180" y1="100" x2="250" y2="85" stroke="#f59e0b" strokeWidth="1.5" opacity="0.5" markerEnd="url(#pbw-arrow)" />
+      <defs>
+        <marker id="pbw-arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#f59e0b" fillOpacity="0.5" />
+        </marker>
+      </defs>
+      {/* title */}
+      <text x="200" y="42" textAnchor="middle" fill="#f1f5f9" fontSize="14" fontWeight="700" fontFamily="system-ui, sans-serif">PAWN BREAKS</text>
+      <text x="200" y="196" textAnchor="middle" fill="#64748b" fontSize="9" fontFamily="system-ui, sans-serif">When to strike. When to hold.</text>
+      {/* small pawn silhouettes */}
+      <circle cx="60" cy="160" r="6" fill="#f1f5f9" fillOpacity="0.15" />
+      <rect x="56" y="166" width="8" height="6" rx="1" fill="#f1f5f9" fillOpacity="0.15" />
+      <circle cx="340" cy="75" r="6" fill="#f1f5f9" fillOpacity="0.1" />
+      <rect x="336" y="81" width="8" height="6" rx="1" fill="#f1f5f9" fillOpacity="0.1" />
+      {/* sparkles */}
+      {[[45,30],[355,45],[30,190],[370,180],[200,60]].map(([x,y],i) => (
+        <circle key={`pbw${i}`} cx={x} cy={y} r={1.2} fill={i%2===0?"#f59e0b":"#10b981"} fillOpacity={0.2+i*0.04}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2+i*0.3}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
