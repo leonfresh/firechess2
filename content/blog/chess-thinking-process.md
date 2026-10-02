@@ -54,7 +54,7 @@ Look at this position from the [Tarrasch Defense](/openings/tarrasch-defense):
 
 **Pawn structure:** White has an isolated queen's pawn (IQP) on d4. This is a classic double-edged feature — the d4 pawn can be a target, but it gives White space and central control. Black's d5 pawn is fixed and solid, but the c5 break is gone.
 
-**Conclusion:** White has a slight advantage due to superior piece activity. The position is strategic, not tactical — White should improve pieces and look for a favorable pawn break, not launch a premature attack.
+**Conclusion:** White has a slight advantage due to superior piece activity. The position is strategic, not tactical — White should improve pieces and look for a favorable [pawn break](/blog/chess-pawn-breaks-when-how), not launch a premature attack.
 
 ### What the Engine Says vs What You Should Think
 

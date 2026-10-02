@@ -287,7 +287,7 @@ A pawn break is a pawn advance that challenges the opponent's pawn structure. It
 - **c4-c5 in the IQP** — the IQP advances, creating a passed pawn or opening lines
 - **...f5 in the King's Indian** — Black's kingside attack begins with this pawn break
 
-Every pawn break should have a concrete purpose. Don't break the structure just to "stir things up." Calculate what the resulting pawn formation looks like and whether it favors you.
+Every pawn break should have a concrete purpose. Don't break the structure just to "stir things up." Calculate what the resulting pawn formation looks like and whether it favors you. For a complete guide to the three types of breaks and when to use each, see our [pawn breaks guide](/blog/chess-pawn-breaks-when-how).
 
 ### Structure recognition in your games
 

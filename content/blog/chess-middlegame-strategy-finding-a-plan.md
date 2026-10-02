@@ -163,7 +163,7 @@ Before committing to an attack, check both kings. King safety assessment is the 
 
 Based on your assessment of pawn structure, piece activity, and king safety, you should now have a general idea of what to do. This is where the framework pays off — instead of staring at the board wondering "what should I play?", you have a shortlist of candidate plans:
 
-- **"I should play on the queenside"** — my pawn majority is there, I can push b4-b5
+- **"I should play on the queenside"** — my pawn majority is there, I can push b4-b5 (see our [pawn breaks guide](/blog/chess-pawn-breaks-when-how) for when and how to break)
 - **"I should improve my knight"** — redirect it from a3 to d5 via c2-e3
 - **"I should attack the king"** — my opponent's kingside is weakened and I have 3 pieces aimed that way
 - **"I should prepare the endgame"** — I'm slightly better, trading pieces benefits me
