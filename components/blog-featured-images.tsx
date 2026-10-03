@@ -146,6 +146,8 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <RepertoireBuilderArt />;
     case "chess-pawn-breaks-when-how":
       return <PawnBreaksArt />;
+    case "chess-common-mistakes-at-1200":
+      return <CommonMistakes1200Art />;
     default:
       return <DefaultArt />;
   }
@@ -3969,6 +3971,63 @@ function PawnBreaksArt() {
       {/* sparkles */}
       {[[45,30],[355,45],[30,190],[370,180],[200,60]].map(([x,y],i) => (
         <circle key={`pbw${i}`} cx={x} cy={y} r={1.2} fill={i%2===0?"#f59e0b":"#10b981"} fillOpacity={0.2+i*0.04}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2+i*0.3}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Common Mistakes at 1200 - chess piece with warning exclamation    */
+/* ================================================================== */
+function CommonMistakes1200Art() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="cm12-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0c1220" /><stop offset="1" stopColor="#1a0a0a" />
+        </linearGradient>
+        <radialGradient id="cm12-glow" cx="200" cy="100" r="120" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#e13c48" stopOpacity="0.25" />
+          <stop offset="1" stopColor="#0c1220" stopOpacity="0" />
+        </radialGradient>
+        <filter id="cm12-blur"><feGaussianBlur stdDeviation="3" /></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#cm12-bg)" rx="8" />
+      <rect width="400" height="200" fill="url(#cm12-glow)" rx="8" />
+      {/* chessboard grid pattern */}
+      <g opacity="0.12">
+        {[0,1,2,3,4,5,6,7].map(i => [0,1,2,3].map(j => (
+          <rect key={`cm12sq${i}${j}`} x={140+i*16} y={70+j*16} width="16" height="16" fill={(i+j)%2===0?"#f1f5f9":"#1e293b"} />
+        )))}
+      </g>
+      {/* king silhouette */}
+      <g transform="translate(200,100)" opacity="0.4">
+        <path d="M-8,-28 L-3,-28 L-3,-33 L3,-33 L3,-28 L8,-28 L8,-22 L0,-16 L-8,-22 Z" fill="#f1f5f9" />
+        <ellipse cx="0" cy="-10" rx="12" ry="12" fill="#f1f5f9" />
+        <ellipse cx="0" cy="6" rx="14" ry="8" fill="#f1f5f9" />
+        <rect x="-16" y="10" width="32" height="6" rx="2" fill="#f1f5f9" />
+      </g>
+      {/* warning exclamation */}
+      <g transform="translate(280,55)">
+        <rect x="-14" y="-10" width="28" height="52" rx="14" fill="#e13c48" fillOpacity="0.85" />
+        <circle cx="0" cy="0" r="4" fill="#0c1220" />
+        <rect x="-2.5" y="8" width="5" height="20" rx="2.5" fill="#0c1220" />
+      </g>
+      {/* 5 mistakes - scattered x marks */}
+      {[[100,80],[120,140],[280,140],[310,95],[160,170]].map(([x,y],i) => (
+        <g key={`cm12x${i}`} transform={`translate(${x},${y})`} opacity={0.3+i*0.08}>
+          <line x1="-5" y1="-5" x2="5" y2="5" stroke="#e13c48" strokeWidth="2" strokeLinecap="round" />
+          <line x1="5" y1="-5" x2="-5" y2="5" stroke="#e13c48" strokeWidth="2" strokeLinecap="round" />
+        </g>
+      ))}
+      {/* title */}
+      <text x="200" y="38" textAnchor="middle" fill="#f1f5f9" fontSize="14" fontWeight="700" fontFamily="system-ui, sans-serif">5 MISTAKES AT 1200</text>
+      <text x="200" y="196" textAnchor="middle" fill="#64748b" fontSize="9" fontFamily="system-ui, sans-serif">Stop losing. Start climbing.</text>
+      {/* sparkles */}
+      {[[50,25],[350,30],[40,175],[360,170],[200,15]].map(([x,y],i) => (
+        <circle key={`cm12sp${i}`} cx={x} cy={y} r={1.2} fill={i%2===0?"#e13c48":"#f59e0b"} fillOpacity={0.2+i*0.04}>
           <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2+i*0.3}s`} repeatCount="indefinite" />
         </circle>
       ))}

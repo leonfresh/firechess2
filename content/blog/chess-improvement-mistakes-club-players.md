@@ -17,7 +17,7 @@ This guide covers the seven most common improvement mistakes that keep club play
 
 ## Mistake #1: Studying Openings Before Tactics
 
-The single biggest time sink for club players is opening study. A 1200-rated player spending three hours memorizing the Najdorf Poisoned Pawn variation is like a basketball player practicing trick shots before they can dribble.
+The single biggest time sink for club players is opening study. A [1200-rated player](/blog/chess-common-mistakes-at-1200) spending three hours memorizing the Najdorf Poisoned Pawn variation is like a basketball player practicing trick shots before they can dribble.
 
 Here's why: openings matter less than you think below 1600. In [analysis of games by rating](/blog/chess-mistakes-by-rating), the most common opening mistake isn't playing the wrong move — it's playing a move that hangs a piece within the first 10 moves. No amount of opening knowledge fixes that.
 

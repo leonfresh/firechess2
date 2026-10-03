@@ -11,7 +11,7 @@ Every rating band has a signature mistake. A 900-rated player walks into Scholar
 
 We analysed over 14,000 games uploaded to FireChess's scanner at /analyze, filtering players by rapid rating, and the data tells a clear story: **the mistakes you make at 1100 are fundamentally different from the mistakes you make at 1500**, and the training that fixes one level does almost nothing for the next. Studying openings when your problem is hanging pieces is like taking driving lessons when you can't see the road.
 
-This guide maps the most common chess mistakes to five rating bands: 800-1000, 1000-1200, 1200-1400, 1400-1600, and 1600-1800. For each band, you'll see the actual positions where these mistakes happen, the centipawn loss data behind them, and — most importantly — what to do about it. If you're tired of plateauing and want to know exactly what's holding you back, start here.
+This guide maps the most common chess mistakes to five rating bands: 800-1000, 1000-1200, 1200-1400, 1400-1600, and 1600-1800. For a deeper dive into the 1200 level specifically, see [5 Chess Mistakes Every 1200 Player Makes](/blog/chess-common-mistakes-at-1200). For each band, you'll see the actual positions where these mistakes happen, the centipawn loss data behind them, and — most importantly — what to do about it. If you're tired of plateauing and want to know exactly what's holding you back, start here.
 
 ---
 

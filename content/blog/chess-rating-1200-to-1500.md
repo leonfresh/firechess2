@@ -6,7 +6,7 @@ author: "FireChess Team"
 tags: ["improvement", "rating", "study-plan", "1200", "1500", "plateau", "FAQ"]
 ---
 
-The jump from 1200 to 1500 is the most important transition in a chess player's development. Below 1200, improvement is mostly about learning not to hang pieces. Above 1500, you start competing on positional understanding and endgame technique.
+The jump from 1200 to 1500 is the most important transition in a chess player's development. Below 1200, improvement is mostly about learning not to hang pieces. If that sounds like you, see our breakdown of [the 5 most common mistakes at 1200](/blog/chess-common-mistakes-at-1200). Above 1500, you start competing on positional understanding and endgame technique.
 
 The 1200–1500 corridor is where you build the core skills that will define your chess ceiling for years to come.
 

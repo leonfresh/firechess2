@@ -84,7 +84,7 @@ This position appears thousands of times per day on online chess servers. Black 
 
 ## 1000-1200: The One-Move Threat Blindspot
 
-Between 1000 and 1200, players stop hanging pieces in one move — but they still miss **one-move threats from the opponent**. The difference is subtle: instead of leaving a piece completely undefended, they overlook that a capture or check creates a second threat (a fork, a pin, or a discovered attack).
+Between 1000 and 1200, players stop [hanging pieces in one move](/blog/chess-common-mistakes-at-1200) — but they still miss **one-move threats from the opponent**. The difference is subtle: instead of leaving a piece completely undefended, they overlook that a capture or check creates a second threat (a fork, a pin, or a discovered attack).
 
 This is the rating range where [Italian Game](/openings/italian-game) middlegames become instructive. The opening is popular at this level, and the typical mistakes reveal the one-move blindspot perfectly:
 
