@@ -260,7 +260,7 @@ Theory without practice is useless. Here's how to actually internalize these pat
 
 **1. Solve endgame puzzles.** Lichess and Chess.com have endgame-specific puzzle sets. Focus on rook endgames exclusively for a week. You'll be surprised how quickly the patterns become automatic.
 
-**2. Play rook endgame training positions against an engine.** Set up a Lucena or Philidor position and play both sides. The engine will show you exactly where you go wrong.
+**2. Play rook [endgame training](/blog/chess-endgame-study-plan-by-rating) positions against an engine.** Set up a Lucena or Philidor position and play both sides. The engine will show you exactly where you go wrong.
 
 **3. Review your own rook endgames.** Upload your games to [FireChess's scanner](/analyze) and look at the endgame phase specifically. Check the centipawn loss per move — if you're losing 50+ centipawns in endgame positions, that's a pattern worth drilling. Look at the move badges: a streak of [amber inaccuracy badges](/blog/chess-accuracy-score-explained) in the endgame tells you that your technique is imprecise, not necessarily that you're blundering.
 

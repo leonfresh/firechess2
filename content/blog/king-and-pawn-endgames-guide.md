@@ -318,7 +318,7 @@ Zugzwang is a position where being forced to move is a disadvantage — every po
 
 ### Q: How can I practice king and pawn endgames?
 
-Start by learning the six concepts in this guide, then practice them against an engine or a training partner. Use [FireChess's analysis tool at /analyze](/analyze) to review your endgame positions — the centipawn loss breakdown shows exactly where your endgame technique goes wrong. Focus on positions where you had an advantage but the game ended as a draw — those are the king and pawn endgames you need to study most.
+Start by learning the six concepts in this guide, then practice them against an engine or a training partner. For a structured plan organized by rating level, see our [endgame study plan by rating](/blog/chess-endgame-study-plan-by-rating). Use [FireChess's analysis tool at /analyze](/analyze) to review your endgame positions — the centipawn loss breakdown shows exactly where your endgame technique goes wrong. Focus on positions where you had an advantage but the game ended as a draw — those are the king and pawn endgames you need to study most.
 
 ---
 

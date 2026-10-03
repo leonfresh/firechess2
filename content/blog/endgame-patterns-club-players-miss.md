@@ -213,7 +213,7 @@ Another common mistake is **premature pawn exchanges**. Club players often trade
   </defs>
   <rect width="640" height="300" rx="18" fill="url(#espBg)"/>
   <rect x="1" y="1" width="638" height="298" rx="17" stroke="white" stroke-opacity="0.04"/>
-  <text x="320" y="28" text-anchor="middle" fill="white" font-size="15" font-weight="700" letter-spacing="0.5">Endgame Study Plan — Ascending Steps</text>
+  <text x="320" y="28" text-anchor="middle" fill="white" font-size="15" font-weight="700" letter-spacing="0.5">[Endgame Study](/blog/chess-endgame-study-plan-by-rating) Plan — Ascending Steps</text>
   <!-- Stone ground -->
   <rect x="0" y="240" width="640" height="60" fill="#111827" opacity="0.5"/>
   <line x1="0" y1="240" x2="640" y2="240" stroke="#1f2937"/>

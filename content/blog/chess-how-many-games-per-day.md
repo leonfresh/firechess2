@@ -66,7 +66,7 @@ At the intermediate-advanced level, improvement comes from **depth, not volume.*
 The ideal session:
 - 3-4 rapid games (15+10 minimum)
 - Full analysis of each game, focusing on **positional errors** rather than just tactics
-- One endgame study session per week (king and pawn endgames are the highest-ROI topic at this level — see our [king and pawn endgames guide](/blog/king-and-pawn-endgames-guide))
+- One [endgame study](/blog/chess-endgame-study-plan-by-rating) session per week (king and pawn endgames are the highest-ROI topic at this level — see our [king and pawn endgames guide](/blog/king-and-pawn-endgames-guide))
 
 <chess-position fen="rn1q1rk1/ppp1bpp1/5n1p/3p4/3P2bB/2NBP3/PP3PPP/R2QK1NR w KQ - 2 9" caption="This Queen's Gambit Declined position is typical of the strategic decisions that separate 1600 from 2000 players. The question isn't a tactic — it's whether to play h3 (kicking the bishop) or develop the queenside. Players who've played 10+ games today are 40% more likely to play the immediate h3 rather than considering the deeper Qd2 and O-O-O plan." orientation="white" arrows="d1d2:green,h3h4:orange" badge="best"></chess-position>
 

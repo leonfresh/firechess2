@@ -148,6 +148,8 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <PawnBreaksArt />;
     case "chess-common-mistakes-at-1200":
       return <CommonMistakes1200Art />;
+    case "chess-endgame-study-plan-by-rating":
+      return <EndgameStudyPlanArt />;
     default:
       return <DefaultArt />;
   }
@@ -4028,6 +4030,55 @@ function CommonMistakes1200Art() {
       {/* sparkles */}
       {[[50,25],[350,30],[40,175],[360,170],[200,15]].map(([x,y],i) => (
         <circle key={`cm12sp${i}`} cx={x} cy={y} r={1.2} fill={i%2===0?"#e13c48":"#f59e0b"} fillOpacity={0.2+i*0.04}>
+          <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2+i*0.3}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+function EndgameStudyPlanArt() {
+  return (
+    <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Endgame Study Plan by Rating featured art">
+      <defs>
+        <radialGradient id="esp-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#10b981" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="esp-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#0c1220" />
+          <stop offset="100%" stopColor="#14102a" />
+        </linearGradient>
+      </defs>
+      <rect width="400" height="220" fill="url(#esp-bg)" rx="12" />
+      <circle cx="200" cy="100" r="120" fill="url(#esp-glow)" />
+      {/* Chess king silhouette */}
+      <g transform="translate(170,45)" fill="#10b981" fillOpacity="0.7">
+        <rect x="10" y="0" width="10" height="3" rx="1" />
+        <rect x="12" y="-2" width="6" height="7" rx="1" />
+        <rect x="5" y="3" width="20" height="5" rx="2" />
+        <path d="M7 8 L5 35 L25 35 L23 8 Z" fillOpacity="0.5" />
+        <rect x="2" y="35" width="26" height="5" rx="2" />
+        <rect x="0" y="40" width="30" height="4" rx="2" />
+      </g>
+      {/* Progress bars */}
+      {[
+        { y: 130, w: 60, label: "800", color: "#ef4444" },
+        { y: 148, w: 100, label: "1200", color: "#f59e0b" },
+        { y: 166, w: 150, label: "1600", color: "#10b981" },
+        { y: 184, w: 210, label: "2000", color: "#06b6d4" },
+      ].map((bar, i) => (
+        <g key={`espb${i}`}>
+          <rect x="95" y={bar.y} width="210" height="12" rx="4" fill="#1e293b" />
+          <rect x="95" y={bar.y} width={bar.w} height="12" rx="4" fill={bar.color} fillOpacity="0.7" />
+          <text x="88" y={bar.y + 10} textAnchor="end" fill="#64748b" fontSize="10" fontFamily="system-ui, sans-serif">{bar.label}</text>
+        </g>
+      ))}
+      <text x="200" y="24" textAnchor="middle" fill="#f1f5f9" fontSize="14" fontWeight="bold" fontFamily="system-ui, sans-serif">Endgame Study Plan</text>
+      <text x="200" y="210" textAnchor="middle" fill="#64748b" fontSize="9" fontFamily="system-ui, sans-serif">Study the right endgame at the right time</text>
+      {/* sparkles */}
+      {[[35,50],[365,45],[30,190],[370,195],[200,18]].map(([x,y],i) => (
+        <circle key={`espsp${i}`} cx={x} cy={y} r={1.2} fill={i%2===0?"#10b981":"#06b6d4"} fillOpacity={0.2+i*0.04}>
           <animate attributeName="opacity" values="0.3;0.08;0.3" dur={`${2+i*0.3}s`} repeatCount="indefinite" />
         </circle>
       ))}
